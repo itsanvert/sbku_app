@@ -6,12 +6,12 @@ class FeatureGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final features = [
-      {'icon': Icons.school, 'label': 'សិស្ស'},
-      {'icon': Icons.event, 'label': 'សកម្មភាព'},
-      {'icon': Icons.list_alt, 'label': 'ព័ត៌មាន'},
       {'icon': Icons.people, 'label': 'គ្រូបង្រៀន'},
-      {'icon': Icons.group, 'label': 'និស្សិត'},
-      {'icon': Icons.more_horiz, 'label': 'ផ្សេងៗ'},
+      {'icon': Icons.school, 'label': 'សិស្ស'},
+      {'icon': Icons.group, 'label': 'បុគ្គលិក'},
+      {'icon': Icons.event, 'label': 'អវត្តមាន'},
+      {'icon': Icons.list_alt, 'label': 'ស្នើរសុំច្បាប់'},
+      {'icon': Icons.subject, 'label': 'តារាងមុខវិជ្ជា'},
     ];
 
     return GridView.builder(
@@ -27,35 +27,54 @@ class FeatureGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFFF6A00)),
             color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFFF6A00), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
+                color: const Color(0xFFFF6A00).withOpacity(0.12),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Top orange bar
+              Container(
+                height: 6,
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: const BoxDecoration(
+                  color: Color.fromARGB(255, 255, 94, 0),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(14),
+                    bottom: Radius.circular(14),
+                  ),
+                ),
+              ),
+
+              const Spacer(),
+
               Icon(
                 features[index]['icon'] as IconData,
-                color: const Color(0xFFFF6A00),
-                size: 32,
+                size: 36,
+                color: const Color(0xFFFF5E01),
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 10),
+
               Text(
                 features[index]['label'] as String,
                 style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFFFF6A00),
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
+                  color: Color(0xFFFF5500),
                 ),
                 textAlign: TextAlign.center,
               ),
+
+              const Spacer(),
             ],
           ),
         );

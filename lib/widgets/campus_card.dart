@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:sbku_app/widgets/card_categories.dart';
+
 class CampusSlider extends StatefulWidget {
   final List<String> imagePaths;
   final double height;
@@ -82,6 +84,7 @@ class _CampusSliderState extends State<CampusSlider> {
             (index) => AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.symmetric(horizontal: 4),
+
               height: 8,
               width: _currentPage == index ? 24 : 8,
               decoration: BoxDecoration(
@@ -94,34 +97,6 @@ class _CampusSliderState extends State<CampusSlider> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class CampusCard extends StatelessWidget {
-  final String imagePath;
-
-  const CampusCard({super.key, required this.imagePath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFF6A00)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.asset(imagePath, fit: BoxFit.cover),
-      ),
     );
   }
 }
