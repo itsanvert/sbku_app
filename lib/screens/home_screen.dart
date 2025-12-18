@@ -17,6 +17,7 @@ class HomePageScreen extends StatelessWidget {
           children: [
             const GreetingCard(),
             const SizedBox(height: 16),
+
             const FeatureGrid(),
             const SizedBox(height: 16),
             const CampusSlider(

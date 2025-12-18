@@ -6,6 +6,9 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      toolbarHeight: 80,
+      leadingWidth: 80,
+
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -15,50 +18,48 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
+
       leading: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(10),
         child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
       ),
+
       title: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           Text(
             'សាកលវិទ្យាល័យសម្តេចព្រះមហាសង្ឃរាជ បួរ គ្រី',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 2),
+          SizedBox(height: 4),
           Text(
             'Samdech Preah Mahasangharajah Bour Kry University',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.white),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
-      centerTitle: true,
+
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
-          onPressed: () {
-            // TODO: Navigate to notifications
-          },
+          onPressed: () {},
         ),
       ],
+
       backgroundColor: Colors.transparent,
       elevation: 0,
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => const Size.fromHeight(80);
 }
