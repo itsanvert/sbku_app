@@ -21,7 +21,11 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
 
       leading: Padding(
         padding: const EdgeInsets.all(10),
-        child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
+        child: Image.asset(
+          'assets/images/logo.jpg',
+          fit: BoxFit.contain,
+          height: 50,
+        ),
       ),
 
       title: Column(

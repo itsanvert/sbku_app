@@ -5,24 +5,44 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
+<<<<<<< HEAD
+  sdk: ">=3.10.1 <4.0.0"
+=======
   sdk: ">=3.10.0 <4.0.0"
+>>>>>>> 790a17b9fb41cb4db08772a05bec1f9803aa5373
 
 dependencies:
   flutter:
     sdk: flutter
+<<<<<<< HEAD
+
+=======
   gradient_borders: ^1.0.0
   go_router: ^14.0.0
   flutter_svg: ^2.0.7
   flutter_form_builder: ^9.0.0
+>>>>>>> 790a17b9fb41cb4db08772a05bec1f9803aa5373
   cupertino_icons: ^1.0.8
+  getwidget: ^7.0.0
+  gradient_borders: ^1.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+<<<<<<< HEAD
+
+  flutter_lints: ^6.0.0
+
+
+flutter:
+  uses-material-design: true
+
+=======
   flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+>>>>>>> 790a17b9fb41cb4db08772a05bec1f9803aa5373
   assets:
     - assets/images/logo.jpg
     - assets/images/campus.png

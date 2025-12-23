@@ -1,6 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:sbku_app/screens/home/home_screen.dart';
+
+import 'package:sbku_app/screen/home/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,10 +12,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Test Student CRUD',
-      theme: ThemeData(primarySwatch: Colors.orange),
-      home: const HomePageScreen(),
-    );
+    return MaterialApp(title: 'SBKU App', home: const HomePageScreen());
   }
 }

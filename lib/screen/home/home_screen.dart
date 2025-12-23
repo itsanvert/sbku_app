@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/widgets/campus_card.dart';
-import 'package:sbku_app/widgets/card_widget.dart';
-import 'package:sbku_app/widgets/feature_grid.dart';
-import '../../widgets/header_widget.dart';
+import 'package:sbku_app/widget/home/campus_slider.dart';
+import 'package:sbku_app/widget/home/greeting_card_widget.dart';
+import 'package:sbku_app/widget/home/feature_grid.dart';
+import '../../widget/home/header_widget.dart';
 
 class HomePageScreen extends StatelessWidget {
   const HomePageScreen({super.key});
@@ -17,7 +17,6 @@ class HomePageScreen extends StatelessWidget {
           children: [
             const GreetingCard(),
             const SizedBox(height: 16),
-
             const FeatureGrid(),
             const SizedBox(height: 16),
             const CampusSlider(

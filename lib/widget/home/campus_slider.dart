@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:sbku_app/widgets/card_categories.dart';
+import 'package:sbku_app/widget/home/card_categories.dart';
 
 class CampusSlider extends StatefulWidget {
   final List<String> imagePaths;
@@ -83,7 +83,6 @@ class _CampusSliderState extends State<CampusSlider> {
             widget.imagePaths.length,
             (index) => AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
 
               height: 8,
               width: _currentPage == index ? 24 : 8,
