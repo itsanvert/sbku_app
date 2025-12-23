@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../data/dummy_students.dart';
-import '../widgets/student_item_widget.dart';
+import '../../data/dummy_students.dart';
+import '../../widgets/student_item_widget.dart';
 import 'add_student_screen.dart';
-import '../models/student_model.dart';
+import '../../models/student_model.dart';
 
 class StudentListScreen extends StatefulWidget {
   const StudentListScreen({super.key});

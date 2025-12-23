@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sbku_app/widgets/campus_card.dart';
 import 'package:sbku_app/widgets/card_widget.dart';
 import 'package:sbku_app/widgets/feature_grid.dart';
-import '../widgets/header_widget.dart';
+import '../../widgets/header_widget.dart';
 
 class HomePageScreen extends StatelessWidget {
   const HomePageScreen({super.key});
