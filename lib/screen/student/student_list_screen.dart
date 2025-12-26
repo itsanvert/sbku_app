@@ -58,7 +58,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       ),
       body: Column(
         children: [
-          // 🎯 FILTERS ROW — MATCH YOUR DESIGN
+          // 🎯 FILTERS ROW — FIXED OVERFLOW
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -73,7 +73,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     ),
                     child: DropdownButtonFormField<String>(
                       value: _selectedFaculty,
+                      isExpanded: true, // ✅ ADDED THIS
                       hint: Row(
+                        mainAxisSize: MainAxisSize.min, // ✅ ADDED THIS
                         children: const [
                           Icon(
                             Icons.filter_alt,
@@ -81,9 +83,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             size: 18,
                           ),
                           SizedBox(width: 4),
-                          Text(
-                            'Faculty',
-                            style: TextStyle(color: Colors.orange),
+                          Flexible(
+                            // ✅ WRAPPED IN FLEXIBLE
+                            child: Text(
+                              'Faculty',
+                              style: TextStyle(color: Colors.orange),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -93,14 +99,17 @@ class _StudentListScreenState extends State<StudentListScreen> {
                         ))
                           DropdownMenuItem<String>(
                             value: faculty,
-                            child: Text(faculty),
+                            child: Text(
+                              faculty,
+                              overflow: TextOverflow.ellipsis, // ✅ ADDED THIS
+                            ),
                           ),
                       ],
                       onChanged: (value) =>
                           setState(() => _selectedFaculty = value),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
+                        contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
                         ),
@@ -109,7 +118,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
 
                 // Shift Filter
                 Expanded(
@@ -121,7 +130,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     ),
                     child: DropdownButtonFormField<String>(
                       value: _selectedShift,
+                      isExpanded: true, // ✅ ADDED THIS
                       hint: Row(
+                        mainAxisSize: MainAxisSize.min, // ✅ ADDED THIS
                         children: const [
                           Icon(
                             Icons.filter_alt,
@@ -129,7 +140,14 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             size: 18,
                           ),
                           SizedBox(width: 4),
-                          Text('Shift', style: TextStyle(color: Colors.orange)),
+                          Flexible(
+                            // ✅ WRAPPED IN FLEXIBLE
+                            child: Text(
+                              'Shift',
+                              style: TextStyle(color: Colors.orange),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                       items: [
@@ -138,14 +156,17 @@ class _StudentListScreenState extends State<StudentListScreen> {
                         ))
                           DropdownMenuItem<String>(
                             value: shift,
-                            child: Text(shift),
+                            child: Text(
+                              shift,
+                              overflow: TextOverflow.ellipsis, // ✅ ADDED THIS
+                            ),
                           ),
                       ],
                       onChanged: (value) =>
                           setState(() => _selectedShift = value),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
+                        contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
                         ),
@@ -166,7 +187,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     ),
                     child: DropdownButtonFormField<String>(
                       value: _selectedGeneration,
+                      isExpanded: true, // ✅ ADDED THIS
                       hint: Row(
+                        mainAxisSize: MainAxisSize.min, // ✅ ADDED THIS
                         children: const [
                           Icon(
                             Icons.filter_alt,
@@ -174,9 +197,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             size: 18,
                           ),
                           SizedBox(width: 4),
-                          Text(
-                            'Generation',
-                            style: TextStyle(color: Colors.orange),
+                          Flexible(
+                            // ✅ WRAPPED IN FLEXIBLE
+                            child: Text(
+                              'Generation',
+                              style: TextStyle(color: Colors.orange),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -186,14 +213,17 @@ class _StudentListScreenState extends State<StudentListScreen> {
                         ))
                           DropdownMenuItem<String>(
                             value: generation,
-                            child: Text(generation),
+                            child: Text(
+                              generation,
+                              overflow: TextOverflow.ellipsis, // ✅ ADDED THIS
+                            ),
                           ),
                       ],
                       onChanged: (value) =>
                           setState(() => _selectedGeneration = value),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
+                        contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
                         ),

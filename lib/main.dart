@@ -1,6 +1,5 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-
 import 'package:sbku_app/screen/home/home_screen.dart';
 
 void main() {
@@ -12,6 +11,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'SBKU App', home: const HomePageScreen());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'SBKU App',
+      theme: ThemeData(primarySwatch: Colors.orange, useMaterial3: true),
+      home: const HomePageScreen(),
+    );
   }
 }
