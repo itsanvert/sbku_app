@@ -31,6 +31,7 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.all(6),
           child: SvgPicture.asset(
             'assets/images/sbku-logo.svg',
+            fit: BoxFit.contain,
             width: 160,
             height: 160,
           ),
