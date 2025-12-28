@@ -1,5 +1,5 @@
 // lib/data/dummy_students.dart
-import 'package:sbku_app/model/student/student.dart';
+import 'package:sbku_app/model/student.dart';
 
 List<StudentModel> dummyStudents = [
   StudentModel(

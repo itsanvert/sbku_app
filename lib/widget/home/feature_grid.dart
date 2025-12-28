@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/screen/student/student_list_screen.dart';
+import 'package:sbku_app/screen/attendance/attendance_list_catgories.dart';
+import 'package:sbku_app/screen/student/student_list.dart';
 
 class FeatureGrid extends StatelessWidget {
   const FeatureGrid({super.key});
@@ -17,10 +18,23 @@ class FeatureGrid extends StatelessWidget {
         'label': 'សិស្ស',
         'screen': const StudentListScreen(),
       },
-      {'icon': Icons.group, 'label': 'បុគ្គលិក'},
-      {'icon': Icons.event, 'label': 'អវត្តមាន'},
-      {'icon': Icons.list_alt, 'label': 'ស្នើរសុំច្បាប់'},
-      {'icon': Icons.subject, 'label': 'តារាងមុខវិជ្ជា'},
+      {
+        'icon': Icons.group, 'label': 'បុគ្គលិក',
+        // 'screen': const EmployeeListScreen(),
+      },
+      {
+        'icon': Icons.event,
+        'label': 'អវត្តមាន',
+        'screen': const AttendanceListCategoryScreen()
+      },
+      {
+        'icon': Icons.list_alt, 'label': 'ស្នើរសុំច្បាប់',
+        //  'screen': const RequestLeaveScreen(),
+      },
+      {
+        'icon': Icons.subject, 'label': 'តារាងមុខវិជ្ជា',
+        //  'screen': const SubjectListScreen(),
+      },
     ];
 
     return GridView.builder(
