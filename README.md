@@ -1,16 +1,19 @@
-# sbku_app
+📱 SBKU App
 
-A new Flutter project.
+SBKU App is a mobile application designed to support universities with a smart and innovative attendance management system. The application helps mobile users easily track student attendance and automatically generate reports for administrative offices.
 
-## Getting Started
+The system supports daily, monthly, and yearly attendance reports, making it efficient for record-keeping and analysis. SBKU App manages multiple user roles, including Students, Professors, and Staff, each with appropriate access and functionality.
 
-This project is a starting point for a Flutter application.
+✨ Key Features
 
-A few resources to get you started if this is your first Flutter project:
+📌 Student attendance tracking via mobile devices
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+📊 Automatic report generation (daily, monthly, yearly)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+👥 User role management (Student, Professor, Staff)
+
+🏫 Designed specifically for university environments
+
+⚡ Improves accuracy, efficiency, and convenience
+
+SBKU App aims to modernize attendance management by reducing manual work and providing reliable data for academic and administrative use.
