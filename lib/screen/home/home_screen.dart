@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/widget/home/campus_slider.dart';
-import 'package:sbku_app/widget/home/greeting_card_widget.dart';
-import 'package:sbku_app/widget/home/feature_grid.dart';
-import '../../widget/home/header_widget.dart';
+import 'package:sbku_app/screen/attendance/attendance_list_catgories.dart';
+
+import 'package:sbku_app/screen/student/student_list_view_screen.dart';
+
+import 'package:sbku_app/widget/appbar_widget.dart';
+import 'package:sbku_app/widget/campus_slider_widget.dart';
+import 'package:sbku_app/widget/greeting_card_widget.dart';
+import 'package:sbku_app/widget/feature_grid_widget.dart';
 
 class HomePageScreen extends StatelessWidget {
   const HomePageScreen({super.key});
@@ -10,17 +14,52 @@ class HomePageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(),
+      appBar: AppBarWidget.home(
+        enableScaling: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             const GreetingCard(),
             const SizedBox(height: 16),
-            const FeatureGrid(),
+            FeatureGrid(
+              features: const [
+                FeatureItem(
+                  icon: Icons.people,
+                  label: 'គ្រូបង្រៀន',
+                  // screen: TeacherScreen(),
+                ),
+                FeatureItem(
+                  icon: Icons.school,
+                  label: 'សិស្ស',
+                  screen: StudentListScreen(), // ✅ This will now work
+                ),
+                FeatureItem(
+                  icon: Icons.group,
+                  label: 'បុគ្គលិក',
+                  // screen: EmployeeListScreen(),
+                ),
+                FeatureItem(
+                  icon: Icons.event,
+                  label: 'អវត្តមាន',
+                  screen: AttendanceListCategoryScreen(),
+                ),
+                FeatureItem(
+                  icon: Icons.list_alt,
+                  label: 'ស្នើរសុំច្បាប់',
+                  // screen: RequestLeaveScreen(),
+                ),
+                FeatureItem(
+                  icon: Icons.subject,
+                  label: 'តារាងមុខវិជ្ជា',
+                  // screen: SubjectListScreen(),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
-            const CampusSlider(
-              imagePaths: [
+            ImageSlider.campus(
+              imagePaths: const [
                 'assets/images/campus.png',
                 'assets/images/campus.png',
                 'assets/images/campus.png',
