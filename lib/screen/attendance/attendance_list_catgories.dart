@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/data/dummy_attendance.dart';
-import 'package:sbku_app/model/attendance.dart';
 import 'package:sbku_app/screen/attendance/attendance_list_view_screen.dart';
 import 'package:sbku_app/widget/appbar_widget.dart';
 import 'package:sbku_app/widget/list_card_widget.dart';
@@ -38,7 +37,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
                 icon: Icons.check_circle_outline,
                 label: 'Present Students',
                 screen: AttendanceItemWidget(
-                  attendance: dummyAttendances[0],
+                  attendance: dummyAttendances[1],
                 ),
               ),
               ListCardItem(
