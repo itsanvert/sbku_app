@@ -1,19 +1,20 @@
 📱 SBKU App
 
-SBKU App is a mobile application designed to support universities with a smart and innovative attendance management system. The application helps mobile users easily track student attendance and automatically generate reports for administrative offices.
+Samdech Preah Mahasangharajah Bour Kry University Mobile Application
 
-The system supports daily, monthly, and yearly attendance reports, making it efficient for record-keeping and analysis. SBKU App manages multiple user roles, including Students, Professors, and Staff, each with appropriate access and functionality.
+SBKU App is a smart mobile application developed to streamline attendance management for university environments. It allows students, professors, and staff to manage and monitor attendance directly from their mobile devices with speed and accuracy.
+
+The application provides automated daily, monthly, and yearly attendance reports, helping academic and administrative offices reduce manual workload while maintaining reliable and well-organized records. With clearly defined user roles, each user experiences a tailored interface and functionality that fits their responsibilities.
 
 ✨ Key Features
 
-📌 Student attendance tracking via mobile devices
+📌 Mobile-based student attendance tracking
+📊 Automated attendance reports (daily, monthly, yearly)
+👥 Role-based access for Students, Professors, and Staff
+🏫 Optimized for university attendance systems
+⚡ Enhances efficiency, accuracy, and convenience
 
-📊 Automatic report generation (daily, monthly, yearly)
+SBKU App modernizes traditional attendance processes by leveraging mobile technology to improve data accuracy, simplify administration, and support better academic decision-making.
 
-👥 User role management (Student, Professor, Staff)
-
-🏫 Designed specifically for university environments
-
-⚡ Improves accuracy, efficiency, and convenience
-
-SBKU App aims to modernize attendance management by reducing manual work and providing reliable data for academic and administrative use.
+🔗 View the Figma design preview:
+https://www.figma.com/design/yr1tZ56H8VI9erP0AdJ9wk/SBKU_APP?node-id=1-2&t=e3I7TfHWy8Kvv4NA-1
