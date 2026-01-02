@@ -241,10 +241,13 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     );
 
     if (enableScaling && scaleFactor != 1.0) {
-      return Transform.scale(
-        scale: scaleFactor,
-        alignment: Alignment.topCenter,
-        child: appBar,
+      return PreferredSize(
+        preferredSize: preferredSize,
+        child: Transform.scale(
+          scale: scaleFactor,
+          alignment: Alignment.topCenter,
+          child: appBar,
+        ),
       );
     }
 

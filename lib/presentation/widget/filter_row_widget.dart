@@ -31,7 +31,6 @@ class FilterRowWidget extends StatelessWidget {
   final Color? backgroundColor;
   final Color? borderColor;
   final bool showAllOption;
-  final String allOptionLabel;
 
   const FilterRowWidget({
     super.key,
@@ -43,7 +42,6 @@ class FilterRowWidget extends StatelessWidget {
     this.backgroundColor,
     this.borderColor,
     this.showAllOption = true,
-    this.allOptionLabel = 'ទាំងអស់',
   });
 
   @override
@@ -73,7 +71,6 @@ class FilterRowWidget extends StatelessWidget {
                 backgroundColor: backgroundColor,
                 borderColor: borderColor,
                 showAllOption: showAllOption,
-                allOptionLabel: allOptionLabel,
               ),
             );
           },

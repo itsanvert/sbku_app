@@ -1,44 +1,40 @@
-// data/dummy_attendance.dart
-import '../model/attendance.dart';
+import 'package:sbku_app/domain/entities/attendance_entity.dart';
 
-List<AttendanceModel> dummyAttendances = [
-  AttendanceModel(
+final List<AttendanceEntity> dummyAttendanceEntities = [
+  AttendanceEntity(
     id: '1',
-    studentId: '1',
-    studentName: 'សុខ វណ្ណា',
-    facultyId: '1',
-    majorId: '1',
-    classId: '1',
-    yearId: '1',
-    date: DateTime.now().subtract(Duration(days: 1)),
-    startTime: '08:00',
-    endTime: '10:00',
+    studentId: 'S001',
+    studentName: 'Sok Dara',
+    facultyId: 'F01',
+    majorId: 'M01',
+    shiftId: 'SH1',
+    classId: 'C01',
+    yearId: 'Y1',
+    date: DateTime(2025, 1, 1),
     isPresent: true,
   ),
-  AttendanceModel(
+  AttendanceEntity(
     id: '2',
-    studentId: '2',
-    studentName: 'លី ចន្ទា',
-    facultyId: '1',
-    majorId: '1',
-    classId: '1',
-    yearId: '1',
-    date: DateTime.now().subtract(Duration(days: 1)),
-    startTime: '08:00',
-    endTime: '10:00',
+    studentId: 'S002',
+    studentName: 'Chanthy Sok',
+    facultyId: 'F02',
+    majorId: 'M02',
+    shiftId: 'SH2',
+    classId: 'C02',
+    yearId: 'Y2',
+    date: DateTime(2025, 1, 1),
     isPresent: false,
   ),
-  AttendanceModel(
+  AttendanceEntity(
     id: '3',
-    studentId: '3',
-    studentName: 'ខេម សុភា',
-    facultyId: '2',
-    majorId: '2',
-    classId: '2',
-    yearId: '2',
-    date: DateTime.now(),
-    startTime: '10:00',
-    endTime: '12:00',
+    studentId: 'S003',
+    studentName: 'Vannak Lim',
+    facultyId: 'F01',
+    majorId: 'M01',
+    shiftId: 'SH3',
+    classId: 'C03',
+    yearId: 'Y3',
+    date: DateTime(2025, 1, 2),
     isPresent: true,
   ),
 ];

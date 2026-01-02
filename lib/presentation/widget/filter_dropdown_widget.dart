@@ -12,7 +12,6 @@ class FilterDropdownWidget extends StatelessWidget {
   final Color? borderColor;
   final IconData? icon;
   final bool showAllOption;
-  final String allOptionLabel;
 
   const FilterDropdownWidget({
     super.key,
@@ -26,7 +25,6 @@ class FilterDropdownWidget extends StatelessWidget {
     this.borderColor,
     this.icon,
     this.showAllOption = true,
-    this.allOptionLabel = 'ទាំងអស់',
   });
 
   @override
@@ -68,15 +66,6 @@ class FilterDropdownWidget extends StatelessWidget {
           ],
         ),
         items: [
-          if (showAllOption)
-            DropdownMenuItem<String>(
-              value: null,
-              child: Text(
-                allOptionLabel,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ),
           ...items.map((item) {
             return DropdownMenuItem<String>(
               value: item,
