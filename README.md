@@ -1,4 +1,5 @@
-# 📱 SBKU App  
+# 📱 SBKU App
+
 **Samdech Preah Mahasangharajah Bour Kry University Mobile Application**
 
 SBKU App is a smart mobile application designed to modernize and simplify attendance management in university environments. It enables students, professors, and staff to track, manage, and review attendance efficiently using mobile devices.
@@ -14,12 +15,14 @@ By automating attendance records and reports, SBKU App reduces manual workload, 
 
 - 📊 **Automated Reports**  
   Generate attendance reports:
+
   - Daily
   - Monthly
   - Yearly
 
 - 👥 **Role-Based Access Control**  
   Tailored interfaces and permissions for:
+
   - Students
   - Professors
   - Administrative Staff
@@ -35,14 +38,17 @@ By automating attendance records and reports, SBKU App reduces manual workload, 
 ## 👤 User Roles & Capabilities
 
 ### 🎓 Students
+
 - View personal attendance records
 - Track attendance status over time
 
 ### 👨‍🏫 Professors
+
 - Take and manage class attendance
 - Review attendance summaries for assigned courses
 
 ### 🧑‍💼 Staff / Administration
+
 - Monitor overall attendance data
 - Access detailed attendance reports
 - Support academic and administrative operations
@@ -78,8 +84,8 @@ The application interface is designed to be simple, modern, and role-specific.
 
 ## 📌 Project Status
 
-- UI/UX Design: ✅ Completed  
-- Development: ⏳ In Progress / Planned  
+- UI/UX Design: ✅ Completed
+- Development: ⏳ In Progress / Planned
 
 ---
 
@@ -90,9 +96,22 @@ This project is developed for academic and institutional use at
 
 ---
 
-## 🤝 Contribution
+## 🤝 Contributors
 
-Contributions, suggestions, and improvements are welcome to help enhance the system and expand its capabilities.
+- **Project Manager and Developer**
+
+  - Vert San
+
+- **Mobile Application Developer**
+
+  - Chhaom Sovanarak
+
+- **Mobile Application Developer and UI/UX Designer**
+
+  - Horng Sina
+
+- **Mobile Application Developer**
+  - Yun Yuna
 
 ---
 
