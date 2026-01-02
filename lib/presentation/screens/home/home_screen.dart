@@ -3,10 +3,10 @@ import 'package:sbku_app/presentation/screens/attendance/attendance_list_catgori
 
 import 'package:sbku_app/presentation/screens/student/student_list_view_screen.dart';
 
-import 'package:sbku_app/presentation/widget/appbar_widget.dart';
-import 'package:sbku_app/presentation/widget/campus_slider_widget.dart';
-import 'package:sbku_app/presentation/widget/greeting_card_widget.dart';
-import 'package:sbku_app/presentation/widget/feature_grid_widget.dart';
+import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/campus_slider_widget.dart';
+import 'package:sbku_app/presentation/widgets/greeting_card_widget.dart';
+import 'package:sbku_app/presentation/widgets/feature_grid_widget.dart';
 
 class HomePageScreen extends StatelessWidget {
   const HomePageScreen({super.key});

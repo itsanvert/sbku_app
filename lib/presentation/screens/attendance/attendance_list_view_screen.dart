@@ -6,9 +6,9 @@ import 'package:sbku_app/data/dummy_major.dart';
 import 'package:sbku_app/data/dummy_shirt.dart';
 import 'package:sbku_app/data/dummy_year.dart';
 import 'package:sbku_app/model/attendance_model.dart';
-import 'package:sbku_app/presentation/widget/appbar_widget.dart';
-import 'package:sbku_app/presentation/widget/filter_row_widget.dart';
-import 'package:sbku_app/presentation/widget/list_item_widget.dart';
+import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
 
 class AttendanceListViewScreen extends StatefulWidget {
   const AttendanceListViewScreen({super.key});

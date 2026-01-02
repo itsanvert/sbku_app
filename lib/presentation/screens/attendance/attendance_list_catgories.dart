@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/attendance/attendance_list_view_screen.dart';
-import 'package:sbku_app/presentation/widget/appbar_widget.dart';
-import 'package:sbku_app/presentation/widget/list_card_widget.dart';
+import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 
 class AttendanceListCategoryScreen extends StatelessWidget {
   const AttendanceListCategoryScreen({Key? key}) : super(key: key);

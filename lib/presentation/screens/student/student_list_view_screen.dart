@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/student/add_student.dart';
-import 'package:sbku_app/presentation/widget/appbar_widget.dart';
-import 'package:sbku_app/presentation/widget/filter_row_widget.dart';
-import 'package:sbku_app/presentation/widget/list_item_widget.dart';
+import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
 import '../../../data/dummy_students.dart';
 
 import '../../../model/student_model.dart';
