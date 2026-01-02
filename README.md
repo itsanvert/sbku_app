@@ -98,7 +98,7 @@ This project is developed for academic and institutional use at
 
 ## 🤝 Contributors
 
-- **Project Manager and Developer**
+- **Project Manager and Full Stack Developer**
 
   - Vert San
 
