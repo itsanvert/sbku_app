@@ -1,4 +1,3 @@
-// widget/filter_dropdown_widget.dart
 import 'package:flutter/material.dart';
 
 class FilterDropdownWidget extends StatelessWidget {
@@ -6,12 +5,7 @@ class FilterDropdownWidget extends StatelessWidget {
   final String hint;
   final List<String> items;
   final ValueChanged<String?> onChanged;
-  final Color? iconColor;
-  final Color? hintColor;
-  final Color? backgroundColor;
-  final Color? borderColor;
-  final IconData? icon;
-  final bool showAllOption;
+  final String Function(String)? labelBuilder;
 
   const FilterDropdownWidget({
     super.key,
@@ -19,68 +13,97 @@ class FilterDropdownWidget extends StatelessWidget {
     required this.hint,
     required this.items,
     required this.onChanged,
-    this.iconColor,
-    this.hintColor,
-    this.backgroundColor,
-    this.borderColor,
-    this.icon,
-    this.showAllOption = true,
+    this.labelBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
-    final effectiveIconColor = iconColor ?? const Color(0xFFFF6A00);
-    final effectiveHintColor = hintColor ?? const Color(0xFFFF6A00);
-    final effectiveBackgroundColor = backgroundColor ?? Colors.white;
-    final effectiveBorderColor = borderColor ?? Colors.grey[200]!;
-    final effectiveIcon = icon ?? Icons.filter_alt;
+    return DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
 
-    return Container(
-      decoration: BoxDecoration(
-        color: effectiveBackgroundColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: effectiveBorderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        isExpanded: true,
-        hint: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(effectiveIcon, color: effectiveIconColor, size: 18),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                hint,
-                style: TextStyle(color: effectiveHintColor),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+      // ✅ SHOW HINT WHEN value == null
+      hint: Text(
+        hint,
+        style: const TextStyle(
+          color: Color(0xFFFF6A00),
+          fontWeight: FontWeight.w500,
         ),
-        items: [
-          ...items.map((item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
+        overflow: TextOverflow.ellipsis,
+      ),
+
+      // ✅ ITEMS (WITH "ALL" OPTION)
+      items: [
+        // 🔹 ALL OPTION
+        DropdownMenuItem<String>(
+          value: null,
+          child: Text(
+            hint,
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ),
+
+        // 🔹 REAL ITEMS
+        ...items.map((id) {
+          final label = labelBuilder?.call(id) ?? id;
+          return DropdownMenuItem<String>(
+            value: id,
+            child: Text(label, overflow: TextOverflow.ellipsis),
+          );
+        }).toList(),
+      ],
+
+      // ✅ SELECTED TEXT BUILDER
+      selectedItemBuilder: (context) {
+        return [
+          // For "All"
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              hint,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ),
+
+          // For real items
+          ...items.map((id) {
+            final label = labelBuilder?.call(id) ?? id;
+            return Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             );
           }).toList(),
-        ],
-        onChanged: onChanged,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        ];
+      },
+
+      onChanged: onChanged,
+
+      decoration: InputDecoration(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
-        style: const TextStyle(color: Colors.black, fontSize: 14),
-        icon: Icon(Icons.arrow_drop_down, color: effectiveIconColor),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(
+            color: value == null ? Colors.grey.shade300 : Colors.orange,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.orange, width: 1.5),
+        ),
       ),
+
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.orange),
     );
   }
 }

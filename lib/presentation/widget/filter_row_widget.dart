@@ -6,19 +6,15 @@ class FilterConfig {
   final String? value;
   final String hint;
   final List<String> items;
+  final String Function(String)? labelBuilder;
   final ValueChanged<String?> onChanged;
-  final IconData? icon;
-  final Color? iconColor;
-  final Color? hintColor;
 
-  const FilterConfig({
+  FilterConfig({
     required this.value,
     required this.hint,
     required this.items,
+    this.labelBuilder,
     required this.onChanged,
-    this.icon,
-    this.iconColor,
-    this.hintColor,
   });
 }
 
@@ -62,15 +58,10 @@ class FilterRowWidget extends StatelessWidget {
             return Expanded(
               child: FilterDropdownWidget(
                 value: filter.value,
+                labelBuilder: filter.labelBuilder,
                 hint: filter.hint,
                 items: filter.items,
                 onChanged: filter.onChanged,
-                icon: filter.icon,
-                iconColor: filter.iconColor ?? defaultIconColor,
-                hintColor: filter.hintColor ?? defaultHintColor,
-                backgroundColor: backgroundColor,
-                borderColor: borderColor,
-                showAllOption: showAllOption,
               ),
             );
           },

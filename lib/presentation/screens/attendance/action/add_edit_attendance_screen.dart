@@ -109,10 +109,8 @@ class _AddAttendanceScreenState extends State<AddAttendanceScreen> {
                 label: 'Faculty',
                 value: _facultyId,
                 items: dummyFaculties
-                    .map((f) =>
-                        DropdownMenuItem(
-                            value: f.facultyId,
-                            child: Text(f.facultyName)))
+                    .map((f) => DropdownMenuItem(
+                        value: f.facultyId, child: Text(f.facultyName)))
                     .toList(),
                 onChanged: (v) => setState(() => _facultyId = v!),
               ),
@@ -120,10 +118,8 @@ class _AddAttendanceScreenState extends State<AddAttendanceScreen> {
                 label: 'Major',
                 value: _majorId,
                 items: dummyMajors
-                    .map((m) =>
-                        DropdownMenuItem(
-                            value: m.majorId,
-                            child: Text(m.majorName)))
+                    .map((m) => DropdownMenuItem(
+                        value: m.majorId, child: Text(m.majorName)))
                     .toList(),
                 onChanged: (v) => setState(() => _majorId = v!),
               ),
@@ -131,10 +127,8 @@ class _AddAttendanceScreenState extends State<AddAttendanceScreen> {
                 label: 'Class',
                 value: _classId,
                 items: dummyClasses
-                    .map((c) =>
-                        DropdownMenuItem(
-                            value: c.classId,
-                            child: Text(c.className)))
+                    .map((c) => DropdownMenuItem(
+                        value: c.classId, child: Text(c.className)))
                     .toList(),
                 onChanged: (v) => setState(() => _classId = v!),
               ),
@@ -142,10 +136,8 @@ class _AddAttendanceScreenState extends State<AddAttendanceScreen> {
                 label: 'Year',
                 value: _yearId,
                 items: dummyYears
-                    .map((y) =>
-                        DropdownMenuItem(
-                            value: y.yearId,
-                            child: Text(y.yearName)))
+                    .map((y) => DropdownMenuItem(
+                        value: y.yearId, child: Text(y.yearName)))
                     .toList(),
                 onChanged: (v) => setState(() => _yearId = v!),
               ),
@@ -153,10 +145,8 @@ class _AddAttendanceScreenState extends State<AddAttendanceScreen> {
                 label: 'Shift',
                 value: _shiftId,
                 items: dummyShifts
-                    .map((s) =>
-                        DropdownMenuItem(
-                            value: s.shiftId,
-                            child: Text(s.shiftName)))
+                    .map((s) => DropdownMenuItem(
+                        value: s.shiftId, child: Text(s.shiftName)))
                     .toList(),
                 onChanged: (v) => setState(() => _shiftId = v!),
               ),

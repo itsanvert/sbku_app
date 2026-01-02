@@ -74,23 +74,35 @@ class _AttendanceListViewScreenState extends State<AttendanceListViewScreen> {
           // 🔹 Filters
           FilterRowWidget(
             filters: [
+              // FACULTY
               FilterConfig(
                 value: _selectedFacultyId,
                 hint: 'មហាវិទ្យាល័យ',
-                items: dummyFaculties.map((f) => f.facultyName).toList(),
+                items: dummyFaculties.map((f) => f.facultyId).toList(),
+                labelBuilder: (id) => dummyFaculties
+                    .firstWhere((f) => f.facultyId == id)
+                    .facultyName,
                 onChanged: (value) =>
                     setState(() => _selectedFacultyId = value),
               ),
+
+              // YEAR
               FilterConfig(
                 value: _selectedYearId,
                 hint: 'ឆ្នាំទី',
-                items: dummyYears.map((y) => y.yearName).toList(),
+                items: dummyYears.map((y) => y.yearId).toList(),
+                labelBuilder: (id) =>
+                    dummyYears.firstWhere((y) => y.yearId == id).yearName,
                 onChanged: (value) => setState(() => _selectedYearId = value),
               ),
+
+              // SHIFT
               FilterConfig(
                 value: _selectedShiftId,
                 hint: 'វេន',
-                items: dummyShifts.map((s) => s.shiftName).toList(),
+                items: dummyShifts.map((s) => s.shiftId).toList(),
+                labelBuilder: (id) =>
+                    dummyShifts.firstWhere((s) => s.shiftId == id).shiftName,
                 onChanged: (value) => setState(() => _selectedShiftId = value),
               ),
             ],
