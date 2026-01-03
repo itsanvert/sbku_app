@@ -7,6 +7,7 @@ import 'package:sbku_app/data/dummy_shirt.dart';
 import 'package:sbku_app/data/dummy_year.dart';
 import 'package:sbku_app/model/attendance_model.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/empty_state_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
 
@@ -111,7 +112,11 @@ class _AttendanceListViewScreenState extends State<AttendanceListViewScreen> {
           // 🔹 List
           Expanded(
             child: filteredAttendance.isEmpty
-                ? _buildEmpty()
+                ? EmptyStateWidget(
+                    icon: Icons.people_outline,
+                    title: 'រកមិនឃើញសិស្ស',
+                    subtitle: 'សូមកែប្រែការតម្រង',
+                  )
                 : ListView.builder(
                     itemCount: filteredAttendance.length,
                     padding: const EdgeInsets.only(bottom: 16),
@@ -128,34 +133,6 @@ class _AttendanceListViewScreenState extends State<AttendanceListViewScreen> {
                       );
                     },
                   ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.people_outline, size: 80, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text(
-            'រកមិនឃើញសិស្ស',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'សូមកែប្រែការតម្រង',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
           ),
         ],
       ),

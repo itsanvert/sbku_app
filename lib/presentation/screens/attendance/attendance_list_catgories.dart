@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sbku_app/presentation/screens/attendance/attendance_list_pending_screen.dart';
 import 'package:sbku_app/presentation/screens/attendance/attendance_list_view_screen.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
@@ -26,7 +27,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
               ListCardItem(
                 icon: Icons.cancel_outlined,
                 label: 'សូមដំណើរការអវត្តមាន',
-                // screen: AbsentStudentsScreen(),
+                screen: AttendanceListPendingScreen(),
               ),
             ],
           ),
