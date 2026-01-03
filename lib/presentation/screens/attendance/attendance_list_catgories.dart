@@ -26,7 +26,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
               ),
               ListCardItem(
                 icon: Icons.cancel_outlined,
-                label: 'សូមដំណើរការអវត្តមាន',
+                label: 'ដំណើរការអវត្តមាន',
                 screen: AttendanceListPendingScreen(),
               ),
             ],
