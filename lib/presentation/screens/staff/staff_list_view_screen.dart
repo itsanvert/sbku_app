@@ -11,15 +11,14 @@ import 'package:sbku_app/presentation/widgets/empty_state_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
 
-class AttendanceListViewScreen extends StatefulWidget {
-  const AttendanceListViewScreen({super.key});
+class StaffListViewScreen extends StatefulWidget {
+  const StaffListViewScreen({super.key});
 
   @override
-  State<AttendanceListViewScreen> createState() =>
-      _AttendanceListViewScreenState();
+  State<StaffListViewScreen> createState() => _StaffListViewScreenState();
 }
 
-class _AttendanceListViewScreenState extends State<AttendanceListViewScreen> {
+class _StaffListViewScreenState extends State<StaffListViewScreen> {
   // ✅ Selected filter IDs
   String? _selectedFacultyId;
   String? _selectedShiftId;
@@ -80,9 +79,8 @@ class _AttendanceListViewScreenState extends State<AttendanceListViewScreen> {
                 value: _selectedFacultyId,
                 hint: 'មហាវិទ្យាល័យ',
                 items: dummyFaculties.map((f) => f.id).toList(),
-                labelBuilder: (id) => dummyFaculties
-                    .firstWhere((f) => f.id == id)
-                    .facultyName,
+                labelBuilder: (id) =>
+                    dummyFaculties.firstWhere((f) => f.id == id).facultyName,
                 onChanged: (value) =>
                     setState(() => _selectedFacultyId = value),
               ),

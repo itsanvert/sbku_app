@@ -32,7 +32,7 @@ class AttendanceModel {
   /// ✅ Factory: Entity → UI Model
   factory AttendanceModel.fromEntity(AttendanceEntity entity) {
     final faculty =
-        dummyFaculties.firstWhere((f) => f.facultyId == entity.facultyId);
+        dummyFaculties.firstWhere((f) => f.id == entity.facultyId);
     final major = dummyMajors.firstWhere((m) => m.majorId == entity.majorId);
     final shift = dummyShifts.firstWhere((s) => s.shiftId == entity.shiftId);
     final classRoom =

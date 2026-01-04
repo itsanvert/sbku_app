@@ -21,3 +21,4 @@ class ScheduleModel {
     required this.roomId,
   });
 }
+
