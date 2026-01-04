@@ -33,7 +33,7 @@ class _AttendanceListPendingScreenState
       .map((e) => AttendanceModel(
             entity: e,
             facultyName: dummyFaculties
-                .firstWhere((f) => f.facultyId == e.facultyId)
+                .firstWhere((f) => f.id == e.facultyId)
                 .facultyName,
             majorName:
                 dummyMajors.firstWhere((m) => m.majorId == e.majorId).majorName,
@@ -82,9 +82,9 @@ class _AttendanceListPendingScreenState
               FilterConfig(
                 value: _selectedFacultyId,
                 hint: 'មហាវិទ្យាល័យ',
-                items: dummyFaculties.map((f) => f.facultyId).toList(),
+                items: dummyFaculties.map((f) => f.id).toList(),
                 labelBuilder: (id) => dummyFaculties
-                    .firstWhere((f) => f.facultyId == id)
+                    .firstWhere((f) => f.id == id)
                     .facultyName,
                 onChanged: (value) =>
                     setState(() => _selectedFacultyId = value),

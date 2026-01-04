@@ -1,8 +1,8 @@
 class FacultyModel {
-  final String facultyId;
+  final String id;
   final String facultyName;
+  final String code;
 
-  FacultyModel({required this.facultyId, required this.facultyName});
+  FacultyModel(
+      {required this.id, required this.facultyName, required this.code});
 }
-
-
