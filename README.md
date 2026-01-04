@@ -1,16 +1,118 @@
-# sbku_app
+# 📱 SBKU App
 
-A new Flutter project.
+**Samdech Preah Mahasangharajah Bour Kry University Mobile Application**
 
-## Getting Started
+SBKU App is a smart mobile application designed to modernize and simplify attendance management in university environments. It enables students, professors, and staff to track, manage, and review attendance efficiently using mobile devices.
 
-This project is a starting point for a Flutter application.
+By automating attendance records and reports, SBKU App reduces manual workload, improves data accuracy, and supports better academic and administrative decision-making.
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## ✨ Key Features
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- 📌 **Mobile-based Attendance Tracking**  
+  Record and monitor student attendance directly from mobile devices.
+
+- 📊 **Automated Reports**  
+  Generate attendance reports:
+
+  - Daily
+  - Monthly
+  - Yearly
+
+- 👥 **Role-Based Access Control**  
+  Tailored interfaces and permissions for:
+
+  - Students
+  - Professors
+  - Administrative Staff
+
+- 🏫 **University-Focused Design**  
+  Optimized specifically for higher education attendance systems.
+
+- ⚡ **Efficient & Accurate**  
+  Minimizes errors, saves time, and improves record organization.
+
+---
+
+## 👤 User Roles & Capabilities
+
+### 🎓 Students
+
+- View personal attendance records
+- Track attendance status over time
+
+### 👨‍🏫 Professors
+
+- Take and manage class attendance
+- Review attendance summaries for assigned courses
+
+### 🧑‍💼 Staff / Administration
+
+- Monitor overall attendance data
+- Access detailed attendance reports
+- Support academic and administrative operations
+
+---
+
+## 🎯 Objectives
+
+- Replace manual attendance systems with a mobile-first solution
+- Improve accuracy and reliability of attendance data
+- Reduce administrative workload
+- Provide real-time access to attendance information
+
+---
+
+## 🎨 UI/UX Design
+
+The application interface is designed to be simple, modern, and role-specific.
+
+🔗 **Figma Design Preview**  
+[View SBKU App Design](https://www.figma.com/design/yr1tZ56H8VI9erP0AdJ9wk/SBKU_APP?node-id=1-2&t=e3I7TfHWy8Kvv4NA-1)
+
+---
+
+## 🚀 Benefits
+
+- Faster attendance processing
+- Centralized and organized records
+- Improved transparency for students and faculty
+- Better data for academic planning and decisions
+
+---
+
+## 📌 Project Status
+
+- UI/UX Design: ✅ Completed
+- Development: ⏳ In Progress / Planned
+
+---
+
+## 📄 License
+
+This project is developed for academic and institutional use at  
+**Samdech Preah Mahasangharajah Bour Kry University (SBKU)**.
+
+---
+
+## 🤝 Contributors
+
+- **Project Manager and Full Stack Developer**
+
+  - Vert San
+
+- **Mobile Application Developer**
+
+  - Chhaom Sovanarak
+
+- **Mobile Application Developer and UI/UX Designer**
+
+  - Horng Sina
+
+- **Mobile Application Developer**
+  - Yun Yuna
+
+---
+
+**SBKU App — Smarter Attendance for a Smarter University**

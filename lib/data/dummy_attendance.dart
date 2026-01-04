@@ -1,0 +1,40 @@
+import 'package:sbku_app/domain/entities/attendance_entity.dart';
+
+final List<AttendanceEntity> dummyAttendanceEntities = [
+  AttendanceEntity(
+    id: '1',
+    studentId: 'S001',
+    studentName: 'Sok Dara',
+    facultyId: 'F01',
+    majorId: 'M01',
+    shiftId: 'SH1',
+    classId: 'C01',
+    yearId: 'Y1',
+    date: DateTime(2025, 1, 1),
+    isPresent: true,
+  ),
+  AttendanceEntity(
+    id: '2',
+    studentId: 'S002',
+    studentName: 'Chanthy Sok',
+    facultyId: 'F02',
+    majorId: 'M02',
+    shiftId: 'SH2',
+    classId: 'C02',
+    yearId: 'Y2',
+    date: DateTime(2025, 1, 1),
+    isPresent: false,
+  ),
+  AttendanceEntity(
+    id: '3',
+    studentId: 'S003',
+    studentName: 'Vannak Lim',
+    facultyId: 'F01',
+    majorId: 'M01',
+    shiftId: 'SH3',
+    classId: 'C03',
+    yearId: 'Y3',
+    date: DateTime(2025, 1, 2),
+    isPresent: true,
+  ),
+];
