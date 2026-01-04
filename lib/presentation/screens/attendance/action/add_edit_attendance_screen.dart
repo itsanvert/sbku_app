@@ -110,7 +110,7 @@ class _AddAttendanceScreenState extends State<AddAttendanceScreen> {
                 value: _facultyId,
                 items: dummyFaculties
                     .map((f) => DropdownMenuItem(
-                        value: f.facultyId, child: Text(f.facultyName)))
+                        value: f.id, child: Text(f.facultyName)))
                     .toList(),
                 onChanged: (v) => setState(() => _facultyId = v!),
               ),
