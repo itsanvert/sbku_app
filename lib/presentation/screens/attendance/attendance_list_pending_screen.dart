@@ -6,7 +6,7 @@ import 'package:sbku_app/data/dummy_class.dart';
 import 'package:sbku_app/data/dummy_year.dart';
 import 'package:sbku_app/data/dummy_shirt.dart';
 import 'package:sbku_app/model/attendance_session_model.dart';
-import 'package:sbku_app/presentation/screens/attendance/action/teacher_active_session_screen.dart';
+import 'package:sbku_app/presentation/screens/attendance/active_session_monitor.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/location_service.dart';
 
@@ -73,6 +73,7 @@ class _TeacherStartAttendanceScreenState
         latitude: _currentLocation!.latitude,
         longitude: _currentLocation!.longitude,
         startTime: DateTime.now(),
+        attendedStudentIds: [],
       );
 
       activeSessions.add(session);

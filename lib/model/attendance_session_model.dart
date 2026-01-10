@@ -1,3 +1,6 @@
+import 'package:sbku_app/domain/entities/attendance_entity.dart';
+import 'package:sbku_app/domain/entities/student_entity.dart';
+
 class AttendanceSession {
   final String id;
   final String teacherId;
@@ -11,6 +14,7 @@ class AttendanceSession {
   final DateTime startTime;
   final DateTime? endTime;
   final bool isActive;
+  final List<String> attendedStudentIds; // List of student IDs who checked in
 
   AttendanceSession({
     required this.id,
@@ -25,6 +29,7 @@ class AttendanceSession {
     required this.startTime,
     this.endTime,
     this.isActive = true,
+    this.attendedStudentIds = const [],
   });
 
   AttendanceSession copyWith({
@@ -40,6 +45,7 @@ class AttendanceSession {
     DateTime? startTime,
     DateTime? endTime,
     bool? isActive,
+    List<String>? attendedStudentIds,
   }) {
     return AttendanceSession(
       id: id ?? this.id,
@@ -54,6 +60,28 @@ class AttendanceSession {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       isActive: isActive ?? this.isActive,
+      attendedStudentIds: attendedStudentIds ?? this.attendedStudentIds,
     );
+  }
+
+  // Convert session to list of AttendanceEntity for all students in class
+  List<AttendanceEntity> toAttendanceEntities(
+      List<StudentEntity> classStudents) {
+    return classStudents.map((student) {
+      final isPresent = attendedStudentIds.contains(student.studentId);
+
+      return AttendanceEntity(
+        id: '${id}_${student.studentId}',
+        studentId: student.studentId,
+        studentName: student.studentName,
+        facultyId: facultyId,
+        majorId: majorId,
+        shiftId: shiftId,
+        classId: classId,
+        yearId: yearId,
+        date: startTime,
+        isPresent: isPresent,
+      );
+    }).toList();
   }
 }

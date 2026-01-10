@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/model/attendance_session_model.dart';
-import 'package:sbku_app/presentation/screens/attendance/teacher_start_attendance_session_screen.dart';
+import 'package:sbku_app/presentation/screens/attendance/attendance_list_pending_screen.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 class TeacherActiveSessionScreen extends StatefulWidget {
   final AttendanceSession session;

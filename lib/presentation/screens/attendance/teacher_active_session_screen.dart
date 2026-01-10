@@ -71,6 +71,7 @@ class _TeacherStartAttendanceScreenState
         latitude: _currentLocation!.latitude,
         longitude: _currentLocation!.longitude,
         startTime: DateTime.now(),
+        attendedStudentIds: [],
       );
 
       attendanceSessions.add(session);

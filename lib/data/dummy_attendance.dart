@@ -1,40 +1,67 @@
-import 'package:sbku_app/domain/entities/attendance_entity.dart';
+class AttendanceSession {
+  final String id;
+  final String teacherId;
+  final String teacherName;
+  final String facultyId;
+  final String majorId;
+  final String classId;
+  final String yearId;
+  final String shiftId;
+  final double latitude;
+  final double longitude;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final bool isActive;
+  final List<String> attendedStudentIds; // List of student IDs who checked in
 
-final List<AttendanceEntity> dummyAttendanceEntities = [
-  AttendanceEntity(
-    id: '1',
-    studentId: 'S001',
-    studentName: 'Sok Dara',
-    facultyId: 'F01',
-    majorId: 'M01',
-    shiftId: 'SH1',
-    classId: 'C01',
-    yearId: 'Y1',
-    date: DateTime(2025, 1, 1),
-    isPresent: true,
-  ),
-  AttendanceEntity(
-    id: '2',
-    studentId: 'S002',
-    studentName: 'Chanthy Sok',
-    facultyId: 'F02',
-    majorId: 'M02',
-    shiftId: 'SH2',
-    classId: 'C02',
-    yearId: 'Y2',
-    date: DateTime(2025, 1, 1),
-    isPresent: false,
-  ),
-  AttendanceEntity(
-    id: '3',
-    studentId: 'S003',
-    studentName: 'Vannak Lim',
-    facultyId: 'F01',
-    majorId: 'M01',
-    shiftId: 'SH3',
-    classId: 'C03',
-    yearId: 'Y3',
-    date: DateTime(2025, 1, 2),
-    isPresent: true,
-  ),
-];
+  AttendanceSession({
+    required this.id,
+    required this.teacherId,
+    required this.teacherName,
+    required this.facultyId,
+    required this.majorId,
+    required this.classId,
+    required this.yearId,
+    required this.shiftId,
+    required this.latitude,
+    required this.longitude,
+    required this.startTime,
+    this.endTime,
+    this.isActive = true,
+    this.attendedStudentIds = const [],
+  });
+
+  AttendanceSession copyWith({
+    String? id,
+    String? teacherId,
+    String? teacherName,
+    String? facultyId,
+    String? majorId,
+    String? classId,
+    String? yearId,
+    String? shiftId,
+    double? latitude,
+    double? longitude,
+    DateTime? startTime,
+    DateTime? endTime,
+    bool? isActive,
+    List<String>? attendedStudentIds,
+  }) {
+    return AttendanceSession(
+      id: id ?? this.id,
+      teacherId: teacherId ?? this.teacherId,
+      teacherName: teacherName ?? this.teacherName,
+      facultyId: facultyId ?? this.facultyId,
+      majorId: majorId ?? this.majorId,
+      classId: classId ?? this.classId,
+      yearId: yearId ?? this.yearId,
+      shiftId: shiftId ?? this.shiftId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      isActive: isActive ?? this.isActive,
+      attendedStudentIds: attendedStudentIds ?? this.attendedStudentIds,
+    );
+  }
+}

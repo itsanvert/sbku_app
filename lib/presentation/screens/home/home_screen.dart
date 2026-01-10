@@ -33,7 +33,7 @@ class HomePageScreen extends StatelessWidget {
                 FeatureItem(
                   icon: Icons.school,
                   label: 'សិស្ស',
-                  screen: StudentListScreen(), // ✅ This will now work
+                  // screen: StudentListScreen(), // ✅ This will now work
                 ),
                 FeatureItem(
                   icon: Icons.group,

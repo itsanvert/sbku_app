@@ -1,9 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:sbku_app/data/dummy_attendance_session.dart';
+import 'package:sbku_app/data/dummy_class.dart';
+import 'package:sbku_app/data/dummy_faculty.dart';
+import 'package:sbku_app/data/dummy_shirt.dart';
 import 'package:sbku_app/model/attendance_session_model.dart';
-import 'package:sbku_app/presentation/screens/attendance/attendance_list_pending_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/location_service.dart';
+import 'package:geolocator/geolocator.dart';
+
 class StudentAttendanceCheckInScreen extends StatefulWidget {
   const StudentAttendanceCheckInScreen({super.key});
 
@@ -19,6 +23,7 @@ class _StudentAttendanceCheckInScreenState
   bool _isLoading = false;
   Position? _studentLocation;
   AttendanceSession? _nearbySession;
+  final String _studentId = 'S001'; // Get from auth
 
   @override
   void initState() {
@@ -47,7 +52,7 @@ class _StudentAttendanceCheckInScreenState
 
     // Find nearby active session
     AttendanceSession? foundSession;
-    for (var session in activeSessions) {
+    for (var session in attendanceSessions) {
       if (!session.isActive) continue;
 
       final teacherPosition = Position(
@@ -78,19 +83,42 @@ class _StudentAttendanceCheckInScreenState
   Future<void> _checkInAttendance() async {
     if (_nearbySession == null || _studentLocation == null) return;
 
+    // Check if already checked in
+    if (_nearbySession!.attendedStudentIds.contains(_studentId)) {
+      _showError('អ្នកបានចុះវត្តមានរួចហើយ');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    // Simulate check-in
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      // Update session with student attendance
+      final index =
+          attendanceSessions.indexWhere((s) => s.id == _nearbySession!.id);
+      if (index != -1) {
+        attendanceSessions[index] = _nearbySession!.copyWith(
+          attendedStudentIds: [
+            ..._nearbySession!.attendedStudentIds,
+            _studentId
+          ],
+        );
+      }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ចុះវត្តមានជោគជ័យ!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ចុះវត្តមានជោគជ័យ!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      _showError('Failed to check in: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -158,18 +186,21 @@ class _StudentAttendanceCheckInScreenState
       _nearbySession!.longitude,
     );
 
+    final alreadyCheckedIn =
+        _nearbySession!.attendedStudentIds.contains(_studentId);
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
-          Icons.check_circle_outline,
+          alreadyCheckedIn ? Icons.check_circle : Icons.check_circle_outline,
           size: 80,
-          color: Colors.green[400],
+          color: alreadyCheckedIn ? Colors.orange : Colors.green[400],
         ),
         const SizedBox(height: 16),
-        const Text(
-          'រកឃើញវេនវត្តមាន!',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        Text(
+          alreadyCheckedIn ? 'អ្នកបានចុះវត្តមានរួចហើយ' : 'រកឃើញវេនវត្តមាន!',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 24),
         Card(
@@ -177,9 +208,21 @@ class _StudentAttendanceCheckInScreenState
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildInfoRow('មហាវិទ្យាល័យ', _nearbySession!.facultyId),
-                _buildInfoRow('ថ្នាក់', _nearbySession!.classId),
-                _buildInfoRow('វេន', _nearbySession!.shiftId),
+                _buildInfoRow(
+                    'មហាវិទ្យាល័យ',
+                    dummyFaculties
+                        .firstWhere((f) => f.id == _nearbySession!.facultyId)
+                        .facultyName),
+                _buildInfoRow(
+                    'ថ្នាក់',
+                    dummyClasses
+                        .firstWhere((c) => c.classId == _nearbySession!.classId)
+                        .className),
+                _buildInfoRow(
+                    'វេន',
+                    dummyShifts
+                        .firstWhere((s) => s.shiftId == _nearbySession!.shiftId)
+                        .shiftName),
                 _buildInfoRow('ចម្ងាយ', '${distance.toStringAsFixed(1)}m'),
               ],
             ),
@@ -187,14 +230,14 @@ class _StudentAttendanceCheckInScreenState
         ),
         const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: _checkInAttendance,
+          onPressed: alreadyCheckedIn ? null : _checkInAttendance,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
+            backgroundColor: alreadyCheckedIn ? Colors.grey : Colors.orange,
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 48),
           ),
-          child: const Text(
-            'ចុះវត្តមាន',
-            style: TextStyle(fontSize: 16, color: Colors.white),
+          child: Text(
+            alreadyCheckedIn ? 'បានចុះវត្តមាន' : 'ចុះវត្តមាន',
+            style: const TextStyle(fontSize: 16, color: Colors.white),
           ),
         ),
       ],
