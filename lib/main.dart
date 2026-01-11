@@ -1,6 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:sbku_app/screen/home/home_screen.dart';
+import 'package:sbku_app/presentation/screens/home/home_screen.dart';
 
 void main() {
   runApp(MaterialApp(

@@ -14,6 +14,9 @@ dependencies:
   getwidget: ^7.0.0
   gradient_borders: ^1.0.0
   flutter_svg: ^2.1.6
+  memory_cache: ^1.2.0
+  geolocator: ^10.1.0
+  permission_handler: ^11.0.1
 
 dev_dependencies:
   flutter_test:
