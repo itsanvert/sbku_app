@@ -7,14 +7,14 @@ import '../../../data/dummy_students.dart';
 
 import '../../../model/student_model.dart';
 
-class StudentListScreen extends StatefulWidget {
-  const StudentListScreen({super.key});
+class StudentListViewScreen extends StatefulWidget {
+  const StudentListViewScreen({super.key});
 
   @override
-  State<StudentListScreen> createState() => _StudentListScreenState();
+  State<StudentListViewScreen> createState() => _StudentListScreenState();
 }
 
-class _StudentListScreenState extends State<StudentListScreen> {
+class _StudentListScreenState extends State<StudentListViewScreen> {
   String? _selectedFaculty;
   String? _selectedShift;
   String? _selectedGeneration;

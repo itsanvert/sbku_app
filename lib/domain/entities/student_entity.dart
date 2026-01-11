@@ -1,27 +1,19 @@
-class AttendanceEntity {
-  final String id;
+class StudentEntity {
   final String studentId;
   final String studentName;
   final String facultyId;
   final String majorId;
-  final String shiftId;
   final String classId;
   final String yearId;
-  final DateTime date;
-  final bool isPresent;
-  
+  final String shiftId;
 
-  AttendanceEntity({
-    required this.id,
+  StudentEntity({
     required this.studentId,
     required this.studentName,
     required this.facultyId,
     required this.majorId,
-    required this.shiftId,
     required this.classId,
     required this.yearId,
-    required this.date,
-    required this.isPresent,
-
+    required this.shiftId,
   });
 }

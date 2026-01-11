@@ -8,7 +8,6 @@ import 'package:sbku_app/data/dummy_year.dart';
 
 class AttendanceModel {
   final AttendanceEntity entity;
-
   // UI-resolved values
   final String facultyName;
   final String majorName;
@@ -31,8 +30,7 @@ class AttendanceModel {
 
   /// ✅ Factory: Entity → UI Model
   factory AttendanceModel.fromEntity(AttendanceEntity entity) {
-    final faculty =
-        dummyFaculties.firstWhere((f) => f.id == entity.facultyId);
+    final faculty = dummyFaculties.firstWhere((f) => f.id == entity.facultyId);
     final major = dummyMajors.firstWhere((m) => m.majorId == entity.majorId);
     final shift = dummyShifts.firstWhere((s) => s.shiftId == entity.shiftId);
     final classRoom =
