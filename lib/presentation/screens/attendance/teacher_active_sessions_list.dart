@@ -40,7 +40,9 @@ class TeacherActiveSessionsListScreen extends StatelessWidget {
                       child: Icon(Icons.check_circle, color: Colors.green[700]),
                     ),
                     title: Text(
-                      '${dummyClasses.firstWhere((c) => c.classId == session.classId).className}',
+                      dummyClasses
+                          .firstWhere((c) => c.classId == session.classId)
+                          .className,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(

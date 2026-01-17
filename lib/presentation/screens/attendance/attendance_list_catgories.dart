@@ -12,7 +12,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
 
   const AttendanceListCategoryScreen({
     Key? key,
-    this.isTeacher = true,
+    this.isTeacher = false,
   }) : super(key: key);
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/student/add_student.dart';
+import 'package:sbku_app/presentation/screens/student/show_student.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
@@ -181,7 +182,13 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                         avatarBackgroundColor: Colors.purple[50],
                         avatarTextColor: Colors.purple,
                         onTap: () {
-                          print('Tapped on ${student.name}');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ShowStudentScreen(studentId: student.id),
+                            ),
+                          );
                         },
                         actions: [
                           ItemAction.text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import '../../../model/student_model.dart';
 import '../../../data/dummy_students.dart';
 
@@ -12,7 +13,7 @@ class AddStudentScreen extends StatefulWidget {
 }
 
 class _AddStudentScreenState extends State<AddStudentScreen> {
-  late final TextEditingController _nameController;
+  late final TextEditingController _idController;
   late final TextEditingController _facultyController;
   late final TextEditingController _majorController;
   late final TextEditingController _generationController;
@@ -26,7 +27,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     super.initState();
     if (widget.student != null) {
       final s = widget.student!;
-      _nameController = TextEditingController(text: s.name);
+      _idController = TextEditingController(text: s.id);
       _facultyController = TextEditingController(text: s.faculty);
       _majorController = TextEditingController(text: s.major);
       _generationController = TextEditingController(text: s.generation);
@@ -35,20 +36,20 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       _selectedGender = s.gender;
       _selectedShift = s.shift;
     } else {
-      _nameController = TextEditingController();
+      _idController = TextEditingController();
       _facultyController = TextEditingController();
       _majorController = TextEditingController();
       _generationController = TextEditingController();
       _yearController = TextEditingController();
       _emailController = TextEditingController();
-      _selectedGender = 'M';
+      _selectedGender = 'Male';
       _selectedShift = 'Morning';
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _idController.dispose();
     _facultyController.dispose();
     _majorController.dispose();
     _generationController.dispose();
@@ -62,9 +63,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     final isEditing = widget.student != null;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.orange,
-        title: Text(isEditing ? 'Edit Student' : 'Add Student'),
+      appBar: AppBarWidget(
+        title: isEditing ? 'Edit Student' : 'Add Student',
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.share)),
           IconButton(onPressed: () {}, icon: const Icon(Icons.person)),
@@ -77,15 +77,15 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             children: [
               _buildTextField(
                 'Student ID',
-                _nameController,
-              ), // or use name if you prefer
+                _idController,
+                enabled: !isEditing,
+              ),
               _buildTextField('Faculty', _facultyController),
               _buildDropdown(
                 'Gender',
                 _selectedGender,
-                ['M', 'F'],
+                ['Male', 'Female'],
                 (v) => setState(() => _selectedGender = v!),
-                (v) => v == 'M' ? 'Male' : 'Female',
               ),
               _buildTextField('Major', _majorController),
               _buildDropdown(
@@ -93,7 +93,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 _selectedShift,
                 ['Morning', 'Evening'],
                 (v) => setState(() => _selectedShift = v!),
-                (v) => v,
               ),
               _buildTextField('Generation', _generationController),
               _buildTextField('Year', _yearController),
@@ -101,39 +100,17 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
               const SizedBox(height: 24),
 
-              // // Upload Button (optional)
-              // ElevatedButton.icon(
-              //   onPressed: () {},
-              //   icon: const Icon(Icons.upload, color: Colors.white),
-              //   label: const Text(
-              //     'Upload Photo',
-              //     style: TextStyle(color: Colors.white),
-              //   ),
-              //   style: ElevatedButton.styleFrom(
-              //     backgroundColor: Colors.orange,
-              //     padding: const EdgeInsets.symmetric(
-              //       horizontal: 32,
-              //       vertical: 12,
-              //     ),
-              //     shape: RoundedRectangleBorder(
-              //       borderRadius: BorderRadius.circular(8),
-              //     ),
-              //   ),
-              // ),
-
-              // const SizedBox(height: 16),
-
               // Save Button
               ElevatedButton(
                 onPressed: () {
-                  final name = _nameController.text.trim();
+                  final id = _idController.text.trim();
                   final faculty = _facultyController.text.trim();
                   final major = _majorController.text.trim();
                   final generation = _generationController.text.trim();
                   final year = _yearController.text.trim();
                   final email = _emailController.text.trim();
 
-                  if (name.isEmpty ||
+                  if (id.isEmpty ||
                       faculty.isEmpty ||
                       major.isEmpty ||
                       generation.isEmpty ||
@@ -148,7 +125,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   if (isEditing) {
                     final updated = StudentModel(
                       id: widget.student!.id,
-                      name: name,
+                      name: widget.student!.name,
                       gender: _selectedGender,
                       faculty: faculty,
                       major: major,
@@ -163,8 +140,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     if (index != -1) dummyStudents[index] = updated;
                   } else {
                     final newStudent = StudentModel(
-                      id: 'SBKU${DateTime.now().millisecondsSinceEpoch}',
-                      name: name,
+                      id: id,
+                      name: id,
                       gender: _selectedGender,
                       faculty: faculty,
                       major: major,
@@ -200,7 +177,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool enabled = true,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -210,6 +191,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           const SizedBox(height: 8),
           TextField(
             controller: controller,
+            enabled: enabled,
             decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -218,12 +200,16 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 borderSide: const BorderSide(color: Colors.orange),
                 borderRadius: BorderRadius.circular(8),
               ),
+              disabledBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
               focusedBorder: OutlineInputBorder(
                 borderSide: const BorderSide(color: Colors.orange, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: enabled ? Colors.white : Colors.grey[200],
             ),
           ),
         ],
@@ -236,7 +222,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     T value,
     List<T> items,
     void Function(T?) onChanged,
-    String Function(T) displayText,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -249,8 +234,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             value: value,
             items: items
                 .map(
-                  (e) =>
-                      DropdownMenuItem(value: e, child: Text(displayText(e))),
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.toString()),
+                  ),
                 )
                 .toList(),
             onChanged: onChanged,
