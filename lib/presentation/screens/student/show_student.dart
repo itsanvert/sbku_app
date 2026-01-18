@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import '../../../data/dummy_students.dart';
 
 class ShowStudentScreen extends StatelessWidget {
@@ -11,9 +11,8 @@ class ShowStudentScreen extends StatelessWidget {
     final student = dummyStudents.firstWhere((s) => s.id == studentId);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.orange,
-        title: const Text('Student Details'),
+      appBar: AppBarWidget(
+        title: "ព័ត៌មានសិស្ស",
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.share)),
           IconButton(onPressed: () {}, icon: const Icon(Icons.person)),
@@ -22,7 +21,7 @@ class ShowStudentScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const CircleAvatar(
               radius: 40,
@@ -33,6 +32,7 @@ class ShowStudentScreen extends StatelessWidget {
             _row('Student ID', student.id),
             _row('Name', student.name),
             _row('Gender', student.gender == 'M' ? 'Male' : 'Female'),
+            _row('Date of Birth', student.dob),
             _row('Faculty', student.faculty),
             _row('Major', student.major),
             _row('Shift', student.shift),

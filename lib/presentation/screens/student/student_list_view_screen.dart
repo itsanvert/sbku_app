@@ -179,8 +179,9 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                         title: student.name,
                         subtitle: student.major,
                         avatarText: student.avatarLetter,
-                        avatarBackgroundColor: Colors.purple[50],
-                        avatarTextColor: Colors.purple,
+                        avatarBackgroundColor: Colors.deepOrange,
+                        avatarTextColor:
+                            const Color.fromARGB(255, 255, 255, 255),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -194,12 +195,12 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                           ItemAction.text(
                             label: 'កែ',
                             onPressed: () => _navigateToEdit(student),
-                            color: Colors.purple,
+                            color: Colors.green,
                           ),
                           ItemAction.text(
                             label: 'លុប',
                             onPressed: () => _showDeleteDialog(student),
-                            color: Colors.purple,
+                            color: Colors.red,
                           ),
                         ],
                       );

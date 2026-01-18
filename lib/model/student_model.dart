@@ -1,8 +1,8 @@
-
 class StudentModel {
   final String id;
   final String name;
   final String gender;
+  final String dob;
   final String faculty;
   final String major;
   final String shift;
@@ -14,6 +14,7 @@ class StudentModel {
     required this.id,
     required this.name,
     required this.gender,
+    required this.dob,
     required this.faculty,
     required this.major,
     required this.shift,
