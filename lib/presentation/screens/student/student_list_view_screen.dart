@@ -178,9 +178,7 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                         item: student,
                         title: student.name,
                         subtitle: student.major,
-                        avatarText: student.name.isNotEmpty
-                            ? student.name[0].toUpperCase()
-                            : '?',
+                        avatarImageUrl: student.profileImagePath,
                         avatarBackgroundColor: Colors.deepOrange,
                         avatarTextColor:
                             const Color.fromARGB(255, 255, 255, 255),

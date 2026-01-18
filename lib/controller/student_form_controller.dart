@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sbku_app/model/year_model.dart';
 import '../model/student_model.dart';
 
 class StudentFormController {
@@ -39,7 +40,7 @@ class StudentFormController {
         emailController = TextEditingController(text: student?.email ?? ''),
         selectedGender = student?.gender ?? 'Male',
         selectedShift = student?.shift ?? 'Morning',
-        selectedYearId = student?.year,
+        selectedYearId = YearModel.nameToId(student?.year),
         profileImagePath = student?.profileImagePath {
     // Load existing image if path exists (mobile only)
     if (!kIsWeb && profileImagePath != null && profileImagePath!.isNotEmpty) {
