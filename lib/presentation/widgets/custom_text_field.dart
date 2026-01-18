@@ -4,6 +4,7 @@ class CustomTextField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final bool enabled;
+  final IconData? suffixIcon;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final int? maxLines;
@@ -12,6 +13,7 @@ class CustomTextField extends StatelessWidget {
     super.key,
     required this.label,
     required this.controller,
+    this.suffixIcon,
     this.enabled = true,
     this.keyboardType,
     this.validator,

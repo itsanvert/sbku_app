@@ -3,8 +3,9 @@ class StudentModel {
   final String name;
   final String gender;
   final String dob;
-  final String faculty;
   final String major;
+  final String faculty;
+
   final String shift;
   final String generation;
   final String year;
@@ -15,8 +16,8 @@ class StudentModel {
     required this.name,
     required this.gender,
     required this.dob,
-    required this.faculty,
     required this.major,
+    required this.faculty,
     required this.shift,
     required this.generation,
     required this.year,

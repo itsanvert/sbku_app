@@ -139,20 +139,21 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             child: Column(
               children: [
                 CustomTextField(
-                  label: 'Student ID',
+                  label: 'អត្តលេខនិស្សិត',
                   controller: _formController.idController,
                   enabled: !_isEditing,
                   validator: (value) =>
                       _formController.validateRequired(value, 'Student ID'),
                 ),
                 CustomTextField(
-                  label: 'Faculty',
-                  controller: _formController.facultyController,
+                  label: 'ឈ្មោះនិស្សិត',
+                  controller: _formController.nameController,
+                  enabled: !_isEditing,
                   validator: (value) =>
-                      _formController.validateRequired(value, 'Faculty'),
+                      _formController.validateRequired(value, 'Student Name'),
                 ),
                 CustomDropdown<String>(
-                  label: 'Gender',
+                  label: 'ភេទ',
                   value: _formController.selectedGender,
                   items: const ['Male', 'Female'],
                   onChanged: (value) {
@@ -161,27 +162,53 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     });
                   },
                 ),
+                GestureDetector(
+                  onTap: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(2000),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+
+                    if (pickedDate != null) {
+                      setState(() {
+                        _formController.dobController.text =
+                            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
+                      });
+                    }
+                  },
+                  child: AbsorbPointer(
+                    child: CustomTextField(
+                      controller: _formController.dobController,
+                      label: 'ថ្ងៃខែឆ្នាំកំណើត',
+                      suffixIcon: Icons.calendar_today,
+                      validator: (value) => _formController.validateRequired(
+                          value, 'Date of Birth'),
+                    ),
+                  ),
+                ),
                 CustomTextField(
-                  label: 'Major',
+                  label: 'ជំនាញ',
                   controller: _formController.majorController,
                   validator: (value) =>
                       _formController.validateRequired(value, 'Major'),
                 ),
+                CustomTextField(
+                  label: 'មហាវិទ្យាល័យ',
+                  controller: _formController.facultyController,
+                  validator: (value) =>
+                      _formController.validateRequired(value, 'Faculty'),
+                ),
                 CustomDropdown<String>(
                   label: 'Shift',
                   value: _formController.selectedShift,
-                  items: const ['Morning', 'Evening'],
+                  items: const ['Morning', 'Evening', 'Afternoon', 'Weekend'],
                   onChanged: (value) {
                     setState(() {
                       _formController.selectedShift = value!;
                     });
                   },
-                ),
-                CustomTextField(
-                  label: 'Generation',
-                  controller: _formController.generationController,
-                  validator: (value) =>
-                      _formController.validateRequired(value, 'Generation'),
                 ),
                 CustomTextField(
                   label: 'Year',

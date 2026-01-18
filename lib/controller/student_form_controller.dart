@@ -4,6 +4,8 @@ import '../model/student_model.dart';
 
 class StudentFormController {
   final TextEditingController idController;
+  final TextEditingController nameController;
+  final TextEditingController dobController;
   final TextEditingController facultyController;
   final TextEditingController majorController;
   final TextEditingController generationController;
@@ -16,6 +18,8 @@ class StudentFormController {
   StudentFormController({
     StudentModel? student,
   })  : idController = TextEditingController(text: student?.id ?? ''),
+        nameController = TextEditingController(text: student?.name ?? ''),
+        dobController = TextEditingController(text: student?.dob ?? ''),
         facultyController = TextEditingController(text: student?.faculty ?? ''),
         majorController = TextEditingController(text: student?.major ?? ''),
         generationController =
