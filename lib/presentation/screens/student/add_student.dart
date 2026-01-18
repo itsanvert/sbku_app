@@ -1,12 +1,12 @@
 // presentation/screens/add_student_screen.dart
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sbku_app/controller/student_form_controller.dart';
+import 'package:sbku_app/data/dummy_year.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/appbutton_widget.dart';
 import 'package:sbku_app/presentation/widgets/custom_text_field.dart';
-
 import 'package:sbku_app/presentation/widgets/custome_dropdown.dart';
-
 import '../../../model/student_model.dart';
 import '../../../data/dummy_students.dart';
 
@@ -22,6 +22,7 @@ class AddStudentScreen extends StatefulWidget {
 class _AddStudentScreenState extends State<AddStudentScreen> {
   late final StudentFormController _formController;
   final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
 
   @override
@@ -54,7 +55,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
       if (mounted) {
         _showSuccessMessage();
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -70,8 +71,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   void _updateStudent() {
     final updated = _formController.toStudentModel(
       existingId: widget.student!.id,
-      existingName: widget.student!.name,
-      existingDob: widget.student!.dob,
     );
 
     final index = dummyStudents.indexWhere((s) => s.id == updated.id);
@@ -83,8 +82,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   void _addNewStudent() {
     final newStudent = _formController.toStudentModel(
       existingId: null,
-      existingName: null,
-      existingDob: '', // Consider adding a date picker for DOB
     );
     dummyStudents.add(newStudent);
   }
@@ -108,6 +105,37 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         content: Text(message),
         backgroundColor: Colors.red,
       ),
+    );
+  }
+
+  Future<void> _handleImageUpload() async {
+    await _formController.showImageSourceDialog(context);
+    setState(() {});
+  }
+
+  // Build profile image widget - handles both web and mobile
+  Widget _buildProfileImage() {
+    ImageProvider? imageProvider;
+
+    if (_formController.hasImage) {
+      if (kIsWeb) {
+        imageProvider = MemoryImage(_formController.profileImageBytes!);
+      } else {
+        imageProvider = FileImage(_formController.profileImage!);
+      }
+    }
+
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: Colors.orange.shade100,
+      backgroundImage: imageProvider,
+      child: imageProvider == null
+          ? Icon(
+              Icons.person,
+              size: 60,
+              color: Colors.orange.shade300,
+            )
+          : null,
     );
   }
 
@@ -138,6 +166,44 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: _isLoading ? null : _handleImageUpload,
+                  child: Stack(
+                    children: [
+                      _buildProfileImage(),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tap to ${_formController.hasImage ? 'change' : 'add'} photo',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 CustomTextField(
                   label: 'អត្តលេខនិស្សិត',
                   controller: _formController.idController,
@@ -174,7 +240,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     if (pickedDate != null) {
                       setState(() {
                         _formController.dobController.text =
-                            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
+                            "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
                       });
                     }
                   },
@@ -200,8 +266,18 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   validator: (value) =>
                       _formController.validateRequired(value, 'Faculty'),
                 ),
+                CustomDropdown(
+                  label: 'ឆ្នាំសិក្សា',
+                  value: _formController.selectedYearId,
+                  items: dummyYears.map((y) => y.yearId).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _formController.selectedYearId = value!;
+                    });
+                  },
+                ),
                 CustomDropdown<String>(
-                  label: 'Shift',
+                  label: 'វេនសិក្សា',
                   value: _formController.selectedShift,
                   items: const ['Morning', 'Evening', 'Afternoon', 'Weekend'],
                   onChanged: (value) {
@@ -211,23 +287,19 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   },
                 ),
                 CustomTextField(
-                  label: 'Year',
-                  controller: _formController.yearController,
-                  keyboardType: TextInputType.number,
-                  validator: (value) =>
-                      _formController.validateRequired(value, 'Year'),
-                ),
-                CustomTextField(
-                  label: 'Email',
+                  label: 'អ៊ីមែល',
                   controller: _formController.emailController,
                   keyboardType: TextInputType.emailAddress,
                   validator: _formController.validateEmail,
                 ),
                 const SizedBox(height: 24),
-                AppButton(
-                  label: _isEditing ? 'Update Student' : 'Add Student',
-                  onPressed: _handleSave,
-                ),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : AppButton(
+                        label: _isEditing ? 'Update Student' : 'Add Student',
+                        onPressed: _handleSave,
+                      ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
