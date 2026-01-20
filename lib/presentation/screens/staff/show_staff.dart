@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/data/dummy_staff.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
-import '../../../data/dummy_students.dart';
 
 class ShowStaffScreen extends StatelessWidget {
   final String staffId;
