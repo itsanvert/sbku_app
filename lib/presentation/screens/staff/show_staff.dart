@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sbku_app/data/dummy_staff.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
-import '../../../data/dummy_students.dart';
 
-class ShowStudentScreen extends StatelessWidget {
-  final String studentId;
-  const ShowStudentScreen({super.key, required this.studentId});
+class ShowStaffScreen extends StatelessWidget {
+  final String staffId;
+  const ShowStaffScreen({super.key, required this.staffId});
 
   @override
   Widget build(BuildContext context) {
-    final student = dummyStudents.firstWhere((s) => s.id == studentId);
+    final staff = dummyStaffs.firstWhere((s) => s.id == staffId);
 
     return Scaffold(
       appBar: AppBarWidget(
@@ -29,16 +29,11 @@ class ShowStudentScreen extends StatelessWidget {
               child: Icon(Icons.person),
             ),
             const SizedBox(height: 20),
-            _row('Student ID', student.id),
-            _row('Name', student.name),
-            _row('Gender', student.gender == 'M' ? 'Male' : 'Female'),
-            _row('Date of Birth', student.dob),
-            _row('Faculty', student.faculty),
-            _row('Major', student.major),
-            _row('Shift', student.shift),
-            _row('Generation', student.generation),
-            _row('Year', student.year),
-            _row('Email', student.email),
+            _row('Staff ID', staff.staffid),
+            _row('Name', staff.fullName),
+            _row('Specialization', staff.specalization),
+            _row('Phone', staff.phone),
+            _row('Email', staff.email),
           ],
         ),
       ),

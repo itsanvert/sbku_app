@@ -65,7 +65,7 @@ class _TeacherStartAttendanceScreenState
         teacherId: 'T001', // Get from auth
         facultyId: _facultyId,
         majorId: _majorId,
-  
+
         classId: _classId,
         yearId: _yearId,
         shiftId: _shiftId,

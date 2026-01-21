@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/student/add_student.dart';
+import 'package:sbku_app/presentation/screens/student/show_student.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
@@ -177,22 +178,29 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                         item: student,
                         title: student.name,
                         subtitle: student.major,
-                        avatarText: student.avatarLetter,
-                        avatarBackgroundColor: Colors.purple[50],
-                        avatarTextColor: Colors.purple,
+                        avatarImageUrl: student.profileImagePath,
+                        avatarBackgroundColor: Colors.deepOrange,
+                        avatarTextColor:
+                            const Color.fromARGB(255, 255, 255, 255),
                         onTap: () {
-                          print('Tapped on ${student.name}');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ShowStudentScreen(studentId: student.id),
+                            ),
+                          );
                         },
                         actions: [
                           ItemAction.text(
                             label: 'កែ',
                             onPressed: () => _navigateToEdit(student),
-                            color: Colors.purple,
+                            color: Colors.green,
                           ),
                           ItemAction.text(
                             label: 'លុប',
                             onPressed: () => _showDeleteDialog(student),
-                            color: Colors.purple,
+                            color: Colors.red,
                           ),
                         ],
                       );

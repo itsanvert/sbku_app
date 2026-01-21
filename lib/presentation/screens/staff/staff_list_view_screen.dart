@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/data/dummy_attendance.dart';
-import 'package:sbku_app/data/dummy_class.dart';
-import 'package:sbku_app/data/dummy_faculty.dart';
-import 'package:sbku_app/data/dummy_major.dart';
-import 'package:sbku_app/data/dummy_shirt.dart';
-import 'package:sbku_app/data/dummy_year.dart';
-import 'package:sbku_app/model/attendance_model.dart';
+import 'package:sbku_app/data/dummy_staff.dart'; // assuming this exports List<StaffModel> dummyStaffs
+import 'package:sbku_app/model/staff_model.dart';
+import 'package:sbku_app/presentation/screens/staff/add_staff.dart';
+import 'package:sbku_app/presentation/screens/staff/show_staff.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
-import 'package:sbku_app/presentation/widgets/empty_state_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
 
@@ -19,115 +15,189 @@ class StaffListViewScreen extends StatefulWidget {
 }
 
 class _StaffListViewScreenState extends State<StaffListViewScreen> {
-  // ✅ Selected filter IDs
-  String? _selectedFacultyId;
-  String? _selectedShiftId;
-  String? _selectedYearId;
+  // Filter values
+  String? _selectedSpecialization;
+  String? _selectedDepartment; // optional – add if your model has department
 
-  // ✅ Map Entity → UI Model
-  late final List<AttendanceModel> _attendances = dummyAttendanceEntities
-      .map((e) => AttendanceModel(
-            entity: e,
-            facultyName: dummyFaculties
-                .firstWhere((f) => f.id == e.facultyId)
-                .facultyName,
-            majorName:
-                dummyMajors.firstWhere((m) => m.majorId == e.majorId).majorName,
-            shiftName:
-                dummyShifts.firstWhere((s) => s.shiftId == e.shiftId).shiftName,
-            className: dummyClasses
-                .firstWhere((c) => c.classId == e.classId)
-                .className,
-            yearName:
-                dummyYears.firstWhere((y) => y.yearId == e.yearId).yearName,
-            startTime:
-                dummyShifts.firstWhere((s) => s.shiftId == e.shiftId).startTime,
-            endTime:
-                dummyShifts.firstWhere((s) => s.shiftId == e.shiftId).endTime,
-          ))
-      .toList();
+  // Get filtered list (you can add more filters later)
+  List<StaffModel> get filteredStaffs {
+    return dummyStaffs.where((staff) {
+      final matchSpec = _selectedSpecialization == null ||
+          staff.specalization == _selectedSpecialization;
+      // final matchDept = _selectedDepartment == null ||
+      //     staff.department == _selectedDepartment;   // ← uncomment if you add department
 
-  // ✅ Filtering (ID-based)
-  List<AttendanceModel> get filteredAttendance {
-    return _attendances.where((attendance) {
-      final facultyMatch = _selectedFacultyId == null ||
-          attendance.entity.facultyId == _selectedFacultyId;
-
-      final shiftMatch = _selectedShiftId == null ||
-          attendance.entity.shiftId == _selectedShiftId;
-
-      final yearMatch = _selectedYearId == null ||
-          attendance.entity.yearId == _selectedYearId;
-
-      return facultyMatch && shiftMatch && yearMatch;
+      return matchSpec; // && matchDept
     }).toList();
+  }
+
+  void _showDeleteDialog(StaffModel staff) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('លុបបុគ្គលិក'),
+        content: Text('តើអ្នកប្រាកដថាចង់លុប ${staff.fullName} ឬទេ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('បោះបង់'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                dummyStaffs.removeWhere((s) => s.id == staff.id);
+              });
+              Navigator.pop(ctx);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${staff.fullName} ត្រូវបានលុបដោយជោគជ័យ'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('លុប'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToEdit(StaffModel staff) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            AddStaffScreen(staff: staff), // ← rename screen if needed
+      ),
+    ).then((_) => setState(() {})); // refresh after edit
+  }
+
+  void _navigateToAdd() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddStaffScreen(),
+      ),
+    ).then((_) => setState(() {})); // refresh after add
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasFilter =
+        _selectedSpecialization != null; // || _selectedDepartment != null
+
     return Scaffold(
       appBar: AppBarWidget.simple(
-        title: 'បញ្ជីវត្តមានសិស្ស',
+        title: 'បញ្ជីបុគ្គលិក',
+        actions: [
+          IconButton(
+            onPressed: () {
+              // TODO: implement share / export functionality
+            },
+            icon: const Icon(Icons.share, color: Colors.white),
+          ),
+          IconButton(
+            onPressed: _navigateToAdd,
+            icon: const Icon(Icons.add, color: Colors.white),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // 🔹 Filters
+          // Filters Row – customize according to your needs
           FilterRowWidget(
             filters: [
-              // FACULTY
               FilterConfig(
-                value: _selectedFacultyId,
-                hint: 'មហាវិទ្យាល័យ',
-                items: dummyFaculties.map((f) => f.id).toList(),
-                labelBuilder: (id) =>
-                    dummyFaculties.firstWhere((f) => f.id == id).facultyName,
-                onChanged: (value) =>
-                    setState(() => _selectedFacultyId = value),
+                value: _selectedSpecialization,
+                hint: 'ជំនាញ',
+                items: Set<String>.from(
+                  dummyStaffs.map((s) => s.specalization),
+                ).toList(),
+                onChanged: (value) {
+                  setState(() => _selectedSpecialization = value);
+                },
               ),
-
-              // YEAR
-              FilterConfig(
-                value: _selectedYearId,
-                hint: 'ឆ្នាំទី',
-                items: dummyYears.map((y) => y.yearId).toList(),
-                labelBuilder: (id) =>
-                    dummyYears.firstWhere((y) => y.yearId == id).yearName,
-                onChanged: (value) => setState(() => _selectedYearId = value),
-              ),
-
-              // SHIFT
-              FilterConfig(
-                value: _selectedShiftId,
-                hint: 'វេន',
-                items: dummyShifts.map((s) => s.shiftId).toList(),
-                labelBuilder: (id) =>
-                    dummyShifts.firstWhere((s) => s.shiftId == id).shiftName,
-                onChanged: (value) => setState(() => _selectedShiftId = value),
-              ),
+              // Add more filters if your StaffModel has more filterable fields
+              // FilterConfig(
+              //   value: _selectedDepartment,
+              //   hint: 'នាយកដ្ឋាន',
+              //   items: Set<String>.from(dummyStaffs.map((s) => s.department ?? '')).toList(),
+              //   onChanged: (value) => setState(() => _selectedDepartment = value),
+              // ),
             ],
           ),
 
-          // 🔹 List
+          // Staff List
           Expanded(
-            child: filteredAttendance.isEmpty
-                ? EmptyStateWidget(
-                    icon: Icons.people_outline,
-                    title: 'រកមិនឃើញសិស្ស',
-                    subtitle: 'សូមកែប្រែការតម្រង',
+            child: filteredStaffs.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 80,
+                          color: Colors.grey[300],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          hasFilter ? 'រកមិនឃើញបុគ្គលិក' : 'មិនទាន់មានបុគ្គលិក',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (hasFilter) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'សូមកែប្រែការតម្រង',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   )
                 : ListView.builder(
-                    itemCount: filteredAttendance.length,
-                    padding: const EdgeInsets.only(bottom: 16),
+                    itemCount: filteredStaffs.length,
+                    padding: const EdgeInsets.only(bottom: 16, top: 8),
                     itemBuilder: (context, index) {
-                      final attendance = filteredAttendance[index];
+                      final staff = filteredStaffs[index];
 
-                      return ListItemWidget<AttendanceModel>(
-                        item: attendance,
-                        title: attendance.studentName,
-                        subtitle: attendance.shiftName,
-                        avatarText: attendance.avatarLetter,
-                        avatarBackgroundColor: Colors.purple[50],
-                        avatarTextColor: Colors.purple,
+                      return ListItemWidget<StaffModel>(
+                        item: staff,
+                        title: staff.fullName,
+                        subtitle: staff.specalization,
+                        // trailingSubtitle: staff.phone,           // optional
+                        avatarBackgroundColor: Colors.deepOrange,
+                        avatarTextColor: Colors.white,
+                        // showAvatarImage: staff has image url → can be extended later
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ShowStaffScreen(staffId: staff.id),
+                            ),
+                          );
+                        },
+                        actions: [
+                          ItemAction.text(
+                            label: 'កែ',
+                            onPressed: () => _navigateToEdit(staff),
+                            color: Colors.green,
+                          ),
+                          ItemAction.text(
+                            label: 'លុប',
+                            onPressed: () => _showDeleteDialog(staff),
+                            color: Colors.red,
+                          ),
+                        ],
                       );
                     },
                   ),

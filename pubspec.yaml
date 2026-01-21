@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^1.0.7
   cupertino_icons: ^1.0.8
   getwidget: ^7.0.0
   gradient_borders: ^1.0.0

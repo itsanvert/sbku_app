@@ -270,12 +270,6 @@ void generateAttendanceFromSession(AttendanceSession session) {
 
     dummyAttendanceEntities.add(attendanceRecord);
   }
-
-  print(
-      '✅ Generated ${classStudents.length} attendance records for session ${session.id}');
-  print('   - Present: ${session.attendedStudentIds.length}');
-  print(
-      '   - Absent: ${classStudents.length - session.attendedStudentIds.length}');
 }
 
 /// Initialize attendance data from all completed sessions
@@ -289,9 +283,6 @@ void initializeAttendanceData() {
   for (var session in closedSessions) {
     generateAttendanceFromSession(session);
   }
-
-  print(
-      '📊 Initialized ${dummyAttendanceEntities.length} attendance records from ${closedSessions.length} sessions');
 }
 
 /// Get all active sessions
@@ -341,14 +332,12 @@ void updateSession(AttendanceSession updatedSession) {
   final index = attendanceSessions.indexWhere((s) => s.id == updatedSession.id);
   if (index != -1) {
     attendanceSessions[index] = updatedSession;
-    print('✅ Updated session ${updatedSession.id}');
   }
 }
 
 /// Add a new session
 void addSession(AttendanceSession newSession) {
   attendanceSessions.add(newSession);
-  print('✅ Added new session ${newSession.id}');
 }
 
 /// Calculate attendance statistics for a class
