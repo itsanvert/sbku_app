@@ -13,6 +13,7 @@ class StaffFormController {
   final TextEditingController staffIdController;
   final TextEditingController fullNameController;
   final TextEditingController specializationController;
+  final TextEditingController departmentController;
   final TextEditingController phoneController;
   final TextEditingController emailController;
   final TextEditingController userIdController;
@@ -31,6 +32,8 @@ class StaffFormController {
         fullNameController = TextEditingController(text: staff?.fullName ?? ''),
         specializationController =
             TextEditingController(text: staff?.specalization ?? ''),
+        departmentController =
+            TextEditingController(text: staff?.department ?? ''),
         phoneController = TextEditingController(text: staff?.phone ?? ''),
         emailController = TextEditingController(text: staff?.email ?? ''),
         userIdController = TextEditingController(text: staff?.userid ?? ''),
@@ -178,6 +181,7 @@ class StaffFormController {
         staffIdController.text.trim().isNotEmpty &&
         fullNameController.text.trim().isNotEmpty &&
         specializationController.text.trim().isNotEmpty &&
+        departmentController.text.trim().isNotEmpty &&
         phoneController.text.trim().isNotEmpty &&
         emailController.text.trim().isNotEmpty &&
         userIdController.text.trim().isNotEmpty;
@@ -192,6 +196,7 @@ class StaffFormController {
       staffid: staffIdController.text.trim(),
       fullName: fullNameController.text.trim(),
       specalization: specializationController.text.trim(),
+      department: departmentController.text.trim(),
       phone: phoneController.text.trim(),
       email: emailController.text.trim(),
       userid: userIdController.text.trim(),
@@ -206,6 +211,7 @@ class StaffFormController {
     staffIdController.clear();
     fullNameController.clear();
     specializationController.clear();
+    departmentController.clear();
     phoneController.clear();
     emailController.clear();
     userIdController.clear();
@@ -220,6 +226,7 @@ class StaffFormController {
     staffIdController.dispose();
     fullNameController.dispose();
     specializationController.dispose();
+    departmentController.dispose();
     phoneController.dispose();
     emailController.dispose();
     userIdController.dispose();
