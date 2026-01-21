@@ -173,44 +173,44 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
               children: [
                 const SizedBox(height: 16),
 
-                // Profile Image Section
-                GestureDetector(
-                  onTap: _isLoading ? null : _handleImageUpload,
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      _buildProfileImage(),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.orange,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // // Profile Image Section
+                // GestureDetector(
+                //   onTap: _isLoading ? null : _handleImageUpload,
+                //   child: Stack(
+                //     alignment: Alignment.bottomRight,
+                //     children: [
+                //       _buildProfileImage(),
+                //       Positioned(
+                //         bottom: 0,
+                //         right: 0,
+                //         child: Container(
+                //           padding: const EdgeInsets.all(8),
+                //           decoration: BoxDecoration(
+                //             color: Colors.orange,
+                //             shape: BoxShape.circle,
+                //             border: Border.all(color: Colors.white, width: 2),
+                //           ),
+                //           child: const Icon(
+                //             Icons.camera_alt,
+                //             color: Colors.white,
+                //             size: 20,
+                //           ),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
 
-                const SizedBox(height: 8),
-                Text(
-                  'Tap to ${_formController.hasImage ? 'change' : 'add'} photo',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
-                ),
+                // const SizedBox(height: 8),
+                // Text(
+                //   'Tap to ${_formController.hasImage ? 'change' : 'add'} photo',
+                //   style: TextStyle(
+                //     color: Colors.grey.shade600,
+                //     fontSize: 12,
+                //   ),
+                // ),
 
-                const SizedBox(height: 32),
+                // const SizedBox(height: 32),
 
                 // Form Fields
                 CustomTextField(

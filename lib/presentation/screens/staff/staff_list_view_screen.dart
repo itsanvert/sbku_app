@@ -24,10 +24,11 @@ class _StaffListViewScreenState extends State<StaffListViewScreen> {
     return dummyStaffs.where((staff) {
       final matchSpec = _selectedSpecialization == null ||
           staff.specalization == _selectedSpecialization;
-      // final matchDept = _selectedDepartment == null ||
-      //     staff.department == _selectedDepartment;   // ← uncomment if you add department
+      final matchDept = _selectedDepartment == null ||
+          staff.department ==
+              _selectedDepartment; // ← uncomment if you add department
 
-      return matchSpec; // && matchDept
+      return matchSpec && matchDept;
     }).toList();
   }
 
@@ -120,12 +121,15 @@ class _StaffListViewScreenState extends State<StaffListViewScreen> {
                 },
               ),
               // Add more filters if your StaffModel has more filterable fields
-              // FilterConfig(
-              //   value: _selectedDepartment,
-              //   hint: 'នាយកដ្ឋាន',
-              //   items: Set<String>.from(dummyStaffs.map((s) => s.department ?? '')).toList(),
-              //   onChanged: (value) => setState(() => _selectedDepartment = value),
-              // ),
+              FilterConfig(
+                value: _selectedDepartment,
+                hint: 'នាយកដ្ឋាន',
+                items:
+                    Set<String>.from(dummyStaffs.map((s) => s.department ?? ''))
+                        .toList(),
+                onChanged: (value) =>
+                    setState(() => _selectedDepartment = value),
+              ),
             ],
           ),
 
