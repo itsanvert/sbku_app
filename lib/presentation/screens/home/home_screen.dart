@@ -3,7 +3,7 @@ import 'package:sbku_app/presentation/screens/attendance/attendance_list_catgori
 import 'package:sbku_app/presentation/screens/staff/staff_list_view_screen.dart';
 
 import 'package:sbku_app/presentation/screens/student/student_list_view_screen.dart';
-
+import 'package:sbku_app/presentation/screens/teacher/teacher_list_screen.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/campus_slider_widget.dart';
 import 'package:sbku_app/presentation/widgets/greeting_card_widget.dart';
@@ -29,7 +29,7 @@ class HomePageScreen extends StatelessWidget {
                 FeatureItem(
                   icon: Icons.people,
                   label: 'គ្រូបង្រៀន',
-                  // screen: TeacherScreen(),
+                  screen: TeacherListScreen(),
                 ),
                 FeatureItem(
                   icon: Icons.school,
