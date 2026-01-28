@@ -1,0 +1,11 @@
+# Ignore generated files
+ios/** linguist-ignore
+android/** linguist-ignore
+build/** linguist-ignore
+linux/** linguist-ignore
+windows/** linguist-ignore
+macos/** linguist-ignore
+web/** linguist-ignore
+
+# Dart only
+*.dart linguist-language=Dart

@@ -3,6 +3,7 @@ import 'package:sbku_app/presentation/screens/attendance/attendance_list_catgori
 import 'package:sbku_app/presentation/screens/staff/staff_list_view_screen.dart';
 
 import 'package:sbku_app/presentation/screens/student/student_list_view_screen.dart';
+import 'package:sbku_app/presentation/screens/syllabus/syllabus_list_view_screen.dart';
 import 'package:sbku_app/presentation/screens/teacher/teacher_list_screen.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/campus_slider_widget.dart';
@@ -54,7 +55,7 @@ class HomePageScreen extends StatelessWidget {
                 FeatureItem(
                   icon: Icons.subject,
                   label: 'តារាងមុខវិជ្ជា',
-                  // screen: SubjectListScreen(),
+                  screen: SyllabusListViewScreen(),
                 ),
               ],
             ),
