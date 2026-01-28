@@ -1,11 +1,28 @@
-# Ignore generated files
-ios/** linguist-ignore
+# -----------------------------
+# Flutter: ignore platform code
+# -----------------------------
 android/** linguist-ignore
-build/** linguist-ignore
+ios/** linguist-ignore
 linux/** linguist-ignore
 windows/** linguist-ignore
 macos/** linguist-ignore
 web/** linguist-ignore
+build/** linguist-ignore
 
-# Dart only
+# -----------------------------
+# Ignore non-Dart languages
+# -----------------------------
+*.c linguist-ignore
+*.cpp linguist-ignore
+*.h linguist-ignore
+*.cmake linguist-ignore
+CMakeLists.txt linguist-ignore
+*.swift linguist-ignore
+*.html linguist-ignore
+*.js linguist-ignore
+*.css linguist-ignore
+
+# -----------------------------
+# Force Dart
+# -----------------------------
 *.dart linguist-language=Dart
