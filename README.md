@@ -1,54 +1,48 @@
-# 📱 SBKU App
-
+# 📱 SBKU App  
 **Samdech Preah Mahasangharajah Bour Kry University Mobile Application**
 
-SBKU App is a smart mobile application designed to modernize and simplify attendance management in university environments. It enables students, professors, and staff to track, manage, and review attendance efficiently using mobile devices.
+SBKU App is a mobile-first attendance management system designed to modernize and simplify academic attendance at **Samdech Preah Mahasangharajah Bour Kry University (SBKU)**.
 
-By automating attendance records and reports, SBKU App reduces manual workload, improves data accuracy, and supports better academic and administrative decision-making.
+The application enables students, professors, and administrative staff to efficiently track, manage, and review attendance data using mobile devices, reducing manual work and improving data accuracy.
 
 ---
 
 ## ✨ Key Features
 
-- 📌 **Mobile-based Attendance Tracking**  
-  Record and monitor student attendance directly from mobile devices.
+- 📌 **Mobile-Based Attendance Tracking**  
+  Record and manage attendance directly from mobile devices.
 
-- 📊 **Automated Reports**  
-  Generate attendance reports:
-
+- 📊 **Automated Attendance Reports**  
+  Generate reports by:
   - Daily
   - Monthly
   - Yearly
 
 - 👥 **Role-Based Access Control**  
-  Tailored interfaces and permissions for:
-
+  Customized access for:
   - Students
   - Professors
   - Administrative Staff
 
-- 🏫 **University-Focused Design**  
-  Optimized specifically for higher education attendance systems.
+- 🏫 **University-Focused System**  
+  Built specifically for higher education environments.
 
 - ⚡ **Efficient & Accurate**  
-  Minimizes errors, saves time, and improves record organization.
+  Reduces human error, saves time, and improves record organization.
 
 ---
 
 ## 👤 User Roles & Capabilities
 
 ### 🎓 Students
-
 - View personal attendance records
 - Track attendance status over time
 
 ### 👨‍🏫 Professors
-
 - Take and manage class attendance
-- Review attendance summaries for assigned courses
+- Review attendance summaries by course
 
 ### 🧑‍💼 Staff / Administration
-
 - Monitor overall attendance data
 - Access detailed attendance reports
 - Support academic and administrative operations
@@ -66,53 +60,93 @@ By automating attendance records and reports, SBKU App reduces manual workload, 
 
 ## 🎨 UI/UX Design
 
-The application interface is designed to be simple, modern, and role-specific.
+The application interface is designed to be **simple, modern, and role-based**.
 
 🔗 **Figma Design Preview**  
-[View SBKU App Design](https://www.figma.com/design/yr1tZ56H8VI9erP0AdJ9wk/SBKU_APP?node-id=1-2&t=e3I7TfHWy8Kvv4NA-1)
+https://www.figma.com/design/yr1tZ56H8VI9erP0AdJ9wk/SBKU_APP
+
+---
+
+## 🚧 Development Progress & Preview Links
+
+### 📐 Design
+- ✅ UI/UX Design Completed
+- ⏳ UX Improvements (In Review)
+
+🔗 Design Preview  
+https://www.figma.com/design/yr1tZ56H8VI9erP0AdJ9wk/SBKU_APP
+
+---
+
+### 🛠️ Development
+- ⏳ Backend Development (Planned / In Progress)
+- ⏳ Mobile Application Development
+- ⏳ API Integration
+
+🔗 Source Code Repository  
+_Private / Academic Use_
+
+---
+
+### 📱 App Preview (Coming Soon)
+- 🎥 Demo Video  
+  (Coming Soon)
+
+- 📲 Android APK  
+  (Internal Testing)
+
+- 🍎 iOS TestFlight  
+  (Internal Testing)
+
+---
+
+### 🗺️ Roadmap
+- Phase 1: Core Attendance Features
+- Phase 2: Reports & Analytics
+- Phase 3: Notifications & Optimization
+- Phase 4: Deployment & University Rollout
 
 ---
 
 ## 🚀 Benefits
 
 - Faster attendance processing
-- Centralized and organized records
+- Centralized and secure data storage
 - Improved transparency for students and faculty
-- Better data for academic planning and decisions
+- Better insights for academic planning
 
 ---
 
 ## 📌 Project Status
 
-- UI/UX Design: ✅ Completed
-- Development: ⏳ In Progress / Planned
+- UI/UX Design: ✅ Completed  
+- Development: ⏳ In Progress / Planned  
+- Testing: ⏳ Upcoming  
+- Deployment: ⏳ Planned  
 
 ---
 
 ## 📄 License
 
-This project is developed for academic and institutional use at  
+This project is developed for **academic and institutional use** at  
 **Samdech Preah Mahasangharajah Bour Kry University (SBKU)**.
 
 ---
 
 ## 🤝 Contributors
 
-- **Project Manager and Full Stack Developer**
-
+- **Project Manager & Full Stack Developer**  
   - Vert San
 
-- **Mobile Application Developer**
-
+- **Mobile Application Developer**  
   - Chhaom Sovanarak
 
-- **Mobile Application Developer and UI/UX Designer**
-
+- **Mobile Application Developer & UI/UX Designer**  
   - Horng Sina
 
-- **Mobile Application Developer**
+- **Mobile Application Developer**  
   - Yun Yuna
 
 ---
 
-**SBKU App — Smarter Attendance for a Smarter University**
+**SBKU App — Smarter Attendance for a Smarter University 🎓**
