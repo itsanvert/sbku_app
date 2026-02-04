@@ -3,10 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/home/home_screen.dart';
 
 void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    title: 'SBKU App',
-    theme: ThemeData(primarySwatch: Colors.orange, useMaterial3: true),
-    home: const HomePageScreen(),
-  ));
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'SBKU App',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.orange,
+        ),
+      ),
+    
+    );
+  }
 }

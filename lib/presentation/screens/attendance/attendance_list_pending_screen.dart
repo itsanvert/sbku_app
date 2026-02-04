@@ -83,9 +83,8 @@ class _AttendanceListPendingScreenState
                 value: _selectedFacultyId,
                 hint: 'មហាវិទ្យាល័យ',
                 items: dummyFaculties.map((f) => f.id).toList(),
-                labelBuilder: (id) => dummyFaculties
-                    .firstWhere((f) => f.id == id)
-                    .facultyName,
+                labelBuilder: (id) =>
+                    dummyFaculties.firstWhere((f) => f.id == id).facultyName,
                 onChanged: (value) =>
                     setState(() => _selectedFacultyId = value),
               ),

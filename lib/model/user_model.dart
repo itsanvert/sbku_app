@@ -12,5 +12,5 @@ class UserModel {
       required this.email,
       required this.passwordhash,
       required this.phone,
-      required this.usertype});
+     required this.usertype});
 }
