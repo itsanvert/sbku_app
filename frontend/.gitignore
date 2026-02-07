@@ -1,0 +1,47 @@
+# =====================
+# OS & Editor files
+# =====================
+.DS_Store
+Thumbs.db
+*.swp
+.history
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code (uncomment if you want to ignore it)
+#.vscode/
+
+# =====================
+# Dart / Flutter
+# =====================
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+coverage/
+doc/api/
+pubspec.lock
+
+# Flutter iOS
+ios/Flutter/.last_build_id
+
+# =====================
+# Flutter build artifacts
+# =====================
+app.*.symbols
+app.*.map.json
+
+# Android build outputs
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+.env
+.env.development
