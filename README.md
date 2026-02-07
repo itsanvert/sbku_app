@@ -51,7 +51,7 @@ sbku_app/
 │   ├── database/           # Migrations and seeders
 │   ├── routes/             # API and web routes
 │   └── tests/              # Backend tests
-├── flutter_app/            # Flutter mobile application
+├── frontend/               # Flutter mobile application
 │   ├── lib/                # Dart source code
 │   │   ├── config/         # App configuration
 │   │   ├── models/         # Data models
