@@ -3,7 +3,7 @@
 SBKU App is a **full-stack mobile application** designed for syllabus management and academic tracking.  
 It features a modern **Laravel** REST API backend and a clean **Flutter** mobile frontend.
 
-https://github.com/your-username/sbku_app
+https://github.com/vertsan/sbku_app
 
 ## Tech Stack
 
