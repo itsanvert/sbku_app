@@ -1,30 +1,74 @@
-# SBKU App
+SBKU App
+========
 
-SBKU App is a **full-stack mobile application** designed for syllabus management and academic tracking.  
-It features a modern **Laravel** REST API backend and a clean **Flutter** mobile frontend.
+SBKU App is a full-stack application built with a **Laravel backend** and a **Flutter mobile application**. The project is structured for scalability and maintainability, with a focus on syllabus management and API-based communication.
 
-https://github.com/vertsan/sbku_app
+Tech Stack
+----------
 
-## Tech Stack
+**Backend**
 
-| Layer      | Technology              | Purpose                              |
-|------------|-------------------------|--------------------------------------|
-| Backend    | Laravel 10/11           | RESTful API, authentication, business logic |
-| Auth       | Laravel Jetstream       | Secure user authentication & session management |
-| Frontend   | Flutter (Dart)          | Cross-platform mobile app (Android + iOS) |
-| Storage    | flutter_secure_storage  | Secure token & credential storage    |
-| API Client | http / dio (recommended)| HTTP requests from Flutter           |
-| Database   | MySQL / MariaDB / SQLite| (configurable via Laravel .env)      |
+*   Laravel
+    
+*   Laravel Jetstream
+    
+*   REST API
+    
 
-## Features
+**Frontend**
 
-- User authentication (register, login, logout, password update)
-- Profile management (update name/email, upload/delete profile photo)
-- Syllabus viewing and management
-- Clean REST API endpoints
-- Secure token-based authentication (Laravel Sanctum / Jetstream)
-- Environment-based configuration
-- Refactored & cleaned codebase
-- Removed unnecessary assets and boilerplate
+*   Flutter
+    
 
-## Project Structure
+Features
+--------
+
+*   Syllabus model and view implementation
+    
+*   REST API for Flutter integration
+    
+*   Laravel Jetstream authentication
+    
+*   Environment-based configuration
+    
+*   Refactored and cleaned codebase
+    
+
+Project Structure
+-----------------
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   sbku_app/  ├── backend/        # Laravel backend  ├── flutter_app/    # Flutter mobile application  └── README.md   `
+
+Setup
+-----
+
+### Backend (Laravel)
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   cd backend  composer install  cp .env.example .env  php artisan key:generate  php artisan migrate  php artisan serve --port=8080   `
+
+### Frontend (Flutter)
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   cd flutter_app  flutter pub get  flutter run   `
+
+API
+---
+
+*   Laravel provides REST APIs consumed by the Flutter app
+    
+*   API base URL is configurable via environment variables
+    
+
+Notes
+-----
+
+*   Codebase has been refactored and cleaned
+    
+*   Unnecessary assets removed
+    
+*   Git configuration included
+    
+
+License
+-------
+
+For development and educational use.
