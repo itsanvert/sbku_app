@@ -111,10 +111,10 @@ Before you begin, ensure you have the following installed:
 
 6. **Start development server**
    ```bash
-   php artisan serve 
+   php artisan serve --port 8000
    ```
 
-   The backend will be available at `http://localhost:8080`
+   The backend will be available at `http://localhost:8000`
 
 ### Frontend Setup (Flutter)
 
