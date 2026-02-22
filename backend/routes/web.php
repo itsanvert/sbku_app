@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Livewire\Users\UserIndex;
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 Route::middleware([
@@ -15,3 +15,13 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+Route::get('/flux-test', function () {
+    return view('flux-test');
+});
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/users', UserIndex::class)->name('users.index');
+});
+
