@@ -1,143 +1,118 @@
-# SBKU App
+# 📱 SBKU App
 
-<div align="center">
+**Samdech Preah Mahasangharajah Bour Kry University Mobile Application**
 
-![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
-![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+SBKU App is a smart mobile application designed to modernize and simplify attendance management in university environments. It enables students, professors, and staff to track, manage, and review attendance efficiently using mobile devices.
 
-**A full-stack application for scalable syllabus management**
-
-[Features](#-features) • [Quick Start](#-quick-start) • [API Documentation](#-api-integration) • [Contributing](#-contributing)
-
-</div>
+By automating attendance records and reports, SBKU App reduces manual workload, improves data accuracy, and supports better academic and administrative decision-making.
 
 ---
 
-## 📖 Overview
+## ✨ Key Features
 
-SBKU App is a modern full-stack application built with a Laravel backend and Flutter mobile application. It's designed for efficient syllabus management with robust API-based communication, providing a seamless experience across platforms.
+- 📌 **Mobile-based Attendance Tracking**  
+  Record and monitor student attendance directly from mobile devices.
 
-## 📋 Tech Stack
+- 📊 **Automated Reports**  
+  Generate attendance reports:
 
-### Backend
-- **[Laravel](https://laravel.com/)** - PHP framework for robust web applications
-- **Laravel Jetstream** - Authentication and team management scaffolding
-- **REST API** - RESTful API architecture for mobile integration
-- **MySQL** - Relational database management system
+  - Daily
+  - Monthly
+  - Yearly
 
-### Frontend
-- **[Flutter](https://flutter.dev/)** - Cross-platform mobile framework
-- **Dart** - Modern programming language optimized for UI development
+- 👥 **Role-Based Access Control**  
+  Tailored interfaces and permissions for:
 
-## ✨ Features
+  - Students
+  - Professors
+  - Administrative Staff
 
-- 📚 **Syllabus Management** - Complete CRUD operations with intuitive interface
-- 🔌 **REST API** - Full API integration for seamless Flutter app communication
-- 🔐 **Secure Authentication** - JWT-based authentication with Laravel Jetstream
-- 🏗️ **Scalable Architecture** - Clean, maintainable, and modular codebase
-- ⚙️ **Environment Configuration** - Flexible configuration for different environments
-- 📱 **Cross-Platform** - Single codebase for iOS and Android
-- 🎨 **Responsive UI** - Adaptive design for various screen sizes
+- 🏫 **University-Focused Design**  
+  Optimized specifically for higher education attendance systems.
 
-## 📁 Project Structure
+- ⚡ **Efficient & Accurate**  
+  Minimizes errors, saves time, and improves record organization.
 
-```
-sbku_app/
-├── backend/                 # Laravel backend application
-│   ├── app/                # Application core
-│   ├── config/             # Configuration files
-│   ├── database/           # Migrations and seeders
-│   ├── routes/             # API and web routes
-│   └── tests/              # Backend tests
-├── frontend/               # Flutter mobile application
-│   ├── lib/                # Dart source code
-│   │   ├── config/         # App configuration
-│   │   ├── models/         # Data models
-│   │   ├── screens/        # UI screens
-│   │   ├── services/       # API services
-│   │   └── widgets/        # Reusable widgets
-│   └── test/               # Flutter tests
-└── README.md               # Project documentation
-```
+---
 
-## 🚀 Quick Start
+## 👤 User Roles & Capabilities
 
-### Prerequisites
+### 🎓 Students
 
-Before you begin, ensure you have the following installed:
+- View personal attendance records
+- Track attendance status over time
 
-- **PHP** >= 8.1
-- **Composer** >= 2.0
-- **MySQL** >= 8.0
-- **Flutter** >= 3.0
-- **Dart** >= 3.0
+### 👨‍🏫 Professors
 
-### Backend Setup (Laravel)
+- Take and manage class attendance
+- Review attendance summaries for assigned courses
 
-1. **Navigate to backend directory**
-   ```bash
-   cd backend
-   ```
+### 🧑‍💼 Staff / Administration
 
-2. **Install PHP dependencies**
-   ```bash
-   composer install
-   ```
+- Monitor overall attendance data
+- Access detailed attendance reports
+- Support academic and administrative operations
 
-3. **Configure environment**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
+---
 
-4. **Configure database**
-   
-   Update your `.env` file with database credentials:
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=sbku_db
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ```
+## 🎯 Objectives
 
-5. **Run database migrations**
-   ```bash
-   php artisan migrate
-   ```
+- Replace manual attendance systems with a mobile-first solution
+- Improve accuracy and reliability of attendance data
+- Reduce administrative workload
+- Provide real-time access to attendance information
 
-6. **Start development server**
-   ```bash
-   php artisan serve --port 8000
-   ```
+---
 
-   The backend will be available at `http://localhost:8000`
+## 🎨 UI/UX Design
 
-### Frontend Setup (Flutter)
+The application interface is designed to be simple, modern, and role-specific.
 
-1. **Navigate to Flutter directory**
-   ```bash
-   cd flutter_app
-   ```
+🔗 **Figma Design Preview**  
+[View SBKU App Design](https://www.figma.com/design/yr1tZ56H8VI9erP0AdJ9wk/SBKU_APP?node-id=1-2&t=e3I7TfHWy8Kvv4NA-1)
 
-2. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
+---
 
-3. **Configure API endpoint**
-   
-   Update `lib/config/api_config.dart` with your backend URL:
-   ```dart
-   const String baseUrl = 'http://localhost:8080/api';
-   ```
+## 🚀 Benefits
 
-4. **Run the application**
-   ```bash
-   flutter run
-   ```
+- Faster attendance processing
+- Centralized and organized records
+- Improved transparency for students and faculty
+- Better data for academic planning and decisions
 
-</div>
+---
+
+## 📌 Project Status
+
+- UI/UX Design: ✅ Completed
+- Development: ⏳ In Progress / Planned
+
+---
+
+## 📄 License
+
+This project is developed for academic and institutional use at  
+**Samdech Preah Mahasangharajah Bour Kry University (SBKU)**.
+
+---
+
+## 🤝 Contributors
+
+- **Project Manager and Full Stack Developer**
+
+  - Vert San
+
+- **Mobile Application Developer**
+
+  - Chhaom Sovanarak
+
+- **Mobile Application Developer and UI/UX Designer**
+
+  - Horng Sina
+
+- **Mobile Application Developer**
+  - Yun Yuna
+
+---
+
+**SBKU App — Smarter Attendance for a Smarter University**
