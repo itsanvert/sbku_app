@@ -1,12 +1,16 @@
 # Normalize line endings
 * text=auto eol=lf
 
-# Show diffs for Blade and Dart only
+# Hide all PHP diffs first
+*.php -diff
+
+# Re-enable diff specifically for Blade files
 *.blade.php diff=html
+
+# Enable Dart diffs
 *.dart diff=dart
 
-# Hide diffs for other common file types
-*.php -diff
+# Hide other file types
 *.css -diff
 *.html -diff
 *.md -diff
