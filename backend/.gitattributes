@@ -1,25 +1,25 @@
 # Normalize line endings
 * text=auto eol=lf
 
-# Force Blade files to be recognized properly
-*.blade.php linguist-language=Blade
+# Hide all PHP diffs first
+*.php -diff
 
-# Force Dart files
-*.dart linguist-language=Dart
+# Re-enable diff specifically for Blade files
+*.blade.php diff=html
 
-# Hide ALL other PHP files from language stats
-*.php linguist-vendored
+# Enable Dart diffs
+*.dart diff=dart
 
-# Optional: hide other unwanted languages
-*.css linguist-vendored
-*.html linguist-vendored
-*.js linguist-vendored
-*.json linguist-vendored
-*.yml linguist-vendored
-*.yaml linguist-vendored
-*.md linguist-vendored
+# Hide other file types
+*.css -diff
+*.html -diff
+*.md -diff
+*.js -diff
+*.json -diff
+*.yml -diff
+*.yaml -diff
 
-# Exclude files from archives
+# Exclude files from archive exports
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
