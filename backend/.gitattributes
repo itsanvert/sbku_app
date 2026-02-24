@@ -1,11 +1,21 @@
+# Normalize line endings
 * text=auto eol=lf
 
+# Show diffs for Blade and Dart only
 *.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
+*.dart diff=dart
 
+# Hide diffs for other common file types
+*.php -diff
+*.css -diff
+*.html -diff
+*.md -diff
+*.js -diff
+*.json -diff
+*.yml -diff
+*.yaml -diff
+
+# Exclude files from archive exports
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
