@@ -7,7 +7,6 @@
 # Force Dart files
 *.dart linguist-language=Dart
 
-
 # Hide ALL other PHP files from language stats
 *.php linguist-vendored
 
