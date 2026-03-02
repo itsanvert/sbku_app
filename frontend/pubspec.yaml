@@ -24,7 +24,7 @@ dependencies:
   permission_handler: ^11.0.1
   flutter_dotenv: ^5.1.0
   path_provider: ^2.1.1
-  supabase_flutter: ^2.12.0
+  # supabase_flutter: ^2.12.0
   sqflite: ^2.4.2
 
 dev_dependencies:
@@ -36,6 +36,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env.development
+    # - .env.development
     - assets/images/sbku-logo.svg
     - assets/images/campus.png

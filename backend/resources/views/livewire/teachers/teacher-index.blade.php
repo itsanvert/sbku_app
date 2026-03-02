@@ -98,7 +98,7 @@
                                         </div>
                                     </td>
 
-                                   
+
 
                                     {{-- Email --}}
                                     <td class="px-4 py-3 text-sm text-zinc-500">
@@ -134,7 +134,7 @@
                                     <td class="px-4 py-3">
                                         <flux:badge color="green" size="sm">Teacher</flux:badge>
                                     </td>
-                                    
+
 
                                     {{-- Joined --}}
                                     <td class="px-4 py-3 text-sm text-zinc-400">

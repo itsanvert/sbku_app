@@ -1,9 +1,12 @@
 <x-guest-layout>
     <x-authentication-card>
         <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
-
+    <div class="flex justify-center">
+        <img src="{{ asset('img/logo.jpg') }}"
+             alt="SBKU Logo"
+             class="h-20 w-auto object-contain">
+    </div>
+</x-slot>
         <x-validation-errors class="mb-4" />
 
         @session('status')
