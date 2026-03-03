@@ -36,6 +36,5 @@ flutter:
   uses-material-design: true
 
   assets:
-    # - .env.development
-    - assets/images/sbku-logo.svg
+    - assets/images/logo.jpg
     - assets/images/campus.png
