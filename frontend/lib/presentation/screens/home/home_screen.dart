@@ -31,7 +31,7 @@ class HomePageScreen extends StatelessWidget {
                 FeatureItem(
                   icon: Icons.people,
                   label: 'គ្រូបង្រៀន',
-                  screen: TeacherListScreen(),
+                  screen: TeacherListViewScreen(),
                 ),
                 FeatureItem(
                   icon: Icons.school,

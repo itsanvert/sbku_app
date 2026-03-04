@@ -66,9 +66,7 @@
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('faculty_id')">Faculty</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('year')">Year</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('schedule')">Schedule</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('phone')">Phone</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('email')">Role</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('created_at')">Joined</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('phone')">Phone</th>                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('created_at')">Joined</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Actions</th>
                             </tr>
                         </thead>
@@ -130,19 +128,13 @@
                                         {{ $teacher->phone ?? '—' }}
                                     </td>
 
-                                    {{-- Role --}}
-                                    <td class="px-4 py-3">
-                                        <flux:badge color="green" size="sm">Teacher</flux:badge>
-                                    </td>
-
-
                                     {{-- Joined --}}
                                     <td class="px-4 py-3 text-sm text-zinc-400">
                                         {{ $teacher->created_at?->format('M j, Y') ?? '—' }}
                                     </td>
 
                                     {{-- Actions --}}
-                                    <td class="px-4 py-3">
+                                    <td class="px-3 py-3">
                                         <div class="flex items-center gap-1.5">
                                             <flux:button wire:click="openEditModal({{ $teacher->id }})" size="sm" variant="ghost">Edit</flux:button>
                                             <flux:button wire:click="confirmDelete({{ $teacher->id }})" size="sm" variant="danger">Delete</flux:button>

@@ -1,71 +1,105 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-    <div class="flex justify-center">
-        <img src="{{ asset('img/logo.jpg') }}"
-             alt="SBKU Logo"
-             class="h-20 w-auto object-contain">
-    </div>
-</x-slot>
-        <x-validation-errors class="mb-4" />
 
+<div class="flex min-h-screen w-full">
+
+    {{-- ── LEFT: Form Panel ── --}}
+    <div class="w-full lg:w-5/12 xl:w-[45%] flex flex-col justify-center px-8 sm:px-14 xl:px-20 py-12 bg-white">
+
+        {{-- Logo --}}
+        <div class="mb-10 ">
+            <a href="{{ url('/') }}" class="inline-flex items-center space-x-2">
+                <img src="{{ asset('img/logo.jpg') }}" alt="SBKU Logo" class="h-20  w-auto">
+            </a>
+        </div>
+
+        {{-- Heading --}}
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-1">Sign in to your account</h1>
+
+        </div>
+
+        {{-- Validation Errors --}}
+        @if ($errors->any())
+            <div class="mb-5 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 space-y-0.5">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- Session Status --}}
         @session('status')
-            <div class="mb-4 font-medium text-sm text-green-600">
+            <div class="mb-5 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
                 {{ $value }}
             </div>
         @endsession
 
-        <form method="POST" action="{{ route('login') }}">
+        {{-- Form --}}
+        <form method="POST" action="{{ route('login') }}" class="space-y-5">
             @csrf
 
+            {{-- Email --}}
             <div>
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full"
-                         type="email"
-                         name="email"
-                         :value="old('email')"
-                         required autofocus autocomplete="username" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password"
-                         class="block mt-1 w-full"
-                         type="password"
-                         name="password"
-                         required
-                         autocomplete="current-password" />
-            </div>
-
-            <div class="block mt-4">
-                <label for="remember_me" class="flex items-center">
-                    <x-checkbox id="remember_me" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600">
-                        {{ __('Remember me') }}
-                    </span>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">
+                    {{ __('Email address') }}
                 </label>
+                <input id="email"
+                       type="email"
+                       name="email"
+                       value="{{ old('email') }}"
+                       required autofocus autocomplete="username"
+                       class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-150">
             </div>
 
-            <div class="flex items-center justify-end mt-4">
-
-                @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 hover:text-gray-900"
-                       href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
-
-                <a class="ms-4 underline text-sm text-gray-600 hover:text-gray-900"
-                   href="{{ route('register') }}">
-                    {{ __('Register') }}
-                </a>
-
-                <x-button class="ms-4">
-                    {{ __('Log in') }}
-                </x-button>
-
+            {{-- Password --}}
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">
+                    {{ __('Password') }}
+                </label>
+                <input id="password"
+                       type="password"
+                       name="password"
+                       required autocomplete="current-password"
+                       class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-150">
             </div>
+
+
+            {{-- Submit --}}
+            <button type="submit"
+                    class="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                {{ __('Sign in') }}
+            </button>
         </form>
+    </div>
 
-    </x-authentication-card>
+    {{-- ── RIGHT: Image Panel ── --}}
+  <div class="hidden lg:flex flex-1 items-center justify-center bg-slate-100 relative overflow-hidden">
+
+    {{-- Subtle background texture --}}
+    <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 20% 80%, #cbd5e1 0%, transparent 50%), radial-gradient(circle at 80% 20%, #e2e8f0 0%, transparent 50%);"></div>
+
+    <lottie-player
+        src="{{ asset('lottie/welcome.json') }}"
+        background="transparent"
+        speed="1"
+        loop
+        autoplay
+        style="width: 500px; height: 500px; position: relative; z-index: 1;">
+    </lottie-player>
+
+    <footer class="absolute bottom-0 left-0 w-full z-10">
+    <div class="bg-white/50 backdrop-blur-md border-t border-orange-100/60"
+         style="box-shadow: 0 -1px 12px rgba(234, 88, 12, 0.06);">
+        <div class="px-8 py-3 flex items-center justify-between">
+
+            {{-- Left: Brand --}}
+            <div class="text-sm text-gray-600">
+                &copy; {{ date('Y') }} From Vert San. All rights reserved.
+            </div>
+        </div>
+    </div>
+</footer>
+</div>
+
 </x-guest-layout>
+

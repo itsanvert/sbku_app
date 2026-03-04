@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sbku_app/model/teacher_model.dart';
 
-
 class TeacherDetailScreen extends StatefulWidget {
   final TeacherModel teacher;
   const TeacherDetailScreen({super.key, required this.teacher});
@@ -149,10 +148,10 @@ class _TeacherDetailScreenState extends State<TeacherDetailScreen> {
   }
 
   BoxDecoration _cardDeco() => BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(12),
-    boxShadow: [
-      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-    ],
-  );
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
+      );
 }
