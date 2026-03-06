@@ -5,68 +5,90 @@
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <flux:heading size="lg">Edit Teacher</flux:heading>
             <flux:button wire:click="$dispatch('closeModal')"
-                         variant="ghost"
-                         size="sm"
-                         icon="x-mark"
-                         class="text-gray-400" />
+                        variant="ghost"
+                        size="sm"
+                        icon="x-mark"
+                        class="text-gray-400" />
         </div>
 
         {{-- Form --}}
         <form wire:submit.prevent="update" class="p-6 space-y-6">
 
-            {{-- Account Info --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <flux:input wire:model="name"
                             label="Full Name"
                             placeholder="e.g. Jane Doe" />
-                @error('name') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
 
                 <flux:input wire:model="email"
                             type="email"
                             label="Email"
                             placeholder="e.g. jane@example.com" />
-                @error('email') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
 
                 <flux:input wire:model="password"
                             type="password"
                             label="New Password (optional)"
                             placeholder="Leave blank to keep current password" />
-                @error('password') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
 
-                <flux:input wire:model="gender"
-                            label="Gender"
-                            placeholder="e.g. Female" />
-                @error('gender') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
-            </div>
+                <flux:field>
+                    <flux:label>Gender</flux:label>
+                    <flux:select wire:model="gender" size="sm">
+                        <flux:select.option value="">Select</flux:select.option>
+                        <flux:select.option value="male">Male</flux:select.option>
+                        <flux:select.option value="female">Female</flux:select.option>
+                    </flux:select>
+                    <flux:error name="gender" />
+                </flux:field>
 
-            {{-- Teacher Info --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <flux:field>
+                    <flux:label>Major</flux:label>
+                    <flux:select wire:model="major_id" size="sm">
+                        <flux:select.option value="">Select</flux:select.option>
+                        @foreach ($majors as $major)
+                            <flux:select.option value="{{ $major->id }}">{{ $major->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="major_id" />
+                </flux:field>
 
-                <flux:input wire:model="major"
-                            label="Major"
-                            placeholder="Mathematics" />
-                @error('major') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
+                <flux:field>
+                    <flux:label>Schedule</flux:label>
+                    <flux:select wire:model="schedule_id" size="sm">
+                        <flux:select.option value="">Select</flux:select.option>
+                        @foreach ($schedules as $schedule)
+                            <flux:select.option value="{{ $schedule->id }}">{{ $schedule->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="schedule_id" />
+                </flux:field>
 
-                <flux:input wire:model="year"
-                            label="Year"
-                            placeholder="2025" />
-                @error('year') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
-
-                <flux:input wire:model="schedule"
-                            label="Schedule"
-                            placeholder="Mon, Wed, Fri" />
-                @error('schedule') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
+                <flux:field>
+                    <flux:label>Year</flux:label>
+                    <flux:select wire:model="year" size="sm">
+                        <flux:select.option value="">Select</flux:select.option>
+                        <flux:select.option value="1">1</flux:select.option>
+                        <flux:select.option value="2">2</flux:select.option>
+                        <flux:select.option value="3">3</flux:select.option>
+                        <flux:select.option value="4">4</flux:select.option>
+                    </flux:select>
+                    <flux:error name="year" />
+                </flux:field>
 
                 <flux:input wire:model="phone"
                             label="Phone"
                             placeholder="123-456-7890" />
-                @error('phone') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
 
-                <flux:input wire:model="faculty"
-                            label="Faculty"
-                            placeholder="Faculty of Science" />
-                @error('faculty') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
+                <flux:field>
+                    <flux:label>Faculty</flux:label>
+                    <flux:select wire:model="faculty_id" size="sm">
+                        <flux:select.option value="">Select</flux:select.option>
+                        @foreach ($faculties as $faculty)
+                            <flux:select.option value="{{ $faculty->id }}">{{ $faculty->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="faculty_id" />
+                </flux:field>
+
             </div>
 
             {{-- Actions --}}

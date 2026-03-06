@@ -13,7 +13,7 @@ class Teacher extends Model
     'major_id',
     'year',
     'role',
-    'schedule',
+    'schedule_id',
     'phone',
     'faculty_id',
 ];
@@ -29,6 +29,9 @@ public function major()
 {
     return $this->belongsTo(Major::class);
 }
+public function schedule()
+{
+    return $this->belongsTo(Schedule::class);
 }
 
-
+}

@@ -22,12 +22,12 @@ return new class extends Migration
             // Teacher-specific fields
             $table->string('name');
             $table->string('gender');
-            $table->foreignId('major_id')->constrained()->onDelete('cascade');
+            $table->foreignId('major_id')->constrained('majors')->onDelete('cascade');
             $table->string('year');
             $table->string('role');
-            $table->string('schedule');
+            $table->foreignId('schedule_id')->constrained('schedules')->onDelete('cascade');
             $table->string('phone');
-            $table->foreignId('faculty_id')->constrained()->onDelete('cascade');
+            $table->foreignId('faculty_id')->constrained('faculties')->onDelete('cascade');
             $table->timestamps();
         });
     }

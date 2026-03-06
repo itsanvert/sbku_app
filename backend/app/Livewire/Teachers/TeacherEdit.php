@@ -5,6 +5,7 @@ namespace App\Livewire\Teachers;
 use App\Models\User;
 use App\Models\Teacher;
 use App\Models\Major;
+use App\Models\Schedule;
 use App\Models\Faculty;
 use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +23,7 @@ class TeacherEdit extends Component
     public $gender = '';
     public $major_id = '';
     public $year = '';
-    public $schedule = '';
+    public $schedule_id = '';
     public $phone = '';
     public $faculty_id = '';
 
@@ -37,7 +38,7 @@ class TeacherEdit extends Component
     $this->gender     = $teacher->gender;
     $this->major_id   = $teacher->major_id;
     $this->year       = $teacher->year;
-    $this->schedule   = $teacher->schedule;
+    $this->schedule_id     = $teacher->schedule_id;
     $this->phone      = $teacher->phone;
     $this->faculty_id = $teacher->faculty_id;
     }
@@ -51,7 +52,7 @@ class TeacherEdit extends Component
             'gender'   => 'required|in:male,female',
             'major_id' => 'required|exists:majors,id',
             'year'     => 'required|integer|min:1|max:10',
-            'schedule' => 'required|string|max:255',
+            'schedule_id' => 'required|exists:schedules,id',
             'phone'    => 'required|string|max:20',
             'faculty_id' => 'required|exists:faculties,id',
         ]);
@@ -66,20 +67,21 @@ class TeacherEdit extends Component
         'gender'     => $this->gender,
         'major_id'   => $this->major_id,
         'year'       => $this->year,
-        'schedule'   => $this->schedule,
+        'schedule_id'   => $this->schedule_id,
         'phone'      => $this->phone,
         'faculty_id' => $this->faculty_id,
     ]);
 
     $this->dispatch('teacherUpdated');
 }
-    
+
 
    public function render()
 {
     return view('livewire.teachers.teacher-edit', [
         'majors'    => Major::orderBy('name')->get(),
         'faculties' => Faculty::orderBy('name')->get(),
+        'schedules' => Schedule::orderBy('name')->get(),
     ]);
 }
 }

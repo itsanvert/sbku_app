@@ -5,6 +5,7 @@ namespace App\Livewire\Teachers;
 use App\Models\User;
 use App\Models\Teacher;
 use App\Models\Major;
+use App\Models\Schedule;
 use App\Models\Faculty;
 use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
@@ -26,7 +27,7 @@ class TeacherCreate extends Component
     public $gender = '';
     public $major_id = '';
     public $year = '';
-    public $schedule = '';
+    public $schedule_id = '';
     public $phone = '';
     public $faculty_id = '';
 
@@ -42,7 +43,7 @@ class TeacherCreate extends Component
             'gender'     => 'required|in:male,female',
             'major_id'   => 'required|exists:majors,id',
             'year'       => 'required',
-            'schedule'   => 'required|string|max:255',
+            'schedule_id'   => 'required|exists:schedules,id',
             'phone'      => 'required|string|max:20',
             'faculty_id' => 'required|exists:faculties,id',
         ];
@@ -78,7 +79,7 @@ class TeacherCreate extends Component
                 'gender'     => $this->gender,
                 'major_id'   => $this->major_id,
                 'year'       => $this->year,
-                'schedule'   => $this->schedule,
+                'schedule_id'   => $this->schedule_id,
                 'phone'      => $this->phone,
                 'faculty_id' => $this->faculty_id,
             ]);
@@ -103,7 +104,7 @@ session()->flash('success', 'Teacher created successfully!');
             'gender',
             'major_id',
             'year',
-            'schedule',
+            'schedule_id',
             'phone',
             'faculty_id',
         ]);
@@ -119,6 +120,7 @@ session()->flash('success', 'Teacher created successfully!');
         return view('livewire.teachers.teacher-create', [
             'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
+            'schedules' => Schedule::orderBy('name')->get(),
         ]);
     }
 }
