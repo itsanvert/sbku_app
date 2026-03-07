@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Users\UserIndex;
+use App\Livewire\Teachers\TeacherIndex;
 Route::get('/', function () {
     return view('auth.login');
 });
@@ -23,5 +24,6 @@ Route::get('/flux-test', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/users', UserIndex::class)->name('users.index');
+    Route::get('/teachers', TeacherIndex::class)->name('teachers.index');
 });
 

@@ -16,6 +16,9 @@
                     <x-nav-link href="{{ route('users.index') }}" :active="request()->routeIs('users.index')">
                         {{ __('User Management') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('teachers.index') }}" :active="request()->routeIs('teachers.index')">
+                        {{ __('Teacher') }}
+                    </x-nav-link>
                 </div>
             </div>
 

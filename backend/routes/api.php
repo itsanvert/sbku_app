@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\TeacherController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,5 +27,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/user/profile-photo', [ProfileController::class, 'deleteProfilePhoto']);
 
     // Add your custom API endpoints here
-    // Route::apiResource('posts', PostController::class);
+    Route::apiResource('teachers', TeacherController::class);
 });

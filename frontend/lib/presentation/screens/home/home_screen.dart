@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/attendance/attendance_list_catgories.dart';
 import 'package:sbku_app/presentation/screens/staff/staff_list_view_screen.dart';
-
 import 'package:sbku_app/presentation/screens/student/student_list_view_screen.dart';
+
 import 'package:sbku_app/presentation/screens/syllabus/syllabus_list_view_screen.dart';
 import 'package:sbku_app/presentation/screens/teacher/teacher_list_screen.dart';
 
@@ -31,7 +31,7 @@ class HomePageScreen extends StatelessWidget {
                 FeatureItem(
                   icon: Icons.people,
                   label: 'គ្រូបង្រៀន',
-                  screen: TeacherListScreen(),
+                  screen: TeacherListViewScreen(),
                 ),
                 FeatureItem(
                   icon: Icons.school,
@@ -56,7 +56,7 @@ class HomePageScreen extends StatelessWidget {
                 FeatureItem(
                   icon: Icons.subject,
                   label: 'តារាងមុខវិជ្ជា',
-                  screen: SyllabusListViewScreen(),
+                  // screen: SyllabusListViewScreen(),
                 ),
               ],
             ),
