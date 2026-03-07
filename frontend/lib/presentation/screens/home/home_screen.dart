@@ -56,7 +56,7 @@ class HomePageScreen extends StatelessWidget {
                 FeatureItem(
                   icon: Icons.subject,
                   label: 'តារាងមុខវិជ្ជា',
-                  screen: SyllabusListViewScreen(),
+                  // screen: SyllabusListViewScreen(),
                 ),
               ],
             ),

@@ -1,157 +1,177 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:sbku_app/model/teacher_model.dart';
+import 'package:sbku_app/service/teacher_service.dart';
 
-class TeacherDetailScreen extends StatefulWidget {
-  final TeacherModel teacher;
-  const TeacherDetailScreen({super.key, required this.teacher});
+
+class TeacherListPage extends StatefulWidget {
+  const TeacherListPage({super.key});
 
   @override
-  State<TeacherDetailScreen> createState() => _TeacherDetailScreenState();
+  State<TeacherListPage> createState() => _TeacherListPageState();
 }
 
-class _TeacherDetailScreenState extends State<TeacherDetailScreen> {
-  final ImagePicker _picker = ImagePicker();
-  File? _image;
-  String? _imagePath;
+class _TeacherListPageState extends State<TeacherListPage> {
+  final TeacherService _service = TeacherService();
+  final TextEditingController _searchController = TextEditingController();
+
+  List<Teacher> _teachers = [];
+  bool _loading = false;
+  String? _error;
+  int _page = 1;
+  int _lastPage = 1;
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
-    _imagePath = widget.teacher.imagePath;
+    _loadTeachers();
   }
 
-  Future<void> _pick(ImageSource source) async {
-    Navigator.pop(context);
-    final XFile? img = await _picker.pickImage(source: source);
-    if (img != null) {
+  Future<void> _loadTeachers({bool reset = false}) async {
+    if (reset) _page = 1;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final result = await _service.getTeachers(
+        page: _page,
+        search: _search,
+      );
+
       setState(() {
-        _image = File(img.path);
-        _imagePath = null;
+        _teachers = result.data;
+        _lastPage = result.lastPage;
       });
-      _snack('រូបភាពបានផ្លាស់ប្តូរ');
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
-  void _snack(String msg) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
-  }
-
-  void _showPicker() {
-    showModalBottomSheet(
+  Future<void> _deleteTeacher(int id) async {
+    final confirm = await showDialog<bool>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _pickItem(Icons.photo_library, 'វិចិត្រសាល', ImageSource.gallery),
-          _pickItem(Icons.camera_alt, 'ថតរូប', ImageSource.camera),
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Teacher?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
-  }
 
-  ListTile _pickItem(IconData icon, String text, ImageSource src) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFFFF5722)),
-      title: Text(text),
-      onTap: () => _pick(src),
-    );
-  }
+    if (confirm != true) return;
 
-  ImageProvider? get _avatar {
-    if (_image != null) return FileImage(_image!);
-    if (_imagePath != null) return FileImage(File(_imagePath!));
-    return null;
+    try {
+      await _service.deleteTeacher(id);
+      _loadTeachers();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFF5722),
-        title: const Text('Show Teacher'),
-      ),
-      body: SingleChildScrollView(
-        child: Column(children: [_avatarSection(), _infoCard()]),
-      ),
-    );
-  }
-
-  Widget _avatarSection() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      color: Colors.white,
-      child: Stack(
-        alignment: Alignment.bottomRight,
+      appBar: AppBar(title: const Text('Teachers')),
+      body: Column(
         children: [
-          CircleAvatar(
-            radius: 60,
-            backgroundColor: Colors.grey.shade200,
-            backgroundImage: _avatar,
-            child: _avatar == null
-                ? const Icon(Icons.person, size: 60, color: Colors.grey)
-                : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.camera_alt, color: Colors.white),
-            onPressed: _showPicker,
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFFF5722),
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search teachers…',
+                prefixIcon: const Icon(Icons.search),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onChanged: (val) {
+                _search = val;
+                _loadTeachers(reset: true);
+              },
             ),
           ),
-        ],
-      ),
-    );
-  }
 
-  Widget _infoCard() {
-    final t = widget.teacher;
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: _cardDeco(),
-      child: Column(
-        children: [
-          _info(Icons.person, 'អត្តលេខ', t.teacherid),
-          _info(Icons.badge, 'ឈ្មោះ', t.fullName),
-          _info(Icons.wc, 'ភេទ', t.gender == 'Male' ? 'Male' : 'Female'),
-          _info(Icons.school, 'ឯកទេស', t.specialization),
-          _info(Icons.phone, 'ទូរសព្ទ', t.phone),
-          _info(Icons.email, 'អ៊ីមែល', t.email),
-          _info(Icons.account_circle, 'User ID', t.userid),
-          _info(Icons.apartment, 'Faculty ID', t.facultyid, last: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _info(IconData icon, String label, String value, {bool last = false}) {
-    return Column(
-      children: [
-        ListTile(
-          leading: Icon(icon, color: const Color(0xFFFF5722)),
-          title: Text(label, style: const TextStyle(fontSize: 12)),
-          subtitle: Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          // Content
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Text(_error!,
+                            style: const TextStyle(color: Colors.red)))
+                    : _teachers.isEmpty
+                        ? const Center(child: Text('No teachers found'))
+                        : ListView.separated(
+                            itemCount: _teachers.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (_, i) {
+                              final t = _teachers[i];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundImage: NetworkImage(
+                                    'https://ui-avatars.com/api/?name=${Uri.encodeComponent(t.name)}&background=6366f1&color=ffffff',
+                                  ),
+                                ),
+                                title: Text(t.name),
+                                subtitle: Text(t.email ?? '—'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.red),
+                                  onPressed: () => _deleteTeacher(t.id),
+                                ),
+                              );
+                            },
+                          ),
           ),
-        ),
-        if (!last) Divider(color: Colors.grey.shade200),
-      ],
+
+          // Pagination
+          if (!_loading)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: _page > 1
+                      ? () {
+                          _page--;
+                          _loadTeachers();
+                        }
+                      : null,
+                ),
+                Text('Page $_page of $_lastPage'),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: _page < _lastPage
+                      ? () {
+                          _page++;
+                          _loadTeachers();
+                        }
+                      : null,
+                ),
+              ],
+            ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {/* open create form */},
+        child: const Icon(Icons.add),
+      ),
     );
   }
-
-  BoxDecoration _cardDeco() => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-        ],
-      );
 }

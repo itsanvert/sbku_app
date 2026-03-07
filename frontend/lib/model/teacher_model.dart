@@ -1,94 +1,99 @@
-class TeacherModel {
-  final String id;
-  final String teacherid;
-  final String fullName;
-  final String gender;
-  final String specialization;
-  final String year;
-  final String schedule;
-  final String phone;
-  final String email;
-  final String userid;
-  final String facultyid;
-  final String? imagePath;
+class Teacher {
+  final int id;
+  final String name;
+  final String? email;
+  final String? phone;
+  final String? gender;
+  final int? year;
+  final int? userId;
+  final String? major;
+  final String? faculty;
+  final String? schedule;
+  final String? avatarUrl;
+  final String? createdAt;
 
-  TeacherModel({
+  Teacher({
     required this.id,
-    required this.teacherid,
-    required this.fullName,
-    required this.gender,
-    required this.specialization,
-    required this.year,
-    required this.schedule,
-    required this.phone,
-    required this.email,
-    required this.userid,
-    required this.facultyid,
-    this.imagePath,
+    required this.name,
+    this.email,
+    this.phone,
+    this.gender,
+    this.year,
+    this.userId,
+    this.major,
+    this.faculty,
+    this.schedule,
+    this.avatarUrl,
+    this.createdAt,
   });
 
-  TeacherModel copyWith({
-    String? id,
-    String? teacherid,
-    String? fullName,
-    String? nickname,
-    String? gender,
-    String? specalization,
-    String? year,
-    String? schedule,
-    String? phone,
-    String? email,
-    String? userid,
-    String? facultyid,
-    String? imagePath,
-  }) {
-    return TeacherModel(
-      id: id ?? this.id,
-      teacherid: teacherid ?? this.teacherid,
-      fullName: fullName ?? this.fullName,
-      gender: gender ?? this.gender,
-      specialization: specalization ?? this.specialization,
-      year: year ?? this.year,
-      schedule: schedule ?? this.schedule,
-      phone: phone ?? this.phone,
-      email: email ?? this.email,
-      userid: userid ?? this.userid,
-      facultyid: facultyid ?? this.facultyid,
-      imagePath: imagePath ?? this.imagePath,
+  factory Teacher.fromJson(Map<String, dynamic> json) {
+    return Teacher(
+      id: _parseInt(json['id'])!,
+      userId: _parseInt(json['user_id']),
+      year: _parseInt(json['year']),
+      name: json['name']?.toString() ?? '',
+      email: json['user']?['email']?.toString() ?? json['email']?.toString(),
+      phone: json['phone']?.toString(),
+      gender: json['gender']?.toString(),
+      major: json['major']?['name']?.toString(),
+      faculty: json['faculty']?['name']?.toString(),
+      schedule: json['schedule']?['name']?.toString(),
+      avatarUrl: json['avatar_url']?.toString(),
+      createdAt: json['created_at']?.toString(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'teacherid': teacherid,
-      'fullName': fullName,
-      'gender': gender,
-      'specalization': specialization,
-      'year': year,
-      'schedule': schedule,
-      'phone': phone,
-      'email': email,
-      'userid': userid,
-      'facultyid': facultyid,
-      'imagePath': imagePath,
-    };
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
-  factory TeacherModel.fromJson(Map<String, dynamic> json) {
-    return TeacherModel(
-      id: json['id'],
-      teacherid: json['teacherid'],
-      fullName: json['fullName'],
-      gender: json['gender'],
-      specialization: json['specialization'],
-      year: json['year'],
-      schedule: json['schedule'],
-      phone: json['phone'],
-      email: json['email'],
-      userid: json['userid'],
-      facultyid: json['facultyid'],
-      imagePath: json['imagePath'],
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'gender': gender,
+        'year': year,
+        'user_id': userId,
+        'major': major,
+        'faculty': faculty,
+        'schedule': schedule,
+        'avatar_url': avatarUrl,
+        'created_at': createdAt,
+      };
+}
+
+// ── Paginated wrapper ──────────────────────────────────────────────────
+class TeacherPaginated {
+  final List<Teacher> data;
+  final int currentPage;
+  final int lastPage;
+  final int total;
+
+  TeacherPaginated({
+    required this.data,
+    required this.currentPage,
+    required this.lastPage,
+    required this.total,
+  });
+
+  factory TeacherPaginated.fromJson(Map<String, dynamic> json) {
+    return TeacherPaginated(
+      data: (json['data'] as List).map((e) => Teacher.fromJson(e)).toList(),
+      currentPage: _parseInt(json['current_page']) ?? 1,
+      lastPage: _parseInt(json['last_page']) ?? 1,
+      total: _parseInt(json['total']) ?? 0,
     );
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 }
