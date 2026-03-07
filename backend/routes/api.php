@@ -16,16 +16,23 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // Protected routes
+// routes/api.php
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Profile management
     Route::put('/user/profile-information', [ProfileController::class, 'updateProfile']);
     Route::put('/user/password', [ProfileController::class, 'updatePassword']);
     Route::post('/user/profile-photo', [ProfileController::class, 'updateProfilePhoto']);
     Route::delete('/user/profile-photo', [ProfileController::class, 'deleteProfilePhoto']);
 
-    // Add your custom API endpoints here
-    Route::apiResource('teachers', TeacherController::class);
+    // ← add ->names() to prefix API route names differently
+    Route::apiResource('teachers', TeacherController::class)
+        ->names([
+            'index'   => 'api.teachers.index',
+            'store'   => 'api.teachers.store',
+            'show'    => 'api.teachers.show',
+            'update'  => 'api.teachers.update',
+            'destroy' => 'api.teachers.destroy',
+        ]);
 });
