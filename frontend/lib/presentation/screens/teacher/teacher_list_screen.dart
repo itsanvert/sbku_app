@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/model/teacher_model.dart';
+import 'package:sbku_app/presentation/screens/teacher/show_teacher.dart';
 import 'package:sbku_app/service/teacher_service.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
@@ -91,51 +92,6 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
       .where((s) => s.isNotEmpty)
       .toSet()
       .toList();
-
-  // ── Delete ────────────────────────────────────────────────────────
-  void _showDeleteDialog(Teacher teacher) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('លុបគ្រូ'),
-        content: Text('តើអ្នកប្រាកដថាចង់លុប ${teacher.name} ឬទេ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('បោះបង់'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await _service.deleteTeacher(teacher.id);
-                setState(
-                    () => _teachers.removeWhere((t) => t.id == teacher.id));
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${teacher.name} ត្រូវបានលុបដោយជោគជ័យ'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Error: $e'),
-                        backgroundColor: Colors.red),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('លុប'),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -242,9 +198,14 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
                                   avatarBackgroundColor: Colors.deepOrange,
                                   avatarTextColor:
                                       const Color.fromARGB(255, 255, 255, 255),
-                                  onTap: () {
-                                    // Navigator.push(...)
-                                  },
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ShowTeacherScreen(
+                                        teacherId: teacher.id,
+                                      ),
+                                    ),
+                                  ),
                                 );
                               },
                             ),
