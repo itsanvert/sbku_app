@@ -21,9 +21,11 @@ Route::get('/flux-test', function () {
     return view('flux-test');
 });
 
+    Route::get('/teachers', TeacherIndex::class)->name('teachers.index'); // ← same path = conflict
 
 Route::middleware(['auth', 'verified'])->group(function () {
+
     Route::get('/users', UserIndex::class)->name('users.index');
-    Route::get('/teachers', TeacherIndex::class)->name('teachers.index');
+
 });
 

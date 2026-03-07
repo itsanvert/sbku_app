@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
+import 'package:sbku_app/providers/auth_provider.dart';
 
 enum AppBarType {
   home, // Logo + Title + Actions
@@ -41,7 +43,6 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.customScaleFactor,
   });
 
-  // Home header factory constructor
   factory AppBarWidget.home({
     Key? key,
     String? logoPath,
@@ -55,7 +56,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     return AppBarWidget(
       key: key,
       type: AppBarType.home,
-      logoPath: logoPath ?? 'assets/images/sbku-logo.svg',
+      logoPath: logoPath ?? 'assets/images/logo.jpg',
       title: title ?? 'សាកលវិទ្យាល័យសម្តេចព្រះមហាសង្ឃរាជ បួរ គ្រី',
       subtitle: subtitle ?? 'Samdech Preah Mahasangharajah Bour Kry University',
       actions: actions,
@@ -65,7 +66,6 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // Simple header factory constructor
   factory AppBarWidget.simple({
     Key? key,
     required String title,
@@ -89,7 +89,6 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // Custom header factory constructor
   factory AppBarWidget.custom({
     Key? key,
     required String title,
@@ -120,7 +119,6 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   double _getScaleFactor(double screenWidth) {
     if (customScaleFactor != null) return customScaleFactor!;
     if (!enableScaling) return 1.0;
-
     if (screenWidth < 360) return 0.85;
     if (screenWidth < 420) return 0.95;
     return 1.0;
@@ -129,11 +127,16 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildLeading(BuildContext context) {
     switch (type) {
       case AppBarType.home:
+        // ── Use Image.asset for .jpg/.png logos ──────────────────
         return Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 4),
-          child: SvgPicture.asset(
+          child: Image.asset(
             logoPath!,
             fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback if asset is missing
+              return const Icon(Icons.school, color: Colors.white, size: 36);
+            },
           ),
         );
       case AppBarType.simple:
@@ -198,9 +201,22 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  List<Widget> _buildActions() {
+  List<Widget> _buildActions(BuildContext context) {
     if (type == AppBarType.home && actions == null) {
       return [
+        IconButton(
+          icon: const Icon(Icons.logout, size: 26),
+          color: Colors.white,
+          onPressed: () async {
+            await context.read<AuthProvider>().logout();
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            }
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.notifications_outlined, size: 26),
           color: Colors.white,
@@ -234,7 +250,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       ),
       leading: _buildLeading(context),
       title: _buildTitle(),
-      actions: _buildActions(),
+      actions: _buildActions(context),
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
