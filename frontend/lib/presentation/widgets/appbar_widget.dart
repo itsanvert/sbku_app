@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
+import 'package:sbku_app/providers/auth_provider.dart';
 
 enum AppBarType {
   home, // Logo + Title + Actions
@@ -198,9 +201,22 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  List<Widget> _buildActions() {
+  List<Widget> _buildActions(BuildContext context) {
     if (type == AppBarType.home && actions == null) {
       return [
+        IconButton(
+          icon: const Icon(Icons.logout, size: 26),
+          color: Colors.white,
+          onPressed: () async {
+            await context.read<AuthProvider>().logout();
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            }
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.notifications_outlined, size: 26),
           color: Colors.white,
@@ -234,7 +250,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       ),
       leading: _buildLeading(context),
       title: _buildTitle(),
-      actions: _buildActions(),
+      actions: _buildActions(context),
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
