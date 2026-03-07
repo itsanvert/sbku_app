@@ -142,4 +142,5 @@ class UserIndex extends Component
     {
         return view('livewire.users.user-index')->layout('layouts.app');
     }
+    
 }

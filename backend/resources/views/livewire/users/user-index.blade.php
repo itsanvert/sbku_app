@@ -31,6 +31,8 @@
                             <flux:select.option value="">All Roles</flux:select.option>
                             <flux:select.option value="admin">Admin</flux:select.option>
                             <flux:select.option value="user">User</flux:select.option>
+                            <flux:select.option value="student">Student</flux:select.option>
+                            <flux:select.option value="teacher">Teacher</flux:select.option>
                         </flux:select>
 
                         @if(count($selected) > 0)
@@ -100,6 +102,10 @@
                                     <td class="px-4 py-3">
                                         @if(($user->role ?? 'user') === 'admin')
                                             <flux:badge color="red" size="sm">Admin</flux:badge>
+                                        @elseif(($user->role ?? 'user') === 'teacher')
+                                            <flux:badge color="green" size="sm">Teacher</flux:badge>
+                                        @elseif(($user->role ?? 'user') === 'student')
+                                            <flux:badge color="yellow" size="sm">Student</flux:badge>
                                         @else
                                             <flux:badge color="blue" size="sm">User</flux:badge>
                                         @endif

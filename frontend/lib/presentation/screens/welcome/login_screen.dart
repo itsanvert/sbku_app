@@ -5,7 +5,6 @@ import 'package:sbku_app/providers/auth_provider.dart';
 
 import 'register_screen.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -64,11 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo
-                  Icon(
-                    Icons.lock_outline,
-                    size: 100,
-                    color: Theme.of(context).primaryColor,
+                  Image.asset(
+                    'assets/images/logo.jpg',
+                    height: MediaQuery.of(context).size.height * 0.15,
                   ),
                   const SizedBox(height: 24),
 
@@ -86,7 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Colors.grey[600],
                         ),
-                        
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -186,22 +182,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Don't have an account? ",
+                        "Please contact to admin to create an account",
                         style: TextStyle(color: Colors.grey[600]),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Register',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      // TextButton(
+                      //   onPressed: () {
+                      //     Navigator.of(context).push(
+                      //       MaterialPageRoute(
+                      //         builder: (_) => const RegisterScreen(),
+                      //       ),
+                      //     );
+                      //   },
+                      //   child: const Text(
+                      //     'Register',
+                      //     style: TextStyle(fontWeight: FontWeight.bold),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ],

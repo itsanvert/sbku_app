@@ -29,7 +29,7 @@ class UserEdit extends Component
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $this->userId,
             'password' => 'nullable|min:8',
-            'role'     => 'required|in:admin,user',
+            'role'     => 'required|in:admin,user,student,teacher',
         ]);
 
         $data = [

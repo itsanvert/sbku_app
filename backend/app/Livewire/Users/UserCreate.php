@@ -17,7 +17,7 @@ class UserCreate extends Component
         'name'     => 'required|string|max:255',
         'email'    => 'required|email|unique:users,email',
         'password' => 'required|min:8',
-        'role'     => 'required|in:admin,user',
+        'role'     => 'required|in:admin,user,student,teacher',
     ];
 
     public function save()
