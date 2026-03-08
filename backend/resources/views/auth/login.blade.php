@@ -93,57 +93,9 @@
         <div class="px-8 py-3 flex items-center justify-between">
 
             {{-- Left: Brand --}}
-          {{-- Left: Brand --}}
-<div class="text-sm text-gray-600 relative inline-block">
-    &copy; {{ date('Y') }}
-    <span class="relative inline-block group/team cursor-pointer">
-        <span class="font-semibold text-gray-800 border-b border-dashed border-gray-400 group-hover/team:border-gray-700 transition-colors duration-200">
-            Vert San's Team
-        </span>
-
-        {{-- Hover Popup --}}
-        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden
-                    opacity-0 invisible translate-y-2
-                    group-hover/team:opacity-100 group-hover/team:visible group-hover/team:translate-y-0
-                    transition-all duration-300 ease-out z-50">
-
-            {{-- Header --}}
-            <div class="bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-3">
-                <p class="text-white text-xs font-semibold tracking-widest uppercase">Our Team</p>
+            <div class="text-sm text-gray-600">
+                &copy; {{ date('Y') }} From Vert San. All rights reserved.
             </div>
-
-            {{-- Members List --}}
-            <ul class="divide-y divide-gray-50 px-1 py-1">
-                @php
-                    $members = [
-                        ['name' => 'Vert San',     'role' => 'Project Manager and Developer',   'avatar' => 'VS', 'color' => 'from-violet-500 to-purple-700'],
-                        ['name' => 'Sina Horng', 'role' => 'UI/UX Designer and Developer',   'avatar' => 'AN', 'color' => 'from-pink-400 to-rose-600'],
-                        ['name' => 'Sovannarak Chhoam',     'role' => 'Developer', 'avatar' => 'BT', 'color' => 'from-blue-400 to-blue-700'],
-                        ['name' => 'Yuna Yun',    'role' => 'QA and Developer',     'avatar' => 'CL', 'color' => 'from-emerald-400 to-teal-600'],
-                    ];
-                @endphp
-
-                @foreach($members as $member)
-                <li class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors duration-150">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br {{ $member['color'] }} flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <span class="text-white text-xs font-bold">{{ $member['avatar'] }}</span>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-gray-900 text-xs font-semibold leading-tight truncate">{{ $member['name'] }}</p>
-                        <p class="text-gray-400 text-[10px] leading-tight truncate">{{ $member['role'] }}</p>
-                    </div>
-                </li>
-                @endforeach
-            </ul>
-
-            {{-- Arrow --}}
-            <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-px overflow-hidden w-4 h-2.5">
-                <div class="w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45 -translate-y-1.5 mx-auto shadow-sm"></div>
-            </div>
-        </div>
-    </span>
-    . All rights reserved.
-</div>
         </div>
     </div>
 </footer>

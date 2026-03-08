@@ -12,12 +12,12 @@
         </div>
 
         {{-- Form --}}
-        <form wire:submit.prevent="update" class="p-6 space-y-6">
+        <form wire:submit.prevent="save" class="p-6 space-y-6">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <flux:input wire:model="name"
-                            label="Full Name"
+                            label="Name"
                             placeholder="e.g. Jane Doe" />
 
                 <flux:input wire:model="email"
@@ -98,8 +98,8 @@
                 </flux:button>
 
                 <flux:button type="submit" variant="primary">
-                    <span wire:loading.remove wire:target="update">Update Teacher</span>
-                    <span wire:loading wire:target="update">Updating...</span>
+                    <span wire:loading.remove wire:target="save">Save Changes</span>
+                    <span wire:loading wire:target="save">Saving...</span>
                 </flux:button>
             </div>
 

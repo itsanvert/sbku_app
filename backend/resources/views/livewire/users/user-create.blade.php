@@ -6,7 +6,7 @@
         </div>
 
         <form wire:submit="save" class="p-6 space-y-5">
-            <flux:input wire:model="name" label="Full Name" placeholder="e.g. Jane Doe" />
+            <flux:input wire:model="name" label="Name" placeholder="e.g. Jane Doe" />
 
             <flux:input wire:model="email" type="email" label="Email Address" placeholder="jane@example.com" />
 

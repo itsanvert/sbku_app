@@ -20,11 +20,11 @@ return new class extends Migration
                   ->onDelete('cascade');
 
             // Teacher-specific fields
-            $table->string('name');
+            $table->string('name')->constrained('users', 'name')->onDelete('cascade');
             $table->string('gender');
             $table->foreignId('major_id')->constrained('majors')->onDelete('cascade');
             $table->string('year');
-            $table->string('role');
+            $table->string('role')  ;
             $table->foreignId('schedule_id')->constrained('schedules')->onDelete('cascade');
             $table->string('phone');
             $table->foreignId('faculty_id')->constrained('faculties')->onDelete('cascade');
