@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Livewire\Teachers;
+namespace App\Livewire\Students;
 
-use App\Models\Teacher;
 use Livewire\Component;
+use App\Models\Student;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
 
-class TeacherIndex extends Component
+class StudentIndex extends Component
 {
     use WithPagination;
 
@@ -21,22 +21,22 @@ class TeacherIndex extends Component
 
     public $showCreateModal = false;
     public $showEditModal   = false;
-    public $editTeacherId      = null;
-    public $deleteTeacherId    = null;
+    public $editStudentId      = null;
+    public $deleteStudentId    = null;
 
     protected $listeners = [
-        'teacherCreated' => 'handleTeacherCreated',
-        'teacherUpdated' => 'handleTeacherUpdated',
+        'studentCreated' => 'handleStudentCreated',
+        'studentUpdated' => 'handleStudentUpdated',
         'closeModal'  => 'closeModals',
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
+     public function updatingSearch() { $this->resetPage(); }
     public function updatingRole() { $this->resetPage(); }
 
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = $this->teachers->pluck('id')->map(fn($id) => (string)$id)->toArray();
+            $this->selected = $this->students->pluck('id')->map(fn($id) => (string)$id)->toArray();
         } else {
             $this->selected = [];
         }
@@ -54,9 +54,9 @@ class TeacherIndex extends Component
     }
 
     #[Computed]
-    public function teachers()
+    public function students()
     {
-        return Teacher::query()
+        return Student::query()
             ->when($this->search, function ($q) {
                 $q->where(function($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
@@ -69,8 +69,7 @@ class TeacherIndex extends Component
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(10);
     }
-
-    public function openCreateModal()
+     public function openCreateModal()
     {
         $this->showEditModal   = false;
         $this->showCreateModal = true;
@@ -78,23 +77,23 @@ class TeacherIndex extends Component
 
     public function openEditModal($id)
     {
-        $this->editTeacherId      = $id;
+        $this->editStudentId      = $id;
         $this->showCreateModal = false;
         $this->showEditModal   = true;
     }
 
     public function confirmDelete($id)
     {
-        $this->deleteTeacherId = $id;
+        $this->deleteStudentId = $id;
         $this->dispatch('modal-show', name: 'confirm-delete');
     }
 
-    public function deleteTeacher()
+    public function deleteStudent()
     {
         if ($this->deleteTeacherId) {
-            Teacher::findOrFail($this->deleteTeacherId)->delete();
-            $this->deleteTeacherId = null;
-            session()->flash('message', 'Teacher deleted successfully.');
+            Student::findOrFail($this->deleteStudentId)->delete();
+            $this->deleteStudentId = null;
+            session()->flash('message', 'Student deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete');
         }
     }
@@ -143,4 +142,12 @@ class TeacherIndex extends Component
         return view('livewire.teachers.teacher-index')->layout('layouts.app');
     }
 
+
+
+
+
+    public function render()
+    {
+        return view('livewire.students.student-index');
+    }
 }
