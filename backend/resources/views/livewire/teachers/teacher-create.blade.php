@@ -18,7 +18,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <flux:input wire:model="name"
-                            label="Full Name"
+                            label="Name"
                             placeholder="e.g. Jane Doe" />
 
                 <flux:input wire:model="email"

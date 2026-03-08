@@ -140,7 +140,7 @@ class TeacherIndex extends Component
 
     public function render()
     {
-                return view('livewire.teachers.teacher-index')->layout('layouts.app');
+        return view('livewire.teachers.teacher-index')->layout('layouts.app');
     }
 
 }

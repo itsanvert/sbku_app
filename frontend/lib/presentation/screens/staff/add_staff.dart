@@ -230,8 +230,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
                 CustomTextField(
                   label: 'ឈ្មោះពេញ',
                   controller: _formController.fullNameController,
-                  validator: (v) =>
-                      _formController.validateRequired(v, 'Full Name'),
+                  validator: (v) => _formController.validateRequired(v, 'Name'),
                 ),
 
                 CustomTextField(
