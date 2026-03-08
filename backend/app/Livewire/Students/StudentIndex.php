@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Students;
 
-use Livewire\Component;
 use App\Models\Student;
+use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
 
@@ -11,32 +11,32 @@ class StudentIndex extends Component
 {
     use WithPagination;
 
-    public $search       = '';
-    public $role         = '';
-    public $sortBy        = 'id';
+    public $search = '';
+    public $role = '';
+    public $sortBy = 'id';
     public $sortDirection = 'asc';
 
-    public $selected      = [];
-    public $selectAll     = false;
+    public $selected = [];
+    public $selectAll = false;
 
     public $showCreateModal = false;
-    public $showEditModal   = false;
-    public $editStudentId      = null;
-    public $deleteStudentId    = null;
+    public $showEditModal = false;
+    public $editStudentId = null;
+    public $deleteStudentId = null;
 
     protected $listeners = [
         'studentCreated' => 'handleStudentCreated',
         'studentUpdated' => 'handleStudentUpdated',
-        'closeModal'  => 'closeModals',
+        'closeModal' => 'closeModals',
     ];
 
-     public function updatingSearch() { $this->resetPage(); }
+    public function updatingSearch() { $this->resetPage(); }
     public function updatingRole() { $this->resetPage(); }
 
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = $this->students->pluck('id')->map(fn($id) => (string)$id)->toArray();
+            $this->selected = $this->students->pluck('id')->map(fn($id) => (string) $id)->toArray();
         } else {
             $this->selected = [];
         }
@@ -47,9 +47,10 @@ class StudentIndex extends Component
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
-            $this->sortBy        = $column;
+            $this->sortBy = $column;
             $this->sortDirection = 'asc';
         }
+
         $this->resetPage();
     }
 
@@ -58,7 +59,7 @@ class StudentIndex extends Component
     {
         return Student::query()
             ->when($this->search, function ($q) {
-                $q->where(function($query) {
+                $q->where(function ($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
                           ->orWhere('email', 'like', '%' . $this->search . '%');
                 });
@@ -69,17 +70,18 @@ class StudentIndex extends Component
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(10);
     }
-     public function openCreateModal()
+
+    public function openCreateModal()
     {
-        $this->showEditModal   = false;
+        $this->showEditModal = false;
         $this->showCreateModal = true;
     }
 
     public function openEditModal($id)
     {
-        $this->editStudentId      = $id;
+        $this->editStudentId = $id;
         $this->showCreateModal = false;
-        $this->showEditModal   = true;
+        $this->showEditModal = true;
     }
 
     public function confirmDelete($id)
@@ -90,7 +92,7 @@ class StudentIndex extends Component
 
     public function deleteStudent()
     {
-        if ($this->deleteTeacherId) {
+        if ($this->deleteStudentId) {
             Student::findOrFail($this->deleteStudentId)->delete();
             $this->deleteStudentId = null;
             session()->flash('message', 'Student deleted successfully.');
@@ -103,17 +105,18 @@ class StudentIndex extends Component
         if (empty($this->selected)) {
             return;
         }
+
         $this->dispatch('modal-show', name: 'confirm-bulk-delete');
     }
 
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            Teacher::whereIn('id', $this->selected)->delete();
+            Student::whereIn('id', $this->selected)->delete();
             $count = count($this->selected);
             $this->selected = [];
             $this->selectAll = false;
-            session()->flash('message', $count . ' teachers deleted successfully.');
+            session()->flash('message', $count . ' students deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-bulk-delete');
         }
     }
@@ -121,33 +124,24 @@ class StudentIndex extends Component
     public function closeModals()
     {
         $this->showCreateModal = false;
-        $this->showEditModal   = false;
-        $this->editTeacherId      = null;
+        $this->showEditModal = false;
+        $this->editStudentId = null;
     }
 
-    public function handleTeacherCreated()
+    public function handleStudentCreated()
     {
         $this->closeModals();
-        session()->flash('message', 'Teacher created successfully.');
+        session()->flash('message', 'Student created successfully.');
     }
 
-    public function handleTeacherUpdated()
+    public function handleStudentUpdated()
     {
         $this->closeModals();
-        session()->flash('message', 'Teacher updated successfully.');
+        session()->flash('message', 'Student updated successfully.');
     }
 
     public function render()
     {
-        return view('livewire.teachers.teacher-index')->layout('layouts.app');
-    }
-
-
-
-
-
-    public function render()
-    {
-        return view('livewire.students.student-index');
+        return view('livewire.students.student-index')->layout('layouts.app');
     }
 }
