@@ -40,6 +40,7 @@ class TeacherCreate extends Component
             'name'       => 'required|string|max:255',
             'email'      => 'required|email|max:255|unique:users,email',
             'password'   => 'required|min:8',
+            'role'       => 'required|in:admin,user,student,teacher',
             'gender'     => 'required|in:male,female',
             'major_id'   => 'required|exists:majors,id',
             'year'       => 'required',
@@ -79,6 +80,7 @@ class TeacherCreate extends Component
                 'gender'     => $this->gender,
                 'major_id'   => $this->major_id,
                 'year'       => $this->year,
+                'role'       => $this->role, // ensure role is persisted
                 'schedule_id'   => $this->schedule_id,
                 'phone'      => $this->phone,
                 'faculty_id' => $this->faculty_id,

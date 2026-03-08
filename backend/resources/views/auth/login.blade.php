@@ -92,7 +92,6 @@
          style="box-shadow: 0 -1px 12px rgba(234, 88, 12, 0.06);">
         <div class="px-8 py-3 flex items-center justify-between">
 
-            {{-- Left: Brand --}}
           {{-- Left: Brand --}}
 <div class="text-sm text-gray-600 relative inline-block">
     &copy; {{ date('Y') }}
@@ -116,6 +115,7 @@
             <ul class="divide-y divide-gray-50 px-1 py-1">
                 @php
                     $members = [
+
                         ['name' => 'Vert San',     'role' => 'Project Manager and Developer',   'avatar' => 'VS', 'color' => 'from-violet-500 to-purple-700'],
                         ['name' => 'Sina Horng', 'role' => 'UI/UX Designer and Developer',   'avatar' => 'AN', 'color' => 'from-pink-400 to-rose-600'],
                         ['name' => 'Sovannarak Chhoam',     'role' => 'Developer', 'avatar' => 'BT', 'color' => 'from-blue-400 to-blue-700'],

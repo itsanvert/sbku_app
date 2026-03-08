@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Teacher extends Model
 {
+    /**
+     * Default attribute values.
+     */
+    protected $attributes = [
+        'role' => 'teacher',
+    ];
+
    protected $fillable = [
     'user_id',
     'name',

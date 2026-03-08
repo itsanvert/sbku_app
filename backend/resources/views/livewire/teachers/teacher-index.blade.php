@@ -90,7 +90,7 @@
                                             <img
                                                 class="h-7 w-7 rounded-lg object-cover ring-1 ring-zinc-200 shrink-0"
                                                 src="https://ui-avatars.com/api/?name={{ urlencode($teacher->name) }}&background=6366f1&color=ffffff&size=64&bold=true&font-size=0.4"
-                                                alt="{{ $teacher->name }}"
+                                                alt="{{ $teacher->user->name }}"
                                             />
                                             <span class="font-medium text-zinc-900 truncate">{{ $teacher->name }}</span>
                                         </div>
