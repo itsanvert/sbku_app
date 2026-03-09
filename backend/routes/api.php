@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\StudentController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -35,4 +37,13 @@ Route::middleware('auth:sanctum')->group(function () {
             'update'  => 'api.teachers.update',
             'destroy' => 'api.teachers.destroy',
         ]);
+
+    Route::apiResource('students', StudentController::class)
+        ->names([
+            'index'   => 'api.students.index',
+            'store'   => 'api.students.store',
+            'show'    => 'api.students.show',
+            'update'  => 'api.students.update',
+            'destroy' => 'api.students.destroy',    
+        ]);    
 });
