@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('shifts', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
         Schema::table('teachers', function (Blueprint $table) {
-            // ensure role has a default so inserts without role won't fail
-            $table->string('role')->default('teacher')->change();
+            $table->foreignId('shift_id')->nullable()->constrained('shifts')->onDelete('cascade');
         });
     }
 
@@ -22,8 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('shifts');
         Schema::table('teachers', function (Blueprint $table) {
-            $table->string('role')->nullable(false)->default(null)->change();
+            $table->dropForeign(['shift_id']);
+            $table->dropColumn('shift_id');
         });
     }
 };

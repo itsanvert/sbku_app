@@ -1,0 +1,193 @@
+// lib/data/dummy_data.dart
+// Centralized in-memory dummy data used across attendance and staff screens.
+// These can be replaced with real API calls once the corresponding backend
+// endpoints are ready.
+
+import 'package:sbku_app/domain/entities/attendance_entity.dart';
+import 'package:sbku_app/model/attendance_session_model.dart';
+import 'package:sbku_app/model/staff_model.dart';
+
+// ── Simple lightweight models used only for display ────────────────────────
+
+class FacultyDummy {
+  final String id;
+  final String facultyName;
+  const FacultyDummy({required this.id, required this.facultyName});
+}
+
+class ClassDummy {
+  final String id;
+  final String className;
+  const ClassDummy({required this.id, required this.className});
+}
+
+class ShiftDummy {
+  final String id;
+  final String shiftName;
+  final String startTime;
+  final String endTime;
+  const ShiftDummy({
+    required this.id,
+    required this.shiftName,
+    this.startTime = '07:00',
+    this.endTime = '11:00',
+  });
+}
+
+class MajorDummy {
+  final String id;
+  final String majorName;
+  const MajorDummy({required this.id, required this.majorName});
+}
+
+class YearDummy {
+  final String id;
+  final String yearName;
+  const YearDummy({required this.id, required this.yearName});
+}
+
+// ── Dummy faculty list ──────────────────────────────────────────────────────
+
+final List<FacultyDummy> dummyFaculties = [
+  const FacultyDummy(id: 'F001', facultyName: 'មហាវិទ្យាល័យបច្ចេកវិទ្យា'),
+  const FacultyDummy(id: 'F002', facultyName: 'មហាវិទ្យាល័យគ្រប់គ្រង'),
+  const FacultyDummy(id: 'F003', facultyName: 'មហាវិទ្យាល័យសេដ្ឋកិច្ច'),
+];
+
+// ── Dummy class list ────────────────────────────────────────────────────────
+
+final List<ClassDummy> dummyClasses = [
+  const ClassDummy(id: 'C001', className: 'IT-Y1-A'),
+  const ClassDummy(id: 'C002', className: 'IT-Y2-A'),
+  const ClassDummy(id: 'C003', className: 'BM-Y1-A'),
+];
+
+// ── Dummy shift list ────────────────────────────────────────────────────────
+
+final List<ShiftDummy> dummyShifts = [
+  const ShiftDummy(id: 'SH1', shiftName: 'ព្រឹក (Morning)', startTime: '07:00', endTime: '11:00'),
+  const ShiftDummy(id: 'SH2', shiftName: 'រសៀល (Afternoon)', startTime: '13:00', endTime: '17:00'),
+  const ShiftDummy(id: 'SH3', shiftName: 'ល្ងាច (Evening)', startTime: '17:30', endTime: '21:00'),
+];
+
+// ── Dummy major list ────────────────────────────────────────────────────────
+
+final List<MajorDummy> dummyMajors = [
+  const MajorDummy(id: 'M01', majorName: 'Computer Science'),
+  const MajorDummy(id: 'M02', majorName: 'Business Administration'),
+  const MajorDummy(id: 'M03', majorName: 'Accounting'),
+];
+
+// ── Dummy year list ─────────────────────────────────────────────────────────
+
+final List<YearDummy> dummyYears = [
+  const YearDummy(id: 'Y1', yearName: 'ឆ្នាំទី 1'),
+  const YearDummy(id: 'Y2', yearName: 'ឆ្នាំទី 2'),
+  const YearDummy(id: 'Y3', yearName: 'ឆ្នាំទី 3'),
+  const YearDummy(id: 'Y4', yearName: 'ឆ្នាំទី 4'),
+];
+
+// ── Dummy student name lookup ────────────────────────────────────────────────
+
+final Map<String, String> _studentNameMap = {
+  'S001': 'Sokha Chan',
+  'S002': 'Borey Oun',
+  'S003': 'Sreyleak Kim',
+};
+
+String getStudentNameById(String id) =>
+    _studentNameMap[id] ?? 'Student $id';
+
+// ── In-memory attendance session list ───────────────────────────────────────
+// A mutable list so screens can update session state locally.
+
+List<AttendanceSession> attendanceSessions = [
+  AttendanceSession(
+    id: 'AS001',
+    teacherId: 'T001',
+    facultyId: 'F001',
+    majorId: 'M001',
+    classId: 'C001',
+    yearId: '1',
+    shiftId: 'SH001',
+    latitude: 11.5689,
+    longitude: 104.9210,
+    startTime: DateTime.now().subtract(const Duration(hours: 1)),
+    isActive: true,
+    attendedStudentIds: ['S001'],
+  ),
+];
+
+/// Placeholder: generate attendance records from a closed session.
+/// Replace with a real API call when the backend is ready.
+void generateAttendanceFromSession(AttendanceSession session) {
+  // TODO: POST to /api/attendance-sessions/{id}/close or similar
+}
+
+// ── Dummy staff list ─────────────────────────────────────────────────────────
+
+List<StaffModel> dummyStaffs = [
+  StaffModel(
+    id: '1',
+    staffid: 'STF001',
+    fullName: 'Dara Prak',
+    specalization: 'Computer Science',
+    department: 'IT',
+    phone: '012-345-678',
+    email: 'dara@sbku.edu',
+    userid: 'U001',
+  ),
+  StaffModel(
+    id: '2',
+    staffid: 'STF002',
+    fullName: 'Sophea Lim',
+    specalization: 'Business Administration',
+    department: 'Management',
+    phone: '017-654-321',
+    email: 'sophea@sbku.edu',
+    userid: 'U002',
+  ),
+];
+
+// ── Dummy attendance entity list ─────────────────────────────────────────────
+// Represents finalized attendance records (one per student per session).
+
+final List<AttendanceEntity> dummyAttendanceEntities = [
+  AttendanceEntity(
+    id: 'ATT001',
+    studentId: 'S001',
+    studentName: 'Sokha Chan',
+    facultyId: 'F001',
+    majorId: 'M01',
+    shiftId: 'SH1',
+    classId: 'C001',
+    yearId: 'Y1',
+    date: DateTime.now().subtract(const Duration(days: 1)),
+    isPresent: true,
+  ),
+  AttendanceEntity(
+    id: 'ATT002',
+    studentId: 'S002',
+    studentName: 'Borey Oun',
+    facultyId: 'F001',
+    majorId: 'M01',
+    shiftId: 'SH1',
+    classId: 'C001',
+    yearId: 'Y1',
+    date: DateTime.now().subtract(const Duration(days: 1)),
+    isPresent: false,
+  ),
+  AttendanceEntity(
+    id: 'ATT003',
+    studentId: 'S003',
+    studentName: 'Sreyleak Kim',
+    facultyId: 'F002',
+    majorId: 'M02',
+    shiftId: 'SH2',
+    classId: 'C003',
+    yearId: 'Y2',
+    date: DateTime.now(),
+    isPresent: true,
+  ),
+];
+

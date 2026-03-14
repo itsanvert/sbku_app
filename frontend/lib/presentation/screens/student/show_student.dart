@@ -1,65 +1,278 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
-import '../../../data/dummy_students.dart';
+import 'package:sbku_app/model/student_model.dart';
+import 'package:sbku_app/service/student_service.dart';
 
 class ShowStudentScreen extends StatelessWidget {
   final String studentId;
+
   const ShowStudentScreen({super.key, required this.studentId});
+
+  static const _primary = Color(0xFF6366F1); // indigo theme for students
 
   @override
   Widget build(BuildContext context) {
-    final student = dummyStudents.firstWhere((s) => s.id == studentId);
+    final StudentService service = StudentService();
+    final int? id = int.tryParse(studentId);
+
+    if (id == null) {
+      return const Scaffold(body: Center(child: Text('Invalid Student ID')));
+    }
 
     return Scaffold(
-      appBar: AppBarWidget(
-        title: "ព័ត៌មានសិស្ស",
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.share)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.person)),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.grey,
-              child: Icon(Icons.person),
-            ),
-            const SizedBox(height: 20),
-            _row('Student ID', student.id),
-            _row('Name', student.name),
-            _row('Gender', student.gender == 'M' ? 'Male' : 'Female'),
-            _row('Date of Birth', student.dob),
-            _row('Faculty', student.faculty),
-            _row('Major', student.major),
-            _row('Shift', student.shift),
-            _row('Generation', student.generation),
-            _row('Year', student.year),
-            _row('Email', student.email),
-          ],
-        ),
+      backgroundColor: Colors.grey.shade100,
+      body: FutureBuilder<Student>(
+        future: service.getStudent(id),
+        builder: (context, snapshot) {
+          // ── Loading ──────────────────────────────────────────────
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // ── Error ────────────────────────────────────────────────
+          if (snapshot.hasError || !snapshot.hasData) {
+            return Scaffold(
+              appBar: AppBar(backgroundColor: _primary),
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 60, color: Colors.grey[400]),
+                    const SizedBox(height: 12),
+                    Text(
+                      snapshot.hasError
+                          ? 'Error: ${snapshot.error}'
+                          : 'រកមិនឃើញសិស្ស',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('ត្រឡប់ក្រោយ'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // ── Data ─────────────────────────────────────────────────
+          final Student s = snapshot.data!;
+
+          return CustomScrollView(
+            slivers: [
+              // ── Hero AppBar ──────────────────────────────────────
+              SliverAppBar(
+                expandedHeight: 260,
+                pinned: true,
+                backgroundColor: _primary,
+                iconTheme: const IconThemeData(color: Colors.white),
+                actions: [
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.share, color: Colors.white),
+                  ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 48),
+                        // Avatar
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 52,
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage:
+                                (s.avatarUrl != null && s.avatarUrl!.isNotEmpty)
+                                    ? NetworkImage(s.avatarUrl!)
+                                    : NetworkImage(
+                                        'https://ui-avatars.com/api/?name=${Uri.encodeComponent(s.name)}&background=6366f1&color=ffffff&size=128&bold=true',
+                                      ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Name
+                        Text(
+                          s.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // Email badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            s.email ?? '—',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                title: const Text('ព័ត៌មានសិស្ស',
+                    style: TextStyle(color: Colors.white)),
+              ),
+
+              // ── Body ─────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionTitle('ព័ត៌មានទូទៅ'),
+                      const SizedBox(height: 8),
+                      _card([
+                        _infoRow(Icons.badge_outlined, 'ឈ្មោះពេញ', s.name),
+                        _infoRow(Icons.wc, 'ភេទ',
+                            s.gender == 'M' ? 'Male' : s.gender ?? '—'),
+                        _infoRow(Icons.cake_outlined, 'ថ្ងៃខែឆ្នាំកំណើត',
+                            s.dob ?? '—'),
+                        _infoRow(
+                            Icons.email_outlined, 'អ៊ីមែល', s.email ?? '—'),
+                      ]),
+                      const SizedBox(height: 20),
+                      _sectionTitle('ព័ត៌មានសិក្សា'),
+                      const SizedBox(height: 8),
+                      _card([
+                        _infoRow(Icons.account_balance_outlined,
+                            'មហាវិទ្យាល័យ', s.faculty ?? '—'),
+                        _infoRow(
+                            Icons.school_outlined, 'ឯកទេស', s.major ?? '—'),
+                        _infoRow(Icons.schedule_outlined, 'វេន', s.shift ?? '—'),
+                        _infoRow(Icons.auto_stories_outlined, 'ជំនាន់',
+                            s.generation ?? '—'),
+                        _infoRow(Icons.calendar_today_outlined, 'ឆ្នាំ',
+                            s.year?.toString() ?? '—'),
+                      ]),
+                      const SizedBox(height: 20),
+                      _sectionTitle('ព័ត៌មានប្រព័ន្ធ'),
+                      const SizedBox(height: 8),
+                      _card([
+                        _infoRow(Icons.tag, 'Student ID', '#${s.id}',
+                            last: true),
+                      ]),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _row(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 1,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+  // ── Helpers ────────────────────────────────────────────────────────
+
+  Widget _sectionTitle(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: Colors.grey.shade500,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+
+  Widget _card(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          Expanded(flex: 2, child: Text(value)),
         ],
       ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value,
+      {bool last = false}) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: _primary, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A2E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!last) Divider(height: 1, indent: 56, color: Colors.grey.shade100),
+      ],
     );
   }
 }

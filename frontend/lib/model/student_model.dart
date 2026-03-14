@@ -1,98 +1,106 @@
-// model/student_model.dart
-class StudentModel {
-  final String id;
+class Student {
+  final int id;
   final String name;
-  final String gender;
-  final String dob;
-  final String faculty;
-  final String major;
-  final String year;
-  final String shift;
-  final String generation;
-  final String email;
-  final String? profileImagePath; // Added for image storage
+  final String? email;
+  final String? gender;
+  final String? dob;
+  final int? userId;
+  final String? faculty;
+  final String? major;
+  final int? year;
+  final String? shift;
+  final String? generation;
+  final String? avatarUrl;
+  final String? createdAt;
 
-  StudentModel({
+  Student({
     required this.id,
     required this.name,
-    required this.gender,
-    required this.dob,
-    required this.faculty,
-    required this.major,
-    required this.year,
-    required this.shift,
-    required this.generation,
-    required this.email,
-    this.profileImagePath,
+    this.email,
+    this.gender,
+    this.dob,
+    this.userId,
+    this.faculty,
+    this.major,
+    this.year,
+    this.shift,
+    this.generation,
+    this.avatarUrl,
+    this.createdAt,
   });
 
-  // Copy with method for easy updates
-  StudentModel copyWith({
-    String? id,
-    String? name,
-    String? gender,
-    String? dob,
-    String? faculty,
-    String? major,
-    String? year,
-    String? shift,
-    String? generation,
-    String? email,
-    String? profileImagePath,
-  }) {
-    return StudentModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      gender: gender ?? this.gender,
-      dob: dob ?? this.dob,
-      faculty: faculty ?? this.faculty,
-      major: major ?? this.major,
-      year: year ?? this.year,
-      shift: shift ?? this.shift,
-      generation: generation ?? this.generation,
-      email: email ?? this.email,
-      profileImagePath: profileImagePath ?? this.profileImagePath,
+  factory Student.fromJson(Map<String, dynamic> json) {
+    return Student(
+      id: _parseInt(json['id'])!,
+      userId: _parseInt(json['user_id']),
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? json['user']?['email']?.toString(),
+      gender: json['gender']?.toString(),
+      dob: json['dob']?.toString(),
+      faculty: json['faculty']?['name']?.toString() ?? json['faculty']?.toString(),
+      major: json['major']?['name']?.toString() ?? json['major']?.toString(),
+      year: _parseInt(json['year']),
+      shift: json['shift']?.toString(),
+      generation: json['generation']?.toString(),
+      avatarUrl: json['avatar_url']?.toString(),
+      createdAt: json['created_at']?.toString(),
     );
   }
 
-  // To JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'gender': gender,
-      'dob': dob,
-      'faculty': faculty,
-      'major': major,
-      'year': year,
-      'shift': shift,
-      'generation': generation,
-      'email': email,
-      'profileImagePath': profileImagePath,
-    };
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
-  // From JSON
-  factory StudentModel.fromJson(Map<String, dynamic> json) {
-    return StudentModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      gender: json['gender'] as String,
-      dob: json['dob'] as String,
-      faculty: json['faculty'] as String,
-      major: json['major'] as String,
-      year: json['year'] as String,
-      shift: json['shift'] as String,
-      generation: json['generation'] as String,
-      email: json['email'] as String,
-      profileImagePath: json['profileImagePath'] as String?,
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'email': email,
+        'gender': gender,
+        'dob': dob,
+        'user_id': userId,
+        'faculty': faculty,
+        'major': major,
+        'year': year,
+        'shift': shift,
+        'generation': generation,
+        'avatar_url': avatarUrl,
+        'created_at': createdAt,
+      };
+}
+
+// For backward compatibility if needed:
+typedef StudentModel = Student;
+
+// ── Paginated wrapper ──────────────────────────────────────────────────
+class StudentPaginated {
+  final List<Student> data;
+  final int currentPage;
+  final int lastPage;
+  final int total;
+
+  StudentPaginated({
+    required this.data,
+    required this.currentPage,
+    required this.lastPage,
+    required this.total,
+  });
+
+  factory StudentPaginated.fromJson(Map<String, dynamic> json) {
+    return StudentPaginated(
+      data: (json['data'] as List).map((e) => Student.fromJson(e)).toList(),
+      currentPage: _parseInt(json['current_page']) ?? 1,
+      lastPage: _parseInt(json['last_page']) ?? 1,
+      total: _parseInt(json['total']) ?? 0,
     );
   }
 
-  @override
-  String toString() {
-    return 'StudentModel(id: $id, name: $name, gender: $gender, dob: $dob, '
-        'faculty: $faculty, major: $major, year: $year, shift: $shift, '
-        'generation: $generation, email: $email, profileImagePath: $profileImagePath)';
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 }
