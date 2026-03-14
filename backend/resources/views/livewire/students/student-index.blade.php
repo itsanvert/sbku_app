@@ -94,8 +94,8 @@
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-2.5">
                                             <img class="h-7 w-7 rounded-lg object-cover ring-1 ring-zinc-200 shrink-0"
-                                                src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=6366f1&color=ffffff&size=64&bold=true&font-size=0.4"
-                                                alt="{{ $student->user->name }}" />
+                                                src="{{ $student->profile_image_path ? asset('storage/' . $student->profile_image_path) : 'https://ui-avatars.com/api/?name=' . urlencode($student->name) . '&background=6366f1&color=ffffff&size=64&bold=true&font-size=0.4' }}"
+                                                alt="{{ $student->name }}" />
                                             <span class="font-medium text-zinc-900 truncate">{{ $student->name }}</span>
                                         </div>
                                     </td>

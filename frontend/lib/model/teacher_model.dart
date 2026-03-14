@@ -9,6 +9,7 @@ class Teacher {
   final String? major;
   final String? faculty;
   final String? schedule;
+  final String? shift;
   final String? avatarUrl;
   final String? createdAt;
 
@@ -23,6 +24,7 @@ class Teacher {
     this.major,
     this.faculty,
     this.schedule,
+    this.shift,
     this.avatarUrl,
     this.createdAt,
   });
@@ -62,6 +64,7 @@ class Teacher {
         'major': major,
         'faculty': faculty,
         'schedule': schedule,
+        'shift': shift,
         'avatar_url': avatarUrl,
         'created_at': createdAt,
       };

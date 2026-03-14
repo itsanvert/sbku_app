@@ -102,8 +102,8 @@ class ShowTeacherScreen extends StatelessWidget {
                             radius: 52,
                             backgroundColor: Colors.grey.shade200,
                             backgroundImage:
-                                (t.avatarUrl != null && t.avatarUrl!.isNotEmpty)
-                                    ? NetworkImage(t.avatarUrl!)
+                                (t.profilePicture != null && t.profilePicture!.isNotEmpty)
+                                    ? NetworkImage(t.profilePicture!)
                                     : NetworkImage(
                                         'https://ui-avatars.com/api/?name=${Uri.encodeComponent(t.name)}&background=FF5722&color=ffffff&size=128&bold=true',
                                       ),
@@ -170,8 +170,10 @@ class ShowTeacherScreen extends StatelessWidget {
                             t.faculty ?? '—'),
                         _infoRow(Icons.calendar_today_outlined, 'ឆ្នាំ',
                             t.year?.toString() ?? '—'),
-                        _infoRow(Icons.schedule_outlined, 'កាលវិភាគ',
+                        _infoRow(Icons.schedule_outlined, 'កាលបរិច្ឆេទ',
                             t.schedule ?? '—'),
+                        _infoRow(Icons.schedule_outlined, 'កាលវិភាគ',
+                            t.shift ?? '—'),
                       ]),
                       const SizedBox(height: 20),
                       _sectionTitle('ព័ត៌មានប្រព័ន្ធ'),

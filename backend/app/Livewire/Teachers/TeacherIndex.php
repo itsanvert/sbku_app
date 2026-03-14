@@ -57,14 +57,17 @@ class TeacherIndex extends Component
     public function teachers()
     {
         return Teacher::query()
+            ->with('user')
             ->when($this->search, function ($q) {
-                $q->where(function($query) {
+                $q->whereHas('user', function($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
                           ->orWhere('email', 'like', '%' . $this->search . '%');
                 });
             })
             ->when($this->role, function ($q) {
-                $q->where('role', $this->role);
+                $q->whereHas('user', function($query) {
+                    $query->where('role', $this->role);
+                });
             })
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(10);
