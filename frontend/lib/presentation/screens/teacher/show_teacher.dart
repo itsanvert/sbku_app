@@ -102,8 +102,8 @@ class ShowTeacherScreen extends StatelessWidget {
                             radius: 52,
                             backgroundColor: Colors.grey.shade200,
                             backgroundImage:
-                                (t.profilePicture != null && t.profilePicture!.isNotEmpty)
-                                    ? NetworkImage(t.profilePicture!)
+                                (t.avatarUrl != null && t.avatarUrl!.isNotEmpty)
+                                    ? NetworkImage(t.avatarUrl!)
                                     : NetworkImage(
                                         'https://ui-avatars.com/api/?name=${Uri.encodeComponent(t.name)}&background=FF5722&color=ffffff&size=128&bold=true',
                                       ),
