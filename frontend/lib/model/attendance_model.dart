@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/data/dummy_class.dart';
-import 'package:sbku_app/data/dummy_major.dart';
-import 'package:sbku_app/data/dummy_shirt.dart';
+import 'package:sbku_app/data/dummy_data.dart';
 import 'package:sbku_app/domain/entities/attendance_entity.dart';
-import 'package:sbku_app/data/dummy_faculty.dart';
-import 'package:sbku_app/data/dummy_year.dart';
-
 class AttendanceModel {
   final AttendanceEntity entity;
   // UI-resolved values

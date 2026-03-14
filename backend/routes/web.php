@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Users\UserIndex;
+use App\Livewire\Students\StudentIndex;
 use App\Livewire\Teachers\TeacherIndex;
 Route::get('/', function () {
     return view('auth.login');
@@ -20,11 +21,10 @@ Route::middleware([
 Route::get('/flux-test', function () {
     return view('flux-test');
 });
-
-    Route::get('/teachers', TeacherIndex::class)->name('teachers.index'); // ← same path = conflict
-
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    Route::get('/teachers', TeacherIndex::class)->name('teachers.index'); // ← same path = conflict
+    Route::get('/students', StudentIndex::class)->name('students.index');
     Route::get('/users', UserIndex::class)->name('users.index');
 
 });

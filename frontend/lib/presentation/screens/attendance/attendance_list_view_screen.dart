@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/data/dummy_attendance.dart';
-import 'package:sbku_app/data/dummy_class.dart';
-import 'package:sbku_app/data/dummy_faculty.dart';
-import 'package:sbku_app/data/dummy_major.dart';
-import 'package:sbku_app/data/dummy_shirt.dart';
-import 'package:sbku_app/data/dummy_year.dart';
+import 'package:sbku_app/data/dummy_data.dart';
 import 'package:sbku_app/model/attendance_model.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/empty_state_widget.dart';

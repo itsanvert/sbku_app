@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/data/dummy_staff.dart';
+import 'package:sbku_app/data/dummy_data.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 
 class ShowStaffScreen extends StatelessWidget {

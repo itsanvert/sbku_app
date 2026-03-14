@@ -20,14 +20,14 @@ return new class extends Migration
                   ->onDelete('cascade');
 
             // Teacher-specific fields
-            $table->string('name')->constrained('users', 'name')->onDelete('cascade');
-            $table->string('gender');
-            $table->foreignId('major_id')->constrained('majors')->onDelete('cascade');
-            $table->string('year');
-            $table->string('role')  ;
-            $table->foreignId('schedule_id')->constrained('schedules')->onDelete('cascade');
-            $table->string('phone');
-            $table->foreignId('faculty_id')->constrained('faculties')->onDelete('cascade');
+            $table->string('gender')->nullable();
+            $table->foreignId('major_id')->nullable()->constrained('majors')->onDelete('cascade');
+            $table->string('year')->nullable();
+            $table->string('role')->default('teacher');
+            $table->foreignId('schedule_id')->nullable()->constrained('schedules')->onDelete('cascade');
+            $table->string('phone')->nullable();
+            $table->foreignId('faculty_id')->nullable()->constrained('faculties')->onDelete('cascade');
+
             $table->timestamps();
         });
     }

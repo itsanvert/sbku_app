@@ -1,33 +1,33 @@
 <?php
 
-namespace App\Livewire\Teachers;
+namespace App\Livewire\Students;
 
-use App\Models\Teacher;
+use App\Models\Student;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
 
-class TeacherIndex extends Component
+class StudentIndex extends Component
 {
     use WithPagination;
 
-    public $search       = '';
-    public $role         = '';
-    public $sortBy        = 'id';
+    public $search = '';
+    public $role = '';
+    public $sortBy = 'id';
     public $sortDirection = 'asc';
 
-    public $selected      = [];
-    public $selectAll     = false;
+    public $selected = [];
+    public $selectAll = false;
 
     public $showCreateModal = false;
-    public $showEditModal   = false;
-    public $editTeacherId      = null;
-    public $deleteTeacherId    = null;
+    public $showEditModal = false;
+    public $editStudentId = null;
+    public $deleteStudentId = null;
 
     protected $listeners = [
-        'teacherCreated' => 'handleTeacherCreated',
-        'teacherUpdated' => 'handleTeacherUpdated',
-        'closeModal'  => 'closeModals',
+        'studentCreated' => 'handleStudentCreated',
+        'studentUpdated' => 'handleStudentUpdated',
+        'closeModal' => 'closeModals',
     ];
 
     public function updatingSearch() { $this->resetPage(); }
@@ -36,7 +36,7 @@ class TeacherIndex extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = $this->teachers->pluck('id')->map(fn($id) => (string)$id)->toArray();
+            $this->selected = $this->students->pluck('id')->map(fn($id) => (string) $id)->toArray();
         } else {
             $this->selected = [];
         }
@@ -47,25 +47,26 @@ class TeacherIndex extends Component
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
-            $this->sortBy        = $column;
+            $this->sortBy = $column;
             $this->sortDirection = 'asc';
         }
+
         $this->resetPage();
     }
 
     #[Computed]
-    public function teachers()
+    public function students()
     {
-        return Teacher::query()
-            ->with('user')
+        return Student::query()
+            ->with(['user', 'major', 'faculty'])
             ->when($this->search, function ($q) {
-                $q->whereHas('user', function($query) {
+                $q->whereHas('user', function ($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
                           ->orWhere('email', 'like', '%' . $this->search . '%');
                 });
             })
             ->when($this->role, function ($q) {
-                $q->whereHas('user', function($query) {
+                $q->whereHas('user', function ($query) {
                     $query->where('role', $this->role);
                 });
             })
@@ -75,29 +76,29 @@ class TeacherIndex extends Component
 
     public function openCreateModal()
     {
-        $this->showEditModal   = false;
+        $this->showEditModal = false;
         $this->showCreateModal = true;
     }
 
     public function openEditModal($id)
     {
-        $this->editTeacherId      = $id;
+        $this->editStudentId = $id;
         $this->showCreateModal = false;
-        $this->showEditModal   = true;
+        $this->showEditModal = true;
     }
 
     public function confirmDelete($id)
     {
-        $this->deleteTeacherId = $id;
+        $this->deleteStudentId = $id;
         $this->dispatch('modal-show', name: 'confirm-delete');
     }
 
-    public function deleteTeacher()
+    public function deleteStudent()
     {
-        if ($this->deleteTeacherId) {
-            Teacher::findOrFail($this->deleteTeacherId)->delete();
-            $this->deleteTeacherId = null;
-            session()->flash('message', 'Teacher deleted successfully.');
+        if ($this->deleteStudentId) {
+            Student::findOrFail($this->deleteStudentId)->delete();
+            $this->deleteStudentId = null;
+            session()->flash('message', 'Student deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete');
         }
     }
@@ -107,17 +108,18 @@ class TeacherIndex extends Component
         if (empty($this->selected)) {
             return;
         }
+
         $this->dispatch('modal-show', name: 'confirm-bulk-delete');
     }
 
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            Teacher::whereIn('id', $this->selected)->delete();
+            Student::whereIn('id', $this->selected)->delete();
             $count = count($this->selected);
             $this->selected = [];
             $this->selectAll = false;
-            session()->flash('message', $count . ' teachers deleted successfully.');
+            session()->flash('message', $count . ' students deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-bulk-delete');
         }
     }
@@ -125,25 +127,24 @@ class TeacherIndex extends Component
     public function closeModals()
     {
         $this->showCreateModal = false;
-        $this->showEditModal   = false;
-        $this->editTeacherId      = null;
+        $this->showEditModal = false;
+        $this->editStudentId = null;
     }
 
-    public function handleTeacherCreated()
+    public function handleStudentCreated()
     {
         $this->closeModals();
-        session()->flash('message', 'Teacher created successfully.');
+        session()->flash('message', 'Student created successfully.');
     }
 
-    public function handleTeacherUpdated()
+    public function handleStudentUpdated()
     {
         $this->closeModals();
-        session()->flash('message', 'Teacher updated successfully.');
+        session()->flash('message', 'Student updated successfully.');
     }
 
     public function render()
     {
-    return view('livewire.teachers.teacher-index')->layout('layouts.app');
+        return view('livewire.students.student-index')->layout('layouts.app');
     }
-
 }

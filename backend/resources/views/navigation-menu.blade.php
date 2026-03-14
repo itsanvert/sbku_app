@@ -17,8 +17,11 @@
                         {{ __('User') }}
                     </x-nav-link>
                    <x-nav-link href="{{ route('teachers.index') }}" :active="request()->routeIs('teachers.index')">
-    {{ __('Teacher') }}
-</x-nav-link>
+                        {{ __('Teacher') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('students.index') }}" :active="request()->routeIs('students.index')">
+                        {{ __('Student') }}
+                    </x-nav-link>
                 </div>
             </div>
 

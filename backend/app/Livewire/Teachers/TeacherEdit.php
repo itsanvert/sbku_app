@@ -6,18 +6,24 @@ use App\Models\User;
 use App\Models\Teacher;
 use App\Models\Major;
 use App\Models\Schedule;
+use App\Models\Shift;
 use App\Models\Faculty;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
 
 class TeacherEdit extends Component
 {
+    use WithFileUploads;
+
     public $name = '';
     public $email = '';
     public $password = '';
     public $role = 'teacher';
     public $teacherId;
     public $userId;
+    public $photo;
+    public $existingPhoto;
 
     /* ---------------------------------
         Teacher Fields
@@ -26,6 +32,7 @@ class TeacherEdit extends Component
     public $major_id = '';
     public $year = '';
     public $schedule_id = '';
+    public $shift_id = '';
     public $phone = '';
     public $faculty_id = '';
 
@@ -42,29 +49,43 @@ class TeacherEdit extends Component
     $this->major_id   = $teacher->major_id;
     $this->year       = $teacher->year;
     $this->schedule_id     = $teacher->schedule_id;
+    $this->shift_id     = $teacher->shift_id;
     $this->phone      = $teacher->phone;
     $this->faculty_id = $teacher->faculty_id;
+    $this->existingPhoto = $teacher->profile_image_path;
     }
+
     public function save()
     {
-        // no change needed here (already validating role)
+        $this->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users,email,'.$this->userId,
+            'photo' => 'nullable|image|max:1024',
+        ]);
 
         $teacher = Teacher::with('user')->findOrFail($this->teacherId);
 
-    $userData = ['name' => $this->name, 'email' => $this->email, 'role' => $this->role];
-    if ($this->password) $userData['password'] = Hash::make($this->password);
-    $teacher->user->update($userData);
+        $userData = ['name' => $this->name, 'email' => $this->email, 'role' => $this->role];
+        if ($this->password) {
+            $userData['password'] = Hash::make($this->password);
+        }
+        $teacher->user->update($userData);
 
-    $teacher->update([
-            'name'       => $this->name,
+        $teacherData = [
             'gender'     => $this->gender,
             'major_id'   => $this->major_id,
             'year'       => $this->year,
-            'role'       => $this->role,
             'schedule_id'   => $this->schedule_id,
+            'shift_id'   => $this->shift_id,
             'phone'      => $this->phone,
             'faculty_id' => $this->faculty_id,
-        ]);
+        ];
+
+        if ($this->photo) {
+            $teacherData['profile_image_path'] = $this->photo->store('profile-photos', 'public');
+        }
+
+        $teacher->update($teacherData);
     $this->dispatch('teacherUpdated');
 }
 
@@ -75,6 +96,7 @@ class TeacherEdit extends Component
         'majors'    => Major::orderBy('name')->get(),
         'faculties' => Faculty::orderBy('name')->get(),
         'schedules' => Schedule::orderBy('name')->get(),
+        'shifts'    => Shift::orderBy('name')->get(),
     ]);
 }
 }
