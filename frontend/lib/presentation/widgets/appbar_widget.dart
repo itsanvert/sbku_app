@@ -127,16 +127,20 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildLeading(BuildContext context) {
     switch (type) {
       case AppBarType.home:
-        // ── Use Image.asset for .jpg/.png logos ──────────────────
-        return Padding(
-          padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 4),
-          child: Image.asset(
-            logoPath!,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              // Fallback if asset is missing
-              return const Icon(Icons.school, color: Colors.white, size: 36);
-            },
+        // ── Use Image.asset for .jpg/.png logos. Keep a fixed size so the
+        // app bar content aligns consistently without extra margin.
+        return SizedBox(
+          width: 56,
+          height: 56,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            child: Image.asset(
+              logoPath!,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback if asset is missing
+                return const Icon(Icons.school, color: Colors.white, size: 36);
+              },
+            ),
           ),
         );
       case AppBarType.simple:
@@ -205,6 +209,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     if (type == AppBarType.home && actions == null) {
       return [
         IconButton(
+          padding: EdgeInsets.zero,
           icon: const Icon(Icons.logout, size: 26),
           color: Colors.white,
           onPressed: () async {
@@ -218,6 +223,8 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           },
         ),
         IconButton(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           icon: const Icon(Icons.notifications_outlined, size: 26),
           color: Colors.white,
           onPressed: () {},
@@ -238,7 +245,8 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
     final appBar = AppBar(
       toolbarHeight: height,
-      leadingWidth: type == AppBarType.home ? 70 : null,
+      leadingWidth: type == AppBarType.home ? 56 : null,
+      titleSpacing: 0,
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -257,11 +265,12 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     );
 
     if (enableScaling && scaleFactor != 1.0) {
+      final scaledHeight = height * scaleFactor;
       return PreferredSize(
-        preferredSize: preferredSize,
-        child: Transform.scale(
-          scale: scaleFactor,
+        preferredSize: Size.fromHeight(scaledHeight),
+        child: Transform(
           alignment: Alignment.topCenter,
+          transform: Matrix4.diagonal3Values(1.0, scaleFactor, 1.0),
           child: appBar,
         ),
       );
