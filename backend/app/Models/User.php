@@ -67,9 +67,29 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            if ($user->role === 'teacher') {
+                $user->teacher()->create();
+            } elseif ($user->role === 'student') {
+                $user->student()->create();
+            }
+        });
+    }
+
     // relationship model the teacher to users
-   public function teacher()
-{
-    return $this->hasOne(Teacher::class);
-}
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    // relationship model the student to users
+    public function student()
+    {
+        return $this->hasOne(Student::class);
+    }
 }

@@ -46,20 +46,38 @@ class TeacherService {
     }
   }
 
-  Future<void> createTeacher(Map<String, dynamic> data) async {
-    final response = await _api.post('teachers', data, requiresAuth: true);
-
-    if (response.statusCode != 201) {
-      final body = jsonDecode(response.body);
-      throw Exception(body['message'] ?? 'Failed to create teacher');
+  Future<void> createTeacher(Map<String, dynamic> data, {String? filePath}) async {
+    if (filePath != null) {
+      final fields = data.map((key, value) => MapEntry(key, value.toString()));
+      final response = await _api.postMultipart('teachers', fields, 'photo', filePath);
+      
+      if (response.statusCode != 201) {
+        throw Exception('Failed to create teacher with photo');
+      }
+    } else {
+      final response = await _api.post('teachers', data, requiresAuth: true);
+      if (response.statusCode != 201) {
+        final body = jsonDecode(response.body);
+        throw Exception(body['message'] ?? 'Failed to create teacher');
+      }
     }
   }
 
-  Future<void> updateTeacher(int id, Map<String, dynamic> data) async {
-    final response = await _api.put('teachers/$id', data);
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update teacher');
+  Future<void> updateTeacher(int id, Map<String, dynamic> data, {String? filePath}) async {
+    if (filePath != null) {
+      final fields = data.map((key, value) => MapEntry(key, value.toString()));
+      fields['_method'] = 'PUT';
+      
+      final response = await _api.postMultipart('teachers/$id', fields, 'photo', filePath);
+      
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update teacher with photo');
+      }
+    } else {
+      final response = await _api.put('teachers/$id', data);
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update teacher');
+      }
     }
   }
 }

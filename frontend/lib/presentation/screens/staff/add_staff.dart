@@ -2,7 +2,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sbku_app/controller/staff_form_controller.dart';
-import 'package:sbku_app/data/dummy_staff.dart';
+import 'package:sbku_app/data/dummy_data.dart';
 import 'package:sbku_app/model/staff_model.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/appbutton_widget.dart';
@@ -230,8 +230,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
                 CustomTextField(
                   label: 'ឈ្មោះពេញ',
                   controller: _formController.fullNameController,
-                  validator: (v) =>
-                      _formController.validateRequired(v, 'Full Name'),
+                  validator: (v) => _formController.validateRequired(v, 'Name'),
                 ),
 
                 CustomTextField(

@@ -4,31 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Teacher extends Model
+class Student extends Model
 {
-    /**
-     * Default attribute values.
-     */
-    protected $attributes = [
-        'role' => 'teacher',
-    ];
-
     protected $appends = ['name', 'email', 'avatar_url'];
-
     protected $fillable = [
         'user_id',
         'gender',
+        'dob',
+        'faculty_id',
         'major_id',
         'year',
-        'schedule_id',
-        'shift_id',
-        'phone',
-        'faculty_id',
+        'shift',
+        'generation',
         'profile_image_path',
     ];
 
     /**
-     * Get the teacher's name from the associated user.
+     * Get the student's name from the associated user.
      */
     public function getNameAttribute()
     {
@@ -36,7 +28,7 @@ class Teacher extends Model
     }
 
     /**
-     * Get the teacher's email from the associated user.
+     * Get the student's email from the associated user.
      */
     public function getEmailAttribute()
     {
@@ -44,15 +36,15 @@ class Teacher extends Model
     }
 
     /**
-     * Get the full URL for the teacher's profile photo.
+     * Get the full URL for the student's profile photo.
      */
     public function getAvatarUrlAttribute()
     {
-        return $this->profile_image_path 
+        return $this->profile_image_path
             ? url('api/storage/' . $this->profile_image_path)
             : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=6366f1&color=ffffff';
     }
-public function user()
+   public function user()
 {
     return $this->belongsTo(User::class);
 }
@@ -67,10 +59,5 @@ public function major()
 public function schedule()
 {
     return $this->belongsTo(Schedule::class);
-}
-public function shift()
-{
-    return $this->belongsTo(Shift::class);
-
 }
 }
