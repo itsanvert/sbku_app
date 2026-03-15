@@ -5,7 +5,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <flux:brand href="#" logo="/img/logo.jpg" name="SBKU"/>
+                    <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.jpg" name="SBKU"/>
 
                 </div>
                 <!-- Navigation Links -->
@@ -17,8 +17,11 @@
                         {{ __('User') }}
                     </x-nav-link>
                    <x-nav-link href="{{ route('teachers.index') }}" :active="request()->routeIs('teachers.index')">
-    {{ __('Teacher') }}
-</x-nav-link>
+                        {{ __('Teacher') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('students.index') }}" :active="request()->routeIs('students.index')">
+                        {{ __('Student') }}
+                    </x-nav-link>
                 </div>
             </div>
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/data/dummy_staff.dart'; // assuming this exports List<StaffModel> dummyStaffs
+import 'package:sbku_app/data/dummy_data.dart'; // assuming this exports List<StaffModel> dummyStaffs
 import 'package:sbku_app/model/staff_model.dart';
 import 'package:sbku_app/presentation/screens/staff/add_staff.dart';
 import 'package:sbku_app/presentation/screens/staff/show_staff.dart';

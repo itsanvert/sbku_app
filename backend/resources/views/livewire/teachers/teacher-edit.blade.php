@@ -12,12 +12,12 @@
         </div>
 
         {{-- Form --}}
-        <form wire:submit.prevent="update" class="p-6 space-y-6">
+        <form wire:submit.prevent="save" class="p-6 space-y-6">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <flux:input wire:model="name"
-                            label="Full Name"
+                            label="Name"
                             placeholder="e.g. Jane Doe" />
 
                 <flux:input wire:model="email"
@@ -62,6 +62,17 @@
                     <flux:error name="schedule_id" />
                 </flux:field>
 
+                 <flux:field>
+                    <flux:label>Shift</flux:label>
+                    <flux:select wire:model="shift_id" size="sm">
+                        <flux:select.option value="">Select</flux:select.option>
+                        @foreach ($shifts as $shift)
+                            <flux:select.option value="{{ $shift->id }}">{{ $shift->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="shift_id" />
+                </flux:field>
+
                 <flux:field>
                     <flux:label>Year</flux:label>
                     <flux:select wire:model="year" size="sm">
@@ -89,6 +100,23 @@
                     <flux:error name="faculty_id" />
                 </flux:field>
 
+                <flux:field>
+                    <flux:label>Profile Photo</flux:label>
+                    <div class="flex items-center gap-4">
+                        @if ($photo)
+                            <img src="{{ $photo->temporaryUrl() }}" class="w-16 h-16 rounded-lg object-cover ring-1 ring-zinc-200">
+                        @elseif ($existingPhoto)
+                            <img src="{{ asset('storage/' . $existingPhoto) }}" class="w-16 h-16 rounded-lg object-cover ring-1 ring-zinc-200">
+                        @else
+                            <div class="w-16 h-16 rounded-lg bg-zinc-100 flex items-center justify-center ring-1 ring-zinc-200">
+                                <flux:icon name="camera" class="w-6 h-6 text-zinc-400" />
+                            </div>
+                        @endif
+                        <flux:input type="file" wire:model="photo" size="sm" />
+                    </div>
+                    <flux:error name="photo" />
+                </flux:field>
+
             </div>
 
             {{-- Actions --}}
@@ -98,8 +126,8 @@
                 </flux:button>
 
                 <flux:button type="submit" variant="primary">
-                    <span wire:loading.remove wire:target="update">Update Teacher</span>
-                    <span wire:loading wire:target="update">Updating...</span>
+                    <span wire:loading.remove wire:target="save">Save Changes</span>
+                    <span wire:loading wire:target="save">Saving...</span>
                 </flux:button>
             </div>
 

@@ -50,6 +50,7 @@
                             <col class="w-28">    {{-- faculty --}}
                             <col class="w-16">    {{-- year --}}
                             <col class="w-36">    {{-- schedule --}}
+                            <col class="w-28">    {{-- shift --}}
                             <col class="w-28">    {{-- phone --}}
                             <col class="w-28">    {{-- joined --}}
                             <col class="w-32">    {{-- actions --}}
@@ -66,7 +67,9 @@
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('faculty_id')">Faculty</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('year')">Year</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('schedule')">Schedule</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('phone')">Phone</th>                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('created_at')">Joined</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('shift')">Shift</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('phone')">Phone</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('created_at')">Joined</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Actions</th>
                             </tr>
                         </thead>
@@ -89,7 +92,7 @@
                                         <div class="flex items-center gap-2.5">
                                             <img
                                                 class="h-7 w-7 rounded-lg object-cover ring-1 ring-zinc-200 shrink-0"
-                                                src="https://ui-avatars.com/api/?name={{ urlencode($teacher->name) }}&background=6366f1&color=ffffff&size=64&bold=true&font-size=0.4"
+                                                src="{{ $teacher->profile_image_path ? asset('storage/' . $teacher->profile_image_path) : 'https://ui-avatars.com/api/?name=' . urlencode($teacher->name) . '&background=6366f1&color=ffffff&size=64&bold=true&font-size=0.4' }}"
                                                 alt="{{ $teacher->name }}"
                                             />
                                             <span class="font-medium text-zinc-900 truncate">{{ $teacher->name }}</span>
@@ -121,6 +124,11 @@
                                     {{-- Schedule --}}
                                     <td class="px-4 py-3 text-sm text-zinc-500">
                                         {{ $teacher->schedule->name ?? '—' }}
+                                    </td>
+
+                                    {{-- Shift --}}
+                                    <td class="px-4 py-3 text-sm text-zinc-500">
+                                        {{ $teacher->shift->name ?? '—' }}
                                     </td>
 
                                     {{-- Phone --}}
