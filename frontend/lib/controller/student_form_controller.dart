@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sbku_app/model/year_model.dart';
 import '../model/student_model.dart';
 
 class StudentFormController {
@@ -30,7 +29,7 @@ class StudentFormController {
 
   StudentFormController({
     StudentModel? student,
-  })  : idController = TextEditingController(text: student?.id ?? ''),
+  })  : idController = TextEditingController(text: student?.id.toString() ?? ''),
         nameController = TextEditingController(text: student?.name ?? ''),
         dobController = TextEditingController(text: student?.dob ?? ''),
         facultyController = TextEditingController(text: student?.faculty ?? ''),
@@ -40,8 +39,8 @@ class StudentFormController {
         emailController = TextEditingController(text: student?.email ?? ''),
         selectedGender = student?.gender ?? 'Male',
         selectedShift = student?.shift ?? 'Morning',
-        selectedYearId = YearModel.nameToId(student?.year),
-        profileImagePath = student?.profileImagePath {
+        selectedYearId = student?.year?.toString(),
+        profileImagePath = student?.avatarUrl {
     // Load existing image if path exists (mobile only)
     if (!kIsWeb && profileImagePath != null && profileImagePath!.isNotEmpty) {
       try {
@@ -197,6 +196,7 @@ class StudentFormController {
         majorController.text.trim().isNotEmpty &&
         generationController.text.trim().isNotEmpty &&
         selectedYearId != null &&
+        selectedYearId!.trim().isNotEmpty &&
         emailController.text.trim().isNotEmpty;
   }
 
@@ -205,17 +205,19 @@ class StudentFormController {
   // ---------------------------
   StudentModel toStudentModel({String? existingId}) {
     return StudentModel(
-      id: existingId ?? idController.text.trim(),
+      id: existingId != null ? int.parse(existingId) : int.parse(idController.text.trim()),
       name: nameController.text.trim(),
       gender: selectedGender,
       dob: dobController.text.trim(),
       faculty: facultyController.text.trim(),
       major: majorController.text.trim(),
-      year: selectedYearId ?? '',
+      year: selectedYearId != null && selectedYearId!.isNotEmpty
+          ? int.tryParse(selectedYearId!)
+          : null,
       shift: selectedShift,
       generation: generationController.text.trim(),
       email: emailController.text.trim(),
-      profileImagePath: profileImagePath,
+      avatarUrl: profileImagePath,
     );
   }
 

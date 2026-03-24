@@ -2,62 +2,62 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Student extends Model
 {
-    use HasFactory;
-
+    protected $appends = ['name', 'email', 'avatar_url'];
     protected $fillable = [
-        'student_id',
-        'full_name',
-        'date_of_birth',
-        'gender',
-        'address',
-        'phone',
-        'email',
         'user_id',
-        'class_id',
+        'gender',
+        'dob',
+        'faculty_id',
+        'major_id',
+        'year',
+        'shift',
+        'generation',
+        'profile_image_path',
     ];
 
+    /**
+     * Get the student's name from the associated user.
+     */
+    public function getNameAttribute()
+    {
+        return $this->user?->name;
+    }
 
+    /**
+     * Get the student's email from the associated user.
+     */
+    public function getEmailAttribute()
+    {
+        return $this->user?->email;
+    }
 
-    protected $casts = [
-        'date_of_birth' => 'date',
-    ];
-
-
+    /**
+     * Get the full URL for the student's profile photo.
+     */
+    public function getAvatarUrlAttribute()
+    {
+        return $this->profile_image_path
+            ? url('api/storage/' . $this->profile_image_path)
+            : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=6366f1&color=ffffff';
+    }
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-
-
-    public function class()
+    public function faculty()
     {
-        return $this->belongsTo(ClassModel::class);
+        return $this->belongsTo(Faculty::class);
     }
-
-    public function attendances()
+    public function major()
     {
-        return $this->hasMany(Attendance::class);
+        return $this->belongsTo(Major::class);
     }
-
-    public function locations()
+    public function schedule()
     {
-        return $this->hasMany(Location::class);
-    }
-
-    public function todayAttendance()
-    {
-        return $this->attendances()->whereDate('attendance_date', today())->latest()->first();
-    }
-
-    public function AttendancePercentage()
-    {
-        $total = $this->attendances()->count();
-        $present = $this->attendances()->where('status', 'present')->count();
-        return $total > 0 ? round(($present / $total) * 100, 2) : 0;
+        return $this->belongsTo(Schedule::class);
     }
 }

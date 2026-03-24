@@ -63,6 +63,18 @@
                     <flux:error name="schedule_id" />
                 </flux:field>
 
+
+                 <flux:field>
+                    <flux:label>Shift</flux:label>
+                    <flux:select wire:model="shift_id" size="sm">
+                        <flux:select.option value="">Select</flux:select.option>
+                        @foreach ($shifts as $shift)
+                            <flux:select.option value="{{ $shift->id }}">{{ $shift->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="shift_id" />
+                </flux:field>
+
                 <flux:field>
                     <flux:label>Year</flux:label>
                     <flux:select wire:model="year" size="sm">
@@ -88,6 +100,21 @@
                         @endforeach
                     </flux:select>
                     <flux:error name="faculty_id" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>Profile Photo</flux:label>
+                    <div class="flex items-center gap-4">
+                        @if ($photo)
+                            <img src="{{ $photo->temporaryUrl() }}" class="w-16 h-16 rounded-lg object-cover ring-1 ring-zinc-200">
+                        @else
+                            <div class="w-16 h-16 rounded-lg bg-zinc-100 flex items-center justify-center ring-1 ring-zinc-200">
+                                <flux:icon name="camera" class="w-6 h-6 text-zinc-400" />
+                            </div>
+                        @endif
+                        <flux:input type="file" wire:model="photo" size="sm" />
+                    </div>
+                    <flux:error name="photo" />
                 </flux:field>
 
             </div>

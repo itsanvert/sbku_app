@@ -6,13 +6,17 @@ use App\Models\User;
 use App\Models\Teacher;
 use App\Models\Major;
 use App\Models\Schedule;
+use App\Models\Shift;
 use App\Models\Faculty;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
 class TeacherCreate extends Component
 {
+    use WithFileUploads;
+
     /* ---------------------------------
         User Fields
     --------------------------------- */
@@ -20,6 +24,7 @@ class TeacherCreate extends Component
     public $email = '';
     public $password = '';
     public $role = 'teacher';
+    public $photo;
 
     /* ---------------------------------
         Teacher Fields
@@ -28,6 +33,7 @@ class TeacherCreate extends Component
     public $major_id = '';
     public $year = '';
     public $schedule_id = '';
+    public $shift_id = '';
     public $phone = '';
     public $faculty_id = '';
 
@@ -45,8 +51,10 @@ class TeacherCreate extends Component
             'major_id'   => 'required|exists:majors,id',
             'year'       => 'required',
             'schedule_id'   => 'required|exists:schedules,id',
+            'shift_id'   => 'required|exists:shifts,id',
             'phone'      => 'required|string|max:20',
             'faculty_id' => 'required|exists:faculties,id',
+            'photo'      => 'nullable|image|max:1024', // 1MB Max
         ];
     }
 
@@ -74,17 +82,24 @@ class TeacherCreate extends Component
                 'role'     => 'teacher',
             ]);
 
-            Teacher::create([
-                'user_id'    => $user->id,
-                'name'       => $this->name,
+            $teacherData = [
                 'gender'     => $this->gender,
                 'major_id'   => $this->major_id,
                 'year'       => $this->year,
-                'role'       => $this->role, // ensure role is persisted
+                'role'       => $this->role, 
                 'schedule_id'   => $this->schedule_id,
+                'shift_id'   => $this->shift_id,
                 'phone'      => $this->phone,
                 'faculty_id' => $this->faculty_id,
-            ]);
+            ];
+
+            if ($this->photo) {
+                $teacherData['profile_image_path'] = $this->photo->store('profile-photos', 'public');
+            }
+
+            // The User observer has already created a skeleton Teacher record.
+            // We now update it with the specific teacher details.
+            $user->teacher()->update($teacherData);
         });
 
         $this->reset();
@@ -107,6 +122,7 @@ session()->flash('success', 'Teacher created successfully!');
             'major_id',
             'year',
             'schedule_id',
+            'shift_id',
             'phone',
             'faculty_id',
         ]);
@@ -123,6 +139,7 @@ session()->flash('success', 'Teacher created successfully!');
             'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
             'schedules' => Schedule::orderBy('name')->get(),
+            'shifts' => Shift::orderBy('name')->get(),
         ]);
     }
 }

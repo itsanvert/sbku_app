@@ -67,74 +67,29 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    // relationship model the teacher to users
-    public function student()
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
     {
-        return $this->hasOne((Student::class));
+        static::created(function (User $user) {
+            if ($user->role === 'teacher') {
+                $user->teacher()->create();
+            } elseif ($user->role === 'student') {
+                $user->student()->create();
+            }
+        });
     }
 
+    // relationship model the teacher to users
     public function teacher()
     {
-        return $this->hasOne((Teacher::class));
+        return $this->hasOne(Teacher::class);
     }
 
-    public function staff()
+    // relationship model the student to users
+    public function student()
     {
-        return $this->hasOne((Staff::class));
+        return $this->hasOne(Student::class);
     }
-
-
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class, 'user_role');
-    }
-
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
-
-    // check if user has specific role
-    public function hasRole($roleName)
-    {
-        return $this->roles()->where('name', '$roleName')->exists();
-    }
-
-    public function hasPermission($permissionName)
-    {
-        return $this->roles()->whereHas('permissions', function ($query) use ($permissionName) {
-            $query->where('name', $permissionName);
-        })->exists();
-    }
-
-    //assign role to user
-
-    public function assignRole($roleName)
-    {
-        $role = Role::where('name', $roleName)->firstOrFail();
-        $this->roles()->syncWithoutDetaching([$role->id]);
-        return $this;
-    }
-
-    //check if user which role 
-
-    public function isAdmin()
-    {
-        return $this->user_type === 'admin' || $this->hasRole('admin');
-    }
-
-    public function isStudent()
-    {
-        return $this->user_type === 'student';
-    }
-    public function isTeacher()
-    {
-        return $this->user_type === 'teacher';
-    }
-
-    public function isStaff()
-    {
-        return $this->user_type === 'staff';
-    }
-
 }

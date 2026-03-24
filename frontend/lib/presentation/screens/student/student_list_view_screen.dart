@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/presentation/screens/student/add_student.dart';
+import 'package:sbku_app/model/student_model.dart';
 import 'package:sbku_app/presentation/screens/student/show_student.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
-import '../../../data/dummy_students.dart';
-
-import '../../../model/student_model.dart';
+import 'package:sbku_app/service/student_service.dart';
 
 class StudentListViewScreen extends StatefulWidget {
   const StudentListViewScreen({super.key});
@@ -16,21 +14,57 @@ class StudentListViewScreen extends StatefulWidget {
 }
 
 class _StudentListScreenState extends State<StudentListViewScreen> {
+  final StudentService _service = StudentService();
+
+  List<Student> _students = [];
+  bool _loading = false;
+  String? _error;
+
+  // Pagination
+  int _page = 1;
+  int _lastPage = 1;
+
+  // Filters
   String? _selectedFaculty;
   String? _selectedShift;
   String? _selectedGeneration;
 
-  List<StudentModel> get filteredStudents {
-    var result = dummyStudents;
+  @override
+  void initState() {
+    super.initState();
+    _loadStudents();
+  }
+
+  Future<void> _loadStudents({bool reset = false}) async {
+    if (reset) _page = 1;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final result = await _service.getStudents(page: _page);
+      setState(() {
+        _students = result.data;
+        _lastPage = result.lastPage;
+      });
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  List<Student> get filteredStudents {
+    var result = _students;
 
     if (_selectedFaculty != null) {
       result = result.where((s) => s.faculty == _selectedFaculty).toList();
     }
-
     if (_selectedShift != null) {
       result = result.where((s) => s.shift == _selectedShift).toList();
     }
-
     if (_selectedGeneration != null) {
       result =
           result.where((s) => s.generation == _selectedGeneration).toList();
@@ -39,7 +73,7 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
     return result;
   }
 
-  void _showDeleteDialog(StudentModel student) {
+  void _showDeleteDialog(Student student) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -51,17 +85,23 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
             child: const Text('បោះបង់'),
           ),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                dummyStudents.removeWhere((s) => s.id == student.id);
-              });
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${student.name} ត្រូវបានលុបដោយជោគជ័យ'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+            onPressed: () async {
+              try {
+                await _service.deleteStudent(student.id);
+                Navigator.pop(ctx);
+                _loadStudents(); // Reload list
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${student.name} ត្រូវបានលុបដោយជោគជ័យ'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('លុប'),
@@ -71,142 +111,127 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
     );
   }
 
-  void _navigateToEdit(StudentModel student) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddStudentScreen(student: student),
-      ),
-    );
-  }
-
-  void _navigateToAdd() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddStudentScreen(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarWidget.simple(
         title: 'បញ្ជីសិស្ស',
-        actions: [
-          IconButton(
-            onPressed: () {
-              // Share functionality
-            },
-            icon: const Icon(Icons.share, color: Colors.white),
-          ),
-          IconButton(
-            onPressed: _navigateToAdd,
-            icon: const Icon(Icons.add, color: Colors.white),
-          ),
-        ],
       ),
       body: Column(
         children: [
-          // Filters Row
           FilterRowWidget(
             filters: [
               FilterConfig(
                 value: _selectedFaculty,
                 hint: 'មហាវិទ្យាល័យ',
-                items: Set<String>.from(dummyStudents.map((s) => s.faculty))
+                items: _students
+                    .map((s) => s.faculty ?? '')
+                    .where((f) => f.isNotEmpty)
+                    .toSet()
                     .toList(),
                 onChanged: (value) => setState(() => _selectedFaculty = value),
               ),
               FilterConfig(
                 value: _selectedShift,
                 hint: 'វេន',
-                items: Set<String>.from(dummyStudents.map((s) => s.shift))
+                items: _students
+                    .map((s) => s.shift ?? '')
+                    .where((s) => s.isNotEmpty)
+                    .toSet()
                     .toList(),
                 onChanged: (value) => setState(() => _selectedShift = value),
               ),
               FilterConfig(
                 value: _selectedGeneration,
                 hint: 'ជំនាន់',
-                items: Set<String>.from(dummyStudents.map((s) => s.generation))
+                items: _students
+                    .map((s) => s.generation ?? '')
+                    .where((g) => g.isNotEmpty)
+                    .toSet()
                     .toList(),
                 onChanged: (value) =>
                     setState(() => _selectedGeneration = value),
               ),
             ],
           ),
-
-          // Student List
           Expanded(
-            child: filteredStudents.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 80,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'រកមិនឃើញសិស្ស',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'សូមកែប្រែការតម្រង',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredStudents.length,
-                    padding: const EdgeInsets.only(bottom: 16),
-                    itemBuilder: (context, index) {
-                      final student = filteredStudents[index];
-                      return ListItemWidget<StudentModel>(
-                        item: student,
-                        title: student.name,
-                        subtitle: student.major,
-                        avatarImageUrl: student.profileImagePath,
-                        avatarBackgroundColor: Colors.deepOrange,
-                        avatarTextColor:
-                            const Color.fromARGB(255, 255, 255, 255),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ShowStudentScreen(studentId: student.id),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(_error!),
+                            ElevatedButton(
+                              onPressed: _loadStudents,
+                              child: const Text('Retry'),
                             ),
-                          );
-                        },
-                        actions: [
-                          ItemAction.text(
-                            label: 'កែ',
-                            onPressed: () => _navigateToEdit(student),
-                            color: Colors.green,
+                          ],
+                        ),
+                      )
+                    : filteredStudents.isEmpty
+                        ? const Center(child: Text('រកមិនឃើញសិស្ស'))
+                        : RefreshIndicator(
+                            onRefresh: () => _loadStudents(reset: true),
+                            child: ListView.builder(
+                              itemCount: filteredStudents.length,
+                              padding: const EdgeInsets.only(bottom: 16),
+                              itemBuilder: (context, index) {
+                                final student = filteredStudents[index];
+                                return ListItemWidget<Student>(
+                                  item: student,
+                                  title: student.name,
+                                  subtitle: student.major ?? '—',
+                                  avatarImageUrl: student.avatarUrl,
+                                  avatarBackgroundColor: Colors.deepOrange,
+                                  avatarTextColor: Colors.white,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ShowStudentScreen(
+                                            studentId: student.id.toString()),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
-                          ItemAction.text(
-                            label: 'លុប',
-                            onPressed: () => _showDeleteDialog(student),
-                            color: Colors.red,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
           ),
+          if (!_loading && _lastPage > 1)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: Colors.grey.shade200)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left),
+                    onPressed: _page > 1
+                        ? () {
+                            _page--;
+                            _loadStudents();
+                          }
+                        : null,
+                  ),
+                  Text('ទំព័រ $_page នៃ $_lastPage'),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right),
+                    onPressed: _page < _lastPage
+                        ? () {
+                            _page++;
+                            _loadStudents();
+                          }
+                        : null,
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
