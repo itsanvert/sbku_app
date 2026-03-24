@@ -13,32 +13,42 @@ class Teacher extends Model
         'role' => 'teacher',
     ];
 
-   protected $fillable = [
-    'user_id',
-    'name',
-    'gender',
-    'major_id',
-    'year',
-    'role',
-    'schedule_id',
-    'phone',
-    'faculty_id',
-];
-public function user()
-{
-    return $this->belongsTo(User::class);
-}
-public function faculty()
-{
-    return $this->belongsTo(Faculty::class);
-}
-public function major()
-{
-    return $this->belongsTo(Major::class);
-}
-public function schedule()
-{
-    return $this->belongsTo(Schedule::class);
-}
+    protected $fillable = [
+        'teacher_id',
+        'full_name',
+        'specialization',
+        'phone',
+        'email',
+        'user_id',
+        'faculty_id',
+    ];
+
+
+
+
+    public function faculty()
+    {
+        return $this->belongsTo(Faculty::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'teacher_subject');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function syllabus()
+    {
+        return $this->hasMany(Syllabus::class);
+    }
 
 }

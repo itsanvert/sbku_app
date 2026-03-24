@@ -5,23 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Faculty extends Model
+class Permission extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
-        'code',
-
+        'permission',
     ];
 
-    public function majors()
+    public function roles()
     {
-        return $this->hasMany(Major::class);
+        return $this->belongsToMany(Role::class, 'role_permission');
     }
-    public function teachers()
-    {
-        return $this->hasMany(Teacher::class);
-    }
-
 }
