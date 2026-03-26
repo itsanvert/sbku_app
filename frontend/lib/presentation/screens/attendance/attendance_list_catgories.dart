@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/attendance/attendance_history_screen.dart';
-import 'package:sbku_app/presentation/screens/attendance/attendance_list_pending_screen.dart';
-import 'package:sbku_app/presentation/screens/attendance/student_check_in_attendance_screen.dart';
+import 'package:sbku_app/presentation/screens/attendance/teacher_start_attendance_session_screen.dart';
+import 'package:sbku_app/presentation/screens/attendance/qr_scan_attendance_screen.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_sessions_list.dart';
 
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 
-class AttendanceListCategoryScreen extends StatelessWidget {
-  final bool isTeacher; // Pass from auth/user role
+import 'package:provider/provider.dart';
+import 'package:sbku_app/providers/auth_provider.dart';
 
+class AttendanceListCategoryScreen extends StatelessWidget {
   const AttendanceListCategoryScreen({
     Key? key,
-    this.isTeacher = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).user;
+    final role = user?.role?.toLowerCase();
+    final bool showTeacherMenu = role == 'teacher' || role == 'admin';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBarWidget.simple(
@@ -26,7 +30,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: ListCardList(
-            items: isTeacher ? _teacherMenuItems() : _studentMenuItems(),
+            items: showTeacherMenu ? _teacherMenuItems() : _studentMenuItems(),
           ),
         ),
       ),
@@ -63,7 +67,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
       ListCardItem(
         icon: Icons.check_circle_outline,
         label: 'ចុះវត្តមាន',
-        screen: StudentAttendanceCheckInScreen(),
+        screen: const QrScanAttendanceScreen(),
       ),
       ListCardItem(
         icon: Icons.history,

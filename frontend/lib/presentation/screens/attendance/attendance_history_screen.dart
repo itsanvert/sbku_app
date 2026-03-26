@@ -1,38 +1,909 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/service/attendance_service.dart';
 
-class AttendanceHistoryScreen extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Teacher Attendance History Screen
+// ─────────────────────────────────────────────────────────────────────────────
+class AttendanceHistoryScreen extends StatefulWidget {
   const AttendanceHistoryScreen({super.key});
+
+  @override
+  State<AttendanceHistoryScreen> createState() =>
+      _AttendanceHistoryScreenState();
+}
+
+class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
+  final AttendanceService _service = AttendanceService();
+  List<Map<String, dynamic>> _records = [];
+  bool _isLoading = true;
+  String? _error;
+  int _page = 1;
+  bool _hasMore = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory({bool loadMore = false}) async {
+    if (loadMore) {
+      _page++;
+    } else {
+      _page = 1;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final result = await _service.getAttendances(page: _page);
+      final data = (result['data'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e))
+              .toList() ??
+          [];
+
+      setState(() {
+        if (loadMore) {
+          _records.addAll(data);
+        } else {
+          _records = data;
+        }
+        _hasMore = (_page < (result['last_page'] ?? 1));
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ប្រវត្តិវត្តមាន'),
-      body: const Center(child: Text('History screen - Coming soon')),
+      body: _isLoading && _records.isEmpty
+          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          : _error != null && _records.isEmpty
+              ? _buildError()
+              : _records.isEmpty
+                  ? _buildEmpty()
+                  : _buildList(),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text(_error!, style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: _loadHistory, child: const Text('ព្យាយាមម្ដងទៀត')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.history, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text('មិនមានប្រវត្តិវត្តមាន',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList() {
+    return RefreshIndicator(
+      onRefresh: () => _loadHistory(),
+      child: ListView.builder(
+        itemCount: _records.length + (_hasMore ? 1 : 0),
+        padding: const EdgeInsets.all(16),
+        itemBuilder: (context, index) {
+          if (index >= _records.length) {
+            _loadHistory(loadMore: true);
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(color: Colors.orange),
+              ),
+            );
+          }
+
+          final record = _records[index];
+          final isPresent = record['status'] == 'Y';
+          final date = record['attendance_date'] ?? '';
+          final studentName = record['student_name'] ??
+              record['student']?['name'] ??
+              'Unknown';
+          final checkIn = record['check_in_time'];
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: isPresent ? Colors.green[50] : Colors.red[50],
+                child: Icon(
+                  isPresent ? Icons.check : Icons.close,
+                  color: isPresent ? Colors.green : Colors.red,
+                ),
+              ),
+              title: Text(studentName,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(
+                '$date${checkIn != null ? " • $checkIn" : ""}',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+              trailing: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isPresent ? Colors.green[50] : Colors.red[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  isPresent ? 'មានវត្តមាន' : 'អវត្តមាន',
+                  style: TextStyle(
+                    color: isPresent ? Colors.green[700] : Colors.red[700],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
-class AttendanceReportScreen extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Attendance Report Screen (Daily / Monthly / Yearly)
+// ─────────────────────────────────────────────────────────────────────────────
+class AttendanceReportScreen extends StatefulWidget {
   const AttendanceReportScreen({super.key});
+
+  @override
+  State<AttendanceReportScreen> createState() => _AttendanceReportScreenState();
+}
+
+class _AttendanceReportScreenState extends State<AttendanceReportScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final AttendanceService _service = AttendanceService();
+
+  // Daily
+  DateTime _selectedDate = DateTime.now();
+  Map<String, dynamic>? _dailyData;
+  bool _dailyLoading = false;
+
+  // Monthly
+  int _selectedMonth = DateTime.now().month;
+  int _selectedMonthYear = DateTime.now().year;
+  Map<String, dynamic>? _monthlyData;
+  bool _monthlyLoading = false;
+
+  // Yearly
+  int _selectedYear = DateTime.now().year;
+  Map<String, dynamic>? _yearlyData;
+  bool _yearlyLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadDailyReport();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // ── Daily Report ──────────────────────────────────────────────
+  Future<void> _loadDailyReport() async {
+    setState(() => _dailyLoading = true);
+    try {
+      final dateStr =
+          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+      final data = await _service.getDailyReport(dateStr);
+      setState(() {
+        _dailyData = data;
+        _dailyLoading = false;
+      });
+    } catch (e) {
+      setState(() => _dailyLoading = false);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: Colors.orange),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+      _loadDailyReport();
+    }
+  }
+
+  // ── Monthly Report ────────────────────────────────────────────
+  Future<void> _loadMonthlyReport() async {
+    setState(() => _monthlyLoading = true);
+    try {
+      final data =
+          await _service.getMonthlyReport(_selectedMonth, _selectedMonthYear);
+      setState(() {
+        _monthlyData = data;
+        _monthlyLoading = false;
+      });
+    } catch (e) {
+      setState(() => _monthlyLoading = false);
+    }
+  }
+
+  // ── Yearly Report ─────────────────────────────────────────────
+  Future<void> _loadYearlyReport() async {
+    setState(() => _yearlyLoading = true);
+    try {
+      final data = await _service.getYearlyReport(_selectedYear);
+      setState(() {
+        _yearlyData = data;
+        _yearlyLoading = false;
+      });
+    } catch (e) {
+      setState(() => _yearlyLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBarWidget.simple(title: 'របាយការណ៍វត្តមាន'),
-      body: const Center(child: Text('Report screen - Coming soon')),
+      appBar: AppBar(
+        title: const Text('របាយការណ៍វត្តមាន',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          onTap: (index) {
+            if (index == 0) _loadDailyReport();
+            if (index == 1) _loadMonthlyReport();
+            if (index == 2) _loadYearlyReport();
+          },
+          tabs: const [
+            Tab(text: 'ប្រចាំថ្ងៃ'),
+            Tab(text: 'ប្រចាំខែ'),
+            Tab(text: 'ប្រចាំឆ្នាំ'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildDailyTab(),
+          _buildMonthlyTab(),
+          _buildYearlyTab(),
+        ],
+      ),
     );
+  }
+
+  // ── Daily Tab ─────────────────────────────────────────────────
+  Widget _buildDailyTab() {
+    return Column(
+      children: [
+        // Date picker
+        InkWell(
+          onTap: _pickDate,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, color: Colors.orange),
+                const SizedBox(width: 12),
+                Text(
+                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                const Icon(Icons.arrow_drop_down, color: Colors.orange),
+              ],
+            ),
+          ),
+        ),
+        if (_dailyLoading)
+          const Expanded(
+              child: Center(
+                  child: CircularProgressIndicator(color: Colors.orange)))
+        else if (_dailyData != null) ...[
+          // Summary cards
+          _buildSummaryCards(_dailyData!['summary']),
+          // Student list
+          Expanded(
+            child: _buildRecordsList(
+                List<Map<String, dynamic>>.from(_dailyData!['records'] ?? [])),
+          ),
+        ] else
+          const Expanded(
+              child: Center(child: Text('សូមជ្រើសរើសកាលបរិច្ឆេទ'))),
+      ],
+    );
+  }
+
+  // ── Monthly Tab ───────────────────────────────────────────────
+  Widget _buildMonthlyTab() {
+    return Column(
+      children: [
+        // Month/Year picker
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: _selectedMonth,
+                  items: List.generate(
+                      12,
+                      (i) => DropdownMenuItem(
+                          value: i + 1, child: Text('ខែ ${i + 1}'))),
+                  onChanged: (v) {
+                    setState(() => _selectedMonth = v!);
+                    _loadMonthlyReport();
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'ខែ',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: _selectedMonthYear,
+                  items: List.generate(
+                      7,
+                      (i) => DropdownMenuItem(
+                          value: 2020 + i,
+                          child: Text('${2020 + i}'))),
+                  onChanged: (v) {
+                    setState(() => _selectedMonthYear = v!);
+                    _loadMonthlyReport();
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'ឆ្នាំ',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_monthlyLoading)
+          const Expanded(
+              child: Center(
+                  child: CircularProgressIndicator(color: Colors.orange)))
+        else if (_monthlyData != null)
+          Expanded(
+            child: _buildStudentSummaryList(
+                List<Map<String, dynamic>>.from(
+                    _monthlyData!['students'] ?? [])),
+          )
+        else
+          const Expanded(
+              child: Center(child: Text('សូមជ្រើសរើសខែ និងឆ្នាំ'))),
+      ],
+    );
+  }
+
+  // ── Yearly Tab ────────────────────────────────────────────────
+  Widget _buildYearlyTab() {
+    return Column(
+      children: [
+        // Year picker
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: DropdownButtonFormField<int>(
+            value: _selectedYear,
+            items: List.generate(
+                7,
+                (i) => DropdownMenuItem(
+                    value: 2020 + i, child: Text('${2020 + i}'))),
+            onChanged: (v) {
+              setState(() => _selectedYear = v!);
+              _loadYearlyReport();
+            },
+            decoration: InputDecoration(
+              labelText: 'ឆ្នាំ',
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          ),
+        ),
+        if (_yearlyLoading)
+          const Expanded(
+              child: Center(
+                  child: CircularProgressIndicator(color: Colors.orange)))
+        else if (_yearlyData != null) ...[
+          // Monthly breakdown chart substitute
+          if (_yearlyData!['monthly_breakdown'] != null)
+            _buildMonthlyBreakdown(List<Map<String, dynamic>>.from(
+                _yearlyData!['monthly_breakdown'])),
+          Expanded(
+            child: _buildStudentSummaryList(
+                List<Map<String, dynamic>>.from(
+                    _yearlyData!['students'] ?? [])),
+          ),
+        ] else
+          const Expanded(child: Center(child: Text('សូមជ្រើសរើសឆ្នាំ'))),
+      ],
+    );
+  }
+
+  // ── Shared Widgets ────────────────────────────────────────────
+  Widget _buildSummaryCards(Map<String, dynamic>? summary) {
+    if (summary == null) return const SizedBox();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _summaryCard('សរុប', '${summary['total'] ?? 0}', Colors.blue),
+          const SizedBox(width: 8),
+          _summaryCard('មានវត្តមាន', '${summary['present'] ?? 0}', Colors.green),
+          const SizedBox(width: 8),
+          _summaryCard('អវត្តមាន', '${summary['absent'] ?? 0}', Colors.red),
+          const SizedBox(width: 8),
+          _summaryCard(
+              '%', '${summary['present_percentage'] ?? 0}%', Colors.orange),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryCard(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Text(value,
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color)),
+            const SizedBox(height: 4),
+            Text(label,
+                style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordsList(List<Map<String, dynamic>> records) {
+    if (records.isEmpty) {
+      return const Center(child: Text('គ្មានទិន្នន័យ'));
+    }
+
+    return ListView.builder(
+      itemCount: records.length,
+      padding: const EdgeInsets.all(16),
+      itemBuilder: (context, index) {
+        final r = records[index];
+        final isPresent = r['status'] == 'Y';
+        final name = r['student_name'] ??
+            r['student']?['name'] ??
+            r['student']?['user']?['name'] ??
+            'Unknown';
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 6),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: isPresent ? Colors.green[50] : Colors.red[50],
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: TextStyle(
+                    color: isPresent ? Colors.green[700] : Colors.red[700],
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+            title: Text(name,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: r['check_in_time'] != null
+                ? Text('ចូល: ${r['check_in_time']}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]))
+                : null,
+            trailing: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isPresent ? Colors.green[50] : Colors.red[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                isPresent ? 'Y' : 'N',
+                style: TextStyle(
+                  color: isPresent ? Colors.green[700] : Colors.red[700],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStudentSummaryList(List<Map<String, dynamic>> students) {
+    if (students.isEmpty) {
+      return const Center(child: Text('គ្មានទិន្នន័យ'));
+    }
+
+    return ListView.builder(
+      itemCount: students.length,
+      padding: const EdgeInsets.all(16),
+      itemBuilder: (context, index) {
+        final s = students[index];
+        final name = s['student_name']?.toString() ?? 'Unknown';
+        final present = s['present_days'] ?? 0;
+        final absent = s['absent_days'] ?? 0;
+        final total = s['total_days'] ?? 0;
+        final rate = s['attendance_rate'] ?? 0;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.orange[50],
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : '?',
+                        style: TextStyle(
+                            color: Colors.orange[700],
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(name,
+                          style:
+                              const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _rateColor(rate).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$rate%',
+                        style: TextStyle(
+                          color: _rateColor(rate),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _miniStat('សរុប', '$total', Colors.blue),
+                    const SizedBox(width: 16),
+                    _miniStat('ចូល', '$present', Colors.green),
+                    const SizedBox(width: 16),
+                    _miniStat('អវត្តមាន', '$absent', Colors.red),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMonthlyBreakdown(List<Map<String, dynamic>> breakdown) {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: breakdown.length,
+        itemBuilder: (context, index) {
+          final m = breakdown[index];
+          final month = m['month'];
+          final present = m['present'] ?? 0;
+          final total = m['total'] ?? 0;
+          final rate =
+              total > 0 ? ((present / total) * 100).round() : 0;
+
+          return Container(
+            width: 60,
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _rateColor(rate).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _rateColor(rate).withOpacity(0.3)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('ខែ$month',
+                    style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text('$rate%',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _rateColor(rate))),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _miniStat(String label, String value, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text('$label: ',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        Text(value,
+            style:
+                TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+      ],
+    );
+  }
+
+  Color _rateColor(dynamic rate) {
+    final r = rate is num ? rate.toDouble() : 0.0;
+    if (r >= 80) return Colors.green;
+    if (r >= 60) return Colors.orange;
+    return Colors.red;
   }
 }
 
-class StudentAttendanceHistoryScreen extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Student Attendance History Screen
+// ─────────────────────────────────────────────────────────────────────────────
+class StudentAttendanceHistoryScreen extends StatefulWidget {
   const StudentAttendanceHistoryScreen({super.key});
+
+  @override
+  State<StudentAttendanceHistoryScreen> createState() =>
+      _StudentAttendanceHistoryScreenState();
+}
+
+class _StudentAttendanceHistoryScreenState
+    extends State<StudentAttendanceHistoryScreen> {
+  final AttendanceService _service = AttendanceService();
+  Map<String, dynamic>? _summary;
+  List<Map<String, dynamic>> _records = [];
+  bool _isLoading = true;
+  int _page = 1;
+  bool _hasMore = true;
+
+  // TODO: Get from auth
+  final int _studentId = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory({bool loadMore = false}) async {
+    if (loadMore) _page++;
+    else _page = 1;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await _service.getStudentHistory(_studentId, page: _page);
+      final attendances = result['attendances'];
+      final data = (attendances?['data'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e))
+              .toList() ??
+          [];
+
+      setState(() {
+        _summary = result['summary'] != null
+            ? Map<String, dynamic>.from(result['summary'])
+            : null;
+        if (loadMore) {
+          _records.addAll(data);
+        } else {
+          _records = data;
+        }
+        _hasMore = _page < (attendances?['last_page'] ?? 1);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ប្រវត្តិវត្តមានរបស់ខ្ញុំ'),
-      body: const Center(child: Text('Student history - Coming soon')),
+      body: _isLoading && _records.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.orange))
+          : RefreshIndicator(
+              onRefresh: () => _loadHistory(),
+              child: Column(
+                children: [
+                  // Stats card
+                  if (_summary != null)
+                    Container(
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.orange[400]!, Colors.orange[600]!],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _statColumn('សរុប',
+                              '${_summary!['total'] ?? 0}', Colors.white),
+                          _statColumn('មាន',
+                              '${_summary!['present'] ?? 0}', Colors.white),
+                          _statColumn('អវត្តមាន',
+                              '${_summary!['absent'] ?? 0}', Colors.white),
+                          _statColumn('ភាគរយ',
+                              '${_summary!['attendance_rate'] ?? 0}%',
+                              Colors.white),
+                        ],
+                      ),
+                    ),
+                  // Records list
+                  Expanded(
+                    child: _records.isEmpty
+                        ? const Center(child: Text('មិនមានប្រវត្តិវត្តមាន'))
+                        : ListView.builder(
+                            itemCount: _records.length + (_hasMore ? 1 : 0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16),
+                            itemBuilder: (context, index) {
+                              if (index >= _records.length) {
+                                _loadHistory(loadMore: true);
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: CircularProgressIndicator(
+                                        color: Colors.orange),
+                                  ),
+                                );
+                              }
+
+                              final r = _records[index];
+                              final isPresent = r['status'] == 'Y';
+
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: isPresent
+                                        ? Colors.green[50]
+                                        : Colors.red[50],
+                                    child: Icon(
+                                      isPresent ? Icons.check : Icons.close,
+                                      color: isPresent
+                                          ? Colors.green
+                                          : Colors.red,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    r['attendance_date'] ?? '',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: r['check_in_time'] != null
+                                      ? Text('ចូល: ${r['check_in_time']}')
+                                      : null,
+                                  trailing: Text(
+                                    isPresent ? 'មានវត្តមាន' : 'អវត្តមាន',
+                                    style: TextStyle(
+                                      color: isPresent
+                                          ? Colors.green[700]
+                                          : Colors.red[700],
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _statColumn(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(value,
+            style: TextStyle(
+                fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+        const SizedBox(height: 4),
+        Text(label,
+            style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
+      ],
     );
   }
 }

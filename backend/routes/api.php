@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\AttendanceSessionController;
 
 
 /*
@@ -30,7 +32,6 @@ Route::get('/storage/{path}', function ($path) {
 })->where('path', '.*');
 
 // Protected routes
-// routes/api.php
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -40,7 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/profile-photo', [ProfileController::class, 'updateProfilePhoto']);
     Route::delete('/user/profile-photo', [ProfileController::class, 'deleteProfilePhoto']);
 
-    // ← add ->names() to prefix API route names differently
+    // Teachers
     Route::apiResource('teachers', TeacherController::class)
         ->names([
             'index'   => 'api.teachers.index',
@@ -50,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
             'destroy' => 'api.teachers.destroy',
         ]);
 
+    // Students
     Route::apiResource('students', StudentController::class)
         ->names([
             'index'   => 'api.students.index',
@@ -57,5 +59,26 @@ Route::middleware('auth:sanctum')->group(function () {
             'show'    => 'api.students.show',
             'update'  => 'api.students.update',
             'destroy' => 'api.students.destroy',    
-        ]);    
+        ]);
+
+    // Attendance reports (must be before apiResource to avoid route conflicts)
+    Route::get('attendances/report/daily', [AttendanceController::class, 'dailyReport']);
+    Route::get('attendances/report/monthly', [AttendanceController::class, 'monthlyReport']);
+    Route::get('attendances/report/yearly', [AttendanceController::class, 'yearlyReport']);
+    Route::get('attendances/student/{studentId}', [AttendanceController::class, 'studentHistory']);
+
+    // Attendance CRUD
+    Route::apiResource('attendances', AttendanceController::class)
+        ->only(['index', 'show'])
+        ->names([
+            'index' => 'api.attendances.index',
+            'show'  => 'api.attendances.show',
+        ]);
+
+    // Attendance Sessions
+    Route::post('attendance-sessions', [AttendanceSessionController::class, 'store']);
+    Route::get('attendance-sessions/active', [AttendanceSessionController::class, 'active']);
+    Route::get('attendance-sessions/{id}', [AttendanceSessionController::class, 'show']);
+    Route::post('attendance-sessions/{id}/check-in', [AttendanceSessionController::class, 'checkIn']);
+    Route::post('attendance-sessions/{id}/end', [AttendanceSessionController::class, 'end']);
 });

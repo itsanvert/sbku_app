@@ -1,0 +1,213 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Attendance;
+use App\Models\Student;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class AttendanceController extends Controller
+{
+    /**
+     * List attendances with filters.
+     */
+    public function index(Request $request)
+    {
+        $query = Attendance::query()
+            ->with(['student.user', 'schedule', 'session']);
+
+        if ($request->student_id) {
+            $query->forStudent($request->student_id);
+        }
+
+        if ($request->date) {
+            $query->forDate($request->date);
+        }
+
+        if ($request->month && $request->year) {
+            $query->forMonth($request->month, $request->year);
+        } elseif ($request->year) {
+            $query->forYear($request->year);
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        $attendances = $query
+            ->orderBy($request->sort_by ?? 'attendance_date', $request->sort_dir ?? 'desc')
+            ->paginate($request->per_page ?? 20);
+
+        return response()->json($attendances);
+    }
+
+    /**
+     * Show a single attendance record.
+     */
+    public function show(Attendance $attendance)
+    {
+        return response()->json(
+            $attendance->load(['student.user', 'schedule', 'session'])
+        );
+    }
+
+    /**
+     * Daily report: all attendance records for a specific date.
+     */
+    public function dailyReport(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+        ]);
+
+        $date = $request->date;
+
+        $attendances = Attendance::with(['student.user', 'schedule'])
+            ->forDate($date)
+            ->orderBy('student_id')
+            ->get();
+
+        $totalStudents = $attendances->count();
+        $presentCount = $attendances->where('status', 'Y')->count();
+        $absentCount = $attendances->where('status', 'N')->count();
+
+        return response()->json([
+            'date' => $date,
+            'summary' => [
+                'total' => $totalStudents,
+                'present' => $presentCount,
+                'absent' => $absentCount,
+                'present_percentage' => $totalStudents > 0
+                    ? round(($presentCount / $totalStudents) * 100, 1)
+                    : 0,
+            ],
+            'records' => $attendances,
+        ]);
+    }
+
+    /**
+     * Monthly report: attendance summary per student for a month.
+     */
+    public function monthlyReport(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020',
+        ]);
+
+        $month = $request->month;
+        $year = $request->year;
+
+        $students = DB::table('attendances')
+            ->join('students', 'attendances.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->whereMonth('attendance_date', $month)
+            ->whereYear('attendance_date', $year)
+            ->select(
+                'students.id as student_id',
+                'users.name as student_name',
+                DB::raw("COUNT(*) as total_days"),
+                DB::raw("SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) as present_days"),
+                DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent_days"),
+                DB::raw("ROUND(SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) / COUNT(*) * 100, 1) as attendance_rate")
+            )
+            ->groupBy('students.id', 'users.name')
+            ->orderBy('users.name')
+            ->get();
+
+        return response()->json([
+            'month' => $month,
+            'year' => $year,
+            'students' => $students,
+        ]);
+    }
+
+    /**
+     * Yearly report: attendance summary per student for a year.
+     */
+    public function yearlyReport(Request $request)
+    {
+        $request->validate([
+            'year' => 'required|integer|min:2020',
+        ]);
+
+        $year = $request->year;
+
+        $students = DB::table('attendances')
+            ->join('students', 'attendances.student_id', '=', 'students.id')
+            ->join('users', 'students.user_id', '=', 'users.id')
+            ->whereYear('attendance_date', $year)
+            ->select(
+                'students.id as student_id',
+                'users.name as student_name',
+                DB::raw("COUNT(*) as total_days"),
+                DB::raw("SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) as present_days"),
+                DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent_days"),
+                DB::raw("ROUND(SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) / COUNT(*) * 100, 1) as attendance_rate")
+            )
+            ->groupBy('students.id', 'users.name')
+            ->orderBy('users.name')
+            ->get();
+
+        // Monthly breakdown
+        $monthlyBreakdown = DB::table('attendances')
+            ->whereYear('attendance_date', $year)
+            ->select(
+                DB::raw("MONTH(attendance_date) as month"),
+                DB::raw("COUNT(*) as total"),
+                DB::raw("SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) as present"),
+                DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent")
+            )
+            ->groupBy(DB::raw("MONTH(attendance_date)"))
+            ->orderBy('month')
+            ->get();
+
+        return response()->json([
+            'year' => $year,
+            'students' => $students,
+            'monthly_breakdown' => $monthlyBreakdown,
+        ]);
+    }
+
+    /**
+     * Student's own attendance history.
+     */
+    public function studentHistory(Request $request, $studentId)
+    {
+        $query = Attendance::with(['schedule', 'session'])
+            ->forStudent($studentId);
+
+        if ($request->month && $request->year) {
+            $query->forMonth($request->month, $request->year);
+        } elseif ($request->year) {
+            $query->forYear($request->year);
+        }
+
+        $attendances = $query
+            ->orderBy('attendance_date', 'desc')
+            ->paginate($request->per_page ?? 30);
+
+        // Summary stats
+        $totalQuery = Attendance::forStudent($studentId);
+        if ($request->month && $request->year) {
+            $totalQuery->forMonth($request->month, $request->year);
+        } elseif ($request->year) {
+            $totalQuery->forYear($request->year);
+        }
+
+        $total = $totalQuery->count();
+        $present = (clone $totalQuery)->present()->count();
+
+        return response()->json([
+            'summary' => [
+                'total' => $total,
+                'present' => $present,
+                'absent' => $total - $present,
+                'attendance_rate' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
+            ],
+            'attendances' => $attendances,
+        ]);
+    }
+}

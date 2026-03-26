@@ -86,7 +86,7 @@ class TeacherCreate extends Component
                 'gender'     => $this->gender,
                 'major_id'   => $this->major_id,
                 'year'       => $this->year,
-                'role'       => $this->role, 
+                'role'       => $this->role,
                 'schedule_id'   => $this->schedule_id,
                 'shift_id'   => $this->shift_id,
                 'phone'      => $this->phone,
@@ -138,7 +138,7 @@ session()->flash('success', 'Teacher created successfully!');
         return view('livewire.teachers.teacher-create', [
             'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
-            'schedules' => Schedule::orderBy('name')->get(),
+            'schedules' => Schedule::orderBy('id')->get(),
             'shifts' => Shift::orderBy('name')->get(),
         ]);
     }

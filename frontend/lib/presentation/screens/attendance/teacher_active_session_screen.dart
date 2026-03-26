@@ -76,7 +76,10 @@ class _TeacherStartAttendanceScreenState
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => TeacherActiveSessionScreen(session: session),
+            builder: (context) => TeacherActiveSessionScreen(
+              sessionId: session.id.hashCode, // Use hashCode as a simple int ID
+              qrToken: 'QR_${session.id}', // Simple QR token
+            ),
           ),
         );
       }

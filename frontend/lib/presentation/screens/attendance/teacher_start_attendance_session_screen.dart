@@ -1,9 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sbku_app/data/dummy_data.dart';
-import 'package:sbku_app/model/attendance_session_model.dart';
+import 'package:provider/provider.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/location_service.dart';
 
 class TeacherStartAttendanceScreen extends StatefulWidget {
@@ -17,20 +18,23 @@ class TeacherStartAttendanceScreen extends StatefulWidget {
 class _TeacherStartAttendanceScreenState
     extends State<TeacherStartAttendanceScreen> {
   final LocationService _locationService = LocationService();
-
-  String _facultyId = 'F01';
-  String _majorId = 'M01';
-  String _classId = 'C01';
-  String _yearId = 'Y1';
-  String _shiftId = 'SH1';
+  final AttendanceService _attendanceService = AttendanceService();
 
   bool _isLoading = false;
   Position? _currentLocation;
+
+  // These IDs will come from the teacher's profile or selection
+  int? _teacherId;
+  int? _facultyId;
+  int? _majorId;
+  int? _scheduleId;
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+    // TODO: Get teacher info from auth provider
+    _teacherId = 1; // placeholder
   }
 
   Future<void> _getCurrentLocation() async {
@@ -52,30 +56,34 @@ class _TeacherStartAttendanceScreenState
       return;
     }
 
+    if (_teacherId == null) {
+      _showError('Teacher ID not found');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final session = AttendanceSession(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        teacherId: 'T001', // Get from auth
+      final result = await _attendanceService.startSession(
+        teacherId: _teacherId!,
         facultyId: _facultyId,
         majorId: _majorId,
-
-        classId: _classId,
-        yearId: _yearId,
-        shiftId: _shiftId,
+        scheduleId: _scheduleId,
         latitude: _currentLocation!.latitude,
         longitude: _currentLocation!.longitude,
-        startTime: DateTime.now(),
       );
 
-      attendanceSessions.add(session);
+      final session = result['session'];
+      final qrToken = result['qr_token'];
 
       if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => TeacherActiveSessionScreen(session: session),
+            builder: (context) => TeacherActiveSessionScreen(
+              sessionId: session['id'],
+              qrToken: qrToken,
+            ),
           ),
         );
       }
@@ -103,50 +111,44 @@ class _TeacherStartAttendanceScreenState
           children: [
             _buildLocationCard(),
             const SizedBox(height: 24),
-            _buildDropdown(
-              label: 'មហាវិទ្យាល័យ',
-              value: _facultyId,
-              items: dummyFaculties
-                  .map((f) =>
-                      DropdownMenuItem(value: f.id, child: Text(f.facultyName)))
-                  .toList(),
-              onChanged: (v) => setState(() => _facultyId = v!),
-            ),
-            _buildDropdown(
-              label: 'ឯកទេស',
-              value: _majorId,
-              items: dummyMajors
-                  .map((m) => DropdownMenuItem(
-                      value: m.id, child: Text(m.majorName)))
-                  .toList(),
-              onChanged: (v) => setState(() => _majorId = v!),
-            ),
-            _buildDropdown(
-              label: 'ថ្នាក់',
-              value: _classId,
-              items: dummyClasses
-                  .map((c) => DropdownMenuItem(
-                      value: c.id, child: Text(c.className)))
-                  .toList(),
-              onChanged: (v) => setState(() => _classId = v!),
-            ),
-            _buildDropdown(
-              label: 'ឆ្នាំទី',
-              value: _yearId,
-              items: dummyYears
-                  .map((y) =>
-                      DropdownMenuItem(value: y.id, child: Text(y.yearName)))
-                  .toList(),
-              onChanged: (v) => setState(() => _yearId = v!),
-            ),
-            _buildDropdown(
-              label: 'វេន',
-              value: _shiftId,
-              items: dummyShifts
-                  .map((s) =>
-                      DropdownMenuItem(value: s.id, child: Text(s.shiftName)))
-                  .toList(),
-              onChanged: (v) => setState(() => _shiftId = v!),
+            // Info card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ការបើកវេនវត្តមាន',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'ពេលបើកវេន សិស្សអាចស្កេន QR កូដដើម្បីចុះវត្តមាន។',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(Icons.qr_code, color: Colors.orange[700], size: 20),
+                        const SizedBox(width: 8),
+                        const Text('QR កូដនឹងត្រូវបង្កើតដោយស្វ័យប្រវត្តិ'),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on, color: Colors.orange[700], size: 20),
+                        const SizedBox(width: 8),
+                        const Text('ទីតាំងនឹងត្រូវកត់ត្រា'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
             const Spacer(),
             ElevatedButton(
@@ -196,26 +198,6 @@ class _TeacherStartAttendanceScreenState
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String label,
-    required String value,
-    required List<DropdownMenuItem<String>> items,
-    required void Function(String?) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        items: items,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
