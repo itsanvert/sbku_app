@@ -7,6 +7,7 @@ class User {
   final bool twoFactorEnabled;
   final String? createdAt;
   final String? updatedAt;
+  final String? role;
 
   User({
     required this.id,
@@ -17,6 +18,7 @@ class User {
     this.twoFactorEnabled = false,
     this.createdAt,
     this.updatedAt,
+    this.role,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class User {
       twoFactorEnabled: json['two_factor_enabled'] ?? false,
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
+      role: json['role'] ?? json['role_id']?.toString(), // Handle string or ID occasionally
     );
   }
 

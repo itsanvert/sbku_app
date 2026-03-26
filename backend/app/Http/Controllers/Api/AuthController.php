@@ -38,6 +38,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'profile_photo_url' => $user->profile_photo_url,
+                'role' => $user->role,
                 'created_at' => $user->created_at,
             ],
             'token' => $token,
@@ -76,6 +77,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'profile_photo_url' => $user->profile_photo_url,
                 'two_factor_enabled' => $user->two_factor_secret !== null,
+                'role' => $user->role,
             ],
             'token' => $token,
         ]);
@@ -109,6 +111,7 @@ class AuthController extends Controller
                 'email_verified_at' => $request->user()->email_verified_at,
                 'profile_photo_url' => $request->user()->profile_photo_url,
                 'two_factor_enabled' => $request->user()->two_factor_secret !== null,
+                'role' => $request->user()->role,
                 'created_at' => $request->user()->created_at,
                 'updated_at' => $request->user()->updated_at,
             ],

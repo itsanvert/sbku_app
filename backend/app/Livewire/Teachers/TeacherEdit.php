@@ -95,7 +95,7 @@ class TeacherEdit extends Component
     return view('livewire.teachers.teacher-edit', [
         'majors'    => Major::orderBy('name')->get(),
         'faculties' => Faculty::orderBy('name')->get(),
-        'schedules' => Schedule::orderBy('name')->get(),
+        'schedules' => Schedule::orderBy('id')->get(),
         'shifts'    => Shift::orderBy('name')->get(),
     ]);
 }
