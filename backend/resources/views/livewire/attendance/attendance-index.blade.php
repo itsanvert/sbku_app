@@ -14,6 +14,10 @@
                         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                             placeholder="Search by student..." size="sm" class="w-52" />    
                     </div>
+                    <div class="flex items-center gap-2">
+                        <flux:button wire:click="exportPdf" icon="document-text" size="sm" variant="outline">PDF</flux:button>
+                        <flux:button wire:click="exportExcel" icon="table-cells" size="sm" variant="outline">Excel</flux:button>
+                    </div>
                 </div>
 
                 {{-- Table --}}
