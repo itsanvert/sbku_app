@@ -49,6 +49,12 @@ class _TeacherStartAttendanceScreenState
 
   Future<void> _startAttendanceSession() async {
     if (_currentLocation == null) {
+      setState(() => _isLoading = true);
+      await _getCurrentLocation();
+      setState(() => _isLoading = false);
+    }
+
+    if (_currentLocation == null) {
       _showError('Unable to get location. Please try again.');
       return;
     }
