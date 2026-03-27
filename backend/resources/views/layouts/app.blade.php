@@ -18,25 +18,53 @@
         @livewireStyles
         @fluxAppearance
     </head>
-    <body class="font-sans antialiased">
-        <x-banner />
+    <body class="min-h-screen bg-white dark:bg-zinc-900 antialiased font-sans text-zinc-900 dark:text-zinc-100 flex flex-col">
+        <div class="flex flex-1 flex-col lg:flex-row">
+            <flux:sidebar stashable sticky class="lg:bg-zinc-50 lg:dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
+                <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-        <div class="min-h-screen bg-gray-100">
-            @livewire('navigation-menu')
+                <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.jpg" name="SBKU" class="px-2" />
 
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <flux:navlist variant="pill" class="mt-6">
+                    <flux:navlist.item icon="home" href="{{ route('dashboard') }}" :current="request()->routeIs('dashboard')">Dashboard</flux:navlist.item>
+                    <flux:navlist.item icon="user" href="{{ route('users.index') }}" :current="request()->routeIs('users.index')">User</flux:navlist.item>
+                    <flux:navlist.item icon="academic-cap" href="{{ route('teachers.index') }}" :current="request()->routeIs('teachers.index')">Teacher</flux:navlist.item>
+                    <flux:navlist.item icon="users" href="{{ route('students.index') }}" :current="request()->routeIs('students.index')">Student</flux:navlist.item>
+                    <flux:navlist.item icon="calendar-days" href="{{ route('attendance.sessions.index') }}" :current="request()->routeIs('attendance.sessions.*')">Sessions</flux:navlist.item>
+                    <flux:navlist.item icon="clipboard-document-check" href="{{ route('attendance.records.index') }}" :current="request()->routeIs('attendance.records.*')">Records</flux:navlist.item>
+                </flux:navlist>
+
+                <flux:spacer />
+
+                <flux:navlist variant="pill">
+                    <flux:navlist.item icon="cog-6-tooth" href="{{ route('profile.show') }}">Settings</flux:navlist.item>
+                </flux:navlist>
+
+                <flux:dropdown class="mb-5">
+                    <flux:profile name="{{ auth()->user()->name }}" avatar="{{ auth()->user()->profile_photo_url }}" />
+
+                    <flux:menu>
+                        <flux:menu.item icon="arrow-right-start-on-rectangle" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log out</flux:menu.item>
+                    </flux:menu>
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
+                </flux:dropdown>
+            </flux:sidebar>
+
+            <div class="flex-1 flex flex-col min-w-0">
+                <flux:header class="border-b border-zinc-200 dark:border-zinc-800 lg:hidden">
+                    <flux:sidebar.toggle icon="bars-3" inset="left" />
+                    <flux:spacer />
+                    <flux:profile avatar="{{ auth()->user()->profile_photo_url }}" />
+                </flux:header>
+
+                <flux:main>
+                    @if (isset($header))
                         {{ $header }}
-                    </div>
-                </header>
-            @endif
+                    @endif
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+                    {{ $slot }}
+                </flux:main>
+            </div>
         </div>
 
         @stack('modals')

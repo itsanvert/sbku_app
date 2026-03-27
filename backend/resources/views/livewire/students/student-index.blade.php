@@ -4,8 +4,7 @@
         <flux:subheading>Manage students</flux:subheading>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+    <div class="space-y-4">
 
             {{-- Flash Message --}}
             @if (session()->has('message'))
@@ -164,8 +163,6 @@
                 </flux:table>
 
             </div>
-
-        </div>
     </div>
 
     {{-- Create Modal --}}

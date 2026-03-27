@@ -4,8 +4,7 @@
         <flux:subheading>Manage team members, roles, and account access</flux:subheading>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+    <div class="space-y-4">
 
             {{-- Flash Message --}}
             @if (session()->has('message'))
@@ -140,7 +139,6 @@
 
             </div>
 
-        </div>
     </div>
 
     {{-- Create Modal --}}
