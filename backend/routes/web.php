@@ -35,14 +35,27 @@ Route::get('/flux-test', function () {
 });
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/teachers', TeacherIndex::class)->name('teachers.index'); // ← same path = conflict
-    Route::get('/students', StudentIndex::class)->name('students.index');
-    Route::get('/users', UserIndex::class)->name('users.index');
+    // Admin only management
+    Route::get('/users', UserIndex::class)->middleware('role:admin,manage-users')->name('users.index');
+    Route::get('/teachers', TeacherIndex::class)->middleware('role:admin,manage-teachers')->name('teachers.index');
+    Route::get('/students', StudentIndex::class)->middleware('role:admin,manage-students')->name('students.index');
     
     // Attendance routes
-    Route::get('/attendance/sessions', \App\Livewire\Attendance\AttendanceSessionIndex::class)->name('attendance.sessions.index');
-    Route::get('/attendance/records', \App\Livewire\Attendance\AttendanceIndex::class)->name('attendance.records.index');
-    Route::get('/attendance/create-session', \App\Livewire\Attendance\AttendanceCreate::class)->name('attendance.sessions.create');
+    Route::prefix('attendance')->name('attendance.')->group(function() {
+        // Teachers and Admins can manage sessions
+        Route::get('/sessions', \App\Livewire\Attendance\AttendanceSessionIndex::class)
+            ->middleware('role:admin,teacher,view-sessions')
+            ->name('sessions.index');
+            
+        Route::get('/create-session', \App\Livewire\Attendance\AttendanceCreate::class)
+            ->middleware('role:admin,teacher,create-sessions')
+            ->name('sessions.create');
+
+        // All roles can view records (filtered internally by the component)
+        Route::get('/records', \App\Livewire\Attendance\AttendanceIndex::class)
+            ->middleware('role:admin,teacher,student,view-attendance')
+            ->name('records.index');
+    });
 
 });
 
