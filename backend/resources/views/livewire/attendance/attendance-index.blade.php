@@ -4,8 +4,7 @@
         <flux:subheading>Manage individual student attendance records</flux:subheading>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+    <div class="space-y-4">
 
             <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
 
@@ -83,6 +82,5 @@
                     </table>
                 </flux:table>
             </div>
-        </div>
     </div>
 </div>

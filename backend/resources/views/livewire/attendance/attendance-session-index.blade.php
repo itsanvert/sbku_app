@@ -4,8 +4,7 @@
         <flux:subheading>Manage current and past attendance sessions</flux:subheading>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+    <div class="space-y-4">
 
             @if (session()->has('message'))
                 <flux:callout variant="success" icon="check-circle" dismissible>
@@ -115,6 +114,5 @@
                     </table>
                 </flux:table>
             </div>
-        </div>
     </div>
 </div>
