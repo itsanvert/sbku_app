@@ -1,6 +1,5 @@
-// Create this file: lib/service/location_service.dart
-
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class LocationService {
   static const double ATTENDANCE_RADIUS = 10.0; // 10 meters
@@ -11,28 +10,36 @@ class LocationService {
       return false;
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return false;
-      }
+    // Check if permission is already granted
+    var status = await Permission.location.status;
+    
+    if (status.isDenied) {
+      // Request permission
+      status = await Permission.location.request();
     }
 
-    if (permission == LocationPermission.deniedForever) {
+    if (status.isPermanentlyDenied) {
+      // Open app settings if user permanently denied
+      await openAppSettings();
       return false;
     }
 
-    return true;
+    return status.isGranted || status.isLimited;
   }
 
   Future<Position?> getCurrentLocation() async {
     try {
       return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
       );
     } catch (e) {
-      return null;
+      // Fallback to last known position if current is unavailable/timed out
+      try {
+        return await Geolocator.getLastKnownPosition();
+      } catch (_) {
+        return null;
+      }
     }
   }
 
