@@ -15,12 +15,16 @@ class Attendance extends Model
         'schedule_id',
         'student_id',
         'session_id',
+        'verify_status',
+        'reject_reason',
+        'verified_at',
     ];
 
     protected $casts = [
         'attendance_date' => 'date',
-        'check_in_time' => 'datetime',
-        'check_out_time' => 'datetime',
+        'check_in_time'   => 'datetime',
+        'check_out_time'  => 'datetime',
+        'verified_at'     => 'datetime',
     ];
 
     protected $appends = ['student_name'];
@@ -77,5 +81,26 @@ class Attendance extends Model
     public function scopeAbsent($query)
     {
         return $query->where('status', 'N');
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('verify_status', 'pending');
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('verify_status', 'approved');
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('verify_status', 'rejected');
+    }
+
+    // Helper: is the check-in fully verified?
+    public function getIsVerifiedAttribute(): bool
+    {
+        return $this->verify_status === 'approved';
     }
 }

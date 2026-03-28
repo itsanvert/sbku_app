@@ -172,4 +172,43 @@ class AttendanceService {
     }
     throw Exception('Failed to load student history');
   }
+
+  // ── Anti-cheating Approval ───────────────────────────────────
+
+  /// Fetch the teacher approval checklist (pending / approved / rejected).
+  Future<Map<String, dynamic>> getApprovalList(int sessionId) async {
+    final response = await _api.get(
+      'attendance-sessions/$sessionId/approvals',
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to load approval list');
+  }
+
+  /// Approve or reject a single student check-in.
+  /// [action] must be 'approved' or 'rejected'.
+  Future<Map<String, dynamic>> verifyAttendance({
+    required int sessionId,
+    required int attendanceId,
+    required String action, // 'approved' | 'rejected'
+    String? reason,
+  }) async {
+    final response = await _api.post(
+      'attendance-sessions/$sessionId/verify/$attendanceId',
+      {
+        'action': action,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+      },
+      requiresAuth: true,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    final body = jsonDecode(response.body);
+    throw Exception(body['message'] ?? 'Verification failed');
+  }
 }

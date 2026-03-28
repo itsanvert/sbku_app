@@ -19,21 +19,40 @@
     <table>
         <thead>
             <tr>
+                <th>#</th>
                 <th>Date</th>
-                <th>Student</th>
-                <th>Session/Teacher</th>
+                <th>Student info</th>
+                <th>Faculty / Major</th>
+                <th>Class info</th>
+                <th>Teacher</th>
                 <th>Status</th>
-                <th>Checked In At</th>
+                <th>Verify</th>
+                <th>Time</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($records as $record)
+            @foreach($records as $index => $record)
                 <tr>
+                    <td>{{ $index + 1 }}</td>
                     <td>{{ $record->attendance_date?->format('Y-m-d') }}</td>
-                    <td>{{ $record->student->user->name ?? 'Unknown Student' }}</td>
-                    <td>{{ $record->session->teacher->user->name ?? 'Unknown Teacher' }}</td>
-                    <td>{{ $record->status === 'Y' ? 'Present' :'Absent' }}</td>
-                    <td>{{ $record->check_in_time ? $record->check_in_time->format('M d, H:i') : '—' }}</td>
+                    <td>
+                        <strong>{{ $record->student->user->name ?? '—' }}</strong><br>
+                        <small>ID: {{ $record->student->student_code ?? '—' }}</small>
+                    </td>
+                    <td>
+                        {{ $record->student->faculty->name ?? $record->session->faculty->name ?? '—' }}<br>
+                        <small>{{ $record->student->major->name ?? $record->session->major->name ?? '—' }}</small>
+                    </td>
+                    <td>
+                        Year: {{ $record->student->year ?? '—' }}<br>
+                        Shift: {{ $record->student->shift ?? '—' }}
+                    </td>
+                    <td>{{ $record->session->teacher->user->name ?? '—' }}</td>
+                    <td style="color: {{ $record->status === 'Y' ? 'green' : 'red' }}; font-weight: bold;">
+                        {{ $record->status === 'Y' ? 'Present' : 'Absent' }}
+                    </td>
+                    <td>{{ ucfirst($record->verify_status ?? 'pending') }}</td>
+                    <td>{{ $record->check_in_time ? $record->check_in_time->format('H:i') : '—' }}</td>
                 </tr>
             @endforeach
         </tbody>

@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';

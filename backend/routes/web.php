@@ -55,6 +55,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/records', \App\Livewire\Attendance\AttendanceIndex::class)
             ->middleware('role:admin,teacher,student,view-attendance')
             ->name('records.index');
+
+        // Excel Export route
+        Route::get('/export/excel', function() {
+            $ids = session('attendance_export_ids');
+            if (!$ids || empty($ids)) {
+                return redirect()->back()->with('error', 'No records selected for export.');
+            }
+            $records = \App\Models\Attendance::with([
+                'student.user',
+                'student.faculty',
+                'student.major',
+                'session.teacher.user',
+                'session.faculty',
+                'session.major',
+            ])->whereIn('id', $ids)->get();
+            
+            return (new \App\Exports\AttendanceExport($records))->download();
+        })->name('export.excel');
     });
 
 });
