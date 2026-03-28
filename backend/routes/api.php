@@ -81,4 +81,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('attendance-sessions/{id}', [AttendanceSessionController::class, 'show']);
     Route::post('attendance-sessions/{id}/check-in', [AttendanceSessionController::class, 'checkIn']);
     Route::post('attendance-sessions/{id}/end', [AttendanceSessionController::class, 'end']);
+
+    // Anti-cheating: teacher approval checklist
+    Route::get('attendance-sessions/{id}/approvals', [AttendanceSessionController::class, 'approvalList']);
+    Route::post('attendance-sessions/{sessionId}/verify/{attendanceId}', [AttendanceSessionController::class, 'verifyAttendance']);
 });

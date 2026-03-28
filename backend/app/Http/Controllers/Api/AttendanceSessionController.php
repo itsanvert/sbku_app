@@ -145,7 +145,7 @@ class AttendanceSessionController extends Controller
             // Mark session as ended
             $session->update([
                 'is_active' => false,
-                'ended_at' => now(),
+                'ended_at'  => now(),
             ]);
 
             // Get all students who should have attended (by faculty + major)
@@ -158,28 +158,123 @@ class AttendanceSessionController extends Controller
                 $query->where('major_id', $session->major_id);
             }
 
-            $allStudents = $query->pluck('id');
+            $allStudents     = $query->pluck('id');
             $checkedInStudents = $session->attendances()->pluck('student_id');
 
-            // Create absent records for students who didn't check in
+            // Mark pending check-ins that were never verified as rejected
+            $session->attendances()
+                ->where('verify_status', 'pending')
+                ->update([
+                    'verify_status' => 'rejected',
+                    'reject_reason' => 'Session ended without teacher verification',
+                    'verified_at'   => now(),
+                    'status'        => 'N',   // treat unverified as absent
+                ]);
+
+            // Create absent records for students who didn't check in at all
             $absentStudents = $allStudents->diff($checkedInStudents);
 
             foreach ($absentStudents as $studentId) {
                 Attendance::create([
                     'attendance_date' => $session->started_at->toDateString(),
-                    'status' => 'N',
-                    'student_id' => $studentId,
-                    'schedule_id' => $session->schedule_id,
-                    'session_id' => $session->id,
+                    'status'          => 'N',
+                    'verify_status'   => 'approved',   // system-generated, no cheating concern
+                    'student_id'      => $studentId,
+                    'schedule_id'     => $session->schedule_id,
+                    'session_id'      => $session->id,
                 ]);
             }
         });
 
         return response()->json([
-            'message' => 'Session ended successfully',
-            'session' => $session->fresh()->load(['attendances.student.user']),
+            'message'       => 'Session ended successfully',
+            'session'       => $session->fresh()->load(['attendances.student.user']),
             'total_present' => $session->attendances()->where('status', 'Y')->count(),
-            'total_absent' => $session->attendances()->where('status', 'N')->count(),
+            'total_absent'  => $session->attendances()->where('status', 'N')->count(),
+        ]);
+    }
+
+    /**
+     * List all check-ins for a session, grouped by verify_status.
+     * Used by the teacher to see who needs approval.
+     */
+    public function approvalList($id)
+    {
+        $session = AttendanceSession::with([
+            'teacher.user', 'faculty', 'major',
+        ])->findOrFail($id);
+
+        $attendances = Attendance::with(['student.user'])
+            ->where('session_id', $id)
+            ->where('status', 'Y')           // only QR check-ins
+            ->orderBy('check_in_time')
+            ->get()
+            ->map(function ($a) {
+                return [
+                    'id'            => $a->id,
+                    'student_id'    => $a->student_id,
+                    'student_name'  => $a->student?->user?->name ?? $a->student?->name ?? 'Unknown',
+                    'student_code'  => $a->student?->student_code ?? '',
+                    'check_in_time' => $a->check_in_time?->format('H:i:s'),
+                    'verify_status' => $a->verify_status,
+                    'reject_reason' => $a->reject_reason,
+                    'verified_at'   => $a->verified_at?->format('H:i:s'),
+                ];
+            });
+
+        $grouped = [
+            'pending'  => $attendances->where('verify_status', 'pending')->values(),
+            'approved' => $attendances->where('verify_status', 'approved')->values(),
+            'rejected' => $attendances->where('verify_status', 'rejected')->values(),
+        ];
+
+        return response()->json([
+            'session'    => $session,
+            'attendances' => $grouped,
+            'counts' => [
+                'pending'  => $grouped['pending']->count(),
+                'approved' => $grouped['approved']->count(),
+                'rejected' => $grouped['rejected']->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Approve or reject a single student check-in.
+     * Body: { "action": "approved" | "rejected", "reason": "..." }
+     */
+    public function verifyAttendance(Request $request, $sessionId, $attendanceId)
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:approved,rejected',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $session = AttendanceSession::findOrFail($sessionId);
+
+        $attendance = Attendance::where('session_id', $sessionId)
+            ->findOrFail($attendanceId);
+
+        if ($attendance->verify_status !== 'pending') {
+            return response()->json([
+                'message' => 'This attendance has already been verified.',
+                'current_status' => $attendance->verify_status,
+            ], 409);
+        }
+
+        $attendance->update([
+            'verify_status' => $validated['action'],
+            'reject_reason' => $validated['reason'] ?? null,
+            'verified_at'   => now(),
+            // If rejected, also flip the status to 'N' (absent)
+            'status'        => $validated['action'] === 'approved' ? 'Y' : 'N',
+        ]);
+
+        return response()->json([
+            'message'    => $validated['action'] === 'approved'
+                ? 'Attendance approved successfully.'
+                : 'Attendance rejected - student marked as absent.',
+            'attendance' => $attendance->load('student.user'),
         ]);
     }
 }

@@ -10,9 +10,31 @@
 
                 {{-- Toolbar --}}
                 <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200">
-                    <div class="flex items-center gap-2">
-                        <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
-                            placeholder="Search by student..." size="sm" class="w-52" />    
+                    <div class="flex flex-wrap items-center gap-2">
+                        <flux:input wire:model.live="search" icon="magnifying-glass"
+                            placeholder="Student name..." size="sm" class="w-48" />
+
+                        <flux:input wire:model.live="filterDate" type="date" size="sm" class="w-40" />
+
+                        <div class="flex items-center gap-2">
+                            <flux:select wire:model.live="filterMonth" size="sm" class="w-32" placeholder="Month">
+                                <flux:select.option value="">All Months</flux:select.option>
+                                @for($i=1; $i<=12; $i++)
+                                    <flux:select.option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}">{{ date('F', mktime(0, 0, 0, $i, 1)) }}</flux:select.option>
+                                @endfor
+                            </flux:select>
+
+                            <flux:select wire:model.live="filterYear" size="sm" class="w-28" placeholder="Year">
+                                <flux:select.option value="">All Years</flux:select.option>
+                                @for($i=date('Y'); $i>=2020; $i--)
+                                    <flux:select.option value="{{ $i }}">{{ $i }}</flux:select.option>
+                                @endfor
+                            </flux:select>
+                        </div>
+
+                        @if($search || $filterDate || $filterMonth || $filterYear)
+                            <flux:button wire:click="$set('search', ''); $set('filterDate', ''); $set('filterMonth', ''); $set('filterYear', '');" size="sm" variant="ghost" icon="x-mark">Clear</flux:button>
+                        @endif
                     </div>
                     <div class="flex items-center gap-2">
                         <flux:button wire:click="exportPdf" icon="document-text" size="sm" variant="outline">PDF</flux:button>

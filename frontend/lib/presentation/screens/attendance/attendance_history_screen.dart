@@ -671,8 +671,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         itemBuilder: (context, index) {
           final m = breakdown[index];
           final month = m['month'];
-          final present = m['present'] ?? 0;
-          final total = m['total'] ?? 0;
+          final present = _toNum(m['present']);
+          final total   = _toNum(m['total']);
           final rate =
               total > 0 ? ((present / total) * 100).round() : 0;
 
@@ -721,6 +721,14 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                 TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       ],
     );
+  }
+
+  /// Safely convert a dynamic JSON value (may be String, int, double, or null)
+  /// to a [num] so arithmetic operators work without crashing.
+  num _toNum(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value;
+    return num.tryParse(value.toString()) ?? 0;
   }
 
   Color _rateColor(dynamic rate) {
