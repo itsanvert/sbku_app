@@ -51,16 +51,20 @@
                     <flux:error name="major_id" />
                 </flux:field>
 
-                <flux:field>
-                    <flux:label>Schedule</flux:label>
-                    <flux:select wire:model="schedule_id" size="sm">
-                        <flux:select.option value="">Select</flux:select.option>
-                        @foreach ($schedules as $schedule)
-                            <flux:select.option value="{{ $schedule->id }}">{{ $schedule->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    <flux:error name="schedule_id" />
-                </flux:field>
+                 <flux:field>
+                        <flux:label>Schedule / Class</flux:label>
+                        <flux:select wire:model="schedule_id" placeholder="Select Schedule" class="w-full">
+                            @foreach($schedules as $schedule)
+                                <flux:select.option value="{{ $schedule->id }}">
+                                    {{ $schedule->name ?? 'No Name' }}
+                                    @if(isset($schedule->day_of_the_week))
+                                        ({{ $schedule->day_of_the_week }})
+                                    @endif
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:error name="schedule_id" />
+                    </flux:field>
 
                  <flux:field>
                     <flux:label>Shift</flux:label>

@@ -32,10 +32,10 @@
 
                 <flux:field>
                     <flux:label>Gender</flux:label>
-                    <flux:select wire:model="gender" size="sm">
-                        <flux:select.option value="">Select</flux:select.option>
-                        <flux:select.option value="male">Male</flux:select.option>
-                        <flux:select.option value="female">Female</flux:select.option>
+                    <flux:select wire:model="gender" size="sm" placeholder="Select Gender">
+                        @foreach ($genders as $val => $label)
+                            <flux:select.option value="{{ $val }}">{{ $label }}</flux:select.option>
+                        @endforeach
                     </flux:select>
                     <flux:error name="gender" />
                 </flux:field>
@@ -70,18 +70,37 @@
                     <flux:label>Year</flux:label>
                     <flux:select wire:model="year" size="sm">
                         <flux:select.option value="">Select</flux:select.option>
-                        <flux:select.option value="1">Year 1</flux:select.option>
-                        <flux:select.option value="2">Year 2</flux:select.option>
-                        <flux:select.option value="3">Year 3</flux:select.option>
-                        <flux:select.option value="4">Year 4</flux:select.option>
+                        <flux:select.option value="1">1</flux:select.option>
+                        <flux:select.option value="2">2</flux:select.option>
+                        <flux:select.option value="3">3</flux:select.option>
+                        <flux:select.option value="4">4</flux:select.option>
                     </flux:select>
                     <flux:error name="year" />
                 </flux:field>
+                <flux:field>
+                    <flux:label>Shift</flux:label>
+                    <flux:select wire:model="shift_id" size="sm" placeholder="Select Shift">
+                        @foreach($shifts as $shift)
+                            <flux:select.option value="{{ $shift->id }}">{{ $shift->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="shift_id" />
+                </flux:field>
 
-                <flux:input wire:model="shift"
-                            label="Shift"
-                            placeholder="e.g. Morning, Afternoon" />
-
+                 <flux:field>
+                        <flux:label>Schedule / Class</flux:label>
+                        <flux:select wire:model="schedule_id" placeholder="Select Schedule" class="w-full">
+                            @foreach($schedules as $schedule)
+                                <flux:select.option value="{{ $schedule->id }}">
+                                    {{ $schedule->name ?? 'No Name' }}
+                                    @if(isset($schedule->day_of_the_week))
+                                        ({{ $schedule->day_of_the_week }})
+                                    @endif
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:error name="schedule_id" />
+                    </flux:field>
                 <flux:input wire:model="generation"
                             label="Generation"
                             placeholder="e.g. 10, 11" />

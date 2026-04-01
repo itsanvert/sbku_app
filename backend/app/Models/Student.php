@@ -14,7 +14,8 @@ class Student extends Model
         'faculty_id',
         'major_id',
         'year',
-        'shift',
+        'shift_id',
+        'schedule_id',
         'generation',
         'profile_image_path',
     ];
@@ -59,5 +60,9 @@ public function major()
 public function schedule()
 {
     return $this->belongsTo(Schedule::class);
+}
+public function shift()
+{
+    return $this->belongsTo(Shift::class);
 }
 }

@@ -122,7 +122,7 @@
 
                                     {{-- Schedule --}}
                                     <td class="px-4 py-3 text-sm text-zinc-500">
-                                        {{ $teacher->schedule->name ?? '—' }}
+                                        {{ $teacher->schedule->day_of_the_week ?? '—' }}
                                     </td>
 
                                     {{-- Shift --}}

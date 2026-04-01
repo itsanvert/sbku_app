@@ -30,13 +30,10 @@ class _StudentAttendanceStatusScreenState
   String? _error;
   Timer? _pollingTimer;
 
-  // Counts
-  int get _pendingCount =>
-      _records.where((r) => r['verify_status'] == 'pending').length;
-  int get _approvedCount =>
-      _records.where((r) => r['verify_status'] == 'approved').length;
-  int get _rejectedCount =>
-      _records.where((r) => r['verify_status'] == 'rejected').length;
+  // Counts from backend summary
+  int get _pendingCount => (_summary?['pending'] ?? 0) as int;
+  int get _approvedCount => (_summary?['approved'] ?? 0) as int;
+  int get _rejectedCount => (_summary?['rejected'] ?? 0) as int;
 
   @override
   void initState() {
@@ -62,10 +59,11 @@ class _StudentAttendanceStatusScreenState
       final user = authProvider.user;
       if (user == null) throw Exception('Not authenticated');
 
-      // Use the existing student history endpoint which returns verify_status
-      final result = await _service.getStudentHistory(
-        user.id is int ? user.id : int.parse(user.id.toString()),
-      );
+      // Use the studentId from user object (the primary key in student table)
+      final int sid = user.studentId ??
+          (user.id is int ? user.id as int : int.parse(user.id.toString()));
+
+      final result = await _service.getStudentHistory(sid);
 
       final attendances = result['attendances'];
       final data = (attendances?['data'] as List?)
@@ -190,11 +188,11 @@ class _StudentAttendanceStatusScreenState
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _miniStatCard('រង់ចាំ', _pendingCount, Colors.orange,
-              Icons.pending_actions),
+          _miniStatCard(
+              'រង់ចាំ', _pendingCount, Colors.orange, Icons.pending_actions),
           const SizedBox(width: 8),
-          _miniStatCard('អនុម័ត', _approvedCount, Colors.green,
-              Icons.check_circle),
+          _miniStatCard(
+              'អនុម័ត', _approvedCount, Colors.green, Icons.check_circle),
           const SizedBox(width: 8),
           _miniStatCard('បដិសេធ', _rejectedCount, Colors.red, Icons.cancel),
         ],
@@ -202,8 +200,7 @@ class _StudentAttendanceStatusScreenState
     );
   }
 
-  Widget _miniStatCard(
-      String label, int count, Color color, IconData icon) {
+  Widget _miniStatCard(String label, int count, Color color, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -304,8 +301,8 @@ class _StudentAttendanceStatusScreenState
               children: [
                 // Date chip
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(20),
@@ -327,8 +324,8 @@ class _StudentAttendanceStatusScreenState
                 const Spacer(),
                 // Verify status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: vColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -356,15 +353,31 @@ class _StudentAttendanceStatusScreenState
             if (checkIn != null)
               Row(
                 children: [
-                  Icon(Icons.login,
-                      size: 14, color: Colors.grey.shade500),
+                  Icon(Icons.login, size: 14, color: Colors.grey.shade500),
                   const SizedBox(width: 6),
                   Text(
                     'ចូល: $checkIn',
-                    style: TextStyle(
-                        fontSize: 13, color: Colors.grey.shade700),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                   ),
                 ],
+              ),
+
+            // Teacher name row
+            if (r['session']?['teacher']?['user']?['name'] != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.person_outline,
+                        size: 14, color: Colors.grey.shade500),
+                    const SizedBox(width: 6),
+                    Text(
+                      'គ្រូ: ${r['session']['teacher']['user']['name']}',
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                    ),
+                  ],
+                ),
               ),
 
             // Presence status
@@ -376,9 +389,7 @@ class _StudentAttendanceStatusScreenState
                       ? Icons.check_circle_outline
                       : Icons.highlight_off,
                   size: 14,
-                  color: attendanceStatus == 'Y'
-                      ? Colors.green
-                      : Colors.red,
+                  color: attendanceStatus == 'Y' ? Colors.green : Colors.red,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -408,14 +419,12 @@ class _StudentAttendanceStatusScreenState
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline,
-                        size: 14, color: Colors.red),
+                    const Icon(Icons.info_outline, size: 14, color: Colors.red),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'មូលហេតុ: $reason',
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.red),
+                        style: const TextStyle(fontSize: 12, color: Colors.red),
                       ),
                     ),
                   ],
@@ -433,7 +442,8 @@ class _StudentAttendanceStatusScreenState
                   const Text(
                     'រង់ចាំការអនុម័តពីគ្រូ...',
                     style: TextStyle(
-                        fontSize: 12, color: Colors.orange,
+                        fontSize: 12,
+                        color: Colors.orange,
                         fontStyle: FontStyle.italic),
                   ),
                 ],

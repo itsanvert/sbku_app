@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\Student;
 use App\Models\Major;
 use App\Models\Faculty;
+use App\Models\Shift;
+use App\Models\Schedule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
@@ -32,7 +34,8 @@ class StudentCreate extends Component
     public $faculty_id = '';
     public $major_id = '';
     public $year = '';
-    public $shift = '';
+    public $shift_id = '';
+    public $schedule_id = '';
     public $generation = '';
 
     /* ---------------------------------
@@ -41,18 +44,19 @@ class StudentCreate extends Component
     protected function rules()
     {
         return [
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|max:255|unique:users,email',
-            'password'   => 'required|min:8',
-            'role'       => 'required|in:admin,user,student,teacher',
-            'gender'     => 'required|in:male,female',
-            'dob'        => 'nullable|date',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|min:8',
+            'role' => 'required|in:admin,user,student,teacher',
+            'gender' => 'required|in:male,female',
+            'dob' => 'nullable|date',
             'faculty_id' => 'required|exists:faculties,id',
-            'major_id'   => 'required|exists:majors,id',
-            'year'       => 'required',
-            'shift'      => 'required',
+            'major_id' => 'required|exists:majors,id',
+            'year' => 'required',
+            'shift_id' => 'required|exists:shifts,id',
+            'schedule_id' => 'required|exists:schedules,id',
             'generation' => 'required',
-            'photo'      => 'nullable|image|max:1024',
+            'photo' => 'nullable|image|max:1024',
         ];
     }
 
@@ -67,19 +71,20 @@ class StudentCreate extends Component
 
         DB::transaction(function () use ($validated) {
             $user = User::create([
-                'name'     => $validated['name'],
-                'email'    => $validated['email'],
+                'name' => $validated['name'],
+                'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role'     => 'student',
+                'role' => 'student',
             ]);
 
             $studentData = [
-                'gender'     => $this->gender,
-                'dob'        => $this->dob,
+                'gender' => $this->gender,
+                'dob' => $this->dob,
                 'faculty_id' => $this->faculty_id,
-                'major_id'   => $this->major_id,
-                'year'       => $this->year,
-                'shift'      => $this->shift,
+                'major_id' => $this->major_id,
+                'year' => $this->year,
+                'shift_id' => $this->shift_id,
+                'schedule_id' => $this->schedule_id,
                 'generation' => $this->generation,
             ];
 
@@ -101,6 +106,9 @@ class StudentCreate extends Component
         return view('livewire.students.student-create', [
             'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
+            'schedules' => Schedule::orderBy('day_of_the_week')->get(),
+            'genders' => ['male' => 'Male', 'female' => 'Female'],
+            'shifts' => Shift::orderBy('name')->get(),
         ]);
     }
 }

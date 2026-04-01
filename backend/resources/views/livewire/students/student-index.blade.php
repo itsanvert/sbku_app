@@ -19,7 +19,15 @@
                 <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200">
                     <div class="flex items-center gap-2">
                         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
-                            placeholder="Search students…" size="sm" class="w-52" />    
+                            placeholder="Search students…" size="sm" class="w-52" />
+
+                        <flux:select wire:model.live="role" size="sm" class="w-36" placeholder="All Roles">
+                            <flux:select.option value="">All Roles</flux:select.option>
+                            <flux:select.option value="admin">Admin</flux:select.option>
+                            <flux:select.option value="student">Student</flux:select.option>
+                            <flux:select.option value="teacher">Teacher</flux:select.option>
+                        </flux:select>
+
                         @if(count($selected) > 0)
                             <flux:button wire:click="confirmBulkDelete" size="sm" variant="danger" icon="trash">
                                 Delete ({{ count($selected) }})
@@ -28,12 +36,12 @@
                     </div>
 
                     <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus">
-                        Add Student 
+                        Add Student
                     </flux:button>
                 </div>
 
                 {{-- Table --}}
-                <flux:table :paginate="$this->students">    
+                <flux:table :paginate="$this->students">
                     <table class="w-full text-sm text-left">
                         <colgroup>
                             <col class="w-10"> {{-- checkbox --}}
@@ -123,7 +131,7 @@
 
                                     {{-- Schedule --}}
                                     <td class="px-4 py-3 text-sm text-zinc-500">
-                                        {{ $student->schedule->name ?? '—' }}
+                                        {{ $student->schedule->day_of_the_week ?? '—' }}
                                     </td>
 
                                     {{-- Phone --}}
@@ -187,7 +195,7 @@
                 <flux:modal.close>
                     <flux:button variant="ghost">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button wire:click="deleteStudent" size="sm" variant="danger">Delete</flux:button> 
+                <flux:button wire:click="deleteStudent" size="sm" variant="danger">Delete</flux:button>
             </div>
         </flux:modal>
 

@@ -8,6 +8,8 @@ class User {
   final String? createdAt;
   final String? updatedAt;
   final String? role;
+  final int? studentId;
+  final int? teacherId;
 
   User({
     required this.id,
@@ -19,6 +21,8 @@ class User {
     this.createdAt,
     this.updatedAt,
     this.role,
+    this.studentId,
+    this.teacherId,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class User {
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
       role: json['role'] ?? json['role_id']?.toString(), // Handle string or ID occasionally
+      studentId: json['student_id'],
+      teacherId: json['teacher_id'],
     );
   }
 
@@ -45,6 +51,9 @@ class User {
       'two_factor_enabled': twoFactorEnabled,
       'created_at': createdAt,
       'updated_at': updatedAt,
+      'role': role,
+      'student_id': studentId,
+      'teacher_id': teacherId,
     };
   }
 

@@ -17,15 +17,19 @@ class AttendanceSession extends Model
         'longitude',
         'started_at',
         'ended_at',
+        'expires_at',
+        'time_limit_minutes',
         'is_active',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
+        'expires_at' => 'datetime',
         'is_active' => 'boolean',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
+        'time_limit_minutes' => 'integer',
     ];
 
     protected $appends = ['teacher_name'];
