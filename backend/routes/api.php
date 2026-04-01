@@ -16,7 +16,7 @@ use App\Http\Controllers\Api\AttendanceSessionController;
 |--------------------------------------------------------------------------
 */
 // Public routes
-Route::post('/register', [AuthController::class, 'register']);
+
 Route::post('/login', [AuthController::class, 'login']);
 
 // Public storage route for CORS support on Flutter Web
