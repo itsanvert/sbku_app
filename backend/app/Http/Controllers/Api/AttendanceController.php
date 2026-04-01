@@ -174,9 +174,16 @@ class AttendanceController extends Controller
     /**
      * Student's own attendance history.
      */
-    public function studentHistory(Request $request, $studentId)
+    public function studentHistory(Request $request, $id)
     {
-        $query = Attendance::with(['schedule', 'session'])
+        // Resolve student model. Check if $id is student.id or student.user_id
+        $student = Student::where('id', $id)
+            ->orWhere('user_id', $id)
+            ->firstOrFail();
+
+        $studentId = $student->id;
+
+        $query = Attendance::with(['schedule', 'session.teacher.user'])
             ->forStudent($studentId);
 
         if ($request->month && $request->year) {
@@ -187,9 +194,10 @@ class AttendanceController extends Controller
 
         $attendances = $query
             ->orderBy('attendance_date', 'desc')
+            ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 30);
 
-        // Summary stats
+        // Summary stats - global or filtered
         $totalQuery = Attendance::forStudent($studentId);
         if ($request->month && $request->year) {
             $totalQuery->forMonth($request->month, $request->year);
@@ -199,12 +207,20 @@ class AttendanceController extends Controller
 
         $total = $totalQuery->count();
         $present = (clone $totalQuery)->present()->count();
+        
+        // Anti-cheating status summary
+        $pending = (clone $totalQuery)->pending()->count();
+        $approved = (clone $totalQuery)->approved()->count();
+        $rejected = (clone $totalQuery)->rejected()->count();
 
         return response()->json([
             'summary' => [
                 'total' => $total,
                 'present' => $present,
                 'absent' => $total - $present,
+                'pending' => $pending,
+                'approved' => $approved,
+                'rejected' => $rejected,
                 'attendance_rate' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
             ],
             'attendances' => $attendances,

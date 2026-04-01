@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\Student;
 use App\Models\Major;
 use App\Models\Faculty;
+use App\Models\Schedule;
+use App\Models\Shift;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
@@ -31,7 +33,8 @@ class StudentEdit extends Component
     public $year = '';
     public $faculty_id = '';
     public $dob = '';
-    public $shift = '';
+    public $shift_id = '';
+    public $schedule_id = '';
     public $generation = '';
 
     public function mount($studentId)
@@ -48,7 +51,8 @@ class StudentEdit extends Component
         $this->faculty_id = $student->faculty_id;
         $this->major_id   = $student->major_id;
         $this->year       = $student->year;
-        $this->shift      = $student->shift;
+        $this->shift_id   = $student->shift_id;
+        $this->schedule_id = $student->schedule_id;
         $this->generation = $student->generation;
         $this->existingPhoto = $student->profile_image_path;
     }
@@ -75,7 +79,8 @@ class StudentEdit extends Component
             'faculty_id' => $this->faculty_id,
             'major_id'   => $this->major_id,
             'year'       => $this->year,
-            'shift'      => $this->shift,
+            'shift_id'   => $this->shift_id,
+            'schedule_id' => $this->schedule_id,
             'generation' => $this->generation,
         ];
 
@@ -93,6 +98,9 @@ class StudentEdit extends Component
         return view('livewire.students.student-edit', [
             'majors'    => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
+            'schedules' => Schedule::orderBy('day_of_the_week')->get(),
+            'genders'   => ['male' => 'Male', 'female' => 'Female'],
+            'shifts'    => Shift::orderBy('name')->get(),
         ]);
     }
 }

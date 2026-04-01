@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
+import 'package:sbku_app/service/auth_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Teacher Attendance History Screen
@@ -86,7 +87,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           const SizedBox(height: 16),
           Text(_error!, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _loadHistory, child: const Text('ព្យាយាមម្ដងទៀត')),
+          ElevatedButton(
+              onPressed: _loadHistory, child: const Text('ព្យាយាមម្ដងទៀត')),
         ],
       ),
     );
@@ -99,8 +101,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         children: [
           Icon(Icons.history, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
-          Text('មិនមានប្រវត្តិវត្តមាន',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+          Text('', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
         ],
       ),
     );
@@ -126,9 +127,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           final record = _records[index];
           final isPresent = record['status'] == 'Y';
           final date = record['attendance_date'] ?? '';
-          final studentName = record['student_name'] ??
-              record['student']?['name'] ??
-              'Unknown';
+          final studentName =
+              record['student_name'] ?? record['student']?['name'] ?? 'Unknown';
           final checkIn = record['check_in_time'];
 
           return Card(
@@ -360,8 +360,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                 List<Map<String, dynamic>>.from(_dailyData!['records'] ?? [])),
           ),
         ] else
-          const Expanded(
-              child: Center(child: Text('សូមជ្រើសរើសកាលបរិច្ឆេទ'))),
+          const Expanded(child: Center(child: Text('សូមជ្រើសរើសកាលបរិច្ឆេទ'))),
       ],
     );
   }
@@ -402,8 +401,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                   items: List.generate(
                       7,
                       (i) => DropdownMenuItem(
-                          value: 2020 + i,
-                          child: Text('${2020 + i}'))),
+                          value: 2020 + i, child: Text('${2020 + i}'))),
                   onChanged: (v) {
                     setState(() => _selectedMonthYear = v!);
                     _loadMonthlyReport();
@@ -426,13 +424,11 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                   child: CircularProgressIndicator(color: Colors.orange)))
         else if (_monthlyData != null)
           Expanded(
-            child: _buildStudentSummaryList(
-                List<Map<String, dynamic>>.from(
-                    _monthlyData!['students'] ?? [])),
+            child: _buildStudentSummaryList(List<Map<String, dynamic>>.from(
+                _monthlyData!['students'] ?? [])),
           )
         else
-          const Expanded(
-              child: Center(child: Text('សូមជ្រើសរើសខែ និងឆ្នាំ'))),
+          const Expanded(child: Center(child: Text('សូមជ្រើសរើសខែ និងឆ្នាំ'))),
       ],
     );
   }
@@ -456,8 +452,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             },
             decoration: InputDecoration(
               labelText: 'ឆ្នាំ',
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
@@ -473,9 +469,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             _buildMonthlyBreakdown(List<Map<String, dynamic>>.from(
                 _yearlyData!['monthly_breakdown'])),
           Expanded(
-            child: _buildStudentSummaryList(
-                List<Map<String, dynamic>>.from(
-                    _yearlyData!['students'] ?? [])),
+            child: _buildStudentSummaryList(List<Map<String, dynamic>>.from(
+                _yearlyData!['students'] ?? [])),
           ),
         ] else
           const Expanded(child: Center(child: Text('សូមជ្រើសរើសឆ្នាំ'))),
@@ -493,7 +488,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         children: [
           _summaryCard('សរុប', '${summary['total'] ?? 0}', Colors.blue),
           const SizedBox(width: 8),
-          _summaryCard('មានវត្តមាន', '${summary['present'] ?? 0}', Colors.green),
+          _summaryCard(
+              'មានវត្តមាន', '${summary['present'] ?? 0}', Colors.green),
           const SizedBox(width: 8),
           _summaryCard('អវត្តមាន', '${summary['absent'] ?? 0}', Colors.red),
           const SizedBox(width: 8),
@@ -517,9 +513,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
           children: [
             Text(value,
                 style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: color)),
+                    fontSize: 20, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
             Text(label,
                 style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
@@ -558,15 +552,14 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                     fontWeight: FontWeight.bold),
               ),
             ),
-            title: Text(name,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: r['check_in_time'] != null
                 ? Text('ចូល: ${r['check_in_time']}',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]))
                 : null,
             trailing: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: isPresent ? Colors.green[50] : Colors.red[50],
                 borderRadius: BorderRadius.circular(12),
@@ -623,8 +616,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(name,
-                          style:
-                              const TextStyle(fontWeight: FontWeight.bold)),
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -672,9 +664,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
           final m = breakdown[index];
           final month = m['month'];
           final present = _toNum(m['present']);
-          final total   = _toNum(m['total']);
-          final rate =
-              total > 0 ? ((present / total) * 100).round() : 0;
+          final total = _toNum(m['total']);
+          final rate = total > 0 ? ((present / total) * 100).round() : 0;
 
           return Container(
             width: 60,
@@ -717,8 +708,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         Text('$label: ',
             style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         Text(value,
-            style:
-                TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       ],
     );
   }
@@ -759,8 +750,7 @@ class _StudentAttendanceHistoryScreenState
   int _page = 1;
   bool _hasMore = true;
 
-  // TODO: Get from auth
-  final int _studentId = 1;
+  int? _studentId;
 
   @override
   void initState() {
@@ -769,13 +759,28 @@ class _StudentAttendanceHistoryScreenState
   }
 
   Future<void> _loadHistory({bool loadMore = false}) async {
-    if (loadMore) _page++;
-    else _page = 1;
+    if (loadMore) {
+      _page++;
+    } else {
+      _page = 1;
+    }
+
+    if (_studentId == null) {
+      final user = await AuthService().getCurrentUser();
+      if (user != null && user.studentId != null) {
+        _studentId = user.studentId;
+      }
+    }
+
+    if (_studentId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     try {
-      final result = await _service.getStudentHistory(_studentId, page: _page);
+      final result = await _service.getStudentHistory(_studentId!, page: _page);
       final attendances = result['attendances'];
       final data = (attendances?['data'] as List?)
               ?.map((e) => Map<String, dynamic>.from(e))
@@ -804,8 +809,7 @@ class _StudentAttendanceHistoryScreenState
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ប្រវត្តិវត្តមានរបស់ខ្ញុំ'),
       body: _isLoading && _records.isEmpty
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.orange))
+          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
           : RefreshIndicator(
               onRefresh: () => _loadHistory(),
               child: Column(
@@ -824,13 +828,14 @@ class _StudentAttendanceHistoryScreenState
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _statColumn('សរុប',
-                              '${_summary!['total'] ?? 0}', Colors.white),
-                          _statColumn('មាន',
-                              '${_summary!['present'] ?? 0}', Colors.white),
-                          _statColumn('អវត្តមាន',
-                              '${_summary!['absent'] ?? 0}', Colors.white),
-                          _statColumn('ភាគរយ',
+                          _statColumn('សរុប', '${_summary!['total'] ?? 0}',
+                              Colors.white),
+                          _statColumn('មាន', '${_summary!['present'] ?? 0}',
+                              Colors.white),
+                          _statColumn('អវត្តមាន', '${_summary!['absent'] ?? 0}',
+                              Colors.white),
+                          _statColumn(
+                              'ភាគរយ',
                               '${_summary!['attendance_rate'] ?? 0}%',
                               Colors.white),
                         ],
@@ -842,8 +847,7 @@ class _StudentAttendanceHistoryScreenState
                         ? const Center(child: Text('មិនមានប្រវត្តិវត្តមាន'))
                         : ListView.builder(
                             itemCount: _records.length + (_hasMore ? 1 : 0),
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemBuilder: (context, index) {
                               if (index >= _records.length) {
                                 _loadHistory(loadMore: true);
@@ -868,9 +872,8 @@ class _StudentAttendanceHistoryScreenState
                                         : Colors.red[50],
                                     child: Icon(
                                       isPresent ? Icons.check : Icons.close,
-                                      color: isPresent
-                                          ? Colors.green
-                                          : Colors.red,
+                                      color:
+                                          isPresent ? Colors.green : Colors.red,
                                     ),
                                   ),
                                   title: Text(

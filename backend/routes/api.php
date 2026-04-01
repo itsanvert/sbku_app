@@ -23,7 +23,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/storage/{path}', function ($path) {
     $path = storage_path('app/public/' . $path);
     if (!file_exists($path)) abort(404);
-    
+
     return response()->file($path, [
         'Access-Control-Allow-Origin' => '*',
         'Access-Control-Allow-Methods' => 'GET',
@@ -58,7 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
             'store'   => 'api.students.store',
             'show'    => 'api.students.show',
             'update'  => 'api.students.update',
-            'destroy' => 'api.students.destroy',    
+            'destroy' => 'api.students.destroy',
         ]);
 
     // Attendance reports (must be before apiResource to avoid route conflicts)

@@ -24,7 +24,8 @@ class AttendanceService {
       if (longitude != null) 'longitude': longitude,
     };
 
-    final response = await _api.post('attendance-sessions', body, requiresAuth: true);
+    final response =
+        await _api.post('attendance-sessions', body, requiresAuth: true);
 
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
@@ -134,7 +135,8 @@ class AttendanceService {
 
   /// Monthly report.
   Future<Map<String, dynamic>> getMonthlyReport(int month, int year) async {
-    final response = await _api.get('attendances/report/monthly?month=$month&year=$year');
+    final response =
+        await _api.get('attendances/report/monthly?month=$month&year=$year');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -153,33 +155,28 @@ class AttendanceService {
   }
 
   /// Student's own attendance history.
-  Future<Map<String, dynamic>> getStudentHistory(
-    int studentId, {
-    int? month,
-    int? year,
-    int page = 1,
-  }) async {
+  Future<Map<String, dynamic>> getStudentHistory(int studentId,
+      {int? month, int? year, int page = 1}) async {
     final params = <String>[
       'page=$page',
       if (month != null) 'month=$month',
       if (year != null) 'year=$year',
     ];
 
-    final response = await _api.get('attendances/student/$studentId?${params.join('&')}');
+    final response = await _api.get(
+        'attendances/student/$studentId?${params.join('&')}',
+        requiresAuth: true);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
-    throw Exception('Failed to load student history');
+    throw Exception('Failed to load student attendance history');
   }
 
-  // ── Anti-cheating Approval ───────────────────────────────────
-
-  /// Fetch the teacher approval checklist (pending / approved / rejected).
+  /// Get list of students who checked in to a session, for teacher approval.
   Future<Map<String, dynamic>> getApprovalList(int sessionId) async {
-    final response = await _api.get(
-      'attendance-sessions/$sessionId/approvals',
-    );
+    final response = await _api.get('attendance-sessions/$sessionId/approvals',
+        requiresAuth: true);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);

@@ -138,7 +138,7 @@ session()->flash('success', 'Teacher created successfully!');
         return view('livewire.teachers.teacher-create', [
             'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
-            'schedules' => Schedule::orderBy('id')->get(),
+            'schedules' => Schedule::orderBy('day_of_the_week')->get(),
             'shifts' => Shift::orderBy('name')->get(),
         ]);
     }

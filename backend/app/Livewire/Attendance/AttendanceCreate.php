@@ -30,6 +30,38 @@ class AttendanceCreate extends Component
         'longitude' => 'required|numeric',
     ];
 
+    public $selectedSchedule = null;
+
+    public function updatedTeacherId($value)
+    {
+        if ($value) {
+            $teacher = Teacher::find($value);
+            if ($teacher) {
+                // Auto-fill from teacher's defaults if not already set
+                $this->faculty_id = $teacher->faculty_id;
+                $this->major_id = $teacher->major_id;
+                $this->schedule_id = $teacher->schedule_id;
+                $this->selectedSchedule = Schedule::find($this->schedule_id);
+            }
+        }
+    }
+
+    public function updatedScheduleId($value)
+    {
+        if ($value) {
+            $this->selectedSchedule = Schedule::find($value);
+            // If we found a teacher for this schedule, we could auto-select them
+            $teacher = Teacher::where('schedule_id', $value)->first();
+            if ($teacher) {
+                $this->teacher_id = $teacher->id;
+                $this->faculty_id = $teacher->faculty_id;
+                $this->major_id = $teacher->major_id;
+            }
+        } else {
+            $this->selectedSchedule = null;
+        }
+    }
+
     public function createSession()
     {
         $this->validate();
@@ -46,7 +78,7 @@ class AttendanceCreate extends Component
             'qr_token' => Str::random(32),
         ]);
 
-        session()->flash('message', 'Attendance Session created successfully.');
+        session()->flash('message', 'Attendance Session started successfully.');
 
         return $this->redirectRoute('attendance.sessions.index', navigate: true);
     }
@@ -54,7 +86,7 @@ class AttendanceCreate extends Component
     public function render()
     {
         return view('livewire.attendance.attendance-create', [
-            'teachers' => Teacher::with('user')->get(),
+            'teachers' => Teacher::with(['user', 'faculty', 'major'])->get(),
             'faculties' => Faculty::all(),
             'majors' => Major::all(),
             'schedules' => Schedule::all(),
