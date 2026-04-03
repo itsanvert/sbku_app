@@ -47,9 +47,10 @@
                         <flux:select wire:model="schedule_id" placeholder="Select Schedule" class="w-full">
                             @foreach($schedules as $schedule)
                                 <flux:select.option value="{{ $schedule->id }}">
-                                    {{ $schedule->name ?? 'No Name' }} 
-                                    @if(isset($schedule->day_of_the_week))
-                                        ({{ $schedule->day_of_the_week }})
+
+                                    @if(isset($schedule->day_of_the_week ))
+
+                                        ({{ $schedule->day_of_the_week}} {{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }} )
                                     @endif
                                 </flux:select.option>
                             @endforeach
@@ -77,12 +78,12 @@
                             <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-zinc-600">
                                 <div>Name:</div>
                                 <div class="font-medium text-zinc-900">{{ $selectedSchedule->name }}</div>
-                                
+
                                 <div>Major:</div>
                                 <div class="font-medium text-zinc-900">
                                     {{ $majors->find($major_id)?->name ?? 'None' }}
                                 </div>
-                                
+
                                 <div>Faculty:</div>
                                 <div class="font-medium text-zinc-900">
                                     {{ $faculties->find($faculty_id)?->name ?? 'None' }}
