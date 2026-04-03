@@ -45,7 +45,7 @@
                     </td>
                     <td>
                         Year: {{ $record->student->year ?? '—' }}<br>
-                        Shift: {{ $record->student->shift ?? '—' }}
+                        Shift: {{ $record->student->shift->name ?? '—' }}
                     </td>
                     <td>{{ $record->session->teacher->user->name ?? '—' }}</td>
                     <td style="color: {{ $record->status === 'Y' ? 'green' : 'red' }}; font-weight: bold;">
