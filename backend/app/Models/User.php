@@ -67,6 +67,33 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the URL to the user's profile photo.
+     * Overridden to fall back to teacher/student profile if exists.
+     *
+     * @return string
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        // 1. Check if user has a direct photo path (Jetstream standard)
+        if ($this->profile_photo_path) {
+            return \Illuminate\Support\Facades\Storage::disk($this->profilePhotoDisk())->url($this->profile_photo_path);
+        }
+
+        // 2. Fall back to Teacher profile image
+        if ($this->teacher && $this->teacher->profile_image_path) {
+            return url('api/storage/' . $this->teacher->profile_image_path);
+        }
+
+        // 3. Fall back to Student profile image
+        if ($this->student && $this->student->profile_image_path) {
+            return url('api/storage/' . $this->student->profile_image_path);
+        }
+
+        // 4. Default ui-avatars
+        return $this->defaultProfilePhotoUrl();
+    }
     /**
      * The "booted" method of the model.
      */

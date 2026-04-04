@@ -30,7 +30,23 @@ class AttendanceService {
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
     }
-    throw Exception('Failed to start session: ${response.statusCode}');
+
+    // Parse the error body so we can surface the server's validation message
+    String errorMessage = 'Failed to start session (HTTP ${response.statusCode})';
+    try {
+      final errorBody = jsonDecode(response.body);
+      if (errorBody is Map) {
+        if (errorBody.containsKey('message')) {
+          errorMessage = errorBody['message'];
+        } else if (errorBody.containsKey('errors')) {
+          final errors = errorBody['errors'] as Map;
+          errorMessage = errors.values
+              .map((v) => v is List ? v.join(', ') : v.toString())
+              .join('\n');
+        }
+      }
+    } catch (_) {}
+    throw Exception(errorMessage);
   }
 
   /// Get active attendance sessions.

@@ -5,12 +5,13 @@ import 'package:sbku_app/providers/auth_provider.dart';
 class GreetingCard extends StatelessWidget {
   const GreetingCard({super.key});
 
+  // ── Time-aware greeting (Khmer) ────────────────────────────────
   String get _greeting {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    if (hour < 21) return 'Good evening';
-    return 'Good night';
+    if (hour < 12) return 'អរុណសួស្តី';
+    if (hour < 17) return 'ទិវាសួស្តី';
+    if (hour < 21) return 'សាយណ្ហសួស្តី';
+    return 'រាត្រីសួស្តី';
   }
 
   IconData get _greetingIcon {
@@ -38,23 +39,57 @@ class GreetingCard extends StatelessWidget {
       'Dec'
     ];
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final day = days[now.weekday - 1];
-    final month = months[now.month - 1];
-    return '$day, $month ${now.day}';
+    return '${days[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
+  }
+
+  /// Returns a friendly display label for the role
+  String _roleLabel(String? role) {
+    if (role == null) return '';
+    switch (role.toLowerCase()) {
+      case 'teacher':
+        return 'គ្រូ';
+      case 'student':
+        return 'សិស្ស';
+      case 'super admin':
+      case 'superadmin':
+      case 'admin':
+        return 'Admin';
+      default:
+        return role;
+    }
+  }
+
+  Color _roleColor(String? role) {
+    switch (role?.toLowerCase()) {
+      case 'teacher':
+        return const Color(0xFF60A5FA); // blue
+      case 'student':
+        return const Color(0xFF34D399); // green
+      default:
+        return const Color(0xFFFBBF24); // amber
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
-        final userName = auth.user?.name ?? 'User';
-        final userEmail = auth.user?.email ?? '';
+        final user = auth.user;
+        final userName = user?.name ?? 'User';
+        final userEmail = user?.email ?? '';
+        final photoUrl = user?.profilePhotoUrl;
+        final role = user?.role;
+
         final initials = userName
             .trim()
             .split(' ')
             .take(2)
-            .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
+            .where((w) => w.isNotEmpty)
+            .map((w) => w[0].toUpperCase())
             .join();
+
+        final roleLabel = _roleLabel(role);
+        final roleColor = _roleColor(role);
 
         return Container(
           width: double.infinity,
@@ -76,8 +111,9 @@ class GreetingCard extends StatelessWidget {
             ],
           ),
           child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              // ── Decorative orb ─────────────────────────────────
+              // ── Decorative orbs ────────────────────────────────
               Positioned(
                 right: -20,
                 top: -20,
@@ -106,58 +142,37 @@ class GreetingCard extends StatelessWidget {
               // ── Content ────────────────────────────────────────
               Row(
                 children: [
-                  // Avatar
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.2),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        initials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // ── Avatar ─────────────────────────────────────
+                  _buildAvatar(photoUrl: photoUrl, initials: initials),
                   const SizedBox(width: 14),
 
-                  // Text
+                  // ── Name / greeting / email ─────────────────────
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Greeting + icon
+                        // Greeting row
                         Row(
                           children: [
                             Icon(
                               _greetingIcon,
                               color: Colors.white.withOpacity(0.85),
-                              size: 14,
+                              size: 13,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '$_greeting!',
+                              _greeting,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.85),
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 3),
-                        // Name
+
+                        // Full name
                         Text(
                           userName,
                           style: const TextStyle(
@@ -169,23 +184,59 @@ class GreetingCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (userEmail.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            userEmail,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.65),
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+
+                        const SizedBox(height: 4),
+
+                        // Email + role badge in one row
+                        Row(
+                          children: [
+                            if (userEmail.isNotEmpty) ...[
+                              Flexible(
+                                child: Text(
+                                  userEmail,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontSize: 11,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (roleLabel.isNotEmpty)
+                                const SizedBox(width: 6),
+                            ],
+                            // Role badge
+                            if (roleLabel.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: roleColor.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: roleColor.withOpacity(0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  roleLabel,
+                                  style: TextStyle(
+                                    color: roleColor,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
 
-                  // Date chip
+                  const SizedBox(width: 8),
+
+                  // ── Date chip ───────────────────────────────────
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -212,6 +263,56 @@ class GreetingCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAvatar({String? photoUrl, required String initials}) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withOpacity(0.2),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.45),
+          width: 2,
+        ),
+      ),
+      child: ClipOval(
+        child: photoUrl != null && photoUrl.isNotEmpty
+            ? Image.network(
+                photoUrl,
+                width: 52,
+                height: 52,
+                fit: BoxFit.cover,
+                // Show initials while loading
+                frameBuilder: (ctx, child, frame, loaded) {
+                  if (loaded) return child;
+                  return frame != null ? child : _initialsWidget(initials);
+                },
+                errorBuilder: (_, __, ___) => _initialsWidget(initials),
+              )
+            : _initialsWidget(initials),
+      ),
+    );
+  }
+
+  Widget _initialsWidget(String initials) {
+    return Container(
+      width: 52,
+      height: 52,
+      color: Colors.transparent,
+      child: Center(
+        child: Text(
+          initials.isEmpty ? '?' : initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
     );
   }
 }

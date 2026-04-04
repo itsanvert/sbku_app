@@ -204,17 +204,24 @@ class AttendanceSessionController extends Controller
             'teacher.user', 'faculty', 'major',
         ])->findOrFail($id);
 
-        $attendances = Attendance::with(['student.user'])
+        $attendances = Attendance::with(['student.user', 'student.faculty', 'student.major', 'student.shift'])
             ->where('session_id', $id)
             ->where('status', 'Y')           // only QR check-ins
             ->orderBy('check_in_time')
             ->get()
             ->map(function ($a) {
+                $student = $a->student;
                 return [
                     'id'            => $a->id,
                     'student_id'    => $a->student_id,
-                    'student_name'  => $a->student?->user?->name ?? $a->student?->name ?? 'Unknown',
-                    'student_code'  => $a->student?->student_code ?? '',
+                    'student_name'  => $student?->user?->name ?? $student?->name ?? 'Unknown',
+                    'student_code'  => $student?->student_code ?? '',
+                    'avatar_url'    => $student?->avatar_url,
+                    'faculty'       => $student?->faculty?->name ?? '—',
+                    'major'         => $student?->major?->name  ?? '—',
+                    'year'          => $student?->year            ?? '—',
+                    'shift'         => $student?->shift?->name   ?? '—',
+                    'generation'    => $student?->generation      ?? '—',
                     'check_in_time' => $a->check_in_time?->format('H:i:s'),
                     'verify_status' => $a->verify_status,
                     'reject_reason' => $a->reject_reason,
