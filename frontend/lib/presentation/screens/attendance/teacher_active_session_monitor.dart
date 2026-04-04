@@ -593,136 +593,134 @@ class _TeacherActiveSessionScreenState
     final code = a['student_code'] ?? '';
     final checkIn = a['check_in_time'] ?? '--:--';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.orange.withOpacity(0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Avatar
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    shape: BoxShape.circle,
-                    border:
-                        Border.all(color: Colors.orange.shade200, width: 2),
-                  ),
-                  child: Center(
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange.shade700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      if (code.isNotEmpty)
-                        Text(
-                          'ID: $code',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
-                        ),
-                    ],
-                  ),
-                ),
-                // Check-in time badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.access_time,
-                          size: 12, color: Colors.blue.shade600),
-                      const SizedBox(width: 4),
-                      Text(
-                        checkIn,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Action buttons
-            Row(
-              children: [
-                // Reject
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _rejectWithReason(a),
-                    icon: const Icon(Icons.close, size: 16),
-                    label: const Text('បដិសេធ', style: TextStyle(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Approve
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _approve(a),
-                    icon: const Icon(Icons.check, size: 16),
-                    label:
-                        const Text('អនុម័ត', style: TextStyle(fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () => _showStudentProfile(a),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildStudentAvatar(a, radius: 22, size: 44),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        if (code.isNotEmpty)
+                          Text(
+                            'ID: $code',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Check-in time badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.access_time,
+                            size: 12, color: Colors.blue.shade600),
+                        const SizedBox(width: 4),
+                        Text(
+                          checkIn,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Profile icon button
+                  GestureDetector(
+                    onTap: () => _showStudentProfile(a),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.person_search,
+                          size: 18, color: Colors.indigo.shade400),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Action buttons
+              Row(
+                children: [
+                  // Reject
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _rejectWithReason(a),
+                      icon: const Icon(Icons.close, size: 16),
+                      label: const Text('បដិសេធ',
+                          style: TextStyle(fontSize: 13)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Approve
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _approve(a),
+                      icon: const Icon(Icons.check, size: 16),
+                      label: const Text('អនុម័ត',
+                          style: TextStyle(fontSize: 13)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -784,55 +782,250 @@ class _TeacherActiveSessionScreenState
     final code = a['student_code'] ?? '';
     final reason = a['reject_reason'];
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+    return GestureDetector(
+      onTap: () => _showStudentProfile(a),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            _buildStudentAvatar(a, radius: 22, size: 44,
+                borderColor: color.withOpacity(0.4)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14)),
+                  if (code.isNotEmpty)
+                    Text('ID: $code',
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade500)),
+                  if (!isApproved && reason != null && reason.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'មូលហេតុ: $reason',
+                        style: const TextStyle(
+                            fontSize: 11, color: Colors.deepOrange),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Icon(
+              isApproved ? Icons.check_circle : Icons.cancel,
+              color: color,
+              size: 22,
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  // ── Student Profile Bottom Sheet ────────────────────────────
+  void _showStudentProfile(Map<String, dynamic> a) {
+    final name      = a['student_name']  ?? 'Unknown';
+    final code      = a['student_code']  ?? '';
+    final faculty   = a['faculty']       ?? '—';
+    final major     = a['major']         ?? '—';
+    final year      = a['year']?.toString() ?? '—';
+    final shift     = a['shift']         ?? '—';
+    final generation = a['generation']?.toString() ?? '—';
+    final checkIn   = a['check_in_time'] ?? '--:--';
+    final status    = a['verify_status'] ?? 'pending';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Avatar
+            _buildStudentAvatar(a, radius: 40, size: 80),
+            const SizedBox(height: 14),
+
+            // Name
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (code.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'ID: $code',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ),
+            ],
+            const SizedBox(height: 4),
+            // Verify status badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: _statusColor(status).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _statusColor(status).withOpacity(0.4)),
+              ),
+              child: Text(
+                status.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: _statusColor(status),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+
+            // Profile detail rows
+            _profileRow(Icons.school_outlined, 'Faculty', faculty),
+            _profileRow(Icons.class_outlined, 'Major', major),
+            _profileRow(Icons.calendar_today_outlined, 'Year', year),
+            _profileRow(Icons.schedule_outlined, 'Shift', shift),
+            _profileRow(Icons.groups_outlined, 'Generation', generation),
+            _profileRow(Icons.login_outlined, 'Check-in', checkIn),
+
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _profileRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: color.withOpacity(0.1),
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ),
+          Icon(icon, size: 18, color: Colors.orange.shade600),
           const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14)),
-                if (code.isNotEmpty)
-                  Text('ID: $code',
-                      style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade500)),
-                if (!isApproved && reason != null && reason.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      'មូលហេតុ: $reason',
-                      style: const TextStyle(
-                          fontSize: 11, color: Colors.deepOrange),
-                    ),
-                  ),
-              ],
+          Text(
+            '$label:',
+            style: TextStyle(
+              fontSize: 13, color: Colors.grey.shade500,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          Icon(
-            isApproved ? Icons.check_circle : Icons.cancel,
-            color: color,
-            size: 22,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.end,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'approved': return Colors.green;
+      case 'rejected': return Colors.red;
+      default:         return Colors.orange;
+    }
+  }
+
+  /// Avatar widget: shows network image if avatar_url is present, else initials
+  Widget _buildStudentAvatar(
+    Map<String, dynamic> a, {
+    required double radius,
+    required double size,
+    Color? borderColor,
+  }) {
+    final name      = (a['student_name'] ?? '') as String;
+    final avatarUrl = a['avatar_url'] as String?;
+    final initial   = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    Widget child;
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      child = ClipOval(
+        child: Image.network(
+          avatarUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _initialsAvatar(initial, size),
+          loadingBuilder: (_, widget, progress) {
+            if (progress == null) return widget;
+            return _initialsAvatar(initial, size);
+          },
+        ),
+      );
+    } else {
+      child = _initialsAvatar(initial, size);
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: borderColor ?? Colors.orange.shade200,
+          width: 2,
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _initialsAvatar(String initial, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontSize: size * 0.38,
+            fontWeight: FontWeight.bold,
+            color: Colors.orange.shade700,
+          ),
+        ),
       ),
     );
   }

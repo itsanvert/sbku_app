@@ -24,6 +24,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final TextStyle? subtitleStyle;
   final bool enableScaling;
   final double? customScaleFactor;
+  final bool showBottomShadow;
 
   const AppBarWidget({
     super.key,
@@ -41,6 +42,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.subtitleStyle,
     this.enableScaling = true,
     this.customScaleFactor,
+    this.showBottomShadow = true,
   });
 
   factory AppBarWidget.home({
@@ -49,7 +51,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     String? title,
     String? subtitle,
     List<Widget>? actions,
-    double height = 80,
+    double height = 90,
     List<Color>? gradientColors,
     bool enableScaling = true,
   }) {
@@ -71,7 +73,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     required String title,
     VoidCallback? onBackPressed,
     List<Widget>? actions,
-    double height = 80,
+    double height = 75,
     List<Color>? gradientColors,
     TextStyle? titleStyle,
     bool enableScaling = true,
@@ -95,7 +97,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     String? subtitle,
     Widget? leading,
     List<Widget>? actions,
-    double height = 80,
+    double height = 75,
     List<Color>? gradientColors,
     TextStyle? titleStyle,
     TextStyle? subtitleStyle,
@@ -124,159 +126,294 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     return 1.0;
   }
 
-  Widget _buildLeading(BuildContext context) {
-    switch (type) {
-      case AppBarType.home:
-        // ── Use Image.asset for .jpg/.png logos. Keep a fixed size so the
-        // app bar content aligns consistently without extra margin.
-        return SizedBox(
-          width: 56,
-          height: 56,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            child: Image.asset(
-              logoPath!,
-              errorBuilder: (context, error, stackTrace) {
-                // Fallback if asset is missing
-                return const Icon(Icons.school, color: Colors.white, size: 36);
-              },
-            ),
-          ),
-        );
-      case AppBarType.simple:
-        if (leading != null) return leading!;
-        if (automaticallyImplyLeading && Navigator.canPop(context)) {
-          return IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: onBackPressed ?? () => Navigator.pop(context),
-          );
-        }
-        return const SizedBox.shrink();
-      case AppBarType.custom:
-        return leading ?? const SizedBox.shrink();
-    }
-  }
-
-  Widget _buildTitle() {
-    if (type == AppBarType.home ||
-        (type == AppBarType.custom && subtitle != null)) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title ?? '',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: titleStyle ??
-                const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  height: 1.3,
-                ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 3),
-            Text(
-              subtitle!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: subtitleStyle ??
-                  const TextStyle(
-                    fontSize: 10.5,
-                    color: Colors.white70,
-                    height: 1.2,
-                  ),
-            ),
-          ],
-        ],
-      );
-    }
-
-    return Text(
-      title ?? '',
-      style: titleStyle ??
-          const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
-    );
-  }
-
-  List<Widget> _buildActions(BuildContext context) {
-    if (type == AppBarType.home && actions == null) {
-      return [
-        IconButton(
-          padding: EdgeInsets.zero,
-          icon: const Icon(Icons.logout, size: 26),
-          color: Colors.white,
-          onPressed: () async {
-            await context.read<AuthProvider>().logout();
-            if (context.mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            }
-          },
-        ),
-        IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-          icon: const Icon(Icons.notifications_outlined, size: 26),
-          color: Colors.white,
-          onPressed: () {},
-        ),
-        const SizedBox(width: 4),
-      ];
-    }
-    return actions ?? [];
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final scaleFactor = _getScaleFactor(screenWidth);
+    final topPadding = MediaQuery.of(context).padding.top;
 
     final defaultGradientColors =
         gradientColors ?? [const Color(0xFFFF6A00), const Color(0xFF9C3701)];
 
-    final appBar = AppBar(
-      toolbarHeight: height,
-      leadingWidth: type == AppBarType.home ? 56 : null,
-      titleSpacing: 0,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: defaultGradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+    // We use a custom Container with Safe Area to achieve the premium look
+    // while still respecting PreferredSize for the Scaffold
+    Widget content = Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: defaultGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        boxShadow: showBottomShadow
+            ? [
+                BoxShadow(
+                  color: defaultGradientColors.last.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : null,
       ),
-      leading: _buildLeading(context),
-      title: _buildTitle(),
-      actions: _buildActions(context),
-      automaticallyImplyLeading: false,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+      child: Stack(
+        children: [
+          // ── Decorative background ───────────────────────────
+          Positioned(
+            top: -10,
+            right: -10,
+            child: _decorativeOrb(70, Colors.white.withOpacity(0.08)),
+          ),
+          Positioned(
+            bottom: 5,
+            left: screenWidth * 0.2,
+            child: _decorativeOrb(30, Colors.white.withOpacity(0.05)),
+          ),
+
+          // ── App Bar Contents ────────────────────────────────
+          Column(
+            children: [
+              SizedBox(height: topPadding),
+              SizedBox(
+                height: height,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    children: [
+                      // 1. Leading
+                      _buildLeading(context),
+
+                      const SizedBox(width: 4),
+
+                      // 2. Title Section
+                      Expanded(child: _buildTitle()),
+
+                      // 3. Actions
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _buildActions(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
 
     if (enableScaling && scaleFactor != 1.0) {
-      final scaledHeight = height * scaleFactor;
-      return PreferredSize(
-        preferredSize: Size.fromHeight(scaledHeight),
-        child: Transform(
-          alignment: Alignment.topCenter,
-          transform: Matrix4.diagonal3Values(1.0, scaleFactor, 1.0),
-          child: appBar,
+      return Transform(
+        alignment: Alignment.topCenter,
+        transform: Matrix4.diagonal3Values(1.0, scaleFactor, 1.0),
+        child: content,
+      );
+    }
+
+    return content;
+  }
+
+  Widget _buildLeading(BuildContext context) {
+    if (leading != null) return leading!;
+
+    switch (type) {
+      case AppBarType.home:
+        return Container(
+          margin: const EdgeInsets.only(left: 12),
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(0.15),
+            border:
+                Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: Padding(
+              padding: const EdgeInsets.all(3),
+              child: Image.asset(
+                logoPath!,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.school_rounded,
+                    color: Colors.white,
+                    size: 22),
+              ),
+            ),
+          ),
+        );
+
+      case AppBarType.simple:
+        if (automaticallyImplyLeading && Navigator.canPop(context)) {
+          return Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: _circularActionIcon(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onPressed: onBackPressed ?? () => Navigator.pop(context),
+              size: 20,
+            ),
+          );
+        }
+        return const SizedBox(width: 16);
+
+      case AppBarType.custom:
+        return const SizedBox(width: 16);
+    }
+  }
+
+  Widget _buildTitle() {
+    final isHome = type == AppBarType.home ||
+        (type == AppBarType.custom && subtitle != null);
+
+    if (isHome) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: titleStyle ??
+                  const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1.2,
+                    letterSpacing: 0.1,
+                  ),
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 1),
+              Text(
+                subtitle!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: subtitleStyle ??
+                    TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withOpacity(0.8),
+                      height: 1.1,
+                      letterSpacing: 0.1,
+                    ),
+              ),
+            ],
+          ],
         ),
       );
     }
 
-    return appBar;
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0),
+      child: Text(
+        title ?? '',
+        style: titleStyle ??
+            const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 0.3,
+            ),
+      ),
+    );
+  }
+
+  List<Widget> _buildActions(BuildContext context) {
+    if (actions != null) return actions!;
+
+    if (type == AppBarType.home) {
+      return [
+        _circularActionIcon(
+          icon: Icons.notifications_none_rounded,
+          onPressed: () {},
+        ),
+        const SizedBox(width: 8),
+        _circularActionIcon(
+          icon: Icons.logout_rounded,
+          onPressed: () => _handleLogout(context),
+        ),
+        const SizedBox(width: 12),
+      ];
+    }
+    return [const SizedBox(width: 12)];
+  }
+
+  Widget _circularActionIcon({
+    required IconData icon,
+    required VoidCallback onPressed,
+    double size = 22,
+  }) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.12),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            customBorder: const CircleBorder(),
+            child: Icon(icon, color: Colors.white, size: size),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('ចាកចេញ (Logout)',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('តើអ្នកប្រាកដជាចង់ចាកចេញពីគណនីមែនទេ?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('ទេ')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('ចាកចេញ'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<AuthProvider>().logout();
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    }
+  }
+
+  Widget _decorativeOrb(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+      ),
+    );
   }
 
   @override

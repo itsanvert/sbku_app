@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
+import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/service/location_service.dart';
 
 class TeacherStartAttendanceScreen extends StatefulWidget {
@@ -17,11 +18,13 @@ class _TeacherStartAttendanceScreenState
     extends State<TeacherStartAttendanceScreen> {
   final LocationService _locationService = LocationService();
   final AttendanceService _attendanceService = AttendanceService();
+  final AuthService _authService = AuthService();
 
   bool _isLoading = false;
+  bool _isLoadingLocation = false;
+  bool _locationFailed = false;
   Position? _currentLocation;
 
-  // These IDs will come from the teacher's profile or selection
   int? _teacherId;
   int? _facultyId;
   int? _majorId;
@@ -30,32 +33,67 @@ class _TeacherStartAttendanceScreenState
   @override
   void initState() {
     super.initState();
+    _loadTeacherInfo();
     _getCurrentLocation();
-    // TODO: Get teacher info from auth provider
-    _teacherId = 1; // placeholder
+  }
+
+  /// Fetch the authenticated teacher's ID from the API instead of hardcoding.
+  Future<void> _loadTeacherInfo() async {
+    final user = await _authService.getCurrentUser();
+    if (!mounted) return;
+
+    if (user == null) {
+      _showError('Could not load teacher profile. Please log in again.');
+      return;
+    }
+    if (user.teacherId == null) {
+      _showError('Your account is not linked to a teacher profile.');
+      return;
+    }
+    setState(() => _teacherId = user.teacherId);
   }
 
   Future<void> _getCurrentLocation() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingLocation = true;
+      _locationFailed = false;
+    });
+
     final hasPermission = await _locationService.requestLocationPermission();
+    if (!mounted) return;
+
     if (!hasPermission) {
-      _showError('Location permission denied');
+      setState(() {
+        _isLoadingLocation = false;
+        _locationFailed = true;
+      });
+      _showError('Location permission denied. Please enable it in settings.');
       return;
     }
 
     final position = await _locationService.getCurrentLocation();
+    if (!mounted) return;
+
     setState(() {
       _currentLocation = position;
+      _isLoadingLocation = false;
+      _locationFailed = position == null;
     });
+
+    if (position == null) {
+      _showError('Could not get location. Please tap "Retry Location".');
+    }
   }
 
   Future<void> _startAttendanceSession() async {
     if (_currentLocation == null) {
-      _showError('Unable to get location. Please try again.');
+      _showError('Location is not available. Please tap "Retry Location".');
       return;
     }
 
     if (_teacherId == null) {
-      _showError('Teacher ID not found');
+      _showError('Teacher profile not loaded yet. Please wait or restart the app.');
       return;
     }
 
@@ -86,15 +124,23 @@ class _TeacherStartAttendanceScreenState
         );
       }
     } catch (e) {
-      _showError('Failed to start session: $e');
+      // Strip leading "Exception: " added by Dart so the message is clean
+      final message = e.toString().replaceFirst('Exception: ', '');
+      _showError(message);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _showError(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red[700],
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+      ),
     );
   }
 
@@ -108,7 +154,9 @@ class _TeacherStartAttendanceScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildLocationCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            _buildTeacherInfoCard(),
+            const SizedBox(height: 16),
             // Info card
             Card(
               child: Padding(
@@ -150,7 +198,9 @@ class _TeacherStartAttendanceScreenState
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed: _isLoading ? null : _startAttendanceSession,
+              onPressed: (_isLoading || _isLoadingLocation || _teacherId == null)
+                  ? null
+                  : _startAttendanceSession,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -168,20 +218,57 @@ class _TeacherStartAttendanceScreenState
     );
   }
 
+  Widget _buildTeacherInfoCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(
+              _teacherId != null ? Icons.person : Icons.person_off,
+              color: _teacherId != null ? Colors.green : Colors.orange,
+            ),
+            const SizedBox(width: 12),
+            _teacherId != null
+                ? Text(
+                    'Teacher ID: $_teacherId',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  )
+                : const Text(
+                    'Loading teacher profile...',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildLocationCard() {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Icon(
-              _currentLocation != null ? Icons.location_on : Icons.location_off,
-              size: 48,
-              color: _currentLocation != null ? Colors.green : Colors.grey,
-            ),
+            if (_isLoadingLocation)
+              const SizedBox(
+                height: 48,
+                width: 48,
+                child: CircularProgressIndicator(),
+              )
+            else
+              Icon(
+                _currentLocation != null ? Icons.location_on : Icons.location_off,
+                size: 48,
+                color: _currentLocation != null ? Colors.green : Colors.red,
+              ),
             const SizedBox(height: 8),
             Text(
-              _currentLocation != null ? 'ទីតាំង​បាន​ទទួល' : 'កំពុងរកទីតាំង...',
+              _isLoadingLocation
+                  ? 'កំពុងរកទីតាំង...'
+                  : _currentLocation != null
+                      ? 'ទីតាំង​បាន​ទទួល'
+                      : 'មិនអាចទទួលទីតាំង',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             if (_currentLocation != null) ...[
@@ -193,6 +280,14 @@ class _TeacherStartAttendanceScreenState
               Text(
                 'Long: ${_currentLocation!.longitude.toStringAsFixed(6)}',
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+            if (_locationFailed && !_isLoadingLocation) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _getCurrentLocation,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry Location'),
               ),
             ],
           ],

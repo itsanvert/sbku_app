@@ -1,3 +1,5 @@
+import 'package:sbku_app/service/api_service.dart';
+
 // teacher_model.dart
 // Matches the backend API response from GET /api/teachers and GET /api/teachers/{id}
 // The backend appends computed attributes: name, email, avatar_url via Eloquent accessors.
@@ -68,7 +70,7 @@ class Teacher {
       year: json['year']?.toString(),
       role: json['role']?.toString() ?? 'teacher',
       profileImagePath: json['profile_image_path']?.toString(),
-      avatarUrl: json['avatar_url']?.toString(),
+      avatarUrl: _fixPhotoUrl(json['avatar_url']?.toString()),
       // Relations may be a nested object with a 'name' field
       major: _relationName(json['major']),
       faculty: _relationName(json['faculty']),
@@ -77,6 +79,34 @@ class Teacher {
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
     );
+  }
+
+  /// Rewrites localhost / 127.0.0.1 URLs to the real backend host so that
+  /// profile photos load correctly on physical devices.
+  static String? _fixPhotoUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+
+    if (url.contains('ui-avatars.com') || url.contains('googleusercontent.com')) {
+      return url;
+    }
+
+    final apiBase = ApiService.baseUrl; 
+    final uri = Uri.tryParse(apiBase);
+    if (uri == null) return url;
+    
+    final backendOrigin = '${uri.scheme}://${uri.host}${uri.hasPort ? ":${uri.port}" : ""}';
+
+    final loopbackRegex = RegExp(r'https?://(localhost|127\.0\.0\.1)(:\d+)?');
+    if (url.contains(loopbackRegex)) {
+      return url.replaceFirst(loopbackRegex, backendOrigin);
+    }
+    
+    if (!url.startsWith('http')) {
+      final cleanPath = url.startsWith('/') ? url.substring(1) : url;
+      return '$backendOrigin/$cleanPath';
+    }
+
+    return url;
   }
 
   static int? _parseInt(dynamic value) {
