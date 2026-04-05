@@ -168,15 +168,12 @@
 
             <!-- Charts Section -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Line/Bar Chart -->
+                <!-- Daily Attendance Volume -->
                 <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300">
                     <div class="flex justify-between items-center mb-6">
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900">Attendance Activity</h3>
-                            <p class="text-sm text-gray-500">Overview of recent check-ins</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <span class="px-3 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs font-bold tracking-wide">Weekly</span>
+                            <h3 class="text-lg font-bold text-gray-900">Attendance Volume</h3>
+                            <p class="text-sm text-gray-500">Daily check-ins (last 7 days)</p>
                         </div>
                     </div>
                     <div class="relative h-72 w-full">
@@ -184,49 +181,45 @@
                     </div>
                 </div>
 
-                <!-- Doughnut Chart -->
+                <!-- Status Distribution -->
                 <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300">
                     <div class="flex justify-between items-center mb-6">
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900">User Distribution</h3>
-                            <p class="text-sm text-gray-500">By account type</p>
+                            <h3 class="text-lg font-bold text-gray-900">Status Analysis</h3>
+                            <p class="text-sm text-gray-500">Overall check-in results</p>
                         </div>
                     </div>
-                    <div class="relative h-56 w-full flex justify-center">
-                        <canvas id="userRoleChart"></canvas>
-                    </div>
-                    <div class="mt-6 grid grid-cols-3 gap-2 text-center border-t border-gray-100 pt-5">
-                        <div class="group hover:bg-blue-50 p-2 rounded-xl transition-colors cursor-default">
-                            <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase mb-1">Students</p>
-                            <p class="text-lg font-black text-gray-800 group-hover:text-blue-600 transition-colors">{{ number_format($studentCount ?? 0) }}</p>
-                        </div>
-                        <div class="group hover:bg-indigo-50 p-2 rounded-xl transition-colors cursor-default border-l border-r border-gray-100">
-                            <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase mb-1">Teachers</p>
-                            <p class="text-lg font-black text-gray-800 group-hover:text-indigo-600 transition-colors">{{ number_format($teacherCount ?? 0) }}</p>
-                        </div>
-                        <div class="group hover:bg-gray-100 p-2 rounded-xl transition-colors cursor-default">
-                            <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase mb-1">Other</p>
-                            <p class="text-lg font-black text-gray-800 transition-colors">{{ number_format(max(0, ($userCount ?? 0) - ($studentCount ?? 0) - ($teacherCount ?? 0))) }}</p>
-                        </div>
+                    <div class="relative h-72 w-full flex justify-center">
+                        <canvas id="statusAnalysisChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Footer Action Panel -->
-            <div class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between text-white border border-gray-700">
-                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                <div class="flex items-center space-x-5 mb-4 md:mb-0 relative z-10">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg border-2 border-white/20">
-                        <flux:icon name="rocket-launch" variant="solid" class="w-7 h-7 text-white"/>
-                    </div>
-                    <div>
-                        <h4 class="text-xl font-extrabold tracking-tight">System is running smoothly</h4>
-                        <p class="text-sm font-medium text-gray-300 mt-1">All services are up and active. Check pending reports.</p>
+            <!-- Role Distribution & Summary Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6">User Role Distribution</h3>
+                    <div class="relative h-56 w-full">
+                        <canvas id="userRoleChart"></canvas>
                     </div>
                 </div>
-                <button class="relative z-10 px-6 py-3 bg-white text-gray-900 rounded-xl font-bold shadow-lg hover:shadow-2xl hover:-translate-y-1 hover:bg-gray-50 transition-all duration-300 transform active:scale-95">
-                    Generate Report
-                </button>
+
+                <!-- Footer-style Summary Summary section -->
+                <div class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between text-white border border-gray-700">
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                    <div class="flex items-center space-x-5 mb-4 md:mb-0 relative z-10">
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg border-2 border-white/20">
+                            <flux:icon name="rocket-launch" variant="solid" class="w-7 h-7 text-white"/>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-extrabold tracking-tight">System Status</h4>
+                            <p class="text-sm font-medium text-gray-300 mt-1">Services active. Database synced.</p>
+                        </div>
+                    </div>
+                    <button class="relative z-10 px-6 py-3 bg-white text-gray-900 rounded-xl font-bold shadow-lg hover:shadow-2xl hover:-translate-y-1 hover:bg-gray-50 transition-all duration-300 transform active:scale-95">
+                        Generate Report
+                    </button>
+                </div>
             </div>
             
     @push('scripts')
@@ -234,117 +227,89 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof Chart !== 'undefined') {
-                // Formatting data for visual appeal
+                
+                // 1. Attendance Volume Chart (Line)
                 const ctxAttendance = document.getElementById('attendanceChart');
                 if (ctxAttendance) {
-                    // Create gradient for line chart
-                    let gradient = ctxAttendance.getContext('2d').createLinearGradient(0, 0, 0, 400);
-                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); // blue-500, semi-transparent
-                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0)'); // transparent
+                    let grad = ctxAttendance.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                    grad.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); 
+                    grad.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
                     new Chart(ctxAttendance, {
                         type: 'line',
                         data: {
-                            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                            labels: {!! json_encode($dates) !!},
                             datasets: [{
-                                label: 'Successful Check-ins',
-                                data: [120, 210, 160, 250, 210, 80, 40], // Dummy realistic data
-                                borderColor: '#3b82f6', // blue-500
-                                backgroundColor: gradient,
+                                label: 'Check-ins',
+                                data: {!! json_encode($counts) !!},
+                                borderColor: '#3b82f6',
+                                backgroundColor: grad,
                                 borderWidth: 3,
                                 fill: true,
-                                tension: 0.4, // Smooth curves
-                                pointBackgroundColor: '#ffffff',
-                                pointBorderColor: '#3b82f6',
+                                tension: 0.4,
+                                pointBackgroundColor: '#fff',
                                 pointBorderWidth: 2,
-                                pointRadius: 4,
-                                pointHoverRadius: 6,
-                                pointHoverBorderWidth: 3,
-                                pointHoverBackgroundColor: '#ffffff'
+                                pointRadius: 5
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: 'rgba(17, 24, 39, 0.95)', // gray-900
-                                    padding: 12,
-                                    titleFont: { size: 13, family: "'Inter', sans-serif", weight: '600' },
-                                    bodyFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
-                                    cornerRadius: 8,
-                                    displayColors: false,
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.parsed.y + ' check-ins';
-                                        }
-                                    }
-                                }
-                            },
+                            plugins: { legend: { display: false } },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { borderDash: [4, 4], color: '#f3f4f6' }, // gray-100
-                                    border: { display: false },
-                                    ticks: { color: '#6b7280', font: { family: "'Inter', sans-serif" } }
-                                },
-                                x: {
-                                    grid: { display: false },
-                                    border: { display: false },
-                                    ticks: { color: '#6b7280', font: { family: "'Inter', sans-serif" } }
-                                }
-                            },
-                            interaction: { mode: 'index', intersect: false }
+                                y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                                x: { grid: { display: false } }
+                            }
                         }
                     });
                 }
 
-                // Setup User Roles Doughnut Chart
-                const ctxRoles = document.getElementById('userRoleChart');
-                if (ctxRoles) {
-                    const studentCount = {{ $studentCount ?? 0 }};
-                    const teacherCount = {{ $teacherCount ?? 0 }};
-                    const otherCount = Math.max(0, {{ ($userCount ?? 0) - ($studentCount ?? 0) - ($teacherCount ?? 0) }});
-                    
-                    // Fallback so the chart isn't empty if the DB is blank
-                    const data = (studentCount + teacherCount + otherCount) === 0 ? [50, 20, 5] : [studentCount, teacherCount, otherCount];
-
-                    new Chart(ctxRoles, {
+                // 2. Status Analysis Chart (Doughnut)
+                const ctxStatus = document.getElementById('statusAnalysisChart');
+                if (ctxStatus) {
+                    new Chart(ctxStatus, {
                         type: 'doughnut',
                         data: {
-                            labels: ['Students', 'Teachers', 'Other Users'],
+                            labels: ['Present (Y)', 'Absent (N)', 'Permission (P)'],
                             datasets: [{
-                                data: data,
-                                backgroundColor: [
-                                    '#3b82f6', // blue-500
-                                    '#6366f1', // indigo-500
-                                    '#cbd5e1'  // slate-300
-                                ],
-                                hoverBackgroundColor: [
-                                    '#2563eb', // blue-600
-                                    '#4f46e5', // indigo-600
-                                    '#94a3b8'  // slate-400
-                                ],
+                                data: [{{ $presentCount }}, {{ $absentCount }}, {{ $permissionCount }}],
+                                backgroundColor: ['#10b981', '#ef4444', '#f59e0b'], // emerald, red, amber
                                 borderWidth: 0,
-                                hoverOffset: 6
+                                hoverOffset: 12
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            cutout: '75%', // Modern thin ring
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                                    padding: 12,
-                                    cornerRadius: 8,
-                                    titleFont: { family: "'Inter', sans-serif", size: 13 },
-                                    bodyFont: { family: "'Inter', sans-serif", weight: 'bold', size: 14 }
-                                }
-                            },
-                            animation: { animateScale: true, animateRotate: true }
+                            cutout: '70%',
+                            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20, font: { weight: 'bold' } } } }
+                        }
+                    });
+                }
+
+                // 3. User Role Distribution Chart (Bar)
+                const ctxRoles = document.getElementById('userRoleChart');
+                if (ctxRoles) {
+                    new Chart(ctxRoles, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Students', 'Teachers', 'Admin/Staff'],
+                            datasets: [{
+                                label: 'Users',
+                                data: [{{ $studentCount }}, {{ $teacherCount }}, {{ max(0, $userCount - $studentCount - $teacherCount) }}],
+                                backgroundColor: ['#3b82f6', '#6366f1', '#475569'], // blue, indigo, slate
+                                borderRadius: 8,
+                                barThickness: 40
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true, grid: { display: false } },
+                                x: { grid: { display: false } }
+                            }
                         }
                     });
                 }
