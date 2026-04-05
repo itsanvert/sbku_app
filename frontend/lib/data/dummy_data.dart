@@ -1,9 +1,5 @@
-// lib/data/dummy_data.dart
-// Centralized in-memory dummy data used across attendance and staff screens.
-// These can be replaced with real API calls once the corresponding backend
-// endpoints are ready.
-
 import 'package:sbku_app/domain/entities/attendance_entity.dart';
+import 'package:sbku_app/domain/entities/syllabus_entity.dart';
 import 'package:sbku_app/model/attendance_session_model.dart';
 import 'package:sbku_app/model/staff_model.dart';
 
@@ -81,10 +77,11 @@ final List<MajorDummy> dummyMajors = [
 // ── Dummy year list ─────────────────────────────────────────────────────────
 
 final List<YearDummy> dummyYears = [
-  const YearDummy(id: 'Y1', yearName: 'ឆ្នាំទី 1'),
-  const YearDummy(id: 'Y2', yearName: 'ឆ្នាំទី 2'),
-  const YearDummy(id: 'Y3', yearName: 'ឆ្នាំទី 3'),
-  const YearDummy(id: 'Y4', yearName: 'ឆ្នាំទី 4'),
+  const YearDummy(id: 'Y1', yearName: 'ឆ្នាំទី 1 (Year 1)'),
+  const YearDummy(id: 'Y2', yearName: 'ឆ្នាំទី 2 (Year 2)'),
+  const YearDummy(id: 'Y3', yearName: 'ឆ្នាំទី 3 (Year 3)'),
+  const YearDummy(id: 'Y4', yearName: 'ឆ្នាំទី 4 (Year 4)'),
+  const YearDummy(id: 'Y5', yearName: 'ឆ្នាំទី 5 (Year 5)'),
 ];
 
 // ── Dummy student name lookup ────────────────────────────────────────────────
@@ -190,4 +187,119 @@ final List<AttendanceEntity> dummyAttendanceEntities = [
     isPresent: true,
   ),
 ];
+
+// ── Dummy Semester list ──────────────────────────────────────────────────────
+
+class SemesterDummy {
+  final String id;
+  final String name;
+  const SemesterDummy({required this.id, required this.name});
+}
+
+final List<SemesterDummy> dummySemesters = [
+  const SemesterDummy(id: 'SEM1', name: 'Semester 1'),
+  const SemesterDummy(id: 'SEM2', name: 'Semester 2'),
+];
+
+// ── Dummy Subject list ───────────────────────────────────────────────────────
+
+class SubjectDummy {
+  final String id;
+  final String subjectName;
+  const SubjectDummy({required this.id, required this.subjectName});
+}
+
+final List<SubjectDummy> dummySubjects = [
+  const SubjectDummy(id: 'SUB101', subjectName: 'Introduction to IT'),
+  const SubjectDummy(id: 'SUB102', subjectName: 'Programming Fundamentals'),
+  const SubjectDummy(id: 'SUB201', subjectName: 'Data Structures'),
+  const SubjectDummy(id: 'SUB202', subjectName: 'Database Systems'),
+  const SubjectDummy(id: 'SUB301', subjectName: 'Software Engineering'),
+  const SubjectDummy(id: 'SUB302', subjectName: 'Network Security'),
+  const SubjectDummy(id: 'SUB401', subjectName: 'Artificial Intelligence'),
+];
+
+// ── Dummy Syllabus Entity list ──────────────────────────────────────────────
+
+final List<SyllabusEntity> dummySyllabus = [
+  // Year 1, Semester 1
+  SyllabusEntity(
+    id: 'SYL001',
+    facultyId: 'F001',
+    majorId: 'M01',
+    subjectId: 'SUB101',
+    teacherId: 'T001',
+    shiftId: 'SH1',
+    yearId: 'Y1',
+    semesterId: 'SEM1',
+    creditHours: '3',
+    scheduleDescription: 'Mon 07:30 - 10:30',
+  ),
+  // Year 1, Semester 2
+  SyllabusEntity(
+    id: 'SYL002',
+    facultyId: 'F001',
+    majorId: 'M01',
+    subjectId: 'SUB102',
+    teacherId: 'T002',
+    shiftId: 'SH1',
+    yearId: 'Y1',
+    semesterId: 'SEM2',
+    creditHours: '4',
+    scheduleDescription: 'Tue 08:00 - 11:30',
+  ),
+  // Year 2, Semester 1
+  SyllabusEntity(
+    id: 'SYL003',
+    facultyId: 'F001',
+    majorId: 'M01',
+    subjectId: 'SUB201',
+    teacherId: 'T001',
+    shiftId: 'SH1',
+    yearId: 'Y2',
+    semesterId: 'SEM1',
+    creditHours: '3',
+    scheduleDescription: 'Wed 13:00 - 16:00',
+  ),
+  // Year 3, Semester 1
+  SyllabusEntity(
+    id: 'SYL004',
+    facultyId: 'F001',
+    majorId: 'M01',
+    subjectId: 'SUB301',
+    teacherId: 'T001',
+    shiftId: 'SH2',
+    yearId: 'Y3',
+    semesterId: 'SEM1',
+    creditHours: '3',
+    scheduleDescription: 'Fri 07:30 - 10:30',
+  ),
+  // Year 4, Semester 1
+  SyllabusEntity(
+    id: 'SYL005',
+    facultyId: 'F001',
+    majorId: 'M01',
+    subjectId: 'SUB401',
+    teacherId: 'T002',
+    shiftId: 'SH1',
+    yearId: 'Y4',
+    semesterId: 'SEM1',
+    creditHours: '3',
+    scheduleDescription: 'Mon 13:00 - 16:00',
+  ),
+  // Year 5, Semester 1 (Final Thesis)
+  SyllabusEntity(
+    id: 'SYL006',
+    facultyId: 'F001',
+    majorId: 'M01',
+    subjectId: 'SUB401', // Reusing AI as placeholder
+    teacherId: 'T001',
+    shiftId: 'SH1',
+    yearId: 'Y5',
+    semesterId: 'SEM2',
+    creditHours: '6',
+    scheduleDescription: 'Thesis Project',
+  ),
+];
+
 
