@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AttendanceSessionController;
+use App\Http\Controllers\Api\SyllabusController;
 
 
 /*
@@ -86,4 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Anti-cheating: teacher approval checklist
     Route::get('attendance-sessions/{id}/approvals', [AttendanceSessionController::class, 'approvalList']);
     Route::post('attendance-sessions/{sessionId}/verify/{attendanceId}', [AttendanceSessionController::class, 'verifyAttendance']);
+
+    // Syllabus
+    Route::get('syllabus', [SyllabusController::class, 'index']);
 });
