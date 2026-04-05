@@ -18,6 +18,8 @@ class Attendance extends Model
         'verify_status',
         'reject_reason',
         'verified_at',
+        'permission_reason',
+        'permission_image',
     ];
 
     protected $casts = [
@@ -27,7 +29,7 @@ class Attendance extends Model
         'verified_at'     => 'datetime',
     ];
 
-    protected $appends = ['student_name'];
+    protected $appends = ['student_name', 'permission_image_url'];
 
     // ── Relationships ──────────────────────────────────────────
     public function student()
@@ -83,6 +85,11 @@ class Attendance extends Model
         return $query->where('status', 'N');
     }
 
+    public function scopePermission($query)
+    {
+        return $query->where('status', 'P');
+    }
+
     public function scopePending($query)
     {
         return $query->where('verify_status', 'pending');
@@ -102,5 +109,17 @@ class Attendance extends Model
     public function getIsVerifiedAttribute(): bool
     {
         return $this->verify_status === 'approved';
+    }
+
+    public function getPermissionImageUrlAttribute()
+    {
+        if ($this->permission_image) {
+            // Check if it's already a full URL or just a path
+            if (str_starts_with($this->permission_image, 'http')) {
+                return $this->permission_image;
+            }
+            return asset('storage/' . $this->permission_image);
+        }
+        return null;
     }
 }

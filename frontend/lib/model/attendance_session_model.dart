@@ -80,7 +80,8 @@ class AttendanceSession {
         classId: classId,
         yearId: yearId,
         date: startTime,
-        isPresent: isPresent,
+        status: isPresent ? 'Y' : 'N',
+        verifyStatus: 'approved',
       );
     }).toList();
   }
