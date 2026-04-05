@@ -40,9 +40,9 @@ class ThemeProvider with ChangeNotifier {
         seedColor: const Color(0xFFFF6A00),
         brightness: Brightness.light,
         surface: Colors.white,
-        onSurface: const Color(0xFF1F2937), // Cool gray 800
+        onSurface: const Color(0xFF1F2937),
       ),
-      scaffoldBackgroundColor: const Color(0xFFF9FAFB), // Cool gray 50
+      scaffoldBackgroundColor: const Color(0xFFF9FAFB),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
         foregroundColor: Color(0xFF111827),
@@ -58,7 +58,7 @@ class ThemeProvider with ChangeNotifier {
     );
   }
 
-  // Modern Clean Dark Theme
+  // Enhanced "Impressive" Dark Theme
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -67,20 +67,25 @@ class ThemeProvider with ChangeNotifier {
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFFFF6A00),
         brightness: Brightness.dark,
-        surface: const Color(0xFF111827), // Cool gray 900
-        onSurface: Colors.white,
+        surface: const Color(0xFF0F172A), // Slate 900
+        onSurface: const Color(0xFFF8FAFC), // Slate 50
+        secondary: const Color(0xFF334155), // Slate 700
       ),
-      scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
+      scaffoldBackgroundColor: const Color(0xFF020617), // Deepest Navy/Slate 950
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF111827),
+        backgroundColor: Color(0xFF0F172A),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1F2937), // Cool gray 800
+        color: const Color(0xFF1E293B), // Slate 800
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      dividerTheme: DividerThemeData(
+        color: Colors.white.withOpacity(0.08),
+        thickness: 1,
       ),
     );
   }

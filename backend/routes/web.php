@@ -22,12 +22,42 @@ Route::middleware([
         $attendanceCount = \App\Models\Attendance::count();
         $activeSessions = \App\Models\AttendanceSession::where('is_active', true)->count();
 
+        // 1. Daily Attendance Data (Last 7 days)
+        $dailyData = \App\Models\Attendance::selectRaw('DATE(created_at) as date, count(*) as count')
+            ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+            ->groupBy('date')
+            ->get()
+            ->pluck('count', 'date');
+        
+        $dates = [];
+        $counts = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $dates[] = now()->subDays($i)->format('M d (D)'); 
+            $counts[] = $dailyData[$date] ?? 0;
+        }
+
+        // 2. Attendance Status Distribution
+        $statusCounts = \App\Models\Attendance::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->get()
+            ->pluck('count', 'status');
+        
+        $presentCount = $statusCounts['Y'] ?? 0;
+        $absentCount = $statusCounts['N'] ?? 0;
+        $permissionCount = $statusCounts['P'] ?? 0;
+
         return view('dashboard', compact(
             'teacherCount', 
             'studentCount', 
             'userCount', 
             'attendanceCount',
-            'activeSessions'
+            'activeSessions',
+            'dates',
+            'counts',
+            'presentCount',
+            'absentCount',
+            'permissionCount'
         ));
     })->name('dashboard');
 });
