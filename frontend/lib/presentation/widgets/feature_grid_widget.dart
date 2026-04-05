@@ -64,11 +64,14 @@ class FeatureGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final effectiveIconColor = defaultIconColor ?? const Color(0xFFFF5E01);
     final effectiveLabelColor = defaultLabelColor ?? const Color(0xFFFF5500);
     final effectiveBorderColor = defaultBorderColor ?? const Color(0xFFFF6A00);
-    final effectiveShadowColor = defaultShadowColor ?? const Color(0xFFFF6A00);
-    final effectiveBackgroundColor = backgroundColor ?? Colors.white;
+    final effectiveShadowColor = defaultShadowColor ?? (isDark ? Colors.black : const Color(0xFFFF6A00));
+    final effectiveBackgroundColor = backgroundColor ?? (isDark ? const Color(0xFF1F2937) : Colors.white);
 
     return GridView.builder(
       shrinkWrap: shrinkWrap,

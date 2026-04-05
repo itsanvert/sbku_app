@@ -69,7 +69,7 @@ class ImageSlider extends StatefulWidget {
         Color.fromARGB(255, 138, 49, 0),
       ],
       borderWidth: 5,
-      backgroundColor: Colors.white,
+      backgroundColor: null, // Allow theme-aware default in build
       activeIndicatorColor: Color(0xFFFF6A00),
       inactiveIndicatorColor: Color(0xFFFF6A00),
     );
@@ -217,7 +217,7 @@ class _ImageSliderState extends State<ImageSlider> {
           margin: EdgeInsets.all(widget.borderWidth),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.borderRadius),
-            color: widget.backgroundColor ?? Colors.white,
+            color: widget.backgroundColor ?? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1F2937) : Colors.white),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -226,7 +226,7 @@ class _ImageSliderState extends State<ImageSlider> {
               fit: widget.imageFit,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: Colors.grey[300],
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
                   child: const Center(
                     child:
                         Icon(Icons.broken_image, size: 50, color: Colors.grey),

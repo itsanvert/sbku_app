@@ -80,6 +80,14 @@ class ProfileController extends Controller
 
         $user->updateProfilePhoto($request->file('photo'));
 
+        // Sync with related role models for dynamic across-the-app reflect
+        if ($user->teacher) {
+            $user->teacher->update(['profile_image_path' => $user->profile_photo_path]);
+        }
+        if ($user->student) {
+            $user->student->update(['profile_image_path' => $user->profile_photo_path]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Profile photo updated successfully',
@@ -87,6 +95,7 @@ class ProfileController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'role' => $user->role,
                 'profile_photo_url' => $user->profile_photo_url,
             ],
         ]);

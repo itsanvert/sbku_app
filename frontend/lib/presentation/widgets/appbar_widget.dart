@@ -337,11 +337,6 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () {},
         ),
         const SizedBox(width: 8),
-        _circularActionIcon(
-          icon: Icons.logout_rounded,
-          onPressed: () => _handleLogout(context),
-        ),
-        const SizedBox(width: 12),
       ];
     }
     return [const SizedBox(width: 12)];
@@ -370,39 +365,6 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('ចាកចេញ (Logout)',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('តើអ្នកប្រាកដជាចង់ចាកចេញពីគណនីមែនទេ?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('ទេ')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('ចាកចេញ'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      await context.read<AuthProvider>().logout();
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-    }
   }
 
   Widget _decorativeOrb(double size, Color color) {
