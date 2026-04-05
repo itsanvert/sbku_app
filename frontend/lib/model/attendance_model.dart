@@ -55,7 +55,28 @@ class AttendanceModel {
 
   String get timeRange => '$startTime - $endTime';
 
-  String get statusLabel => entity.isPresent ? 'មានវត្តមាន' : 'អវត្តមាន';
+  String get statusLabel {
+    if (entity.isPermission) {
+      if (entity.verifyStatus == 'pending') return 'រង់ចាំការអនុញ្ញាត';
+      if (entity.verifyStatus == 'approved') return 'អនុញ្ញាត (ច្បាប់)';
+      if (entity.verifyStatus == 'rejected') return 'បដិសេធច្បាប់ (អវត្តមាន)';
+      return 'ច្បាប់';
+    }
+    if (entity.isPresent) {
+      return entity.verifyStatus == 'pending' ? 'រង់ចាំការបញ្ជាក់' : 'មានវត្តមាន';
+    }
+    return 'អវត្តមាន';
+  }
 
-  Color get statusColor => entity.isPresent ? Colors.green : Colors.red;
+  Color get statusColor {
+    if (entity.isPermission) {
+      if (entity.verifyStatus == 'pending') return Colors.orange;
+      if (entity.verifyStatus == 'approved') return Colors.blue;
+      return Colors.red;
+    }
+    if (entity.isPresent) {
+      return entity.verifyStatus == 'pending' ? Colors.teal : Colors.green;
+    }
+    return Colors.red;
+  }
 }

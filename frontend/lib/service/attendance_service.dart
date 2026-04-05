@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:sbku_app/service/api_service.dart';
+import 'package:http/http.dart' as http;
 
 class AttendanceService {
   final ApiService _api = ApiService();
@@ -223,5 +224,54 @@ class AttendanceService {
 
     final body = jsonDecode(response.body);
     throw Exception(body['message'] ?? 'Verification failed');
+  }
+
+  /// Student request permission for a date.
+  Future<Map<String, dynamic>> requestPermission({
+    required int studentId,
+    required String attendanceDate, // YYYY-MM-DD
+    required String reason,
+    String? imagePath,
+    int? scheduleId,
+  }) async {
+    final fields = <String, String>{
+      'student_id': studentId.toString(),
+      'attendance_date': attendanceDate,
+      'reason': reason,
+      if (scheduleId != null) 'schedule_id': scheduleId.toString(),
+    };
+
+    if (imagePath != null && imagePath.isNotEmpty) {
+      final streamedResponse = await _api.postMultipart(
+        'attendances/request-permission',
+        fields,
+        'image',
+        imagePath,
+        requiresAuth: true,
+      );
+
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body);
+      }
+
+      final body = jsonDecode(response.body);
+      throw Exception(body['message'] ?? 'Permission request failed');
+    } else {
+      // Regular POST if no image
+      final response = await _api.post(
+        'attendances/request-permission',
+        fields,
+        requiresAuth: true,
+      );
+
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body);
+      }
+
+      final body = jsonDecode(response.body);
+      throw Exception(body['message'] ?? 'Permission request failed');
+    }
   }
 }

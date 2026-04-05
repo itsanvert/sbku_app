@@ -226,4 +226,43 @@ class AttendanceController extends Controller
             'attendances' => $attendances,
         ]);
     }
+    /**
+     * Student request permission for a date.
+     */
+    public function requestPermission(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'attendance_date' => 'required|date',
+            'reason' => 'required|string',
+            'image' => 'nullable|image|max:2048', // 2MB max
+            'schedule_id' => 'nullable|exists:schedules,id',
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('permissions', 'public');
+        }
+
+        // We use updateOrCreate because there might already be an "Absent" record if the session was ended.
+        // Or if the student is pre-emptively asking for permission.
+        $attendance = Attendance::updateOrCreate(
+            [
+                'student_id' => $request->student_id,
+                'attendance_date' => $request->attendance_date,
+                'schedule_id' => $request->schedule_id,
+            ],
+            [
+                'status' => 'P', // Permission
+                'verify_status' => 'pending',
+                'permission_reason' => $request->reason,
+                'permission_image' => $imagePath,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Permission request submitted successfully',
+            'attendance' => $attendance->load(['student.user', 'schedule']),
+        ], 201);
+    }
 }
