@@ -160,7 +160,8 @@ final List<AttendanceEntity> dummyAttendanceEntities = [
     classId: 'C001',
     yearId: 'Y1',
     date: DateTime.now().subtract(const Duration(days: 1)),
-    isPresent: true,
+    status: 'Y',
+    verifyStatus: 'approved',
   ),
   AttendanceEntity(
     id: 'ATT002',
@@ -172,7 +173,8 @@ final List<AttendanceEntity> dummyAttendanceEntities = [
     classId: 'C001',
     yearId: 'Y1',
     date: DateTime.now().subtract(const Duration(days: 1)),
-    isPresent: false,
+    status: 'N',
+    verifyStatus: 'approved',
   ),
   AttendanceEntity(
     id: 'ATT003',
@@ -184,7 +186,8 @@ final List<AttendanceEntity> dummyAttendanceEntities = [
     classId: 'C003',
     yearId: 'Y2',
     date: DateTime.now(),
-    isPresent: true,
+    status: 'Y',
+    verifyStatus: 'approved',
   ),
 ];
 

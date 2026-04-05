@@ -8,8 +8,14 @@ class AttendanceEntity {
   final String classId;
   final String yearId;
   final DateTime date;
-  final bool isPresent;
-  
+  final String status; // 'Y', 'N', 'P'
+  final String verifyStatus; // 'pending', 'approved', 'rejected'
+  final String? permissionReason;
+  final String? permissionImageUrl;
+
+  bool get isPresent => status == 'Y';
+  bool get isPermission => status == 'P';
+  bool get isAbsent => status == 'N';
 
   AttendanceEntity({
     required this.id,
@@ -21,7 +27,9 @@ class AttendanceEntity {
     required this.classId,
     required this.yearId,
     required this.date,
-    required this.isPresent,
-
+    required this.status,
+    required this.verifyStatus,
+    this.permissionReason,
+    this.permissionImageUrl,
   });
 }
