@@ -41,8 +41,9 @@ class Student extends Model
      */
     public function getAvatarUrlAttribute()
     {
+        $baseUrl = request()->getSchemeAndHttpHost() . '/api/storage/';
         return $this->profile_image_path
-            ? url('api/storage/' . $this->profile_image_path)
+            ? $baseUrl . $this->profile_image_path
             : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=6366f1&color=ffffff';
     }
    public function user()

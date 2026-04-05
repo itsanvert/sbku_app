@@ -76,19 +76,21 @@ class User extends Authenticatable
      */
     public function getProfilePhotoUrlAttribute()
     {
+        $baseUrl = request()->getSchemeAndHttpHost() . '/api/storage/';
+
         // 1. Check if user has a direct photo path (Jetstream standard)
         if ($this->profile_photo_path) {
-            return url('api/storage/' . $this->profile_photo_path);
+            return $baseUrl . $this->profile_photo_path;
         }
 
         // 2. Fall back to Teacher profile image
         if ($this->teacher && $this->teacher->profile_image_path) {
-            return url('api/storage/' . $this->teacher->profile_image_path);
+            return $baseUrl . $this->teacher->profile_image_path;
         }
 
         // 3. Fall back to Student profile image
         if ($this->student && $this->student->profile_image_path) {
-            return url('api/storage/' . $this->student->profile_image_path);
+            return $baseUrl . $this->student->profile_image_path;
         }
 
         // 4. Default ui-avatars
