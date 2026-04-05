@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sbku_app/service/attendance_service.dart';
+import 'package:sbku_app/service/api_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
@@ -593,6 +594,8 @@ class _TeacherActiveSessionScreenState
     final code = a['student_code'] ?? '';
     final checkIn = a['check_in_time'] ?? '--:--';
 
+    final isPermission = a['status'] == 'P';
+
     return GestureDetector(
       onTap: () => _showStudentProfile(a),
       child: Container(
@@ -600,7 +603,10 @@ class _TeacherActiveSessionScreenState
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+          border: Border.all(
+            color: isPermission ? Colors.orange : Colors.orange.withOpacity(0.3),
+            width: isPermission ? 1.5 : 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -634,6 +640,23 @@ class _TeacherActiveSessionScreenState
                             'ID: $code',
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                        if (isPermission)
+                          Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade100,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'ស្នើសុំច្បាប់',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -679,6 +702,35 @@ class _TeacherActiveSessionScreenState
                   ),
                 ],
               ),
+              if (isPermission && a['permission_reason'] != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'មូលហេតុច្បាប់:',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        a['permission_reason'],
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               // Action buttons
               Row(
@@ -911,6 +963,45 @@ class _TeacherActiveSessionScreenState
               ),
             ),
 
+            if (a['status'] == 'P') ...[
+              const SizedBox(height: 16),
+              const Text(
+                'សំណើសុំច្បាប់',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.shade100),
+                ),
+                child: Text(
+                  a['permission_reason'] ?? 'គ្មានមូលហេតុ',
+                  style: const TextStyle(fontSize: 14, height: 1.4),
+                ),
+              ),
+              if (a['permission_image_url'] != null) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    _fixUrl(a['permission_image_url']),
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, _, __) => Container(
+                      height: 100,
+                      color: Colors.grey.shade100,
+                      child: const Center(child: Text('មិនអាចទាញយករូបភាពបាន')),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 12),
@@ -1127,5 +1218,22 @@ class _TeacherActiveSessionScreenState
     } catch (_) {
       return dateTimeStr;
     }
+  }
+
+  String _fixUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) {
+      final apiBase = ApiService.baseUrl;
+      final uri = Uri.tryParse(apiBase);
+      if (uri == null) return url;
+      final backendOrigin =
+          '${uri.scheme}://${uri.host}${uri.hasPort ? ":${uri.port}" : ""}';
+      final loopbackRegex = RegExp(r'https?://(localhost|127\.0\.0\.1)(:\d+)?');
+      if (url.contains(loopbackRegex)) {
+        return url.replaceFirst(loopbackRegex, backendOrigin);
+      }
+      return url;
+    }
+    return url;
   }
 }

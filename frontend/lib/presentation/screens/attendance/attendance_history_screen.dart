@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
+import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Teacher Attendance History Screen
@@ -860,48 +861,73 @@ class _StudentAttendanceHistoryScreenState
                                 );
                               }
 
-                              final r = _records[index];
-                              final isPresent = r['status'] == 'Y';
+                                final r = _records[index];
+                                final status = r['status'];
+                                final isPresent = status == 'Y';
+                                final isPermission = status == 'P';
+                                
+                                String statusText = 'អវត្តមាន';
+                                Color statusColor = Colors.red;
+                                IconData statusIcon = Icons.close;
+                                
+                                if (isPresent) {
+                                  statusText = 'មានវត្តមាន';
+                                  statusColor = Colors.green;
+                                  statusIcon = Icons.check;
+                                } else if (isPermission) {
+                                  statusText = 'ច្បាប់';
+                                  statusColor = Colors.orange;
+                                  statusIcon = Icons.list_alt;
+                                }
 
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: isPresent
-                                        ? Colors.green[50]
-                                        : Colors.red[50],
-                                    child: Icon(
-                                      isPresent ? Icons.check : Icons.close,
-                                      color:
-                                          isPresent ? Colors.green : Colors.red,
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: statusColor.withOpacity(0.1),
+                                      child: Icon(statusIcon, color: statusColor),
+                                    ),
+                                    title: Text(
+                                      r['attendance_date'] ?? '',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    subtitle: isPermission 
+                                      ? Text('មូលហេតុ: ${r['permission_reason'] ?? '—'}', 
+                                          maxLines: 1, overflow: TextOverflow.ellipsis)
+                                      : (r['check_in_time'] != null
+                                          ? Text('ចូល: ${r['check_in_time']}')
+                                          : null),
+                                    trailing: Text(
+                                      statusText,
+                                      style: TextStyle(
+                                        color: statusColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
-                                  title: Text(
-                                    r['attendance_date'] ?? '',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                  subtitle: r['check_in_time'] != null
-                                      ? Text('ចូល: ${r['check_in_time']}')
-                                      : null,
-                                  trailing: Text(
-                                    isPresent ? 'មានវត្តមាន' : 'អវត្តមាន',
-                                    style: TextStyle(
-                                      color: isPresent
-                                          ? Colors.green[700]
-                                          : Colors.red[700],
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const RequestPermissionScreen()),
+          );
+          if (result == true) {
+            _loadHistory();
+          }
+        },
+        backgroundColor: Colors.orange,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('ស្នើសុំច្បាប់', style: TextStyle(color: Colors.white)),
+      ),
     );
   }
 
