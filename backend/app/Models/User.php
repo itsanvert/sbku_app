@@ -78,7 +78,7 @@ class User extends Authenticatable
     {
         // 1. Check if user has a direct photo path (Jetstream standard)
         if ($this->profile_photo_path) {
-            return \Illuminate\Support\Facades\Storage::disk($this->profilePhotoDisk())->url($this->profile_photo_path);
+            return url('api/storage/' . $this->profile_photo_path);
         }
 
         // 2. Fall back to Teacher profile image

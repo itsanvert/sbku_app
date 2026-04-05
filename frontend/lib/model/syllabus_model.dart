@@ -1,26 +1,25 @@
-
 class SyllabusModel {
   final String id;
-  final String className;
-  final String teacherName;
-  final String subjectName;
-  final String shiftName;
-  final String semesterName;
+  final String facultyName;
+  final String majorName;
   final String yearName;
+  final String semesterName;
+  final String subjectName;
+  final String teacherName;
+  final String shiftName;
+  final String creditHours;
+  final String scheduleInfo;
 
   SyllabusModel({
     required this.id,
-    required this.className,
-    required this.teacherName,
-    required this.subjectName,
-    required this.shiftName,
-    required this.semesterName,
+    required this.facultyName,
+    required this.majorName,
     required this.yearName,
+    required this.semesterName,
+    required this.subjectName,
+    required this.teacherName,
+    required this.shiftName,
+    this.creditHours = '3',
+    this.scheduleInfo = 'TBD',
   });
-
-  /// ❌ REMOVE THIS (unsafe without ID lookup)
-  /// SyllabusEntity toEntity() { ... }
-
-  /// ❌ REMOVE THIS (entity has IDs, model has names)
-  /// factory SyllabusModel.fromEntity(...)
 }

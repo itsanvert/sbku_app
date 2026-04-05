@@ -40,6 +40,14 @@
                         <flux:navlist.item icon="users" href="{{ route('students.index') }}" :current="request()->routeIs('students.index')">Student</flux:navlist.item>
                     @endif
 
+                    @if(auth()->user()->role === 'admin' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-syllabus'))
+                        <flux:navlist.item icon="book-open" href="{{ route('syllabuses.index') }}" :current="request()->routeIs('syllabuses.index')">Syllabus</flux:navlist.item>
+                    @endif
+
+                    @if(auth()->user()->role === 'admin' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-subjects'))
+                        <flux:navlist.item icon="bookmark" href="{{ route('subjects.index') }}" :current="request()->routeIs('subjects.index')">Subject</flux:navlist.item>
+                    @endif
+
                     @guest
                     @else
                         @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-sessions'))
