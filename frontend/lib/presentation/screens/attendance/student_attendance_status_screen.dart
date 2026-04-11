@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
@@ -385,8 +386,12 @@ class _StudentAttendanceStatusScreenState
                 children: [
                   Icon(Icons.login, size: 14, color: greyText),
                   const SizedBox(width: 6),
-                  Text('ចូល: $checkIn',
-                      style: TextStyle(fontSize: 13, color: bodyText)),
+                  Text('ចូល: ${_formatTime(checkIn)}',
+                      style: TextStyle(
+                        fontSize: 13, 
+                        color: isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                        fontWeight: FontWeight.bold,
+                      )),
                 ],
               ),
 
@@ -537,6 +542,21 @@ class _StudentAttendanceStatusScreenState
         return 'បានបដិសេធ';
       default:
         return 'រង់ចាំ';
+    }
+  }
+
+  String _formatTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
+    try {
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      final dt = DateTime.parse(dateTimeStr);
+      return DateFormat('h:mm a').format(dt);
+    } catch (_) {
+      return dateTimeStr;
     }
   }
 }
