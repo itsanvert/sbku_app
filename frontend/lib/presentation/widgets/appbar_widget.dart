@@ -128,12 +128,16 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final scaleFactor = _getScaleFactor(screenWidth);
     final topPadding = MediaQuery.of(context).padding.top;
 
-    final defaultGradientColors =
-        gradientColors ?? [const Color(0xFFFF6A00), const Color(0xFF9C3701)];
+    final defaultGradientColors = gradientColors ??
+        (isDark
+            ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+            : [const Color(0xFFFF6A00), const Color(0xFF9C3701)]);
 
     // We use a custom Container with Safe Area to achieve the premium look
     // while still respecting PreferredSize for the Scaffold
@@ -148,7 +152,9 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         boxShadow: showBottomShadow
             ? [
                 BoxShadow(
-                  color: defaultGradientColors.last.withOpacity(0.3),
+                  color: isDark
+                      ? Colors.black.withOpacity(0.5)
+                      : defaultGradientColors.last.withOpacity(0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -161,12 +167,12 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           Positioned(
             top: -10,
             right: -10,
-            child: _decorativeOrb(70, Colors.white.withOpacity(0.08)),
+            child: _decorativeOrb(70, Colors.white.withOpacity(isDark ? 0.03 : 0.08)),
           ),
           Positioned(
             bottom: 5,
             left: screenWidth * 0.2,
-            child: _decorativeOrb(30, Colors.white.withOpacity(0.05)),
+            child: _decorativeOrb(30, Colors.white.withOpacity(isDark ? 0.02 : 0.05)),
           ),
 
           // ── App Bar Contents ────────────────────────────────
@@ -243,7 +249,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                 errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.school_rounded,
                     color: Colors.white,
-                    size: 22),
+                    size: 22.5),
               ),
             ),
           ),
@@ -284,7 +290,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               overflow: TextOverflow.ellipsis,
               style: titleStyle ??
                   const TextStyle(
-                    fontSize: 14.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     height: 1.2,
@@ -299,7 +305,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                 overflow: TextOverflow.ellipsis,
                 style: subtitleStyle ??
                     TextStyle(
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w400,
                       color: Colors.white.withOpacity(0.8),
                       height: 1.1,

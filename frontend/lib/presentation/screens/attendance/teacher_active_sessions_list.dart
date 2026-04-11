@@ -38,26 +38,43 @@ class _TeacherActiveSessionsListScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'វេនកំពុងដំណើរការ'),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? Center(
+              child: CircularProgressIndicator(color: theme.primaryColor),
+            )
           : _sessions.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.event_busy, size: 64, color: Colors.grey[400]),
+                      Icon(
+                        Icons.event_busy,
+                        size: 64,
+                        color: isDark
+                            ? const Color(0xFF475569)
+                            : Colors.grey[400],
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'មិនមានវេនកំពុងដំណើរការ',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
                 )
               : RefreshIndicator(
                   onRefresh: _loadSessions,
+                  color: theme.primaryColor,
                   child: ListView.builder(
                     itemCount: _sessions.length,
                     padding: const EdgeInsets.all(16),
@@ -74,20 +91,35 @@ class _TeacherActiveSessionsListScreenState
                         margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.green[100],
-                            child: Icon(Icons.check_circle,
-                                color: Colors.green[700]),
+                            backgroundColor: Colors.green.withOpacity(
+                              isDark ? 0.15 : 0.1,
+                            ),
+                            child: Icon(
+                              Icons.check_circle,
+                              color: isDark
+                                  ? Colors.green.shade300
+                                  : Colors.green[700],
+                            ),
                           ),
                           title: Text(
                             teacherName,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.titleMedium?.color,
+                            ),
                           ),
                           subtitle: Text(
                             '$facultyName\n$checkedIn នាក់បានចូលរួម\nចាប់ផ្តើម: $startedAt',
-                            style: const TextStyle(height: 1.5),
+                            style: TextStyle(
+                              height: 1.5,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: theme.iconTheme.color,
+                          ),
                           onTap: () {
                             Navigator.push(
                               context,

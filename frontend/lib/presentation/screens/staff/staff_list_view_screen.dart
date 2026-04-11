@@ -143,14 +143,18 @@ class _StaffListViewScreenState extends State<StaffListViewScreen> {
                         Icon(
                           Icons.people_outline,
                           size: 80,
-                          color: Colors.grey[300],
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF475569)
+                              : Colors.grey[300],
                         ),
                         const SizedBox(height: 16),
                         Text(
                           hasFilter ? 'រកមិនឃើញបុគ្គលិក' : 'មិនទាន់មានបុគ្គលិក',
                           style: TextStyle(
                             fontSize: 18,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.grey[600],
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -160,7 +164,9 @@ class _StaffListViewScreenState extends State<StaffListViewScreen> {
                             'សូមកែប្រែការតម្រង',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[500],
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF64748B)
+                                  : Colors.grey[500],
                             ),
                           ),
                         ],

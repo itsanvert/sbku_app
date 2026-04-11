@@ -22,7 +22,6 @@ class AttendanceListCategoryScreen extends StatelessWidget {
     final bool showTeacherMenu = role == 'teacher' || role == 'admin';
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBarWidget.simple(
         title: 'បញ្ជីវត្តមាន',
       ),

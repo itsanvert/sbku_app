@@ -1,8 +1,12 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
+import 'package:share_plus/share_plus.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Teacher Attendance History Screen
@@ -86,7 +90,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         children: [
           Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
           const SizedBox(height: 16),
-          Text(_error!, style: const TextStyle(color: Colors.grey)),
+          Text(_error!, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
           const SizedBox(height: 16),
           ElevatedButton(
               onPressed: _loadHistory, child: const Text('ព្យាយាមម្ដងទៀត')),
@@ -100,9 +104,15 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 64, color: Colors.grey[400]),
+          Icon(Icons.history, size: 64,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF475569)
+                  : Colors.grey[400]),
           const SizedBox(height: 16),
-          Text('', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+          Text('', style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          )),
         ],
       ),
     );
@@ -116,11 +126,10 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         padding: const EdgeInsets.all(16),
         itemBuilder: (context, index) {
           if (index >= _records.length) {
-            _loadHistory(loadMore: true);
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(color: Colors.orange),
+                child: CircularProgressIndicator(),
               ),
             );
           }
@@ -131,12 +140,15 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           final studentName =
               record['student_name'] ?? record['student']?['name'] ?? 'Unknown';
           final checkIn = record['check_in_time'];
+          final isDark = Theme.of(context).brightness == Brightness.dark;
 
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: isPresent ? Colors.green[50] : Colors.red[50],
+                backgroundColor: isPresent
+                    ? Colors.green.withOpacity(isDark ? 0.15 : 0.08)
+                    : Colors.red.withOpacity(isDark ? 0.15 : 0.08),
                 child: Icon(
                   isPresent ? Icons.check : Icons.close,
                   color: isPresent ? Colors.green : Colors.red,
@@ -146,19 +158,24 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(
                 '$date${checkIn != null ? " • $checkIn" : ""}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontSize: 13,
+                ),
               ),
               trailing: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isPresent ? Colors.green[50] : Colors.red[50],
+                  color: isPresent
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   isPresent ? 'មានវត្តមាន' : 'អវត្តមាន',
                   style: TextStyle(
-                    color: isPresent ? Colors.green[700] : Colors.red[700],
+                    color: isPresent ? Colors.green.shade600 : Colors.red.shade600,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -202,6 +219,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
   int _selectedYear = DateTime.now().year;
   Map<String, dynamic>? _yearlyData;
   bool _yearlyLoading = false;
+
+  bool _isLoadingExport = false;
 
   @override
   void initState() {
@@ -284,12 +303,19 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.primaryColor;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('របាយការណ៍វត្តមាន',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.orange,
+        title: const Text(
+          'របាយការណ៍វត្តមាន',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: isDark ? const Color(0xFF0F172A) : primary,
         foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
@@ -306,6 +332,33 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             Tab(text: 'ប្រចាំឆ្នាំ'),
           ],
         ),
+        actions: [
+          if (_isLoadingExport)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.download_for_offline_rounded, size: 28),
+              tooltip: 'ទាញយករបាយការណ៍',
+              onPressed: () {
+                final currentTab = _tabController.index;
+                final type = currentTab == 0
+                    ? 'daily'
+                    : (currentTab == 1 ? 'monthly' : 'yearly');
+                _showExportOptions(context, type);
+              },
+            ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: TabBarView(
         controller: _tabController,
@@ -350,11 +403,11 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_dailyLoading)
           const Expanded(
-              child: Center(
-                  child: CircularProgressIndicator(color: Colors.orange)))
+              child: Center(child: CircularProgressIndicator()))
         else if (_dailyData != null) ...[
           // Summary cards
           _buildSummaryCards(_dailyData!['summary']),
+          const SizedBox(height: 12),
           // Student list
           Expanded(
             child: _buildRecordsList(
@@ -421,8 +474,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_monthlyLoading)
           const Expanded(
-              child: Center(
-                  child: CircularProgressIndicator(color: Colors.orange)))
+              child: Center(child: CircularProgressIndicator()))
         else if (_monthlyData != null)
           Expanded(
             child: _buildStudentSummaryList(List<Map<String, dynamic>>.from(
@@ -462,8 +514,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_yearlyLoading)
           const Expanded(
-              child: Center(
-                  child: CircularProgressIndicator(color: Colors.orange)))
+              child: Center(child: CircularProgressIndicator()))
         else if (_yearlyData != null) ...[
           // Monthly breakdown chart substitute
           if (_yearlyData!['monthly_breakdown'] != null)
@@ -728,6 +779,243 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
     if (r >= 80) return Colors.green;
     if (r >= 60) return Colors.orange;
     return Colors.red;
+  }
+
+  // ── Export Logic & UI Enhancements ───────────────────────────
+  
+  void _showExportOptions(BuildContext context, String type) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.file_download_outlined, color: Colors.orange),
+                ),
+                const SizedBox(width: 16),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ទាញយករបាយការណ៍',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'សូមជ្រើសរើសប្រភេទឯកសារ',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildExportOptionTile(
+              context,
+              title: 'PDF Document',
+              subtitle: 'ល្អសម្រាប់ការបោះពុម្ព និងចែករំលែក',
+              icon: Icons.picture_as_pdf_rounded,
+              color: Colors.redAccent,
+              onPressed: () {
+                Navigator.pop(context);
+                _handleExport(type, 'pdf');
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildExportOptionTile(
+              context,
+              title: 'Excel Spreadsheet',
+              subtitle: 'ល្អសម្រាប់ការវិភាគទិន្នន័យ',
+              icon: Icons.table_view_rounded,
+              color: Colors.green,
+              onPressed: () {
+                Navigator.pop(context);
+                _handleExport(type, 'excel');
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExportOptionTile(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isDark ? Colors.grey.shade600 : Colors.grey.shade400),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleExport(String type, String format) async {
+    setState(() => _isLoadingExport = true);
+    try {
+      http.Response response;
+      String fileName = 'attendance_${type}_report';
+      
+      if (type == 'daily') {
+        final dateStr = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+        response = format == 'pdf' 
+          ? await _service.exportPdf(date: dateStr)
+          : await _service.exportExcel(date: dateStr);
+        fileName += '_$dateStr';
+      } else if (type == 'monthly') {
+        response = format == 'pdf'
+          ? await _service.exportPdf(month: _selectedMonth, year: _selectedMonthYear)
+          : await _service.exportExcel(month: _selectedMonth, year: _selectedMonthYear);
+        fileName += '_${_selectedMonthYear}_$_selectedMonth';
+      } else {
+        response = format == 'pdf'
+          ? await _service.exportPdf(year: _selectedYear)
+          : await _service.exportExcel(year: _selectedYear);
+        fileName += '_$_selectedYear';
+      }
+
+      if (response.statusCode == 200) {
+        final bytes = response.bodyBytes;
+        final extension = format == 'pdf' ? 'pdf' : 'xlsx';
+        
+        final directory = await getTemporaryDirectory();
+        
+        final filePath = '${directory!.path}/$fileName.$extension';
+        final file = File(filePath);
+        await file.writeAsBytes(bytes);
+        
+        // Trigger system share dialog
+        await Share.shareXFiles(
+          [XFile(filePath)],
+          text: 'របាយការណ៍វត្តមាន${format == 'pdf' ? ' (PDF)' : ' (Excel)'}',
+        );
+      } else {
+        throw Exception('Export failed status: ${response.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => _isLoadingExport = false);
+    }
+  }
+
+  void _showSuccessDialog(String path, String format) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 50),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'រក្សាទុកបានជោគជ័យ',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'ឯកសាររបស់អ្នកត្រូវបានរក្សាទុកក្នុងទូរស័ព្ទរួចរាល់ហើយ។',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SelectableText(
+                path,
+                style: const TextStyle(fontSize: 11, color: Colors.blueGrey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('យល់ព្រម', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

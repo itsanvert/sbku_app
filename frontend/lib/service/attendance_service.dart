@@ -171,6 +171,38 @@ class AttendanceService {
     throw Exception('Failed to load yearly report');
   }
 
+  /// Export attendance report to PDF.
+  Future<http.Response> exportPdf({
+    String? date,
+    int? month,
+    int? year,
+    int? studentId,
+  }) async {
+    final params = <String>[
+      if (date != null) 'date=$date',
+      if (month != null) 'month=$month',
+      if (year != null) 'year=$year',
+      if (studentId != null) 'student_id=$studentId',
+    ];
+    return await _api.get('attendances/export/pdf?${params.join('&')}');
+  }
+
+  /// Export attendance report to Excel (XLSX).
+  Future<http.Response> exportExcel({
+    String? date,
+    int? month,
+    int? year,
+    int? studentId,
+  }) async {
+    final params = <String>[
+      if (date != null) 'date=$date',
+      if (month != null) 'month=$month',
+      if (year != null) 'year=$year',
+      if (studentId != null) 'student_id=$studentId',
+    ];
+    return await _api.get('attendances/export/excel?${params.join('&')}');
+  }
+
   /// Student's own attendance history.
   Future<Map<String, dynamic>> getStudentHistory(int studentId,
       {int? month, int? year, int page = 1}) async {

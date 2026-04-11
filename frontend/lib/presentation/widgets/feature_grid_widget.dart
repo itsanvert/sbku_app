@@ -66,12 +66,18 @@ class FeatureGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    const primary = Color(0xFFFF6A00);
 
-    final effectiveIconColor = defaultIconColor ?? const Color(0xFFFF5E01);
-    final effectiveLabelColor = defaultLabelColor ?? const Color(0xFFFF5500);
-    final effectiveBorderColor = defaultBorderColor ?? const Color(0xFFFF6A00);
-    final effectiveShadowColor = defaultShadowColor ?? (isDark ? Colors.black : const Color(0xFFFF6A00));
-    final effectiveBackgroundColor = backgroundColor ?? (isDark ? const Color(0xFF1F2937) : Colors.white);
+    // Theme-aware defaults
+    final effectiveIconColor = defaultIconColor ?? primary;
+    final effectiveLabelColor = defaultLabelColor ??
+        (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151));
+    final effectiveBorderColor = defaultBorderColor ??
+        (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB));
+    final effectiveShadowColor = defaultShadowColor ??
+        (isDark ? Colors.black45 : Colors.black12);
+    final effectiveBackgroundColor = backgroundColor ??
+        (isDark ? const Color(0xFF1E293B) : Colors.white);
 
     return GridView.builder(
       shrinkWrap: shrinkWrap,
@@ -87,6 +93,8 @@ class FeatureGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final feature = features[index];
         final isEnabled = feature.screen != null || feature.onTap != null;
+        final featureIconColor = feature.iconColor ?? effectiveIconColor;
+        final featureBorderColor = feature.borderColor ?? primary;
 
         return InkWell(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -105,7 +113,7 @@ class FeatureGrid extends StatelessWidget {
                 }
               : null,
           child: Opacity(
-            opacity: isEnabled ? 1.0 : 0.5,
+            opacity: isEnabled ? 1.0 : 0.45,
             child: Container(
               decoration: BoxDecoration(
                 color: effectiveBackgroundColor,
@@ -123,12 +131,14 @@ class FeatureGrid extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Top colored bar
+                  // Top accent bar
                   Container(
                     height: topBarHeight,
-                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: feature.borderColor ?? effectiveBorderColor,
+                      gradient: LinearGradient(
+                        colors: [featureBorderColor, featureBorderColor.withOpacity(0.6)],
+                      ),
                       borderRadius: BorderRadius.vertical(
                         bottom: Radius.circular(borderRadius),
                       ),
@@ -137,10 +147,19 @@ class FeatureGrid extends StatelessWidget {
 
                   const Spacer(),
 
-                  Icon(
-                    feature.icon,
-                    size: iconSize ?? 36,
-                    color: feature.iconColor ?? effectiveIconColor,
+                  // Icon with background pill
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: featureIconColor.withOpacity(0.12),
+                    ),
+                    child: Icon(
+                      feature.icon,
+                      size: iconSize ?? 26,
+                      color: featureIconColor,
+                    ),
                   ),
 
                   const SizedBox(height: 10),
@@ -153,9 +172,10 @@ class FeatureGrid extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: labelFontSize ?? 13,
+                        fontSize: labelFontSize ?? 12.5,
                         fontWeight: labelFontWeight ?? FontWeight.w600,
                         color: feature.labelColor ?? effectiveLabelColor,
+                        height: 1.3,
                       ),
                     ),
                   ),

@@ -4,24 +4,31 @@ class CustomTextField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final bool enabled;
+  final IconData? prefixIcon;
   final IconData? suffixIcon;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final int? maxLines;
+  final VoidCallback? onSuffixTap;
+  final bool obscureText;
 
   const CustomTextField({
     super.key,
     required this.label,
     required this.controller,
+    this.prefixIcon,
     this.suffixIcon,
     this.enabled = true,
     this.keyboardType,
     this.validator,
     this.maxLines = 1,
+    this.onSuffixTap,
+    this.obscureText = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Uses theme's inputDecorationTheme automatically
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -29,8 +36,8 @@ class CustomTextField extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
           ),
@@ -41,36 +48,17 @@ class CustomTextField extends StatelessWidget {
             keyboardType: keyboardType,
             validator: validator,
             maxLines: maxLines,
+            obscureText: obscureText,
+            style: Theme.of(context).textTheme.bodyLarge,
             decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.orange),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.orange, width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.red),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.red, width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              filled: true,
-              fillColor: enabled ? Colors.white : Colors.grey[200],
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
+              prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+              suffixIcon: suffixIcon != null
+                  ? IconButton(
+                      icon: Icon(suffixIcon),
+                      onPressed: onSuffixTap,
+                    )
+                  : null,
+              hintText: label,
             ),
           ),
         ],

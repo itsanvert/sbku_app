@@ -202,7 +202,7 @@ class _TeacherStartAttendanceScreenState
                   ? null
                   : _startAttendanceSession,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Theme.of(context).primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: _isLoading

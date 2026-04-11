@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
 
@@ -34,16 +35,16 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
   }
 
   Future<void> _selectDate() async {
+    final theme = Theme.of(context);
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate:
-          DateTime.now().subtract(const Duration(days: 7)), // Allow 1 week back
-      lastDate: DateTime.now().add(const Duration(days: 30)), // 1 month ahead
+      firstDate: DateTime.now().subtract(const Duration(days: 7)),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
       builder: (context, child) {
         return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(primary: Colors.orange),
+          data: Theme.of(context).copyWith(
+            colorScheme: theme.colorScheme.copyWith(primary: theme.primaryColor),
           ),
           child: child!,
         );
@@ -104,62 +105,58 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.primaryColor;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        title: const Text('ស្នើសុំច្បាប់ (Permission)',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
-        centerTitle: true,
-      ),
+      appBar: AppBarWidget.simple(title: 'ស្នើសុំច្បាប់ (Permission)'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoCard(),
+            _buildInfoCard(primary),
             const SizedBox(height: 24),
-            _label('កាលបរិច្ឆេទអវត្តមាន'),
-            _buildDatePicker(),
+            _label('កាលបរិច្ឆេទអវត្តមាន', isDark),
+            _buildDatePicker(isDark, primary),
             const SizedBox(height: 20),
-            _label('មូលហេតុលម្អិត'),
-            _buildReasonInput(),
+            _label('មូលហេតុលម្អិត', isDark),
+            _buildReasonInput(isDark),
             const SizedBox(height: 20),
-            _label('រូបភាពបញ្ជាក់ (លិខិតពេទ្យ ឬឯកសារផ្សេងៗ)'),
-            _buildImagePicker(),
+            _label('រូបភាពបញ្ជាក់ (លិខិតពេទ្យ ឬឯកសារផ្សេងៗ)', isDark),
+            _buildImagePicker(isDark, primary),
             const SizedBox(height: 40),
-            _buildSubmitButton(),
+            _buildSubmitButton(primary),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(Color primary) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.orange.shade400, Colors.orange.shade700],
+          colors: [primary, primary.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: primary.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Icon(Icons.info_outline, color: Colors.white, size: 28),
-          const SizedBox(width: 12),
-          const Expanded(
+          Icon(Icons.info_outline, color: Colors.white, size: 28),
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               'សិស្សអាចស្នើសុំច្បាប់ទុកជាមុន ឬក៏បន្ទាប់ពីខកខាន។ គ្រូបង្រៀននឹងធ្វើការពិនិត្យ និងអនុម័ត។',
               style: TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
@@ -170,77 +167,102 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
     );
   }
 
-  Widget _label(String text) {
+  Widget _label(String text, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         text,
-        style: const TextStyle(
-            fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black54),
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          color: isDark ? const Color(0xFF94A3B8) : Colors.black54,
+        ),
       ),
     );
   }
 
-  Widget _buildDatePicker() {
+  Widget _buildDatePicker(bool isDark, Color primary) {
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey.shade200;
+
     return InkWell(
       onTap: _isSubmitting ? null : _selectDate,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_month_outlined, color: Colors.orange),
+            Icon(Icons.calendar_month_outlined, color: primary),
             const SizedBox(width: 12),
             Text(
               DateFormat('dd MMMM yyyy').format(_selectedDate),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF1F2937),
+              ),
             ),
             const Spacer(),
-            const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+            Icon(Icons.keyboard_arrow_down,
+                color: isDark ? const Color(0xFF64748B) : Colors.grey),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildReasonInput() {
+  Widget _buildReasonInput(bool isDark) {
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey.shade200;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: borderColor),
       ),
       child: TextField(
         controller: _reasonController,
         maxLines: 5,
         enabled: !_isSubmitting,
-        decoration: const InputDecoration(
+        style: TextStyle(
+          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1F2937),
+        ),
+        decoration: InputDecoration(
           hintText: 'សូមបញ្ជាក់ពីមូលហេតុដែលអ្នកសុំច្បាប់...',
-          hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-          contentPadding: EdgeInsets.all(16),
+          hintStyle: TextStyle(
+            fontSize: 14,
+            color: isDark ? const Color(0xFF64748B) : Colors.grey,
+          ),
+          contentPadding: const EdgeInsets.all(16),
           border: InputBorder.none,
+          filled: false,
         ),
       ),
     );
   }
 
-  Widget _buildImagePicker() {
+  Widget _buildImagePicker(bool isDark, Color primary) {
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDark
+        ? primary.withOpacity(0.4)
+        : primary.withOpacity(0.3);
+
     return InkWell(
       onTap: _isSubmitting ? null : _pickImage,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
         height: 180,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: Colors.orange.withOpacity(0.3),
-              style: BorderStyle.solid,
-              width: 1),
+          border: Border.all(color: borderColor),
         ),
         child: _imageFile != null
             ? Stack(
@@ -272,29 +294,36 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add_photo_alternate_rounded,
-                      size: 48, color: Colors.orange.shade200),
+                      size: 48,
+                      color: isDark
+                          ? primary.withOpacity(0.4)
+                          : primary.withOpacity(0.3)),
                   const SizedBox(height: 8),
-                  const Text('ចុចដើម្បីបន្ថែមរូបភាព',
-                      style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  Text(
+                    'ចុចដើម្បីបន្ថែមរូបភាព',
+                    style: TextStyle(
+                      color: isDark ? const Color(0xFF64748B) : Colors.grey,
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
       ),
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(Color primary) {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: _isSubmitting ? null : _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.orange,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 4,
-          shadowColor: Colors.orange.withOpacity(0.4),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shadowColor: primary.withOpacity(0.4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: _isSubmitting
             ? const SizedBox(

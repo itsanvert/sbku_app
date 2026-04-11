@@ -18,6 +18,9 @@ class CustomDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -25,43 +28,35 @@ class CustomDropdown<T> extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<T>(
             value: value,
+            dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            style: theme.textTheme.bodyLarge,
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: theme.primaryColor,
+            ),
             items: items
                 .map(
                   (e) => DropdownMenuItem(
                     value: e,
                     child: Text(
                       displayText != null ? displayText!(e) : e.toString(),
+                      style: theme.textTheme.bodyLarge,
                     ),
                   ),
                 )
                 .toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.orange),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.orange, width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
               filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
+              fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             ),
           ),
         ],

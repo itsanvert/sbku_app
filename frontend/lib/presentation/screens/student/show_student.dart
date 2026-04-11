@@ -19,7 +19,7 @@ class ShowStudentScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+
       body: FutureBuilder<Student>(
         future: service.getStudent(id),
         builder: (context, snapshot) {

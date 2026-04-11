@@ -5,13 +5,7 @@ import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 
-/// ─────────────────────────────────────────────────────────────────────────────
 /// Student Attendance Verification Status Screen
-///
-/// Shows the authenticated student the verify_status of their latest
-/// check-ins (pending / approved / rejected) so they know whether the
-/// teacher accepted their QR scan — a key piece of anti-cheating transparency.
-/// ─────────────────────────────────────────────────────────────────────────────
 class StudentAttendanceStatusScreen extends StatefulWidget {
   const StudentAttendanceStatusScreen({super.key});
 
@@ -30,7 +24,6 @@ class _StudentAttendanceStatusScreenState
   String? _error;
   Timer? _pollingTimer;
 
-  // Counts from backend summary
   int get _pendingCount => (_summary?['pending'] ?? 0) as int;
   int get _approvedCount => (_summary?['approved'] ?? 0) as int;
   int get _rejectedCount => (_summary?['rejected'] ?? 0) as int;
@@ -39,7 +32,6 @@ class _StudentAttendanceStatusScreenState
   void initState() {
     super.initState();
     _loadHistory();
-    // Poll every 10 s so student sees approval in real-time
     _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _loadHistory(silent: true);
     });
@@ -59,7 +51,6 @@ class _StudentAttendanceStatusScreenState
       final user = authProvider.user;
       if (user == null) throw Exception('Not authenticated');
 
-      // Use the studentId from user object (the primary key in student table)
       final int sid = user.studentId ??
           (user.id is int ? user.id as int : int.parse(user.id.toString()));
 
@@ -93,28 +84,33 @@ class _StudentAttendanceStatusScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.primaryColor;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBarWidget.simple(title: 'ស្ថានភាពវត្តមានរបស់ខ្ញុំ'),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? Center(child: CircularProgressIndicator(color: primary))
           : _error != null && _records.isEmpty
               ? _buildError()
               : RefreshIndicator(
                   onRefresh: _loadHistory,
+                  color: primary,
                   child: CustomScrollView(
                     slivers: [
-                      SliverToBoxAdapter(child: _buildHeader()),
+                      SliverToBoxAdapter(child: _buildHeader(primary)),
                       SliverToBoxAdapter(child: _buildStatsRow()),
                       if (_pendingCount > 0)
                         SliverToBoxAdapter(child: _buildPendingBanner()),
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                         sliver: _records.isEmpty
-                            ? const SliverFillRemaining(
+                            ? SliverFillRemaining(
                                 child: Center(
-                                  child: Text('មិនមានប្រវត្តិវត្តមាន',
-                                      style: TextStyle(color: Colors.grey)),
+                                  child: Text(
+                                    'មិនមានប្រវត្តិវត្តមាន',
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
                                 ),
                               )
                             : SliverList(
@@ -131,20 +127,26 @@ class _StudentAttendanceStatusScreenState
   }
 
   // ── Header gradient card ─────────────────────────────────────
-  Widget _buildHeader() {
+  Widget _buildHeader(Color primary) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF8C00), Color(0xFFFF6000)],
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [const Color(0xFFFF8C00), const Color(0xFFFF6000)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.4),
+            color: isDark
+                ? Colors.black.withOpacity(0.4)
+                : Colors.orange.withOpacity(0.4),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -152,16 +154,20 @@ class _StudentAttendanceStatusScreenState
       ),
       child: Row(
         children: [
-          const Icon(Icons.how_to_reg, color: Colors.white, size: 40),
+          Icon(
+            Icons.how_to_reg,
+            color: isDark ? primary : Colors.white,
+            size: 40,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'ការផ្ទៀងផ្ទាត់វត្តមាន',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: isDark ? Colors.white : Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -170,7 +176,9 @@ class _StudentAttendanceStatusScreenState
                 Text(
                   'មើលស្ថានភាពការចូលរួមរបស់អ្នក',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.white.withOpacity(0.85),
                     fontSize: 13,
                   ),
                 ),
@@ -219,7 +227,8 @@ class _StudentAttendanceStatusScreenState
                   fontSize: 20, fontWeight: FontWeight.bold, color: color),
             ),
             Text(label,
-                style: TextStyle(fontSize: 11, color: color.withOpacity(0.8))),
+                style:
+                    TextStyle(fontSize: 11, color: color.withOpacity(0.8))),
           ],
         ),
       ),
@@ -228,13 +237,21 @@ class _StudentAttendanceStatusScreenState
 
   // ── Pending warning banner ───────────────────────────────────
   Widget _buildPendingBanner() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: isDark
+            ? const Color(0xFF1E293B)
+            : Colors.orange.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(
+          color: isDark
+              ? Colors.orange.withOpacity(0.4)
+              : Colors.orange.shade200,
+        ),
       ),
       child: Row(
         children: [
@@ -243,12 +260,16 @@ class _StudentAttendanceStatusScreenState
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(fontSize: 13, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+                ),
                 children: [
                   TextSpan(
                     text: '$_pendingCount ',
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.deepOrange),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepOrange),
                   ),
                   const TextSpan(
                     text: 'ការចូលរួមរបស់អ្នក កំពុងរង់ចាំការអនុម័ត'
@@ -259,7 +280,6 @@ class _StudentAttendanceStatusScreenState
             ),
           ),
           const SizedBox(width: 8),
-          // live dot indicator
           _LiveDot(),
         ],
       ),
@@ -268,6 +288,9 @@ class _StudentAttendanceStatusScreenState
 
   // ── Record card ──────────────────────────────────────────────
   Widget _buildRecordCard(Map<String, dynamic> r) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final verifyStatus = r['verify_status'] as String? ?? 'pending';
     final attendanceStatus = r['status'] as String? ?? 'N';
     final date = r['attendance_date']?.toString() ?? '';
@@ -278,15 +301,20 @@ class _StudentAttendanceStatusScreenState
     final vIcon = _verifyIcon(verifyStatus);
     final vLabel = _verifyLabel(verifyStatus);
 
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final dateChipBg = isDark ? const Color(0xFF334155) : Colors.grey.shade100;
+    final greyText = isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500;
+    final bodyText = isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade700;
+
     return Container(
       margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: vColor.withOpacity(0.25)),
+        border: Border.all(color: vColor.withOpacity(isDark ? 0.35 : 0.25)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -304,19 +332,21 @@ class _StudentAttendanceStatusScreenState
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: dateChipBg,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.calendar_today,
-                          size: 12, color: Colors.grey),
+                      Icon(Icons.calendar_today, size: 12, color: greyText),
                       const SizedBox(width: 4),
                       Text(
                         date,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
                       ),
                     ],
                   ),
@@ -349,38 +379,32 @@ class _StudentAttendanceStatusScreenState
               ],
             ),
             const SizedBox(height: 10),
-            // Check-in time row
+
             if (checkIn != null)
               Row(
                 children: [
-                  Icon(Icons.login, size: 14, color: Colors.grey.shade500),
+                  Icon(Icons.login, size: 14, color: greyText),
                   const SizedBox(width: 6),
-                  Text(
-                    'ចូល: $checkIn',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-                  ),
+                  Text('ចូល: $checkIn',
+                      style: TextStyle(fontSize: 13, color: bodyText)),
                 ],
               ),
 
-            // Teacher name row
             if (r['session']?['teacher']?['user']?['name'] != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline,
-                        size: 14, color: Colors.grey.shade500),
+                    Icon(Icons.person_outline, size: 14, color: greyText),
                     const SizedBox(width: 6),
                     Text(
                       'គ្រូ: ${r['session']['teacher']['user']['name']}',
-                      style:
-                          TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                      style: TextStyle(fontSize: 13, color: bodyText),
                     ),
                   ],
                 ),
               ),
 
-            // Presence status
             const SizedBox(height: 6),
             Row(
               children: [
@@ -397,15 +421,14 @@ class _StudentAttendanceStatusScreenState
                   style: TextStyle(
                     fontSize: 13,
                     color: attendanceStatus == 'Y'
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
+                        ? Colors.green.shade600
+                        : Colors.red.shade600,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
 
-            // Rejection reason
             if (verifyStatus == 'rejected' &&
                 reason != null &&
                 reason.isNotEmpty) ...[
@@ -413,18 +436,28 @@ class _StudentAttendanceStatusScreenState
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: isDark
+                      ? Colors.red.withOpacity(0.1)
+                      : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.red.withOpacity(isDark ? 0.3 : 0.2),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline, size: 14, color: Colors.red),
+                    Icon(Icons.info_outline,
+                        size: 14,
+                        color: isDark ? Colors.red.shade300 : Colors.red),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'មូលហេតុ: $reason',
-                        style: const TextStyle(fontSize: 12, color: Colors.red),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.red.shade300 : Colors.red,
+                        ),
                       ),
                     ),
                   ],
@@ -432,19 +465,19 @@ class _StudentAttendanceStatusScreenState
               ),
             ],
 
-            // Pending pulsing indicator
             if (verifyStatus == 'pending') ...[
               const SizedBox(height: 8),
               Row(
                 children: [
                   _LiveDot(size: 8),
                   const SizedBox(width: 6),
-                  const Text(
+                  Text(
                     'រង់ចាំការអនុម័តពីគ្រូ...',
                     style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange,
-                        fontStyle: FontStyle.italic),
+                      fontSize: 12,
+                      color: Colors.orange.shade400,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),
@@ -456,14 +489,14 @@ class _StudentAttendanceStatusScreenState
   }
 
   Widget _buildError() {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
           const SizedBox(height: 16),
-          Text(_error ?? 'Unknown error',
-              style: const TextStyle(color: Colors.grey)),
+          Text(_error ?? 'Unknown error', style: theme.textTheme.bodyMedium),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadHistory,
@@ -474,7 +507,6 @@ class _StudentAttendanceStatusScreenState
     );
   }
 
-  // ── Helpers ─────────────────────────────────────────────────
   Color _verifyColor(String status) {
     switch (status) {
       case 'approved':
@@ -509,7 +541,7 @@ class _StudentAttendanceStatusScreenState
   }
 }
 
-// ─── Animated live dot indicator ───────────────────────────────────────────
+// ─── Animated live dot indicator ─────────────────────────────
 class _LiveDot extends StatefulWidget {
   final double size;
   const _LiveDot({this.size = 10});

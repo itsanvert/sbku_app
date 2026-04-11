@@ -265,4 +265,66 @@ class AttendanceController extends Controller
             'attendance' => $attendance->load(['student.user', 'schedule']),
         ], 201);
     }
+    /**
+     * Export attendance to PDF.
+     */
+    public function exportPdf(Request $request)
+    {
+        $query = Attendance::with([
+            'student.user', 
+            'student.faculty', 
+            'student.major', 
+            'student.shift', 
+            'schedule', 
+            'session.teacher.user',
+            'session.faculty',
+            'session.major',
+        ]);
+
+        if ($request->studentId || $request->student_id) {
+            $query->forStudent($request->studentId ?? $request->student_id);
+        }
+        if ($request->date) $query->forDate($request->date);
+        if ($request->month && $request->year) $query->forMonth($request->month, $request->year);
+        elseif ($request->year) $query->forYear($request->year);
+        if ($request->status) $query->where('status', $request->status);
+
+        $records = $query->orderBy('attendance_date', 'desc')->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
+            'records' => $records,
+            'title'   => 'Attendance Report',
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('attendance-report-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export attendance to Excel (XLSX).
+     */
+    public function exportExcel(Request $request)
+    {
+        $query = Attendance::with([
+            'student.user', 
+            'student.faculty', 
+            'student.major', 
+            'student.shift', 
+            'schedule', 
+            'session.teacher.user',
+            'session.faculty',
+            'session.major'
+        ]);
+
+        if ($request->studentId || $request->student_id) {
+            $query->forStudent($request->studentId ?? $request->student_id);
+        }
+        if ($request->date) $query->forDate($request->date);
+        if ($request->month && $request->year) $query->forMonth($request->month, $request->year);
+        elseif ($request->year) $query->forYear($request->year);
+        if ($request->status) $query->where('status', $request->status);
+
+        $records = $query->orderBy('attendance_date', 'desc')->get();
+
+        return (new \App\Exports\AttendanceExport($records))->download('attendance-report-' . now()->format('Y-m-d') . '.xlsx');
+    }
 }

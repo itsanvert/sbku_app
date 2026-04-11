@@ -5,6 +5,7 @@ class ListItemWidget<T> extends StatelessWidget {
   final T item;
   final String title;
   final String? subtitle;
+  final String? trailingSubtitle;
   final String? avatarText;
   final String? avatarImageUrl;
   final Color? avatarBackgroundColor;
@@ -28,6 +29,7 @@ class ListItemWidget<T> extends StatelessWidget {
     required this.item,
     required this.title,
     this.subtitle,
+    this.trailingSubtitle,
     this.avatarText,
     this.avatarImageUrl,
     this.avatarBackgroundColor,
@@ -49,12 +51,17 @@ class ListItemWidget<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final effectiveMargin =
-        margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
-    final effectivePadding = padding ?? const EdgeInsets.all(16);
-    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(12);
-    final effectiveBackgroundColor = backgroundColor ?? Colors.white;
-    final effectiveBorderColor = borderColor ?? Colors.grey[200]!;
+        margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 6);
+    final effectivePadding = padding ?? const EdgeInsets.all(14);
+    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(14);
+    final effectiveBackgroundColor = backgroundColor ??
+        (isDark ? const Color(0xFF1E293B) : Colors.white);
+    final effectiveBorderColor = borderColor ??
+        (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB));
 
     Widget content = Row(
       children: [
@@ -62,7 +69,7 @@ class ListItemWidget<T> extends StatelessWidget {
         if (leading != null)
           leading!
         else if (avatarText != null || avatarImageUrl != null)
-          _buildAvatar(),
+          _buildAvatar(isDark),
 
         if (leading != null || avatarText != null || avatarImageUrl != null)
           SizedBox(width: spacing),
@@ -75,21 +82,18 @@ class ListItemWidget<T> extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
                 ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 2,
               ),
               if (subtitle != null) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   subtitle!,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
@@ -101,6 +105,11 @@ class ListItemWidget<T> extends StatelessWidget {
         // Actions or trailing widget
         if (trailing != null)
           trailing!
+        else if (trailingSubtitle != null)
+          Text(
+            trailingSubtitle!,
+            style: theme.textTheme.bodySmall,
+          )
         else if (actions.isNotEmpty)
           _buildActions(context),
       ],
@@ -108,27 +117,39 @@ class ListItemWidget<T> extends StatelessWidget {
 
     return Container(
       margin: effectiveMargin,
-      padding: effectivePadding,
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
         borderRadius: effectiveBorderRadius,
         border: Border.all(color: effectiveBorderColor),
-        boxShadow: boxShadow,
+        boxShadow: boxShadow ??
+            [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
       ),
-      child: onTap != null
-          ? InkWell(
-              onTap: onTap,
-              borderRadius: effectiveBorderRadius,
-              child: content,
-            )
-          : content,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: effectiveBorderRadius,
+          child: Padding(
+            padding: effectivePadding,
+            child: content,
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildAvatar() {
-    final size = avatarSize ?? 40;
-    final bgColor = avatarBackgroundColor ?? Colors.purple[50];
-    final txtColor = avatarTextColor ?? Colors.purple;
+  Widget _buildAvatar(bool isDark) {
+    final size = avatarSize ?? 44.0;
+    final bgColor = avatarBackgroundColor ??
+        (isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6));
+    final txtColor = avatarTextColor ??
+        (isDark ? Colors.white70 : const Color(0xFF374151));
 
     if (avatarImageUrl != null) {
       return CircleAvatar(
@@ -141,17 +162,14 @@ class ListItemWidget<T> extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: bgColor,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: bgColor),
       child: Center(
         child: Text(
           avatarText ?? '',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: txtColor,
-            fontSize: size * 0.4,
+            fontSize: size * 0.38,
           ),
         ),
       ),
@@ -171,9 +189,18 @@ class ListItemWidget<T> extends StatelessWidget {
         }
         return TextButton(
           onPressed: action.onPressed,
+          style: TextButton.styleFrom(
+            foregroundColor: action.color,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            minimumSize: const Size(0, 32),
+          ),
           child: Text(
             action.label,
-            style: TextStyle(color: action.color),
+            style: TextStyle(
+              color: action.color,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
           ),
         );
       }).toList(),

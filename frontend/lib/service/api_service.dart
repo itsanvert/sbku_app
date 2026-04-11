@@ -6,8 +6,8 @@ class ApiService {
   // ⚠️ IMPORTANT: Change this to your Laravel backend URL
   // For Android Emulator: http://10.0.2.2:8000/api
   // For iOS Simulator: http://localhost:8000/api
-  // For Physical Device: http://YOUR_COMPUTER_IP:8000/api (e.g., http://192.168.1.13:8000/api)
-  static const String baseUrl = 'http://192.168.1.18:8000/api';
+  // For Physical Device: http://YOUR_COMPUTER_IP:8000/api (e.g., http://192.168.1.14:8000/api)
+  static const String baseUrl = 'http://192.168.1.14:8000/api';
 
   final storage = const FlutterSecureStorage();
 
