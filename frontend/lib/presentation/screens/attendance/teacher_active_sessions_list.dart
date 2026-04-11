@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
+import 'package:intl/intl.dart';
 
 class TeacherActiveSessionsListScreen extends StatefulWidget {
   const TeacherActiveSessionsListScreen({super.key});
@@ -91,8 +92,8 @@ class _TeacherActiveSessionsListScreenState
                         margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.green.withOpacity(
-                              isDark ? 0.15 : 0.1,
+                            backgroundColor: Colors.green.withValues(
+                              alpha: isDark ? 0.15 : 0.1,
                             ),
                             child: Icon(
                               Icons.check_circle,
@@ -109,7 +110,7 @@ class _TeacherActiveSessionsListScreenState
                             ),
                           ),
                           subtitle: Text(
-                            '$facultyName\n$checkedIn នាក់បានចូលរួម\nចាប់ផ្តើម: $startedAt',
+                            '$facultyName • ${_formatDate(startedAt)}\n$checkedIn នាក់បានចូលរួម\nម៉ោងចាប់ផ្តើម: ${_formatTime(startedAt)}',
                             style: TextStyle(
                               height: 1.5,
                               color: theme.textTheme.bodySmall?.color,
@@ -137,5 +138,30 @@ class _TeacherActiveSessionsListScreenState
                   ),
                 ),
     );
+  }
+
+  String _formatTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
+    try {
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      final dt = DateTime.parse(dateTimeStr);
+      return DateFormat('h:mm a').format(dt);
+    } catch (_) {
+      return dateTimeStr ?? '--:--';
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
+    }
   }
 }

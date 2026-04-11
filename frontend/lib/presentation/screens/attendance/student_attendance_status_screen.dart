@@ -342,7 +342,7 @@ class _StudentAttendanceStatusScreenState
                       Icon(Icons.calendar_today, size: 12, color: greyText),
                       const SizedBox(width: 4),
                       Text(
-                        date,
+                        _formatDate(date),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -544,7 +544,6 @@ class _StudentAttendanceStatusScreenState
         return 'រង់ចាំ';
     }
   }
-
   String _formatTime(String? dateTimeStr) {
     if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
     try {
@@ -557,6 +556,16 @@ class _StudentAttendanceStatusScreenState
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
       return dateTimeStr ?? '--:--';
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
     }
   }
 }
