@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/api_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -485,7 +486,11 @@ class _TeacherActiveSessionScreenState
                     const SizedBox(width: 4),
                     Text(
                       'ចាប់ផ្តើម: ${_formatTime(_sessionData?["started_at"])}',
-                      style: TextStyle(fontSize: 13, color: mutedText),
+                      style: TextStyle(
+                        fontSize: 13, 
+                        color: isDark ? Colors.blue.shade300 : primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -715,13 +720,13 @@ class _TeacherActiveSessionScreenState
                                 : Colors.blue.shade600),
                         const SizedBox(width: 4),
                         Text(
-                          checkIn,
+                          _formatTime(a['check_in_time']),
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark
                                 ? Colors.blue.shade300
                                 : Colors.blue.shade700,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -933,10 +938,24 @@ class _TeacherActiveSessionScreenState
                 ],
               ),
             ),
-            Icon(
-              isApproved ? Icons.check_circle : Icons.cancel,
-              color: color,
-              size: 22,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Icon(
+                  isApproved ? Icons.check_circle : Icons.cancel,
+                  color: color,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatTime(a['check_in_time']),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1307,10 +1326,18 @@ class _TeacherActiveSessionScreenState
   }
 
   String _formatTime(String? dateTimeStr) {
-    if (dateTimeStr == null) return '--:--';
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
     try {
+      // If it's just a time string (HH:mm:ss or HH:mm), prepend current date
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      
       final dt = DateTime.parse(dateTimeStr);
-      return '${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+      // Format to 12-hour with AM/PM (e.g., 08:30 AM)
+      return DateFormat('h:mm a').format(dt);
     } catch (_) {
       return dateTimeStr;
     }

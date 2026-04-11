@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
@@ -157,10 +158,11 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
               title: Text(studentName,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(
-                '$date${checkIn != null ? " • $checkIn" : ""}',
+                '$date${checkIn != null ? " • ${_formatTime(checkIn)}" : ""}',
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  color: isDark ? Colors.blue.shade300 : Colors.blue.shade700,
                   fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               trailing: Container(
@@ -186,6 +188,21 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         },
       ),
     );
+  }
+
+  String _formatTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
+    try {
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      final dt = DateTime.parse(dateTimeStr);
+      return DateFormat('h:mm a').format(dt);
+    } catch (_) {
+      return dateTimeStr;
+    }
   }
 }
 
@@ -607,8 +624,12 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             title:
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: r['check_in_time'] != null
-                ? Text('ចូល: ${r['check_in_time']}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]))
+                ? Text('ចូល: ${_formatTime(r['check_in_time'])}',
+                    style: TextStyle(
+                      fontSize: 12, 
+                      color: Colors.blue.shade600,
+                      fontWeight: FontWeight.bold,
+                    ))
                 : null,
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1230,5 +1251,20 @@ class _StudentAttendanceHistoryScreenState
             style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
       ],
     );
+  }
+
+  String _formatTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
+    try {
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      final dt = DateTime.parse(dateTimeStr);
+      return DateFormat('h:mm a').format(dt);
+    } catch (_) {
+      return dateTimeStr;
+    }
   }
 }
