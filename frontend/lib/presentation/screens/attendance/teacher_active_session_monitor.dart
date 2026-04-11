@@ -1339,7 +1339,7 @@ class _TeacherActiveSessionScreenState
       // Format to 12-hour with AM/PM (e.g., 08:30 AM)
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
-      return dateTimeStr;
+      return dateTimeStr ?? '--:--';
     }
   }
 
