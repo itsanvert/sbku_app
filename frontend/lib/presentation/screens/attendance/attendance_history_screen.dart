@@ -148,8 +148,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: isPresent
-                    ? Colors.green.withOpacity(isDark ? 0.15 : 0.08)
-                    : Colors.red.withOpacity(isDark ? 0.15 : 0.08),
+                    ? Colors.green.withValues(alpha: isDark ? 0.15 : 0.08)
+                    : Colors.red.withValues(alpha: isDark ? 0.15 : 0.08),
                 child: Icon(
                   isPresent ? Icons.check : Icons.close,
                   color: isPresent ? Colors.green : Colors.red,
@@ -170,8 +170,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isPresent
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.red.withOpacity(0.1),
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -201,7 +201,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       final dt = DateTime.parse(dateTimeStr);
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
-      return dateTimeStr;
+      return dateTimeStr ?? '--:--';
     }
   }
 }
@@ -399,9 +399,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange[50],
+              color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -447,7 +447,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _selectedMonth,
+                  initialValue: _selectedMonth,
                   items: List.generate(
                       12,
                       (i) => DropdownMenuItem(
@@ -468,7 +468,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _selectedMonthYear,
+                  initialValue: _selectedMonthYear,
                   items: List.generate(
                       7,
                       (i) => DropdownMenuItem(
@@ -511,7 +511,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         Padding(
           padding: const EdgeInsets.all(16),
           child: DropdownButtonFormField<int>(
-            value: _selectedYear,
+            initialValue: _selectedYear,
             items: List.generate(
                 7,
                 (i) => DropdownMenuItem(
@@ -574,9 +574,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -585,7 +585,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                     fontSize: 20, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
             Text(label,
-                style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
+                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8)),
                 textAlign: TextAlign.center),
           ],
         ),
@@ -695,7 +695,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _rateColor(rate).withOpacity(0.1),
+                        color: _rateColor(rate).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -745,9 +745,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _rateColor(rate).withOpacity(0.1),
+              color: _rateColor(rate).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _rateColor(rate).withOpacity(0.3)),
+              border: Border.all(color: _rateColor(rate).withValues(alpha: 0.3)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -825,7 +825,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.file_download_outlined, color: Colors.orange),
@@ -908,7 +908,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -962,7 +962,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         
         final directory = await getTemporaryDirectory();
         
-        final filePath = '${directory!.path}/$fileName.$extension';
+        final filePath = '${directory.path}/$fileName.$extension';
         final file = File(filePath);
         await file.writeAsBytes(bytes);
         
@@ -975,6 +975,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         throw Exception('Export failed status: ${response.statusCode}');
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
@@ -983,60 +984,19 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
     }
   }
 
-  void _showSuccessDialog(String path, String format) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 50),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'រក្សាទុកបានជោគជ័យ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'ឯកសាររបស់អ្នកត្រូវបានរក្សាទុកក្នុងទូរស័ព្ទរួចរាល់ហើយ។',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: SelectableText(
-                path,
-                style: const TextStyle(fontSize: 11, color: Colors.blueGrey),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('យល់ព្រម', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+  String _formatTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
+    try {
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      final dt = DateTime.parse(dateTimeStr);
+      return DateFormat('h:mm a').format(dt);
+    } catch (_) {
+      return dateTimeStr ?? '--:--';
+    }
   }
 }
 
@@ -1193,7 +1153,7 @@ class _StudentAttendanceHistoryScreenState
                                   margin: const EdgeInsets.only(bottom: 8),
                                   child: ListTile(
                                     leading: CircleAvatar(
-                                      backgroundColor: statusColor.withOpacity(0.1),
+                                      backgroundColor: statusColor.withValues(alpha: 0.1),
                                       child: Icon(statusIcon, color: statusColor),
                                     ),
                                     title: Text(
@@ -1205,7 +1165,7 @@ class _StudentAttendanceHistoryScreenState
                                       ? Text('មូលហេតុ: ${r['permission_reason'] ?? '—'}', 
                                           maxLines: 1, overflow: TextOverflow.ellipsis)
                                       : (r['check_in_time'] != null
-                                          ? Text('ចូល: ${r['check_in_time']}')
+                                          ? Text('ចូល: ${_formatTime(r['check_in_time'])}')
                                           : null),
                                     trailing: Text(
                                       statusText,
@@ -1248,7 +1208,7 @@ class _StudentAttendanceHistoryScreenState
                 fontSize: 22, fontWeight: FontWeight.bold, color: color)),
         const SizedBox(height: 4),
         Text(label,
-            style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
+            style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.9))),
       ],
     );
   }
@@ -1264,7 +1224,7 @@ class _StudentAttendanceHistoryScreenState
       final dt = DateTime.parse(dateTimeStr);
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
-      return dateTimeStr;
+      return dateTimeStr ?? '--:--';
     }
   }
 }

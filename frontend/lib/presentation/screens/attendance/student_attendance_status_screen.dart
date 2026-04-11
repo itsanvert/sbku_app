@@ -556,7 +556,7 @@ class _StudentAttendanceStatusScreenState
       final dt = DateTime.parse(dateTimeStr);
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
-      return dateTimeStr;
+      return dateTimeStr ?? '--:--';
     }
   }
 }
