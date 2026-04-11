@@ -40,14 +40,23 @@ class ListCardList extends StatelessWidget {
     this.defaultBorderColor,
     this.defaultLabelColor,
     this.tabGradientColors,
-    this.showSnackBar = true,
+    this.showSnackBar = false,
     this.snackBarPrefix,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Default colors adapt to theme
+    final effectiveBorderColor = defaultBorderColor ??
+        (isDark ? theme.primaryColor.withOpacity(0.6) : theme.primaryColor);
+    final effectiveLabelColor = defaultLabelColor ??
+        (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1F2937));
+
     return ListView.builder(
-      padding: padding ?? const EdgeInsets.only(top: 50),
+      padding: padding ?? const EdgeInsets.only(top: 8, bottom: 16),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -58,23 +67,18 @@ class ListCardList extends StatelessWidget {
           child: TabStyleCard(
             contentLabel: item.label,
             icon: item.icon,
-            borderColor: item.borderColor ??
-                defaultBorderColor ??
-                const Color(0xFFE74C3C),
-            labelColor:
-                item.labelColor ?? defaultLabelColor ?? const Color(0xFFE74C3C),
+            borderColor: item.borderColor ?? effectiveBorderColor,
+            labelColor: item.labelColor ?? effectiveLabelColor,
             tabGradientColors: tabGradientColors,
             isEnabled: isEnabled,
+            isDark: isDark,
             onTap: isEnabled
                 ? () {
                     if (showSnackBar) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content:
-                              Text('${snackBarPrefix ?? 'បើក'} ${item.label}'),
-                          backgroundColor: item.borderColor ??
-                              defaultBorderColor ??
-                              const Color(0xFFE74C3C),
+                          content: Text('${snackBarPrefix ?? 'បើក'} ${item.label}'),
+                          backgroundColor: item.borderColor ?? effectiveBorderColor,
                           duration: const Duration(seconds: 1),
                         ),
                       );
@@ -106,6 +110,7 @@ class TabStyleCard extends StatelessWidget {
   final Color labelColor;
   final List<Color>? tabGradientColors;
   final bool isEnabled;
+  final bool isDark;
   final double height;
   final double borderWidth;
   final double tabHeight;
@@ -117,83 +122,98 @@ class TabStyleCard extends StatelessWidget {
     required this.contentLabel,
     required this.icon,
     this.onTap,
-    this.borderColor = const Color(0xFFE74C3C),
-    this.labelColor = const Color(0xFFE74C3C),
+    this.borderColor = const Color(0xFFFF6A00),
+    this.labelColor = const Color(0xFF1F2937),
     this.tabGradientColors,
     this.isEnabled = true,
-    this.height = 60,
-    this.borderWidth = 2.5,
+    this.isDark = false,
+    this.height = 68,
+    this.borderWidth = 1.5,
     this.tabHeight = 10,
     this.tabWidth = 200,
-    this.borderRadius = 10,
+    this.borderRadius = 14,
   });
 
   @override
   Widget build(BuildContext context) {
     final effectiveGradientColors = tabGradientColors ??
         [
-          const Color.fromARGB(255, 251, 79, 0),
-          const Color.fromARGB(255, 139, 64, 2),
+          const Color(0xFFFF6A00),
+          const Color(0xFF9C3701),
         ];
 
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardBorder = isDark
+        ? borderColor.withOpacity(0.5)
+        : borderColor.withOpacity(0.4);
+
     return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
+      opacity: isEnabled ? 1.0 : 0.45,
       child: InkWell(
         onTap: isEnabled ? onTap : null,
-        borderRadius: BorderRadius.circular(borderRadius + 5),
+        borderRadius: BorderRadius.circular(borderRadius + 4),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Main container
+            // ── Main card ───────────────────────────────────────
             Container(
               width: double.infinity,
               height: height,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(borderRadius),
-                border: Border.all(
-                  color: borderColor,
-                  width: borderWidth,
-                ),
+                border: Border.all(color: cardBorder, width: borderWidth),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 10,
+                    color: Colors.black.withOpacity(isDark ? 0.4 : 0.06),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 child: Row(
                   children: [
-                    // Content label
+                    // Icon
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF6A00).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, color: const Color(0xFFFF6A00), size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    // Label
                     Expanded(
                       child: Text(
                         contentLabel,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           color: labelColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    // Optional: Add arrow or icon here
+                    // Arrow
                     Icon(
-                      Icons.arrow_forward_ios,
-                      color: labelColor.withOpacity(0.5),
-                      size: 18,
+                      Icons.arrow_forward_ios_rounded,
+                      color: isDark
+                          ? const Color(0xFF475569)
+                          : const Color(0xFFD1D5DB),
+                      size: 16,
                     ),
                   ],
                 ),
               ),
             ),
 
-            // Tab-like header (positioned at top)
+            // ── Tab header ──────────────────────────────────────
             Positioned(
-              top: -4,
-              left: 15,
+              top: -5,
+              left: 16,
               child: Container(
                 height: tabHeight,
                 width: tabWidth,
@@ -206,7 +226,7 @@ class TabStyleCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(borderRadius),
                   boxShadow: [
                     BoxShadow(
-                      color: borderColor.withOpacity(0.4),
+                      color: const Color(0xFFFF6A00).withOpacity(0.35),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -220,3 +240,4 @@ class TabStyleCard extends StatelessWidget {
     );
   }
 }
+

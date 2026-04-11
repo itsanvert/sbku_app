@@ -312,20 +312,24 @@ class _TeacherActiveSessionScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.primaryColor;
+    final tabBarBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+
     final qrData = jsonEncode({
       'session_id': widget.sessionId,
       'qr_token': widget.qrToken,
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text(
           'វេនវត្តមានកំពុងដំណើរការ',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Colors.black87,
         elevation: 0,
         actions: [
           if (_pending.isNotEmpty)
@@ -344,12 +348,13 @@ class _TeacherActiveSessionScreenState
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
-            color: Colors.white,
+            color: tabBarBg,
             child: TabBar(
               controller: _tabController,
-              labelColor: Colors.orange,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Colors.orange,
+              labelColor: primary,
+              unselectedLabelColor:
+                  isDark ? const Color(0xFF64748B) : Colors.grey,
+              indicatorColor: primary,
               tabs: [
                 Tab(
                   child: Row(
@@ -390,7 +395,7 @@ class _TeacherActiveSessionScreenState
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? Center(child: CircularProgressIndicator(color: primary))
           : TabBarView(
               controller: _tabController,
               children: [
@@ -405,11 +410,16 @@ class _TeacherActiveSessionScreenState
 
   // ── Tab 1: QR Code ──────────────────────────────────────────
   Widget _buildQrTab(String qrData) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final mutedText = isDark ? const Color(0xFF94A3B8) : Colors.grey;
+    final primary = theme.primaryColor;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Stats row
           Row(
             children: [
               _statCard('រង់ចាំ', _pending.length, Colors.orange,
@@ -422,17 +432,15 @@ class _TeacherActiveSessionScreenState
             ],
           ),
           const SizedBox(height: 20),
-
-          // QR Card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.07),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -440,18 +448,18 @@ class _TeacherActiveSessionScreenState
             ),
             child: Column(
               children: [
-                const Text(
+                Text(
                   'សូមឱ្យសិស្សស្កេន QR',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'បន្ទាប់ពីស្កេន សូមអនុម័តបញ្ជីខាងក្រោម',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: mutedText),
                 ),
                 const SizedBox(height: 20),
                 Container(
@@ -460,7 +468,7 @@ class _TeacherActiveSessionScreenState
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: Colors.orange.withOpacity(0.3), width: 2),
+                        color: primary.withOpacity(0.3), width: 2),
                   ),
                   child: QrImageView(
                     data: qrData,
@@ -473,27 +481,30 @@ class _TeacherActiveSessionScreenState
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.access_time, size: 15, color: Colors.grey),
+                    Icon(Icons.access_time, size: 15, color: mutedText),
                     const SizedBox(width: 4),
                     Text(
-                      'ចាប់ផ្តើម: ${_formatTime(_sessionData?['started_at'])}',
-                      style:
-                          const TextStyle(fontSize: 13, color: Colors.grey),
+                      'ចាប់ផ្តើម: ${_formatTime(_sessionData?["started_at"])}',
+                      style: TextStyle(fontSize: 13, color: mutedText),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-
           if (_pending.isNotEmpty) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: isDark
+                    ? Colors.orange.withOpacity(0.08)
+                    : Colors.orange.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(
+                    color: isDark
+                        ? Colors.orange.withOpacity(0.3)
+                        : Colors.orange.shade200),
               ),
               child: Row(
                 children: [
@@ -503,8 +514,8 @@ class _TeacherActiveSessionScreenState
                     child: Text(
                       'មាន ${_pending.length} នាក់ ដែលបានស្កេន QR ហើយ '
                       'រង់ចាំការអនុម័ត។ ចូលទៅ Tab "រង់ចាំ" ដើម្បីផ្ទៀងផ្ទាត់។',
-                      style:
-                          const TextStyle(fontSize: 13, color: Colors.deepOrange),
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.deepOrange),
                     ),
                   ),
                 ],
@@ -518,6 +529,9 @@ class _TeacherActiveSessionScreenState
 
   // ── Tab 2: Pending Approval Checklist ───────────────────────
   Widget _buildPendingTab() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     if (_pending.isEmpty) {
       return Center(
         child: Column(
@@ -526,16 +540,23 @@ class _TeacherActiveSessionScreenState
             Icon(Icons.check_circle_outline,
                 size: 72, color: Colors.green.shade300),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'គ្មានការចូលរួមដែលរង់ចាំ',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(
+                  fontSize: 16,
+                  color:
+                      isDark ? const Color(0xFF94A3B8) : Colors.grey),
             ),
             const SizedBox(height: 8),
             Text(
               _approved.isEmpty && _rejected.isEmpty
                   ? 'រង់ចាំសិស្សស្កេន QR...'
                   : 'ទាំងអស់ត្រូវបានផ្ទៀងផ្ទាត់រួចហើយ ✓',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? const Color(0xFF64748B)
+                      : Colors.grey.shade500),
             ),
           ],
         ),
@@ -544,23 +565,26 @@ class _TeacherActiveSessionScreenState
 
     return Column(
       children: [
-        // Header action bar
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   '${_pending.length} នាក់ ត្រូវការផ្ទៀងផ្ទាត់',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 14),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: theme.textTheme.titleMedium?.color,
+                  ),
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: _approveAll,
                 icon: const Icon(Icons.done_all, size: 16),
-                label: const Text('អនុម័តទាំងអស់', style: TextStyle(fontSize: 12)),
+                label:
+                    const Text('អនុម័តទាំងអស់', style: TextStyle(fontSize: 12)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -574,7 +598,6 @@ class _TeacherActiveSessionScreenState
           ),
         ),
         const Divider(height: 1),
-        // Pending list
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(12),
@@ -590,26 +613,34 @@ class _TeacherActiveSessionScreenState
   }
 
   Widget _buildPendingCard(Map<String, dynamic> a, int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final primary = theme.primaryColor;
+
     final name = a['student_name'] ?? 'Unknown';
     final code = a['student_code'] ?? '';
     final checkIn = a['check_in_time'] ?? '--:--';
-
     final isPermission = a['status'] == 'P';
+
+    final borderColor = isPermission
+        ? primary
+        : primary.withOpacity(isDark ? 0.4 : 0.3);
 
     return GestureDetector(
       onTap: () => _showStudentProfile(a),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isPermission ? Colors.orange : Colors.orange.withOpacity(0.3),
+            color: borderColor,
             width: isPermission ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -630,56 +661,66 @@ class _TeacherActiveSessionScreenState
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
+                            color: theme.textTheme.titleMedium?.color,
                           ),
                         ),
                         if (code.isNotEmpty)
                           Text(
                             'ID: $code',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade600),
+                              fontSize: 12,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : Colors.grey.shade600,
+                            ),
                           ),
                         if (isPermission)
                           Container(
                             margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.orange.shade100,
+                              color: primary.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
+                            child: Text(
                               'ស្នើសុំច្បាប់',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.orange,
+                                color: primary,
                               ),
                             ),
                           ),
                       ],
                     ),
                   ),
-                  // Check-in time badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: Colors.blue.withOpacity(isDark ? 0.15 : 0.07),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.access_time,
-                            size: 12, color: Colors.blue.shade600),
+                            size: 12,
+                            color: isDark
+                                ? Colors.blue.shade300
+                                : Colors.blue.shade600),
                         const SizedBox(width: 4),
                         Text(
                           checkIn,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.blue.shade700,
+                            color: isDark
+                                ? Colors.blue.shade300
+                                : Colors.blue.shade700,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -687,17 +728,21 @@ class _TeacherActiveSessionScreenState
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Profile icon button
                   GestureDetector(
                     onTap: () => _showStudentProfile(a),
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.indigo.shade50,
+                        color: isDark
+                            ? Colors.indigo.withOpacity(0.15)
+                            : Colors.indigo.shade50,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(Icons.person_search,
-                          size: 18, color: Colors.indigo.shade400),
+                          size: 18,
+                          color: isDark
+                              ? Colors.indigo.shade300
+                              : Colors.indigo.shade400),
                     ),
                   ),
                 ],
@@ -708,34 +753,42 @@ class _TeacherActiveSessionScreenState
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: isDark
+                        ? const Color(0xFF0F172A)
+                        : Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : Colors.grey.shade200),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'មូលហេតុច្បាប់:',
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey),
+                            color: isDark
+                                ? const Color(0xFF64748B)
+                                : Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         a['permission_reason'],
-                        style: const TextStyle(fontSize: 13),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
               const SizedBox(height: 12),
-              // Action buttons
               Row(
                 children: [
-                  // Reject
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _rejectWithReason(a),
@@ -752,7 +805,6 @@ class _TeacherActiveSessionScreenState
                     ),
                   ),
                   const SizedBox(width: 10),
-                  // Approve
                   Expanded(
                     flex: 2,
                     child: ElevatedButton.icon(
@@ -780,10 +832,12 @@ class _TeacherActiveSessionScreenState
 
   // ── Tab 3: Results (Approved + Rejected) ────────────────────
   Widget _buildResultsTab() {
+    final theme = Theme.of(context);
     if (_approved.isEmpty && _rejected.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('មិនទាន់មានការផ្ទៀងផ្ទាត់',
-            style: TextStyle(color: Colors.grey, fontSize: 15)),
+            style: TextStyle(
+                color: theme.textTheme.bodyMedium?.color, fontSize: 15)),
       );
     }
 
@@ -828,6 +882,8 @@ class _TeacherActiveSessionScreenState
   }
 
   Widget _buildResultCard(Map<String, dynamic> a, String status) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isApproved = status == 'approved';
     final color = isApproved ? Colors.green : Colors.red;
     final name = a['student_name'] ?? 'Unknown';
@@ -840,9 +896,9 @@ class _TeacherActiveSessionScreenState
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withOpacity(isDark ? 0.35 : 0.2)),
         ),
         child: Row(
           children: [
@@ -854,12 +910,17 @@ class _TeacherActiveSessionScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: theme.textTheme.titleMedium?.color)),
                   if (code.isNotEmpty)
                     Text('ID: $code',
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade500)),
+                            fontSize: 11,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.grey.shade500)),
                   if (!isApproved && reason != null && reason.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
@@ -899,20 +960,30 @@ class _TeacherActiveSessionScreenState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (ctx) {
+        final isDark =
+            Theme.of(ctx).brightness == Brightness.dark;
+        final sheetBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final handleColor =
+            isDark ? const Color(0xFF475569) : Colors.grey.shade300;
+        final chipBg = isDark ? const Color(0xFF334155) : Colors.grey.shade100;
+        final chipText =
+            isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600;
+
+        return Container(
+        decoration: BoxDecoration(
+          color: sheetBg,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
             Container(
               width: 40, height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: handleColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -933,14 +1004,15 @@ class _TeacherActiveSessionScreenState
             if (code.isNotEmpty) ...[
               const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: chipBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   'ID: $code',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 13, color: chipText),
                 ),
               ),
             ],
@@ -974,13 +1046,24 @@ class _TeacherActiveSessionScreenState
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: isDark
+                      ? Colors.orange.withOpacity(0.08)
+                      : Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.shade100),
+                  border: Border.all(
+                      color: isDark
+                          ? Colors.orange.withOpacity(0.3)
+                          : Colors.orange.shade100),
                 ),
                 child: Text(
                   a['permission_reason'] ?? 'គ្មានមូលហេតុ',
-                  style: const TextStyle(fontSize: 14, height: 1.4),
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: isDark
+                        ? const Color(0xFFCBD5E1)
+                        : const Color(0xFF1F2937),
+                  ),
                 ),
               ),
               if (a['permission_image_url'] != null) ...[
@@ -1017,21 +1100,28 @@ class _TeacherActiveSessionScreenState
             const SizedBox(height: 16),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 
   Widget _profileRow(IconData icon, String label, String value) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.orange.shade600),
+          Icon(icon, size: 18,
+              color: isDark
+                  ? Theme.of(context).primaryColor
+                  : Colors.orange.shade600),
           const SizedBox(width: 12),
           Text(
             '$label:',
             style: TextStyle(
-              fontSize: 13, color: Colors.grey.shade500,
+              fontSize: 13,
+              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1039,7 +1129,11 @@ class _TeacherActiveSessionScreenState
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
               textAlign: TextAlign.end,
             ),
           ),
@@ -1123,9 +1217,11 @@ class _TeacherActiveSessionScreenState
 
   // ── Bottom End Session Bar ───────────────────────────────────
   Widget _buildEndSessionBar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-      color: Colors.white,
+      color: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -18,92 +18,82 @@ class FilterDropdownWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.primaryColor;
+
+    final textStyle = theme.textTheme.bodyMedium!;
+    final activeTextStyle = theme.textTheme.bodyLarge!.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
     return DropdownButtonFormField<String>(
       value: value,
       isExpanded: true,
+      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      style: activeTextStyle,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor, size: 22),
 
-      // ✅ SHOW HINT WHEN value == null
+      // Hint
       hint: Text(
         hint,
-        style: const TextStyle(
-          color: Color(0xFFFF6A00),
+        style: textStyle.copyWith(
+          color: primaryColor,
           fontWeight: FontWeight.w500,
         ),
         overflow: TextOverflow.ellipsis,
       ),
 
-      // ✅ ITEMS (WITH "ALL" OPTION)
+      // Items
       items: [
-        // 🔹 ALL OPTION
+        // "All" option
         DropdownMenuItem<String>(
           value: null,
-          child: Text(
-            hint,
-            style: TextStyle(color: Colors.grey[600]),
-          ),
+          child: Text(hint, style: textStyle),
         ),
-
-        // 🔹 REAL ITEMS
         ...items.map((id) {
           final label = labelBuilder?.call(id) ?? id;
           return DropdownMenuItem<String>(
             value: id,
-            child: Text(label, overflow: TextOverflow.ellipsis),
+            child: Text(label, overflow: TextOverflow.ellipsis, style: activeTextStyle),
           );
-        }).toList(),
+        }),
       ],
 
-      // ✅ SELECTED TEXT BUILDER
+      // Selected item builder
       selectedItemBuilder: (context) {
         return [
-          // For "All"
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              hint,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ),
-
-          // For real items
+          Align(alignment: Alignment.centerLeft, child: Text(hint, style: textStyle)),
           ...items.map((id) {
             final label = labelBuilder?.call(id) ?? id;
             return Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              child: Text(label, overflow: TextOverflow.ellipsis, style: activeTextStyle),
             );
-          }).toList(),
+          }),
         ];
       },
 
       onChanged: onChanged,
 
       decoration: InputDecoration(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        filled: true,
+        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-            color: value == null ? Colors.grey.shade300 : Colors.orange,
+            color: value == null
+                ? (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB))
+                : primaryColor,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.orange, width: 1.5),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: primaryColor, width: 1.5),
         ),
       ),
-
-      icon: const Icon(Icons.arrow_drop_down, color: Colors.orange),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/model/syllabus_model.dart';
+import 'package:sbku_app/presentation/screens/syllabus/show_syllabus.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/service/syllabus_service.dart';
@@ -76,8 +77,11 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F9FC),
       appBar: AppBarWidget.simple(
         title: 'កម្មវិធីសិក្សា (Syllabus)',
       ),
@@ -144,6 +148,7 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
   Widget _buildCurriculumList(Map<String, Map<String, List<SyllabusModel>>> grouped) {
     // Collect years in order
     final yearKeys = grouped.keys.toList()..sort();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -154,9 +159,10 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
         final semesterKeys = semesters.keys.toList()..sort();
 
         return Card(
-          elevation: 2,
+          elevation: isDark ? 0 : 2,
           margin: const EdgeInsets.only(bottom: 20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -164,9 +170,9 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1E3A8A), // Indigo
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFF1E3A8A), // Indigo or Slate
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
                   ),
@@ -193,6 +199,7 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
   }
 
   Widget _buildSemesterSection(String name, List<SyllabusModel> subjects) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -200,20 +207,20 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(
             children: [
-              const Icon(Icons.school_outlined, size: 18, color: Colors.blueGrey),
+              Icon(Icons.school_outlined, size: 18, color: isDark ? Colors.blue.shade300 : Colors.blueGrey),
               const SizedBox(width: 8),
               Text(
                 name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: Colors.blueGrey,
+                  color: isDark ? Colors.blue.shade300 : Colors.blueGrey,
                 ),
               ),
             ],
           ),
         ),
-        const Divider(height: 1, endIndent: 16, indent: 16),
+        Divider(height: 1, endIndent: 16, indent: 16, color: isDark ? Colors.white10 : Colors.black12),
         ...subjects.map((s) => _buildSubjectTile(s)),
         const SizedBox(height: 8),
       ],
@@ -221,52 +228,70 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
   }
 
   Widget _buildSubjectTile(SyllabusModel s) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.05),
+        color: isDark ? Colors.blue.withOpacity(0.12) : Colors.blue.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withOpacity(0.1)),
+        border: Border.all(color: isDark ? Colors.blue.withOpacity(0.2) : Colors.blue.withOpacity(0.1)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ShowSyllabusScreen(syllabus: s),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  s.subjectName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      s.subjectName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.blue.withOpacity(0.2) : Colors.indigo.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${s.creditHours} Credits',
+                      style: TextStyle(
+                        fontSize: 10, 
+                        color: isDark ? Colors.blue.shade200 : Colors.indigo, 
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.indigo.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${s.creditHours} Credits',
-                  style: const TextStyle(fontSize: 10, color: Colors.indigo, fontWeight: FontWeight.bold),
-                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.person_outline, size: 14, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(s.teacherName, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey)),
+                  const Spacer(),
+                  Icon(Icons.schedule, size: 14, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(s.scheduleInfo, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey)),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.person_outline, size: 14, color: Colors.grey),
-              const SizedBox(width: 4),
-              Text(s.teacherName, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              const Spacer(),
-              const Icon(Icons.schedule, size: 14, color: Colors.grey),
-              const SizedBox(width: 4),
-              Text(s.scheduleInfo, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

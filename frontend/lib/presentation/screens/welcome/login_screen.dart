@@ -111,8 +111,11 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           _buildBackground(),
@@ -235,14 +238,16 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildHeader() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Column(children: [
-      const Text(
+      Text(
         'Welcome Back',
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 26,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF1A1A2E),
+          color: isDark ? Colors.white : const Color(0xFF1A1A2E),
           letterSpacing: -0.5,
         ),
       ),
@@ -250,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen>
       Text(
         'Sign in to continue',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+        style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
       ),
     ]);
   }
@@ -261,16 +266,22 @@ class _LoginScreenState extends State<LoginScreen>
     required IconData icon,
     Widget? suffix,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey.shade200;
+    final fillColor = isDark ? const Color(0xFF1E293B) : Colors.grey.shade50;
+    final iconBg = isDark ? const Color(0xFF253043) : _primaryLight;
+
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-      labelStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+      hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400, fontSize: 14),
+      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500, fontSize: 14),
       prefixIcon: Container(
         margin: const EdgeInsets.only(left: 14, right: 10),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: _primaryLight,
+          color: iconBg,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: _primary, size: 18),
@@ -278,20 +289,20 @@ class _LoginScreenState extends State<LoginScreen>
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffix,
       filled: true,
-      fillColor: Colors.grey.shade50,
+      fillColor: fillColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.shade200)),
+          borderSide: BorderSide(color: borderColor)),
       enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.shade200)),
+          borderSide: BorderSide(color: borderColor)),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: _primary, width: 1.5)),
       errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.red.shade300)),
+          borderSide: BorderSide(color: Colors.red.shade400)),
       focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.red.shade400, width: 1.5)),
@@ -399,23 +410,30 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildFooterNote() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.info_outline_rounded,
-                size: 14, color: Colors.grey.shade400),
+                size: 14,
+                color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
             const SizedBox(width: 6),
             Text(
               'Contact admin to create an account',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
+              ),
             ),
           ],
         ),

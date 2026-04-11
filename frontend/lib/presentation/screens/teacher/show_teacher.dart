@@ -14,7 +14,7 @@ class ShowTeacherScreen extends StatelessWidget {
     final TeacherService service = TeacherService();
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+
       body: FutureBuilder<Teacher>(
         future:
             service.getTeacher(teacherId), // ← fetch single teacher directly

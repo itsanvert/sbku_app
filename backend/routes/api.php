@@ -66,6 +66,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('attendances/report/daily', [AttendanceController::class, 'dailyReport']);
     Route::get('attendances/report/monthly', [AttendanceController::class, 'monthlyReport']);
     Route::get('attendances/report/yearly', [AttendanceController::class, 'yearlyReport']);
+    Route::get('attendances/export/pdf', [AttendanceController::class, 'exportPdf']);
+    Route::get('attendances/export/excel', [AttendanceController::class, 'exportExcel']);
     Route::get('attendances/student/{studentId}', [AttendanceController::class, 'studentHistory']);
     Route::post('attendances/request-permission', [AttendanceController::class, 'requestPermission']);
 
