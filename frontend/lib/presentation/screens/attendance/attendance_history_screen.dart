@@ -158,11 +158,11 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
               title: Text(studentName,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(
-                '$date${checkIn != null ? " • ${_formatTime(checkIn)}" : ""}',
+                '${_formatDate(date)}${checkIn != null ? " • ${_formatTime(checkIn)}" : ""}',
                 style: TextStyle(
-                  color: isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                  color: isDark ? Colors.blue.shade400 : Colors.blue.shade800,
                   fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               trailing: Container(
@@ -202,6 +202,16 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
       return dateTimeStr ?? '--:--';
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
     }
   }
 }
@@ -998,6 +1008,16 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       return dateTimeStr ?? '--:--';
     }
   }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1157,9 +1177,9 @@ class _StudentAttendanceHistoryScreenState
                                       child: Icon(statusIcon, color: statusColor),
                                     ),
                                     title: Text(
-                                      r['attendance_date'] ?? '',
+                                      _formatDate(r['attendance_date']),
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w600),
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: isPermission 
                                       ? Text('មូលហេតុ: ${r['permission_reason'] ?? '—'}', 
@@ -1225,6 +1245,16 @@ class _StudentAttendanceHistoryScreenState
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
       return dateTimeStr ?? '--:--';
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
     }
   }
 }

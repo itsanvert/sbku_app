@@ -485,7 +485,7 @@ class _TeacherActiveSessionScreenState
                     Icon(Icons.access_time, size: 15, color: mutedText),
                     const SizedBox(width: 4),
                     Text(
-                      'ចាប់ផ្តើម: ${_formatTime(_sessionData?["started_at"])}',
+                      'ម៉ោងចាប់ផ្តើម: ${_formatTime(_sessionData?["started_at"])}',
                       style: TextStyle(
                         fontSize: 13, 
                         color: isDark ? Colors.blue.shade300 : primary,
@@ -1328,18 +1328,25 @@ class _TeacherActiveSessionScreenState
   String _formatTime(String? dateTimeStr) {
     if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
     try {
-      // If it's just a time string (HH:mm:ss or HH:mm), prepend current date
       if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
         final now = DateTime.now();
         final datePrefix = DateFormat('yyyy-MM-dd').format(now);
         dateTimeStr = '$datePrefix $dateTimeStr';
       }
-      
       final dt = DateTime.parse(dateTimeStr);
-      // Format to 12-hour with AM/PM (e.g., 08:30 AM)
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
       return dateTimeStr ?? '--:--';
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
     }
   }
 
