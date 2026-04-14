@@ -24,8 +24,7 @@ class TeacherActiveSessionScreen extends StatefulWidget {
       _TeacherActiveSessionScreenState();
 }
 
-class _TeacherActiveSessionScreenState
-    extends State<TeacherActiveSessionScreen>
+class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     with SingleTickerProviderStateMixin {
   final AttendanceService _service = AttendanceService();
 
@@ -72,9 +71,12 @@ class _TeacherActiveSessionScreenState
 
       setState(() {
         _sessionData = data['session'] as Map<String, dynamic>?;
-        _pending = List<Map<String, dynamic>>.from(attendances['pending'] ?? []);
-        _approved = List<Map<String, dynamic>>.from(attendances['approved'] ?? []);
-        _rejected = List<Map<String, dynamic>>.from(attendances['rejected'] ?? []);
+        _pending =
+            List<Map<String, dynamic>>.from(attendances['pending'] ?? []);
+        _approved =
+            List<Map<String, dynamic>>.from(attendances['approved'] ?? []);
+        _rejected =
+            List<Map<String, dynamic>>.from(attendances['rejected'] ?? []);
         _isLoading = false;
       });
     } catch (e) {
@@ -116,8 +118,8 @@ class _TeacherActiveSessionScreenState
               decoration: InputDecoration(
                 labelText: 'មូលហេតុ (ស្រេចចិត្ត)',
                 hintText: 'ឧ. ចូលឈ្មោះជំនួស, ស្កេនទូរស័ព្ទអ្នកដទៃ...',
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ],
@@ -268,8 +270,7 @@ class _TeacherActiveSessionScreenState
                   ],
                 ),
               ),
-            const Text(
-                'សិស្សដែលមិនបានស្កេន QR នឹងត្រូវកត់ត្រាជា អវត្តមាន។'),
+            const Text('សិស្សដែលមិនបានស្កេន QR នឹងត្រូវកត់ត្រាជា អវត្តមាន។'),
           ],
         ),
         actions: [
@@ -279,8 +280,7 @@ class _TeacherActiveSessionScreenState
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('បិទវេន',
-                style: TextStyle(color: Colors.white)),
+            child: const Text('បិទវេន', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -468,8 +468,8 @@ class _TeacherActiveSessionScreenState
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: primary.withOpacity(0.3), width: 2),
+                    border:
+                        Border.all(color: primary.withOpacity(0.3), width: 2),
                   ),
                   child: QrImageView(
                     data: qrData,
@@ -487,7 +487,7 @@ class _TeacherActiveSessionScreenState
                     Text(
                       'ម៉ោងចាប់ផ្តើម: ${_formatTime(_sessionData?["started_at"])}',
                       style: TextStyle(
-                        fontSize: 13, 
+                        fontSize: 13,
                         color: isDark ? Colors.blue.shade300 : primary,
                         fontWeight: FontWeight.bold,
                       ),
@@ -549,8 +549,7 @@ class _TeacherActiveSessionScreenState
               'គ្មានការចូលរួមដែលរង់ចាំ',
               style: TextStyle(
                   fontSize: 16,
-                  color:
-                      isDark ? const Color(0xFF94A3B8) : Colors.grey),
+                  color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
             ),
             const SizedBox(height: 8),
             Text(
@@ -559,9 +558,8 @@ class _TeacherActiveSessionScreenState
                   : 'ទាំងអស់ត្រូវបានផ្ទៀងផ្ទាត់រួចហើយ ✓',
               style: TextStyle(
                   fontSize: 13,
-                  color: isDark
-                      ? const Color(0xFF64748B)
-                      : Colors.grey.shade500),
+                  color:
+                      isDark ? const Color(0xFF64748B) : Colors.grey.shade500),
             ),
           ],
         ),
@@ -628,9 +626,8 @@ class _TeacherActiveSessionScreenState
     final checkIn = a['check_in_time'] ?? '--:--';
     final isPermission = a['status'] == 'P';
 
-    final borderColor = isPermission
-        ? primary
-        : primary.withOpacity(isDark ? 0.4 : 0.3);
+    final borderColor =
+        isPermission ? primary : primary.withOpacity(isDark ? 0.4 : 0.3);
 
     return GestureDetector(
       onTap: () => _showStudentProfile(a),
@@ -704,8 +701,8 @@ class _TeacherActiveSessionScreenState
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.blue.withOpacity(isDark ? 0.15 : 0.07),
                       borderRadius: BorderRadius.circular(20),
@@ -758,9 +755,8 @@ class _TeacherActiveSessionScreenState
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF0F172A)
-                        : Colors.grey.shade50,
+                    color:
+                        isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                         color: isDark
@@ -775,9 +771,8 @@ class _TeacherActiveSessionScreenState
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? const Color(0xFF64748B)
-                                : Colors.grey),
+                            color:
+                                isDark ? const Color(0xFF64748B) : Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -798,8 +793,8 @@ class _TeacherActiveSessionScreenState
                     child: OutlinedButton.icon(
                       onPressed: () => _rejectWithReason(a),
                       icon: const Icon(Icons.close, size: 16),
-                      label: const Text('បដិសេធ',
-                          style: TextStyle(fontSize: 13)),
+                      label:
+                          const Text('បដិសេធ', style: TextStyle(fontSize: 13)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -815,8 +810,8 @@ class _TeacherActiveSessionScreenState
                     child: ElevatedButton.icon(
                       onPressed: () => _approve(a),
                       icon: const Icon(Icons.check, size: 16),
-                      label: const Text('អនុម័ត',
-                          style: TextStyle(fontSize: 13)),
+                      label:
+                          const Text('អនុម័ត', style: TextStyle(fontSize: 13)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -850,14 +845,14 @@ class _TeacherActiveSessionScreenState
       padding: const EdgeInsets.all(12),
       children: [
         if (_approved.isNotEmpty) ...[
-          _sectionHeader('អនុម័ត (${_approved.length})', Colors.green,
-              Icons.check_circle),
+          _sectionHeader(
+              'អនុម័ត (${_approved.length})', Colors.green, Icons.check_circle),
           ..._approved.map((a) => _buildResultCard(a, 'approved')),
           const SizedBox(height: 8),
         ],
         if (_rejected.isNotEmpty) ...[
-          _sectionHeader('បដិសេធ (${_rejected.length})', Colors.red,
-              Icons.cancel),
+          _sectionHeader(
+              'បដិសេធ (${_rejected.length})', Colors.red, Icons.cancel),
           ..._rejected.map((a) => _buildResultCard(a, 'rejected')),
         ],
       ],
@@ -907,8 +902,8 @@ class _TeacherActiveSessionScreenState
         ),
         child: Row(
           children: [
-            _buildStudentAvatar(a, radius: 22, size: 44,
-                borderColor: color.withOpacity(0.4)),
+            _buildStudentAvatar(a,
+                radius: 22, size: 44, borderColor: color.withOpacity(0.4)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -952,7 +947,8 @@ class _TeacherActiveSessionScreenState
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    color:
+                        isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
                   ),
                 ),
               ],
@@ -965,23 +961,22 @@ class _TeacherActiveSessionScreenState
 
   // ── Student Profile Bottom Sheet ────────────────────────────
   void _showStudentProfile(Map<String, dynamic> a) {
-    final name      = a['student_name']  ?? 'Unknown';
-    final code      = a['student_code']  ?? '';
-    final faculty   = a['faculty']       ?? '—';
-    final major     = a['major']         ?? '—';
-    final year      = a['year']?.toString() ?? '—';
-    final shift     = a['shift']         ?? '—';
+    final name = a['student_name'] ?? 'Unknown';
+    final code = a['student_code'] ?? '';
+    final faculty = a['faculty'] ?? '—';
+    final major = a['major'] ?? '—';
+    final year = a['year']?.toString() ?? '—';
+    final shift = a['shift'] ?? '—';
     final generation = a['generation']?.toString() ?? '—';
-    final checkIn   = a['check_in_time'] ?? '--:--';
-    final status    = a['verify_status'] ?? 'pending';
+    final checkIn = a['check_in_time'] ?? '--:--';
+    final status = a['verify_status'] ?? 'pending';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final isDark =
-            Theme.of(ctx).brightness == Brightness.dark;
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final sheetBg = isDark ? const Color(0xFF1E293B) : Colors.white;
         final handleColor =
             isDark ? const Color(0xFF475569) : Colors.grey.shade300;
@@ -990,136 +985,140 @@ class _TeacherActiveSessionScreenState
             isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600;
 
         return Container(
-        decoration: BoxDecoration(
-          color: sheetBg,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: handleColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Avatar
-            _buildStudentAvatar(a, radius: 40, size: 80),
-            const SizedBox(height: 14),
-
-            // Name
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (code.isNotEmpty) ...[
-              const SizedBox(height: 4),
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: chipBg,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'ID: $code',
-                  style: TextStyle(fontSize: 13, color: chipText),
+                  color: handleColor,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ],
-            const SizedBox(height: 4),
-            // Verify status badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: _statusColor(status).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _statusColor(status).withOpacity(0.4)),
-              ),
-              child: Text(
-                status.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 11,
+              const SizedBox(height: 20),
+
+              // Avatar
+              _buildStudentAvatar(a, radius: 40, size: 80),
+              const SizedBox(height: 14),
+
+              // Name
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: _statusColor(status),
                 ),
+                textAlign: TextAlign.center,
               ),
-            ),
-
-            if (a['status'] == 'P') ...[
-              const SizedBox(height: 16),
-              const Text(
-                'សំណើសុំច្បាប់',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.orange.withOpacity(0.08)
-                      : Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: isDark
-                          ? Colors.orange.withOpacity(0.3)
-                          : Colors.orange.shade100),
-                ),
-                child: Text(
-                  a['permission_reason'] ?? 'គ្មានមូលហេតុ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.4,
-                    color: isDark
-                        ? const Color(0xFFCBD5E1)
-                        : const Color(0xFF1F2937),
+              if (code.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: chipBg,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ),
-              ),
-              if (a['permission_image_url'] != null) ...[
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    _fixUrl(a['permission_image_url']),
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, _, __) => Container(
-                      height: 100,
-                      color: Colors.grey.shade100,
-                      child: const Center(child: Text('មិនអាចទាញយករូបភាពបាន')),
-                    ),
+                  child: Text(
+                    'ID: $code',
+                    style: TextStyle(fontSize: 13, color: chipText),
                   ),
                 ),
               ],
+              const SizedBox(height: 4),
+              // Verify status badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _statusColor(status).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border:
+                      Border.all(color: _statusColor(status).withOpacity(0.4)),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: _statusColor(status),
+                  ),
+                ),
+              ),
+
+              if (a['status'] == 'P') ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'សំណើសុំច្បាប់',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.orange.withOpacity(0.08)
+                        : Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: isDark
+                            ? Colors.orange.withOpacity(0.3)
+                            : Colors.orange.shade100),
+                  ),
+                  child: Text(
+                    a['permission_reason'] ?? 'គ្មានមូលហេតុ',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: isDark
+                          ? const Color(0xFFCBD5E1)
+                          : const Color(0xFF1F2937),
+                    ),
+                  ),
+                ),
+                if (a['permission_image_url'] != null) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      _fixUrl(a['permission_image_url']),
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, _, __) => Container(
+                        height: 100,
+                        color: Colors.grey.shade100,
+                        child:
+                            const Center(child: Text('មិនអាចទាញយករូបភាពបាន')),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 12),
+
+              // Profile detail rows
+              _profileRow(Icons.school_outlined, 'Faculty', faculty),
+              _profileRow(Icons.class_outlined, 'Major', major),
+              _profileRow(Icons.calendar_today_outlined, 'Year', year),
+              _profileRow(Icons.schedule_outlined, 'Shift', shift),
+              _profileRow(Icons.groups_outlined, 'Generation', generation),
+              _profileRow(Icons.login_outlined, 'Check-in', checkIn),
+
+              const SizedBox(height: 16),
             ],
-
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 12),
-
-            // Profile detail rows
-            _profileRow(Icons.school_outlined, 'Faculty', faculty),
-            _profileRow(Icons.class_outlined, 'Major', major),
-            _profileRow(Icons.calendar_today_outlined, 'Year', year),
-            _profileRow(Icons.schedule_outlined, 'Shift', shift),
-            _profileRow(Icons.groups_outlined, 'Generation', generation),
-            _profileRow(Icons.login_outlined, 'Check-in', checkIn),
-
-            const SizedBox(height: 16),
-          ],
-        ),
-      );
+          ),
+        );
       },
     );
   }
@@ -1131,7 +1130,8 @@ class _TeacherActiveSessionScreenState
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 18,
+          Icon(icon,
+              size: 18,
               color: isDark
                   ? Theme.of(context).primaryColor
                   : Colors.orange.shade600),
@@ -1163,9 +1163,12 @@ class _TeacherActiveSessionScreenState
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'approved': return Colors.green;
-      case 'rejected': return Colors.red;
-      default:         return Colors.orange;
+      case 'approved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.orange;
     }
   }
 
@@ -1176,9 +1179,9 @@ class _TeacherActiveSessionScreenState
     required double size,
     Color? borderColor,
   }) {
-    final name      = (a['student_name'] ?? '') as String;
+    final name = (a['student_name'] ?? '') as String;
     final avatarUrl = a['avatar_url'] as String?;
-    final initial   = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     Widget child;
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
@@ -1255,8 +1258,8 @@ class _TeacherActiveSessionScreenState
                   Text(
                     'មាន ${_pending.length} នាក់ ដែលរង់ចាំ — '
                     'ពួកគេនឹងចាត់ទុកជា "អវត្តមាន" ប្រសិនបើបិទ',
-                    style: const TextStyle(
-                        fontSize: 12, color: Colors.deepOrange),
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.deepOrange),
                   ),
                 ],
               ),
@@ -1278,8 +1281,8 @@ class _TeacherActiveSessionScreenState
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
-              textStyle: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold),
+              textStyle:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ],

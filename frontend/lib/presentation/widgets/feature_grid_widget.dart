@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class FeatureItem {
   final IconData icon;
@@ -20,7 +21,7 @@ class FeatureItem {
   });
 }
 
-class FeatureGrid extends StatelessWidget {
+class FeatureGrid extends StatefulWidget {
   final List<FeatureItem> features;
   final int crossAxisCount;
   final double crossAxisSpacing;
@@ -39,6 +40,7 @@ class FeatureGrid extends StatelessWidget {
   final EdgeInsets? padding;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
+  final Function(List<FeatureItem>)? onReorder;
 
   const FeatureGrid({
     super.key,
@@ -60,7 +62,29 @@ class FeatureGrid extends StatelessWidget {
     this.padding,
     this.shrinkWrap = true,
     this.physics = const NeverScrollableScrollPhysics(),
+    this.onReorder,
   });
+
+  @override
+  State<FeatureGrid> createState() => _FeatureGridState();
+}
+
+class _FeatureGridState extends State<FeatureGrid> {
+  late List<FeatureItem> _items;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List.from(widget.features);
+  }
+
+  @override
+  void didUpdateWidget(FeatureGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.features != oldWidget.features) {
+      _items = List.from(widget.features);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,119 +93,134 @@ class FeatureGrid extends StatelessWidget {
     const primary = Color(0xFFFF6A00);
 
     // Theme-aware defaults
-    final effectiveIconColor = defaultIconColor ?? primary;
-    final effectiveLabelColor = defaultLabelColor ??
-        (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151));
-    final effectiveBorderColor = defaultBorderColor ??
+    final effectiveIconColor = widget.defaultIconColor ?? primary;
+    final effectiveLabelColor = widget.defaultLabelColor ??
+        (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1F2937));
+    final effectiveBorderColor = widget.defaultBorderColor ??
         (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB));
-    final effectiveShadowColor = defaultShadowColor ??
-        (isDark ? Colors.black45 : Colors.black12);
-    final effectiveBackgroundColor = backgroundColor ??
+    final effectiveShadowColor = widget.defaultShadowColor ??
+        (isDark ? Colors.black54 : Colors.black12);
+    final effectiveBackgroundColor = widget.backgroundColor ??
         (isDark ? const Color(0xFF1E293B) : Colors.white);
 
-    return GridView.builder(
-      shrinkWrap: shrinkWrap,
-      physics: physics,
-      padding: padding,
-      itemCount: features.length,
+    return ReorderableGridView.builder(
+      shrinkWrap: widget.shrinkWrap,
+      physics: widget.physics,
+      padding: widget.padding ??
+          const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      itemCount: _items.length,
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          final item = _items.removeAt(oldIndex);
+          _items.insert(newIndex, item);
+        });
+        if (widget.onReorder != null) {
+          widget.onReorder!(_items);
+        }
+      },
+      dragWidgetBuilder: (index, child) {
+        return Transform.scale(
+          scale: 1.05,
+          child: Material(
+            color: Colors.transparent,
+            child: child,
+          ),
+        );
+      },
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: crossAxisSpacing,
-        mainAxisSpacing: mainAxisSpacing,
-        childAspectRatio: childAspectRatio,
+        crossAxisCount: widget.crossAxisCount,
+        crossAxisSpacing: widget.crossAxisSpacing,
+        mainAxisSpacing: widget.mainAxisSpacing,
+        childAspectRatio: widget.childAspectRatio,
       ),
       itemBuilder: (context, index) {
-        final feature = features[index];
+        final feature = _items[index];
         final isEnabled = feature.screen != null || feature.onTap != null;
         final featureIconColor = feature.iconColor ?? effectiveIconColor;
-        final featureBorderColor = feature.borderColor ?? primary;
+        final featureBorderColor = feature.borderColor ?? effectiveBorderColor;
 
-        return InkWell(
-          borderRadius: BorderRadius.circular(borderRadius),
-          onTap: isEnabled
-              ? () {
-                  if (feature.onTap != null) {
-                    feature.onTap!();
-                  } else if (feature.screen != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => feature.screen!,
-                      ),
-                    );
+        return KeyedSubtree(
+          key: ValueKey('feature_${feature.label}'),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            onTap: isEnabled
+                ? () {
+                    if (feature.onTap != null) {
+                      feature.onTap!();
+                    } else if (feature.screen != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => feature.screen!,
+                        ),
+                      );
+                    }
                   }
-                }
-              : null,
-          child: Opacity(
-            opacity: isEnabled ? 1.0 : 0.45,
-            child: Container(
-              decoration: BoxDecoration(
-                color: effectiveBackgroundColor,
-                borderRadius: BorderRadius.circular(borderRadius),
-                border: Border.all(
-                  color: feature.borderColor ?? effectiveBorderColor,
+                : null,
+            child: Opacity(
+              opacity: isEnabled ? 1.0 : 0.45,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: effectiveBackgroundColor,
+                  borderRadius: BorderRadius.circular(widget.borderRadius),
+                  border: Border.all(
+                    color: featureIconColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+
+                    BoxShadow(
+                      color: effectiveShadowColor.withValues(alpha: isDark ? 0.2 : 0.03),
+                      blurRadius: 10,
+                      spreadRadius: -2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: effectiveShadowColor.withOpacity(0.12),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Top accent bar
-                  Container(
-                    height: topBarHeight,
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [featureBorderColor, featureBorderColor.withOpacity(0.6)],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(flex: 2),
+
+                    // Clean Flat Icon Pill
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: featureIconColor.withValues(alpha: 0.08),
                       ),
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(borderRadius),
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Icon with background pill
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: featureIconColor.withOpacity(0.12),
-                    ),
-                    child: Icon(
-                      feature.icon,
-                      size: iconSize ?? 26,
-                      color: featureIconColor,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      feature.label,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: labelFontSize ?? 12.5,
-                        fontWeight: labelFontWeight ?? FontWeight.w600,
-                        color: feature.labelColor ?? effectiveLabelColor,
-                        height: 1.3,
+                      child: Center(
+                        child: Icon(
+                          feature.icon,
+                          size: widget.iconSize ?? 26,
+                          color: featureIconColor,
+                        ),
                       ),
                     ),
-                  ),
 
-                  const Spacer(),
-                ],
+                    const Spacer(flex: 1),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        feature.label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: widget.labelFontSize ?? 13,
+                          fontWeight: widget.labelFontWeight ?? FontWeight.w700,
+                          color: feature.labelColor ?? effectiveLabelColor,
+                          letterSpacing: -0.2,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(flex: 2),
+                  ],
+                ),
               ),
             ),
           ),
