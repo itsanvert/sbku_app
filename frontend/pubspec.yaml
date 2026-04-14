@@ -40,5 +40,6 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/images/logo.jpg
     - assets/images/campus.png

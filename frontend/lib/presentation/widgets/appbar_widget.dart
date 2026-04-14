@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
-import 'package:sbku_app/providers/auth_provider.dart';
 
 enum AppBarType {
   home, // Logo + Title + Actions
@@ -167,12 +164,14 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           Positioned(
             top: -10,
             right: -10,
-            child: _decorativeOrb(70, Colors.white.withOpacity(isDark ? 0.03 : 0.08)),
+            child: _decorativeOrb(
+                70, Colors.white.withOpacity(isDark ? 0.03 : 0.08)),
           ),
           Positioned(
             bottom: 5,
             left: screenWidth * 0.2,
-            child: _decorativeOrb(30, Colors.white.withOpacity(isDark ? 0.02 : 0.05)),
+            child: _decorativeOrb(
+                30, Colors.white.withOpacity(isDark ? 0.02 : 0.05)),
           ),
 
           // ── App Bar Contents ────────────────────────────────
