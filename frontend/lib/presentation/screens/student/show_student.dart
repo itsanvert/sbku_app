@@ -82,7 +82,7 @@ class ShowStudentScreen extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 260,
                 pinned: true,
-                backgroundColor: _primary,
+                backgroundColor: const Color.fromARGB(255, 255, 123, 0),
                 iconTheme: const IconThemeData(color: Colors.white),
                 actions: [
                   IconButton(
