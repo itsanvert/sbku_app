@@ -24,7 +24,8 @@ class ShowStudentScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
+      backgroundColor:
+          _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
       body: FutureBuilder<Student>(
         future: service.getStudent(id),
         builder: (context, snapshot) {
@@ -38,21 +39,28 @@ class ShowStudentScreen extends StatelessWidget {
           // ── Error ────────────────────────────────────────────────
           if (snapshot.hasError || !snapshot.hasData) {
             return Scaffold(
-              backgroundColor: _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
+              backgroundColor:
+                  _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
               appBar: AppBar(backgroundColor: _primary),
               body: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.error_outline,
-                        size: 60, color: _isDarkMode(context) ? Colors.grey[600] : Colors.grey[400]),
+                        size: 60,
+                        color: _isDarkMode(context)
+                            ? Colors.grey[600]
+                            : Colors.grey[400]),
                     const SizedBox(height: 12),
                     Text(
                       snapshot.hasError
                           ? 'Error: ${snapshot.error}'
                           : 'រកមិនឃើញសិស្ស',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: _isDarkMode(context) ? Colors.grey[400] : Colors.grey[600]),
+                      style: TextStyle(
+                          color: _isDarkMode(context)
+                              ? Colors.grey[400]
+                              : Colors.grey[600]),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -162,13 +170,17 @@ class ShowStudentScreen extends StatelessWidget {
                       _sectionTitle('ព័ត៌មានទូទៅ', context),
                       const SizedBox(height: 8),
                       _card([
-                        _infoRow(Icons.badge_outlined, 'ឈ្មោះពេញ', s.name, context),
-                        _infoRow(Icons.wc, 'ភេទ',
-                            s.gender == 'M' ? 'Male' : s.gender ?? '—', context),
+                        _infoRow(
+                            Icons.badge_outlined, 'ឈ្មោះពេញ', s.name, context),
+                        _infoRow(
+                            Icons.wc,
+                            'ភេទ',
+                            s.gender == 'M' ? 'Male' : s.gender ?? '—',
+                            context),
                         _infoRow(Icons.cake_outlined, 'ថ្ងៃខែឆ្នាំកំណើត',
                             s.dob ?? '—', context),
-                        _infoRow(
-                            Icons.email_outlined, 'អ៊ីមែល', s.email ?? '—', context),
+                        _infoRow(Icons.email_outlined, 'អ៊ីមែល', s.email ?? '—',
+                            context),
                       ], context),
                       const SizedBox(height: 20),
                       _sectionTitle('ព័ត៌មានសិក្សា', context),
@@ -176,10 +188,10 @@ class ShowStudentScreen extends StatelessWidget {
                       _card([
                         _infoRow(Icons.account_balance_outlined, 'មហាវិទ្យាល័យ',
                             s.faculty ?? '—', context),
-                        _infoRow(
-                            Icons.school_outlined, 'ឯកទេស', s.major ?? '—', context),
-                        _infoRow(
-                            Icons.schedule_outlined, 'វេន', s.shift ?? '—', context),
+                        _infoRow(Icons.school_outlined, 'ឯកទេស', s.major ?? '—',
+                            context),
+                        _infoRow(Icons.schedule_outlined, 'វេន', s.shift ?? '—',
+                            context),
                         _infoRow(Icons.auto_stories_outlined, 'ជំនាន់',
                             s.generation ?? '—', context),
                         _infoRow(Icons.calendar_today_outlined, 'ឆ្នាំ',
@@ -233,7 +245,8 @@ class ShowStudentScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value, BuildContext context,
+  Widget _infoRow(
+      IconData icon, String label, String value, BuildContext context,
       {bool last = false}) {
     return Column(
       children: [
@@ -244,7 +257,8 @@ class ShowStudentScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _primary.withOpacity(_isDarkMode(context) ? 0.15 : 0.08),
+                  color:
+                      _primary.withOpacity(_isDarkMode(context) ? 0.15 : 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: _primary, size: 18),
@@ -258,7 +272,9 @@ class ShowStudentScreen extends StatelessWidget {
                       label,
                       style: TextStyle(
                         fontSize: 11,
-                        color: _isDarkMode(context) ? Colors.grey[500] : Colors.grey.shade500,
+                        color: _isDarkMode(context)
+                            ? Colors.grey[500]
+                            : Colors.grey.shade500,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -268,7 +284,9 @@ class ShowStudentScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: _isDarkMode(context) ? Colors.white : const Color(0xFF1A1A2E),
+                        color: _isDarkMode(context)
+                            ? Colors.white
+                            : const Color(0xFF1A1A2E),
                       ),
                     ),
                   ],
@@ -277,7 +295,13 @@ class ShowStudentScreen extends StatelessWidget {
             ],
           ),
         ),
-        if (!last) Divider(height: 1, indent: 56, color: _isDarkMode(context) ? Colors.grey[700] : Colors.grey.shade100),
+        if (!last)
+          Divider(
+              height: 1,
+              indent: 56,
+              color: _isDarkMode(context)
+                  ? Colors.grey[700]
+                  : Colors.grey.shade100),
       ],
     );
   }
