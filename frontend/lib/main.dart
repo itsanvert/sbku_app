@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/presentation/screens/home/home_screen.dart';
 import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
@@ -7,6 +8,7 @@ import 'package:sbku_app/providers/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load();
   runApp(
     MultiProvider(
       providers: [

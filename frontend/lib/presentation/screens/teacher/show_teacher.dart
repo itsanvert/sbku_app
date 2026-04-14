@@ -9,12 +9,17 @@ class ShowTeacherScreen extends StatelessWidget {
 
   static const _primary = Color(0xFFFF5722);
 
+  bool _isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   @override
   Widget build(BuildContext context) {
     final TeacherService service = TeacherService();
 
     return Scaffold(
-
+      backgroundColor:
+          _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
       body: FutureBuilder<Teacher>(
         future:
             service.getTeacher(teacherId), // ← fetch single teacher directly
@@ -29,20 +34,28 @@ class ShowTeacherScreen extends StatelessWidget {
           // ── Error ────────────────────────────────────────────────
           if (snapshot.hasError || !snapshot.hasData) {
             return Scaffold(
+              backgroundColor:
+                  _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
               appBar: AppBar(backgroundColor: _primary),
               body: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.error_outline,
-                        size: 60, color: Colors.grey[400]),
+                        size: 60,
+                        color: _isDarkMode(context)
+                            ? Colors.grey[600]
+                            : Colors.grey[400]),
                     const SizedBox(height: 12),
                     Text(
                       snapshot.hasError
                           ? 'Error: ${snapshot.error}'
                           : 'រកមិនឃើញគ្រូ',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(
+                          color: _isDarkMode(context)
+                              ? Colors.grey[400]
+                              : Colors.grey[600]),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -149,43 +162,47 @@ class ShowTeacherScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionTitle('ព័ត៌មានទូទៅ'),
+                      _sectionTitle('ព័ត៌មានទូទៅ', context),
                       const SizedBox(height: 8),
                       _card([
-                        _infoRow(Icons.badge_outlined, 'ឈ្មោះពេញ', t.name),
-                        _infoRow(Icons.wc, 'ភេទ',
-                            t.gender == 'M' ? 'Male' : t.gender ?? '—'),
                         _infoRow(
-                            Icons.phone_outlined, 'ទូរសព្ទ', t.phone ?? '—'),
+                            Icons.badge_outlined, 'ឈ្មោះពេញ', t.name, context),
                         _infoRow(
-                            Icons.email_outlined, 'អ៊ីមែល', t.email ?? '—'),
-                      ]),
+                            Icons.wc,
+                            'ភេទ',
+                            t.gender == 'M' ? 'Male' : t.gender ?? '—',
+                            context),
+                        _infoRow(Icons.phone_outlined, 'ទូរសព្ទ',
+                            t.phone ?? '—', context),
+                        _infoRow(Icons.email_outlined, 'អ៊ីមែល', t.email ?? '—',
+                            context),
+                      ], context),
                       const SizedBox(height: 20),
-                      _sectionTitle('ព័ត៌មានវិជ្ជាជីវៈ'),
+                      _sectionTitle('ព័ត៌មានវិជ្ជាជីវៈ', context),
                       const SizedBox(height: 8),
                       _card([
-                        _infoRow(
-                            Icons.school_outlined, 'ឯកទេស', t.major ?? '—'),
+                        _infoRow(Icons.school_outlined, 'ឯកទេស', t.major ?? '—',
+                            context),
                         _infoRow(Icons.account_balance_outlined, 'មហាវិទ្យាល័យ',
-                            t.faculty ?? '—'),
+                            t.faculty ?? '—', context),
                         _infoRow(Icons.calendar_today_outlined, 'ឆ្នាំ',
-                            t.year?.toString() ?? '—'),
+                            t.year?.toString() ?? '—', context),
                         _infoRow(Icons.schedule_outlined, 'កាលបរិច្ឆេទ',
-                            t.schedule ?? '—'),
+                            t.schedule ?? '—', context),
                         _infoRow(Icons.schedule_outlined, 'កាលវិភាគ',
-                            t.shift ?? '—'),
-                      ]),
+                            t.shift ?? '—', context),
+                      ], context),
                       const SizedBox(height: 20),
-                      _sectionTitle('ព័ត៌មានប្រព័ន្ធ'),
+                      _sectionTitle('ព័ត៌មានប្រព័ន្ធ', context),
                       const SizedBox(height: 8),
                       _card([
-                        _infoRow(Icons.tag, 'Teacher ID', '#${t.id}'),
+                        _infoRow(Icons.tag, 'Teacher ID', '#${t.id}', context),
                         _infoRow(Icons.person_outline, 'User ID',
-                            t.userId?.toString() ?? '—'),
+                            t.userId?.toString() ?? '—', context),
                         _infoRow(Icons.event_outlined, 'បានចូលរួម',
-                            t.createdAt ?? '—',
+                            t.createdAt ?? '—', context,
                             last: true),
-                      ]),
+                      ], context),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -200,26 +217,26 @@ class ShowTeacherScreen extends StatelessWidget {
 
   // ── Helpers ────────────────────────────────────────────────────────
 
-  Widget _sectionTitle(String text) {
+  Widget _sectionTitle(String text, BuildContext context) {
     return Text(
       text,
       style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w700,
-        color: Colors.grey.shade500,
+        color: _isDarkMode(context) ? Colors.grey[400] : Colors.grey.shade500,
         letterSpacing: 0.8,
       ),
     );
   }
 
-  Widget _card(List<Widget> children) {
+  Widget _card(List<Widget> children, BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _isDarkMode(context) ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(_isDarkMode(context) ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -229,7 +246,8 @@ class ShowTeacherScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value,
+  Widget _infoRow(
+      IconData icon, String label, String value, BuildContext context,
       {bool last = false}) {
     return Column(
       children: [
@@ -240,7 +258,8 @@ class ShowTeacherScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _primary.withOpacity(0.08),
+                  color:
+                      _primary.withOpacity(_isDarkMode(context) ? 0.15 : 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: _primary, size: 18),
@@ -254,17 +273,21 @@ class ShowTeacherScreen extends StatelessWidget {
                       label,
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: _isDarkMode(context)
+                            ? Colors.grey[500]
+                            : Colors.grey.shade500,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       value,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A2E),
+                        color: _isDarkMode(context)
+                            ? Colors.white
+                            : const Color(0xFF1A1A2E),
                       ),
                     ),
                   ],
@@ -273,7 +296,13 @@ class ShowTeacherScreen extends StatelessWidget {
             ],
           ),
         ),
-        if (!last) Divider(height: 1, indent: 56, color: Colors.grey.shade100),
+        if (!last)
+          Divider(
+              height: 1,
+              indent: 56,
+              color: _isDarkMode(context)
+                  ? Colors.grey[700]
+                  : Colors.grey.shade100),
       ],
     );
   }

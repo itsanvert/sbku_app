@@ -21,12 +21,15 @@ class HomePageScreen extends StatelessWidget {
         enableScaling: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         child: Column(
           children: [
-            const GreetingCard(),
-            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: const GreetingCard(),
+            ),
             FeatureGrid(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               features: const [
                 FeatureItem(
                   icon: Icons.people,
@@ -60,14 +63,17 @@ class HomePageScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            ImageSlider.campus(
-              imagePaths: const [
-                'assets/images/campus.png',
-                'assets/images/campus.png',
-                'assets/images/campus.png',
-              ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: ImageSlider.campus(
+                imagePaths: const [
+                  'assets/images/campus.png',
+                  'assets/images/campus.png',
+                  'assets/images/campus.png',
+                ],
+              ),
             ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
