@@ -1,6 +1,6 @@
 {
-    "name": "sbku_app",
-    "short_name": "sbku_app",
+    "name": "SBKU App",
+    "short_name": "SBKU App",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

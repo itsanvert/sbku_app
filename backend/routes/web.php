@@ -93,6 +93,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Excel Export route
         Route::get('/export/excel', function() {
             $ids = session('attendance_export_ids');
+            $filterInfo = session('attendance_export_filter', 'All records');
+            
             if (!$ids || empty($ids)) {
                 return redirect()->back()->with('error', 'No records selected for export.');
             }
@@ -105,7 +107,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'session.major',
             ])->whereIn('id', $ids)->get();
             
-            return (new \App\Exports\AttendanceExport($records))->download();
+            return (new \App\Exports\AttendanceExport(
+                $records, 
+                auth()->user()?->name ?? 'System',
+                $filterInfo
+            ))->download();
         })->name('export.excel');
     });
 

@@ -83,7 +83,16 @@ class AttendanceIndex extends Component
         // Get ALL filtered records (not just current page)
         $records = $this->getBaseQuery()->get();
         
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', ['records' => $records]);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
+            'records'    => $records,
+            'reportedBy' => auth()->user()?->name ?? 'System',
+            'filterInfo' => collect([
+                $this->filterDate  ? 'Date: ' . $this->filterDate   : null,
+                $this->filterMonth ? 'Month: ' . $this->filterMonth  : null,
+                $this->filterYear  ? 'Year: ' . $this->filterYear    : null,
+                $this->search      ? 'Search: ' . $this->search      : null,
+            ])->filter()->implode(' | ') ?: 'All records',
+        ]);
         
         return response()->streamDownload(
             fn () => print($pdf->output()),
@@ -96,7 +105,15 @@ class AttendanceIndex extends Component
         // Get ALL filtered IDs
         $ids = $this->getBaseQuery()->pluck('id')->toArray();
         
-        session(['attendance_export_ids' => $ids]);
+        session([
+            'attendance_export_ids' => $ids,
+            'attendance_export_filter' => collect([
+                $this->filterDate ? 'Date: ' . $this->filterDate : null,
+                $this->filterMonth ? 'Month: ' . $this->filterMonth : null,
+                $this->filterYear ? 'Year: ' . $this->filterYear : null,
+                $this->search ? 'Search: ' . $this->search : null,
+            ])->filter()->implode(' | ') ?: 'All records'
+        ]);
         
         return $this->redirect(route('attendance.export.excel'), navigate: false);
     }

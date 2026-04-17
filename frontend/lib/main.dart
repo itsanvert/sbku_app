@@ -5,6 +5,7 @@ import 'package:sbku_app/presentation/screens/home/home_screen.dart';
 import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
+import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,20 +56,23 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 
   Future<void> _checkAuth() async {
-    await Provider.of<AuthProvider>(context, listen: false).checkAuth();
-    setState(() {
-      _isChecking = false;
-    });
+    // Ensure our Flutter splash screen is visible for branding
+    await Future.wait([
+      Provider.of<AuthProvider>(context, listen: false).checkAuth(),
+      Future.delayed(const Duration(seconds: 2)),
+    ]);
+
+    if (mounted) {
+      setState(() {
+        _isChecking = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isChecking) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: Colors.orange),
-        ),
-      );
+      return const SplashScreen();
     }
 
     return Consumer<AuthProvider>(

@@ -7,24 +7,26 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Color;
 use Illuminate\Support\Collection;
 
 /**
  * AttendanceExport
  *
- * Generates a styled XLSX file using PhpSpreadsheet directly
- * (avoids the broken maatwebsite/excel v1 package).
+ * Generates a styled XLSX file using PhpSpreadsheet directly.
+ * Visual design mirrors the PDF attendance report template.
  *
  * Columns exported:
- *   #, Date, Student Name, Student ID/Code, Faculty, Major,
- *   Year, Shift, Generation, Teacher, Status, Verified, Check-In Time, Notes
+ *   #, Date, Student Name / ID, Faculty / Major,
+ *   Year & Shift, Teacher, Status, Verified, Check-In Time, Notes
  */
 class AttendanceExport
 {
-    protected $records;
+    protected Collection $records;
+    protected string     $reportedBy;
+    protected string     $filterInfo;
 
-    public function __construct($records)
+    public function __construct($records, string $reportedBy = 'System', string $filterInfo = 'All records')
     {
         // Accept Paginator, Collection, or plain array
         if (method_exists($records, 'getCollection')) {
@@ -34,6 +36,9 @@ class AttendanceExport
         } else {
             $this->records = collect($records);
         }
+
+        $this->reportedBy = $reportedBy;
+        $this->filterInfo = $filterInfo;
     }
 
     /**
@@ -67,177 +72,261 @@ class AttendanceExport
         $spreadsheet->getProperties()
             ->setTitle('Attendance Records')
             ->setSubject('SBKU Attendance Export')
+            ->setCreator($this->reportedBy)
             ->setDescription('Exported on ' . now()->format('Y-m-d H:i:s'));
 
-        // ── Title row ──────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════════
+        // ROW 1 — University branding title (navy #1a1a2e, like PDF header)
+        // ═══════════════════════════════════════════════════════════════════
         $sheet->mergeCells('A1:J1');
         $sheet->setCellValue('A1', 'SBKU — Attendance Records Report');
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FFFFFFFF']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E40AF']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1a1a2e']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
         ]);
-        $sheet->getRowDimension(1)->setRowHeight(28);
+        $sheet->getRowDimension(1)->setRowHeight(32);
 
-        // ── Subtitle / generation date ─────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════════
+        // ROW 2 — Orange reporter banner (mirrors PDF reporter-banner)
+        // ═══════════════════════════════════════════════════════════════════
         $sheet->mergeCells('A2:J2');
-        $sheet->setCellValue('A2', 'Generated: ' . now()->format('D, d M Y  H:i'));
+        $reporterText = 'Reported by: ' . $this->reportedBy
+            . '    |    Filter: ' . $this->filterInfo
+            . '    |    Total Records: ' . $this->records->count()
+            . '    |    Generated: ' . now()->format('d M Y, H:i');
+        $sheet->setCellValue('A2', $reporterText);
         $sheet->getStyle('A2')->applyFromArray([
-            'font'      => ['italic' => true, 'size' => 10, 'color' => ['argb' => 'FF555555']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFDBEAFE']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            'font'      => ['italic' => true, 'size' => 9, 'color' => ['argb' => 'FF7C2D00']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFF8F4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'indent' => 2],
+            'borders'   => [
+                'left'   => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FFFF5E00']],
+                'bottom' => ['borderStyle' => Border::BORDER_THIN,   'color' => ['argb' => 'FFFFD5B8']],
+            ],
+        ]);
+        $sheet->getRowDimension(2)->setRowHeight(18);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // ROW 3 — Summary KPI strip (matches PDF summary cards)
+        // ═══════════════════════════════════════════════════════════════════
+        $total      = $this->records->count();
+        $present    = $this->records->where('status', 'Y')->count();
+        $permission = $this->records->where('status', 'P')->count();
+        $absent     = $this->records->where('status', 'N')->count();
+        $rate       = $total > 0 ? round(($present / $total) * 100, 1) : 0;
+
+        $sheet->mergeCells('A3:B3');
+        $sheet->setCellValue('A3', "Total: {$total}");
+        $sheet->getStyle('A3:B3')->applyFromArray([
+            'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF6366F1']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF5F3FF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders'   => ['top' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF6366F1']]],
         ]);
 
-        // ── Headers row ───────────────────────────────────────────────────
+        $sheet->mergeCells('C3:D3');
+        $sheet->setCellValue('C3', "Present: {$present} ({$rate}%)");
+        $sheet->getStyle('C3:D3')->applyFromArray([
+            'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF15803D']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF0FDF4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders'   => ['top' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF22C55E']]],
+        ]);
+
+        $sheet->mergeCells('E3:G3');
+        $sheet->setCellValue('E3', "Permission: {$permission}");
+        $sheet->getStyle('E3:G3')->applyFromArray([
+            'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FFB45309']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFEFCE8']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders'   => ['top' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FFF59E0B']]],
+        ]);
+
+        $sheet->mergeCells('H3:J3');
+        $absentPct = $total > 0 ? round(($absent / $total) * 100, 1) : 0;
+        $sheet->setCellValue('H3', "Absent: {$absent} ({$absentPct}%)");
+        $sheet->getStyle('H3:J3')->applyFromArray([
+            'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FFB91C1C']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFEF2F2']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders'   => ['top' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FFEF4444']]],
+        ]);
+
+        $sheet->getRowDimension(3)->setRowHeight(22);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // ROW 4 — Column headers (navy, like PDF thead)
+        // ═══════════════════════════════════════════════════════════════════
         $headers = [
             'A' => '#',
             'B' => 'Date',
-            'C' => 'Student info',
+            'C' => 'Student',
             'D' => 'Faculty / Major',
-            'E' => 'Class info',
+            'E' => 'Year & Shift',
             'F' => 'Teacher',
             'G' => 'Status',
             'H' => 'Verify',
-            'I' => 'Time',
+            'I' => 'Check-in',
             'J' => 'Notes',
         ];
 
         foreach ($headers as $col => $label) {
-            $sheet->setCellValue("{$col}3", $label);
+            $sheet->setCellValue("{$col}4", $label);
         }
 
-        $sheet->getStyle('A3:J3')->applyFromArray([
-            'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1D4ED8']],
+        $sheet->getStyle('A4:J4')->applyFromArray([
+            'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1a1a2e']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFB0C4DE']]],
+            'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF374151']]],
         ]);
-        $sheet->getRowDimension(3)->setRowHeight(20);
+        $sheet->getRowDimension(4)->setRowHeight(22);
 
         // ── Column widths ─────────────────────────────────────────────────
         $columnWidths = [
-            'A' =>  5,  // #
-            'B' => 12,  // Date
-            'C' => 28,  // Student Name
-            'D' => 28,  // Faculty / Major
-            'E' => 18,  // Class info
-            'F' => 22,  // Teacher
-            'G' => 12,  // Status
-            'H' => 12,  // Verify
-            'I' => 10,  // Time
-            'J' => 28,  // Notes
+            'A' =>  5,   // #
+            'B' => 13,   // Date
+            'C' => 30,   // Student
+            'D' => 30,   // Faculty / Major
+            'E' => 18,   // Year & Shift
+            'F' => 24,   // Teacher
+            'G' => 13,   // Status
+            'H' => 13,   // Verify
+            'I' => 11,   // Check-in
+            'J' => 28,   // Notes
         ];
         foreach ($columnWidths as $col => $width) {
             $sheet->getColumnDimension($col)->setWidth($width);
         }
 
-        // ── Data rows ─────────────────────────────────────────────────────
-        $row = 4;
+        // ═══════════════════════════════════════════════════════════════════
+        // DATA ROWS — starting at row 5
+        // ═══════════════════════════════════════════════════════════════════
+        $row = 5;
         foreach ($this->records as $i => $record) {
-            $student    = $record->student;
-            $user       = $student?->user;
-            $faculty    = $student?->faculty;
-            $major      = $student?->major;
-            $session    = $record->session;
-            $teacher    = $session?->teacher?->user;
+            $student  = $record->student;
+            $user     = $student?->user;
+            $faculty  = $student?->faculty;
+            $major    = $student?->major;
+            $session  = $record->session;
+            $teacher  = $session?->teacher?->user;
 
-            // Status
-            $status      = $record->status === 'Y' ? 'Present' : 'Absent';
+            $statusRaw   = $record->status ?? 'N';
+            $statusLabel = match ($statusRaw) {
+                'Y'     => 'Present',
+                'P'     => 'Permission',
+                default => 'Absent',
+            };
             $verified    = ucfirst($record->verify_status ?? 'pending');
-            $checkInTime = $record->check_in_time?->format('H:i:s') ?? '—';
-            $date        = $record->attendance_date?->format('Y-m-d') ?? '—';
+            $checkInTime = $record->check_in_time?->format('H:i') ?? '—';
+            $date        = $record->attendance_date?->format('d M Y') ?? '—';
 
+            // ── Cell values ───────────────────────────────────────────────
             $sheet->setCellValue("A{$row}", $i + 1);
             $sheet->setCellValue("B{$row}", $date);
-            
-            // Student Info
+
             $studentInfo = ($user?->name ?? 'Unknown') . "\nID: " . ($student?->student_code ?? '—');
             $sheet->setCellValue("C{$row}", $studentInfo);
             $sheet->getStyle("C{$row}")->getAlignment()->setWrapText(true);
 
-            // Faculty / Major
             $facName = $faculty?->name ?? $session?->faculty?->name ?? '—';
             $majName = $major?->name   ?? $session?->major?->name   ?? '—';
-            $facMaj  = $facName . "\n" . $majName;
-            $sheet->setCellValue("D{$row}", $facMaj);
+            $sheet->setCellValue("D{$row}", $facName . "\n" . $majName);
             $sheet->getStyle("D{$row}")->getAlignment()->setWrapText(true);
 
-            // Class info
-            $classInfo = "Year: " . ($student?->year ?? '—') . "\nShift: " . ($student?->shift->name ?? '—');
+            $classInfo = 'Year: ' . ($student?->year ?? '—') . "\nShift: " . ($student?->shift?->name ?? '—');
             $sheet->setCellValue("E{$row}", $classInfo);
             $sheet->getStyle("E{$row}")->getAlignment()->setWrapText(true);
 
             $sheet->setCellValue("F{$row}", $teacher?->name ?? '—');
-            $sheet->setCellValue("G{$row}", $status);
+            $sheet->setCellValue("G{$row}", $statusLabel);
             $sheet->setCellValue("H{$row}", $verified);
             $sheet->setCellValue("I{$row}", $checkInTime);
             $sheet->setCellValue("J{$row}", $record->noted ?? '');
 
-            // Zebra striping
-            $bgColor = ($i % 2 === 0) ? 'FFFAFAFA' : 'FFEFF6FF';
+            // ── Zebra striping ────────────────────────────────────────────
+            $bgColor = ($i % 2 === 0) ? 'FFFFFFFF' : 'FFF9FAFB';
             $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
                 'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => $bgColor]],
                 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-                'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+                'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE5E7EB']]],
+                'font'      => ['size' => 10, 'color' => ['argb' => 'FF374151']],
             ]);
 
-            // Status colour highlight
-            $statusColor = $record->status === 'Y' ? 'FF16A34A' : 'FFDC2626';
-            $sheet->getStyle("G{$row}")->getFont()->setColor(
-                (new \PhpOffice\PhpSpreadsheet\Style\Color($statusColor))
-            );
+            // ── Status badge color ────────────────────────────────────────
+            $statusColor = match ($statusRaw) {
+                'Y'     => 'FF15803D',
+                'P'     => 'FFB45309',
+                default => 'FFB91C1C',
+            };
+            $sheet->getStyle("G{$row}")->getFont()->setColor(new Color($statusColor));
             $sheet->getStyle("G{$row}")->getFont()->setBold(true);
 
-            // Verify status colour
+            // ── Verify badge color ────────────────────────────────────────
             $verifyColor = match ($record->verify_status ?? 'pending') {
-                'approved' => 'FF16A34A',
-                'rejected' => 'FFDC2626',
-                default    => 'FFD97706',  // orange for pending
+                'approved' => 'FF15803D',
+                'rejected' => 'FFB91C1C',
+                default    => 'FFB45309',
             };
-            $sheet->getStyle("H{$row}")->getFont()->setColor(
-                (new \PhpOffice\PhpSpreadsheet\Style\Color($verifyColor))
-            );
+            $sheet->getStyle("H{$row}")->getFont()->setColor(new Color($verifyColor));
 
-            // Center-align specific columns
-            $sheet->getStyle("A{$row}:A{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle("G{$row}:I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            // ── Alignment ─────────────────────────────────────────────────
+            $sheet->getStyle("A{$row}")->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("G{$row}:I{$row}")->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-            $sheet->getRowDimension($row)->setRowHeight(36); // Taller for multiline
+            $sheet->getRowDimension($row)->setRowHeight(36);
             $row++;
         }
 
-        // ── Summary row ───────────────────────────────────────────────────
-        $totalRows     = $this->records->count();
-        $presentCount  = $this->records->where('status', 'Y')->count();
-        $absentCount   = $this->records->where('status', 'N')->count();
+        // ═══════════════════════════════════════════════════════════════════
+        // FOOTER ROW — approved / pending / rejected counts (navy, like PDF)
+        // ═══════════════════════════════════════════════════════════════════
         $approvedCount = $this->records->where('verify_status', 'approved')->count();
         $pendingCount  = $this->records->where('verify_status', 'pending')->count();
         $rejectedCount = $this->records->where('verify_status', 'rejected')->count();
-        $rate          = $totalRows > 0 ? round(($presentCount / $totalRows) * 100, 1) : 0;
 
-        $summaryRow = $row + 1;
-        $sheet->mergeCells("A{$summaryRow}:B{$summaryRow}");
-        $sheet->setCellValue("A{$summaryRow}", 'SUMMARY');
-        
-        $sheet->mergeCells("C{$summaryRow}:D{$summaryRow}");
-        $sheet->setCellValue("C{$summaryRow}", "Total Records: {$totalRows}");
-        
-        $sheet->mergeCells("E{$summaryRow}:G{$summaryRow}");
-        $sheet->setCellValue("E{$summaryRow}", "Present: {$presentCount} | Absent: {$absentCount} | Rate: {$rate}%");
-        
-        $sheet->mergeCells("H{$summaryRow}:J{$summaryRow}");
-        $sheet->setCellValue("H{$summaryRow}", "Appr: {$approvedCount} / Pend: {$pendingCount} / Rej: {$rejectedCount}");
+        $footerRow = $row + 1;
 
-        $sheet->getStyle("A{$summaryRow}:J{$summaryRow}")->applyFromArray([
-            'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E40AF']],
+        $sheet->mergeCells("A{$footerRow}:B{$footerRow}");
+        $sheet->setCellValue("A{$footerRow}", 'SUMMARY');
+
+        $sheet->mergeCells("C{$footerRow}:D{$footerRow}");
+        $sheet->setCellValue("C{$footerRow}", "Records: {$total}  |  Rate: {$rate}%");
+
+        $sheet->mergeCells("E{$footerRow}:G{$footerRow}");
+        $sheet->setCellValue("E{$footerRow}", "Present: {$present}  |  Permission: {$permission}  |  Absent: {$absent}");
+
+        $sheet->mergeCells("H{$footerRow}:J{$footerRow}");
+        $sheet->setCellValue("H{$footerRow}", "Appr: {$approvedCount}  /  Pend: {$pendingCount}  /  Rej: {$rejectedCount}");
+
+        $sheet->getStyle("A{$footerRow}:J{$footerRow}")->applyFromArray([
+            'font'      => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1a1a2e']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF93C5FD']]],
+            'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF374151']]],
         ]);
-        $sheet->getRowDimension($summaryRow)->setRowHeight(22);
+        $sheet->getRowDimension($footerRow)->setRowHeight(22);
 
-        // Freeze header rows
-        $sheet->freezePane('A4');
+        // ── Generated-by credit row ────────────────────────────────────────
+        $creditRow = $footerRow + 1;
+        $sheet->mergeCells("A{$creditRow}:J{$creditRow}");
+        $sheet->setCellValue("A{$creditRow}",
+            'SBKU Attendance Management System  —  Reported by: ' . $this->reportedBy
+            . '  —  ' . now()->format('d M Y, H:i:s')
+        );
+        $sheet->getStyle("A{$creditRow}:J{$creditRow}")->applyFromArray([
+            'font'      => ['italic' => true, 'size' => 8, 'color' => ['argb' => 'FF9CA3AF']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF9FAFB']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            'borders'   => ['bottom' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FFFF5E00']]],
+        ]);
+        $sheet->getRowDimension($creditRow)->setRowHeight(16);
+
+        // Freeze header + summary rows so data scrolls underneath
+        $sheet->freezePane('A5');
 
         return $spreadsheet;
     }
