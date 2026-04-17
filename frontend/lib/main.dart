@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/presentation/screens/home/home_screen.dart';
@@ -9,10 +7,8 @@ import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
 
-
 Future<void> main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
   runApp(
     MultiProvider(
@@ -60,9 +56,6 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 
   Future<void> _checkAuth() async {
-    // Remove native splash as soon as we can so our premium Flutter splash is shown
-    FlutterNativeSplash.remove();
-
     // Ensure our Flutter splash screen is visible for branding
     await Future.wait([
       Provider.of<AuthProvider>(context, listen: false).checkAuth(),
