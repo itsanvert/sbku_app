@@ -868,13 +868,19 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
         _isSuccess ? Icons.check_circle_rounded : Icons.error_rounded;
     final String resultTitle = _isSuccess ? 'ជោគជ័យ!' : 'មានបញ្ហា';
 
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF0F0F1E), Color(0xFF1A1A2E)],
-        ),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        gradient: isDarkMode
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF0F0F1E), Color(0xFF1A1A2E)],
+              )
+            : null,
       ),
       child: SafeArea(
         child: Column(
@@ -885,15 +891,15 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new,
-                        color: Colors.white70, size: 18),
+                    icon: Icon(Icons.arrow_back_ios_new,
+                        color: isDarkMode ? Colors.white70 : Colors.black87, size: 18),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
-                  const Text(
+                  Text(
                     'ផ្ទៀងផ្ទាត់វត្តមាន',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isDarkMode ? Colors.white : Colors.black87,
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                     ),
@@ -951,7 +957,9 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.06),
+                            color: isDarkMode
+                                ? Colors.white.withOpacity(0.06)
+                                : Colors.black.withOpacity(0.06),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -961,7 +969,7 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                                 _mode == _ScanMode.camera
                                     ? Icons.qr_code_scanner_rounded
                                     : Icons.photo_library_rounded,
-                                color: Colors.white38,
+                                color: isDarkMode ? Colors.white38 : Colors.black54,
                                 size: 12,
                               ),
                               const SizedBox(width: 5),
@@ -969,8 +977,8 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                                 _mode == _ScanMode.camera
                                     ? 'Camera Scan'
                                     : 'Image Upload',
-                                style: const TextStyle(
-                                  color: Colors.white38,
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white38 : Colors.black54,
                                   fontSize: 11,
                                 ),
                               ),
@@ -997,9 +1005,9 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                         Text(
                           _resultMessage ?? '',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white60,
+                            color: isDarkMode ? Colors.white60 : Colors.black87,
                             height: 1.5,
                           ),
                         ),
@@ -1011,7 +1019,9 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.06),
+                              color: isDarkMode
+                                  ? Colors.white.withOpacity(0.06)
+                                  : Colors.black.withOpacity(0.03),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: statusColor.withOpacity(0.3),
@@ -1046,7 +1056,7 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.white.withOpacity(0.5),
+                                      color: isDarkMode ? Colors.white.withOpacity(0.5) : Colors.black45,
                                       height: 1.6,
                                     ),
                                   ),
@@ -1090,9 +1100,9 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                           const SizedBox(height: 12),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text(
+                            child: Text(
                               'ថយក្រោយ',
-                              style: TextStyle(color: Colors.white54),
+                              style: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
                             ),
                           ),
                         ],
