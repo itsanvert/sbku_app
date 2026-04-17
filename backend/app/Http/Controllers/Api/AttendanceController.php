@@ -335,6 +335,18 @@ class AttendanceController extends Controller
 
         $records = $query->orderBy('attendance_date', 'desc')->get();
 
-        return (new \App\Exports\AttendanceExport($records))->download('attendance-report-' . now()->format('Y-m-d') . '.xlsx');
+        // Build a human-readable filter summary
+        $filterParts = [];
+        if ($request->date)   $filterParts[] = 'Date: ' . $request->date;
+        if ($request->month)  $filterParts[] = 'Month: ' . $request->month;
+        if ($request->year)   $filterParts[] = 'Year: ' . $request->year;
+        if ($request->status) $filterParts[] = 'Status: ' . $request->status;
+        $filterInfo = $filterParts ? implode(' | ', $filterParts) : 'All records';
+
+        return (new \App\Exports\AttendanceExport(
+            $records,
+            auth()->user()?->name ?? 'System',
+            $filterInfo
+        ))->download('attendance-report-' . now()->format('Y-m-d') . '.xlsx');
     }
 }

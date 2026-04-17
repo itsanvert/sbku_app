@@ -512,13 +512,16 @@
 
         {{-- ═══ FOOTER ═══ --}}
         <div class="footer">
-            <div class="footer-left">
-                Svay Rieng University &mdash; Attendance Management System<br>
-                This document is auto-generated and is valid without a handwritten signature unless required.
-            </div>
-            <div class="footer-right">
-                Generated: {{ now()->format('d M Y, H:i:s') }}<br>
-                Page 1 of 1
+            <div style="border-bottom: 2px solid #FF5E00; margin-bottom: 8px;"></div>
+            <div style="display: table; width: 100%;">
+                <div class="footer-left">
+                    <strong>SBKU (Svay Rieng University)</strong> &mdash; Attendance Management System<br>
+                    <span style="font-size: 8px; color: #aaa;">This document is auto-generated and valid without a handwritten signature.</span>
+                </div>
+                <div class="footer-right">
+                    Generated on: {{ now()->format('d M Y, H:i:s') }}<br>
+                    <strong>Report ID: {{ strtoupper(uniqid('SRU-')) }}</strong>
+                </div>
             </div>
         </div>
 

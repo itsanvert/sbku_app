@@ -105,7 +105,15 @@ class AttendanceIndex extends Component
         // Get ALL filtered IDs
         $ids = $this->getBaseQuery()->pluck('id')->toArray();
         
-        session(['attendance_export_ids' => $ids]);
+        session([
+            'attendance_export_ids' => $ids,
+            'attendance_export_filter' => collect([
+                $this->filterDate ? 'Date: ' . $this->filterDate : null,
+                $this->filterMonth ? 'Month: ' . $this->filterMonth : null,
+                $this->filterYear ? 'Year: ' . $this->filterYear : null,
+                $this->search ? 'Search: ' . $this->search : null,
+            ])->filter()->implode(' | ') ?: 'All records'
+        ]);
         
         return $this->redirect(route('attendance.export.excel'), navigate: false);
     }
