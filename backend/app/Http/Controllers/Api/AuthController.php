@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
  *
  * Uses ApiResponse trait for consistent JSON envelope.
  * Uses UserResource for consistent user serialization.
- *
+ *re
  * NOTE: Auth responses use a FLAT format (token/user at top level)
  * for backward compatibility with the existing Flutter AuthService.
  */
