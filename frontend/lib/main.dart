@@ -58,17 +58,10 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 
   Future<void> _checkAuth() async {
-    // Ensure our Flutter splash screen is visible for branding.
-    await Future.wait([
-      Provider.of<AuthProvider>(context, listen: false).checkAuth(),
-      Future.delayed(const Duration(seconds: 2)),
-    ]);
-
-    if (mounted) {
-      setState(() {
-        _isChecking = false;
-      });
-    }
+    await Provider.of<AuthProvider>(context, listen: false).checkAuth();
+    setState(() {
+      _isChecking = false;
+    });
   }
 
   @override
