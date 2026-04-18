@@ -3,12 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
+/**
+ * API controller for profile management.
+ *
+ * Uses UserResource for consistent user serialization.
+ *
+ * NOTE: Profile responses use a FLAT format (user at top level)
+ * for backward compatibility with the existing Flutter AuthService.
+ */
 class ProfileController extends Controller
 {
+    use ApiResponse;
+
     /**
      * Update user profile information
      */
@@ -26,15 +38,11 @@ class ProfileController extends Controller
             'email' => $validated['email'],
         ])->save();
 
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'profile_photo_url' => $user->profile_photo_url,
-            ],
+            'user'    => (new UserResource($user->fresh()))->resolve(),
         ]);
     }
 
@@ -88,16 +96,11 @@ class ProfileController extends Controller
             $user->student->update(['profile_image_path' => $user->profile_photo_path]);
         }
 
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
             'message' => 'Profile photo updated successfully',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'profile_photo_url' => $user->profile_photo_url,
-            ],
+            'user'    => (new UserResource($user->fresh()))->resolve(),
         ]);
     }
 
@@ -109,15 +112,11 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->deleteProfilePhoto();
 
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
             'message' => 'Profile photo deleted successfully',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'profile_photo_url' => $user->profile_photo_url,
-            ],
+            'user'    => (new UserResource($user->fresh()))->resolve(),
         ]);
     }
 }
