@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
+use App\Http\Requests\LoginRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -22,6 +25,8 @@ use Illuminate\Validation\ValidationException;
  */
 class AuthController extends Controller
 {
+    use ApiResponse;
+
     use ApiResponse;
 
     /**
@@ -44,8 +49,11 @@ class AuthController extends Controller
         $token = $user->createToken('mobile-app')->plainTextToken;
 
         // Flat format for Flutter AuthService compatibility
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
+            'user'    => (new UserResource($user))->resolve(),
+            'token'   => $token,
             'user'    => (new UserResource($user))->resolve(),
             'token'   => $token,
         ], 201);
@@ -54,6 +62,7 @@ class AuthController extends Controller
     /**
      * Login user
      */
+    public function login(LoginRequest $request)
     public function login(LoginRequest $request)
     {
         $user = User::where('email', $request->email)->first();
@@ -67,8 +76,11 @@ class AuthController extends Controller
         $token = $user->createToken('mobile-app')->plainTextToken;
 
         // Flat format for Flutter AuthService compatibility
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
+            'user'    => (new UserResource($user))->resolve(),
+            'token'   => $token,
             'user'    => (new UserResource($user))->resolve(),
             'token'   => $token,
         ]);
@@ -82,6 +94,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return $this->success(null, 'Logged out successfully');
+        return $this->success(null, 'Logged out successfully');
     }
 
     /**
@@ -90,8 +103,10 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         // Flat format for Flutter AuthService compatibility
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
+            'user'    => (new UserResource($request->user()))->resolve(),
             'user'    => (new UserResource($request->user()))->resolve(),
         ]);
     }
