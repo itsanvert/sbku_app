@@ -5,11 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
-use App\Http\Requests\LoginRequest;
-use App\Http\Resources\UserResource;
+
 use App\Models\User;
 use App\Traits\ApiResponse;
-use App\Traits\ApiResponse;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -62,7 +61,6 @@ class AuthController extends Controller
     /**
      * Login user
      */
-    public function login(LoginRequest $request)
     public function login(LoginRequest $request)
     {
         $user = User::where('email', $request->email)->first();
