@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/presentation/screens/home/home_screen.dart';
 import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
@@ -10,6 +11,7 @@ import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+  setupServiceLocator();
   runApp(
     MultiProvider(
       providers: [
@@ -56,17 +58,10 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 
   Future<void> _checkAuth() async {
-    // Ensure our Flutter splash screen is visible for branding
-    await Future.wait([
-      Provider.of<AuthProvider>(context, listen: false).checkAuth(),
-      Future.delayed(const Duration(seconds: 2)),
-    ]);
-
-    if (mounted) {
-      setState(() {
-        _isChecking = false;
-      });
-    }
+    await Provider.of<AuthProvider>(context, listen: false).checkAuth();
+    setState(() {
+      _isChecking = false;
+    });
   }
 
   @override

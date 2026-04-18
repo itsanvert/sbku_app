@@ -3,11 +3,30 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreStudentRequest;
+use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Student;
+use App\Services\StudentService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Thin API controller for student CRUD.
+ *
+ * Business logic lives in StudentService.
+ * Validation lives in Form Requests.
+ *
+ * NOTE: Responses maintain the ORIGINAL flat format for backward
+ * compatibility with the existing Flutter StudentService/StudentPaginated.
+ */
 class StudentController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(
+        private readonly StudentService $studentService,
+    ) {}
+
     public function index(Request $request)
     {
         $students = Student::query()
@@ -21,51 +40,19 @@ class StudentController extends Controller
             ->orderBy($request->sort_by ?? 'id', $request->sort_dir ?? 'asc')
             ->paginate($request->per_page ?? 10);
 
+        // Return raw paginator JSON — Flutter's StudentPaginated.fromJson()
+        // expects current_page, last_page, total at top level
         return response()->json($students);
     }
 
-    public function store(Request $request)
+    public function store(StoreStudentRequest $request)
     {
-        $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
-            'password'   => 'required|min:8',
-            'gender'     => 'required|in:male,female',
-            'dob'        => 'nullable|date',
-            'faculty_id' => 'required|exists:faculties,id',
-            'major_id'   => 'required|exists:majors,id',
-            'year'       => 'required|integer',
-            'shift'      => 'required|string',
-            'generation' => 'required|string',
-            'photo'      => 'nullable|image|max:1024',
-        ]);
+        $student = $this->studentService->create(
+            $request->validated(),
+            $request->file('photo'),
+        );
 
-        $student = \DB::transaction(function () use ($validated, $request) {
-            $user = \App\Models\User::create([
-                'name'     => $validated['name'],
-                'email'    => $validated['email'],
-                'password' => \Hash::make($validated['password']),
-                'role'     => 'student',
-            ]);
-
-            $studentData = [
-                'gender'     => $validated['gender'],
-                'dob'        => $validated['dob'],
-                'faculty_id' => $validated['faculty_id'],
-                'major_id'   => $validated['major_id'],
-                'year'       => $validated['year'],
-                'shift'      => $validated['shift'],
-                'generation' => $validated['generation'],
-            ];
-
-            if ($request->hasFile('photo')) {
-                $studentData['profile_image_path'] = $request->file('photo')->store('profile-photos', 'public');
-            }
-
-            $user->student()->update($studentData); // Use student() relationship to update
-            return $user->student->load(['user', 'major', 'faculty']);
-        });
-
+        // Flutter expects the raw student model JSON on 201
         return response()->json($student, 201);
     }
 
@@ -76,44 +63,21 @@ class StudentController extends Controller
         );
     }
 
-    public function update(Request $request, Student $student)
+    public function update(UpdateStudentRequest $request, Student $student)
     {
-        $validated = $request->validate([
-            'name'       => 'sometimes|required|string|max:255',
-            'email'      => 'sometimes|required|email|unique:users,email,'.$student->user_id,
-            'password'   => 'nullable|min:8',
-            'gender'     => 'sometimes|required|in:male,female',
-            'dob'        => 'nullable|date',
-            'faculty_id' => 'sometimes|required|exists:faculties,id',
-            'major_id'   => 'sometimes|required|exists:majors,id',
-            'year'       => 'sometimes|required|integer',
-            'shift'      => 'sometimes|required|string',
-            'generation' => 'sometimes|required|string',
-            'photo'      => 'nullable|image|max:1024',
-        ]);
+        $student = $this->studentService->update(
+            $student,
+            $request->validated(),
+            $request->file('photo'),
+        );
 
-        \DB::transaction(function () use ($validated, $request, $student) {
-            $userData = $request->only(['name', 'email']);
-            if ($request->password) {
-                $userData['password'] = \Hash::make($request->password);
-            }
-            $student->user->update($userData);
-
-            $studentData = $request->only(['gender', 'dob', 'faculty_id', 'major_id', 'year', 'shift', 'generation']);
-            
-            if ($request->hasFile('photo')) {
-                $studentData['profile_image_path'] = $request->file('photo')->store('profile-photos', 'public');
-            }
-
-            $student->update($studentData);
-        });
-
-        return response()->json($student->load(['user', 'major', 'faculty']));
+        return response()->json($student);
     }
 
     public function destroy(Student $student)
     {
-        $student->user()->delete();
+        $this->studentService->delete($student);
+
         return response()->json(['message' => 'Student deleted']);
     }
 }

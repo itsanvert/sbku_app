@@ -3,14 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Laravel\Jetstream\Jetstream;
 
+/**
+ * Thin API controller for authentication.
+ *
+ * Uses ApiResponse trait for consistent JSON envelope.
+ * Uses UserResource for consistent user serialization.
+ *
+ * NOTE: Auth responses use a FLAT format (token/user at top level)
+ * for backward compatibility with the existing Flutter AuthService.
+ */
 class AuthController extends Controller
 {
+    use ApiResponse;
+
     /**
      * Register a new user
      */
@@ -28,35 +41,21 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Create token for mobile app
         $token = $user->createToken('mobile-app')->plainTextToken;
 
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'profile_photo_url' => $user->profile_photo_url,
-                'role' => $user->role,
-                'student_id' => $user->student?->id,
-                'teacher_id' => $user->teacher?->id,
-                'created_at' => $user->created_at,
-            ],
-            'token' => $token,
+            'user'    => (new UserResource($user))->resolve(),
+            'token'   => $token,
         ], 201);
     }
 
     /**
      * Login user
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -65,25 +64,13 @@ class AuthController extends Controller
             ]);
         }
 
-        // Revoke old tokens (optional)
-        // $user->tokens()->delete();
-
-        // Create new token
         $token = $user->createToken('mobile-app')->plainTextToken;
 
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'profile_photo_url' => $user->profile_photo_url,
-                'two_factor_enabled' => $user->two_factor_secret !== null,
-                'role' => $user->role,
-                'student_id' => $user->student?->id,
-                'teacher_id' => $user->teacher?->id,
-            ],
-            'token' => $token,
+            'user'    => (new UserResource($user))->resolve(),
+            'token'   => $token,
         ]);
     }
 
@@ -92,13 +79,9 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // Delete current token
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logged out successfully',
-        ]);
+        return $this->success(null, 'Logged out successfully');
     }
 
     /**
@@ -106,21 +89,10 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
+        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
-            'user' => [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
-                'email_verified_at' => $request->user()->email_verified_at,
-                'profile_photo_url' => $request->user()->profile_photo_url,
-                'two_factor_enabled' => $request->user()->two_factor_secret !== null,
-                'role' => $request->user()->role,
-                'student_id' => $request->user()->student?->id,
-                'teacher_id' => $request->user()->teacher?->id,
-                'created_at' => $request->user()->created_at,
-                'updated_at' => $request->user()->updated_at,
-            ],
+            'user'    => (new UserResource($request->user()))->resolve(),
         ]);
     }
 }
