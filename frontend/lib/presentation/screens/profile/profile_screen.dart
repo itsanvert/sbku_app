@@ -1,11 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/model/user_model.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
-import 'package:sbku_app/providers/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (image != null && mounted) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final success = await authProvider.uploadProfilePhoto(image.path);
-      
+
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -54,7 +52,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to update photo')),
+            SnackBar(
+                content: Text(
+                    authProvider.errorMessage ?? 'Failed to update photo')),
           );
         }
       }
@@ -78,7 +78,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to update profile')),
+          SnackBar(
+              content: Text(
+                  authProvider.errorMessage ?? 'Failed to update profile')),
         );
       }
     }
@@ -107,7 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionTitle('ព័ត៌មានផ្ទាល់ខ្លួន (Personal Info)', isDark),
+                    _buildSectionTitle(
+                        'ព័ត៌មានផ្ទាល់ខ្លួន (Personal Info)', isDark),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _nameController,
@@ -139,9 +142,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 });
                               },
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 side: BorderSide(color: Colors.grey.shade400),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               child: const Text('បោះបង់'),
                             ),
@@ -149,16 +154,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: authProvider.isLoading ? null : _saveProfile,
+                              onPressed:
+                                  authProvider.isLoading ? null : _saveProfile,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFFF6A00),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                                 elevation: 0,
                               ),
                               child: authProvider.isLoading
-                                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white))
                                   : const Text('រក្សាទុក'),
                             ),
                           ),
@@ -172,10 +184,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: const Icon(Icons.edit_outlined, size: 20),
                           label: const Text('កែតម្រូវព័ត៌មាន (Edit Profile)'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF3F4F6),
-                            foregroundColor: isDark ? Colors.white : const Color(0xFF1F2937),
+                            backgroundColor: isDark
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFFF3F4F6),
+                            foregroundColor:
+                                isDark ? Colors.white : const Color(0xFF1F2937),
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
                         ),
@@ -203,9 +219,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.fromLTRB(20, 40, 20, 30),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark 
-            ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-            : [const Color(0xFFFFF7ED), const Color(0xFFFED7AA).withOpacity(0.3)],
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [
+                  const Color(0xFFFFF7ED),
+                  const Color(0xFFFED7AA).withOpacity(0.3)
+                ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -230,11 +249,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 child: ClipOval(
-                  child: user?.profilePhotoUrl != null && user!.profilePhotoUrl!.isNotEmpty
+                  child: user?.profilePhotoUrl != null &&
+                          user!.profilePhotoUrl!.isNotEmpty
                       ? Image.network(
                           user.profilePhotoUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildInitials(initials, isDark),
+                          errorBuilder: (_, __, ___) =>
+                              _buildInitials(initials, isDark),
                         )
                       : _buildInitials(initials, isDark),
                 ),
@@ -250,7 +271,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: Color(0xFFFF6A00),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                    child: const Icon(Icons.camera_alt,
+                        color: Colors.white, size: 20),
                   ),
                 ),
               ),
@@ -290,10 +312,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildRoleBadge(String? role, bool isDark) {
     if (role == null) return const SizedBox();
-    
+
     Color color;
     String label = role.toUpperCase();
-    
+
     switch (role.toLowerCase()) {
       case 'teacher':
         color = const Color(0xFF60A5FA);
@@ -369,7 +391,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: const Color(0xFFFF6A00), size: 22),
           labelText: label,
-          labelStyle: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+          labelStyle: TextStyle(
+              color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
