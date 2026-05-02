@@ -515,7 +515,7 @@
             <div style="border-bottom: 2px solid #FF5E00; margin-bottom: 8px;"></div>
             <div style="display: table; width: 100%;">
                 <div class="footer-left">
-                    <strong>SBKU (Svay Rieng University)</strong> &mdash; Attendance Management System<br>
+                    <strong>SBKU (Samdech Preah Mahasangrajah Bour Kry University)</strong> &mdash; Attendance Management System<br>
                     <span style="font-size: 8px; color: #aaa;">This document is auto-generated and valid without a handwritten signature.</span>
                 </div>
                 <div class="footer-right">
