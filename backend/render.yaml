@@ -2,9 +2,8 @@ services:
   - type: web
     name: sbku-backend
     env: docker
-    rootDir: backend
     plan: free
-    region: singapore # Change this if you prefer another region
+    region: singapore
     envVars:
       - key: APP_ENV
         value: production
@@ -12,11 +11,6 @@ services:
         value: "false"
       - key: APP_KEY
         generateValue: true
-      - key: APP_URL
-        fromService:
-          type: web
-          name: sbku-backend
-          property: host
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -51,6 +45,8 @@ services:
         value: /etc/secrets/firebase-credentials.json
       - key: GOOGLE_APPLICATION_CREDENTIALS
         value: /etc/secrets/firebase-credentials.json
+      - key: GOOGLE_CLOUD_USE_REST
+        value: "true"
     secretFiles:
       - key: firebase-credentials.json
         name: firebase-credentials.json
