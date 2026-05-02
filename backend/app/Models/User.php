@@ -21,6 +21,7 @@ class User extends Authenticatable
     use HasTeams;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use \App\Traits\SyncsToFirestore;
 
     /**
      * The attributes that are mass assignable.
