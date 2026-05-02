@@ -8,6 +8,8 @@ import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:sbku_app/service/api_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Teacher Attendance History Screen
@@ -143,6 +145,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           final checkIn = record['check_in_time'];
           final isDark = Theme.of(context).brightness == Brightness.dark;
 
+          final avatarUrl = record['student']?['avatar_url'] ??
+              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(studentName)}&background=6366f1&color=ffffff';
+
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
@@ -150,10 +155,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                 backgroundColor: isPresent
                     ? Colors.green.withValues(alpha: isDark ? 0.15 : 0.08)
                     : Colors.red.withValues(alpha: isDark ? 0.15 : 0.08),
-                child: Icon(
-                  isPresent ? Icons.check : Icons.close,
-                  color: isPresent ? Colors.green : Colors.red,
-                ),
+                backgroundImage: NetworkImage(avatarUrl),
               ),
               title: Text(studentName,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -619,17 +621,15 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             r['student']?['user']?['name'] ??
             'Unknown';
 
+        final avatarUrl = r['student']?['avatar_url'] ??
+            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=6366f1&color=ffffff';
+
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: isPresent ? Colors.green[50] : Colors.red[50],
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: TextStyle(
-                    color: isPresent ? Colors.green[700] : Colors.red[700],
-                    fontWeight: FontWeight.bold),
-              ),
+              backgroundImage: NetworkImage(avatarUrl),
             ),
             title:
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -677,25 +677,25 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         final total = s['total_days'] ?? 0;
         final rate = s['attendance_rate'] ?? 0;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.orange[50],
-                      child: Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : '?',
-                        style: TextStyle(
-                            color: Colors.orange[700],
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                final avatarUrl = s['avatar_url'] ??
+                    (s['profile_image_path'] != null
+                        ? '${dotenv.env['API_URL']}/api/storage/${s['profile_image_path']}'
+                        : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=6366f1&color=ffffff');
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.orange[50],
+                              backgroundImage: NetworkImage(avatarUrl),
+                            ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(name,
