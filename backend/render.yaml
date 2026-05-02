@@ -47,10 +47,6 @@ services:
         value: /etc/secrets/firebase-credentials.json
       - key: GOOGLE_CLOUD_USE_REST
         value: "true"
-    # Moved secrets here as Render sometimes prefers this format
-    secrets:
-      - key: firebase-credentials.json
-        name: firebase-credentials.json
 
 databases:
   - name: sbku-db
