@@ -1,5 +1,5 @@
-# Use PHP 8.3 with Apache
-FROM php:8.3-apache
+# Use PHP 8.4 with Apache
+FROM php:8.4-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -34,14 +34,14 @@ WORKDIR /var/www/html
 COPY . .
 
 # Install dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod +x /var/www/html/start.sh
 
 # Configure Apache
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
@@ -52,6 +52,8 @@ RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/a
 # Set environment variables for production
 ENV APP_ENV=production
 ENV APP_DEBUG=false
+ENV GOOGLE_CLOUD_USE_REST=true
+RUN rm -rf public/storage && php artisan storage:link
 
 # Expose the port
 EXPOSE 8080
