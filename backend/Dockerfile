@@ -33,8 +33,15 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Install dependencies
+# Install Node.js and npm for Vite
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
+
+# Install Node dependencies and build assets
+RUN npm install && npm run build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
