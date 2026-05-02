@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/login_sucess_screen.dart';
@@ -16,15 +15,27 @@ class _LoginScreenState extends State<LoginScreen>
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
+  // ValueNotifier avoids full-tree rebuild on password toggle
+  final _obscurePassword = ValueNotifier<bool>(true);
+  // Track focus for field glow animation
+  final _emailFocused = ValueNotifier<bool>(false);
+  final _passwordFocused = ValueNotifier<bool>(false);
+  // Track button press scale
+  final _buttonPressed = ValueNotifier<bool>(false);
 
   late final AnimationController _fadeController;
   late final AnimationController _slideController;
-  late final AnimationController _pulseController;
+  late final AnimationController _logoController;
 
   late final Animation<double> _fadeAnim;
-  late final Animation<Offset> _slideAnim;
-  late final Animation<double> _pulseAnim;
+  late final Animation<Offset> _headerSlideAnim;
+  late final Animation<Offset> _emailSlideAnim;
+  late final Animation<Offset> _passwordSlideAnim;
+  late final Animation<Offset> _buttonSlideAnim;
+  late final Animation<double> _logoScaleAnim;
 
   static const _primary = Color(0xFFE84E0F);
   static const _primaryDark = Color(0xFFBF3B08);
@@ -34,38 +45,72 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
 
+    // Faster overall fade: 500ms
     _fadeController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
+        vsync: this, duration: const Duration(milliseconds: 500));
+    // Staggered slide: 600ms total window
     _slideController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800));
-    _pulseController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1600))
-      ..repeat(reverse: true);
+        vsync: this, duration: const Duration(milliseconds: 600));
+    // Logo bounce-in: 550ms
+    _logoController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 550));
 
-    _fadeAnim = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(
-        CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.05).animate(
-        CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+    _fadeAnim =
+        CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
 
+    // Stagger each element by slicing the 0..1 interval
+    _headerSlideAnim = _makeSlide(_slideController, 0.0, 0.55);
+    _emailSlideAnim = _makeSlide(_slideController, 0.20, 0.75);
+    _passwordSlideAnim = _makeSlide(_slideController, 0.35, 0.85);
+    _buttonSlideAnim = _makeSlide(_slideController, 0.50, 1.0);
+
+    _logoScaleAnim = Tween<double>(begin: 0.6, end: 1.0).animate(
+        CurvedAnimation(
+            parent: _logoController, curve: Curves.elasticOut));
+
+    _emailFocus.addListener(() {
+      _emailFocused.value = _emailFocus.hasFocus;
+    });
+    _passwordFocus.addListener(() {
+      _passwordFocused.value = _passwordFocus.hasFocus;
+    });
+
+    // Kick off all animations together
     _fadeController.forward();
     _slideController.forward();
+    _logoController.forward();
+  }
+
+  Animation<Offset> _makeSlide(
+      AnimationController ctrl, double startInterval, double endInterval) {
+    return Tween<Offset>(
+      begin: const Offset(0, 0.10),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: ctrl,
+      curve: Interval(startInterval, endInterval, curve: Curves.easeOutCubic),
+    ));
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    _obscurePassword.dispose();
+    _emailFocused.dispose();
+    _passwordFocused.dispose();
+    _buttonPressed.dispose();
     _fadeController.dispose();
     _slideController.dispose();
-    _pulseController.dispose();
+    _logoController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
+    // Dismiss keyboard immediately
+    FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -75,17 +120,16 @@ class _LoginScreenState extends State<LoginScreen>
     );
 
     if (success && mounted) {
-      // Navigate to dedicated success screen
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => LoginSuccessScreen(
-            userName: authProvider.user?.name, // pass name if available
+            userName: authProvider.user?.name,
           ),
           transitionsBuilder: (_, anim, __, child) => FadeTransition(
             opacity: anim,
             child: child,
           ),
-          transitionDuration: const Duration(milliseconds: 400),
+          transitionDuration: const Duration(milliseconds: 350),
         ),
       );
     } else if (mounted) {
@@ -104,6 +148,7 @@ class _LoginScreenState extends State<LoginScreen>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -112,40 +157,59 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      // Resize so keyboard doesn't shift content abruptly
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           _buildBackground(),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
                 child: FadeTransition(
                   opacity: _fadeAnim,
-                  child: SlideTransition(
-                    position: _slideAnim,
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildLogo(),
-                          const SizedBox(height: 32),
-                          _buildHeader(),
-                          const SizedBox(height: 36),
-                          _buildEmailField(),
-                          const SizedBox(height: 14),
-                          _buildPasswordField(),
-                          const SizedBox(height: 28),
-                          _buildLoginButton(),
-                          const SizedBox(height: 20),
-                          _buildFooterNote(),
-                        ],
-                      ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Logo with elastic bounce-in
+                        ScaleTransition(
+                          scale: _logoScaleAnim,
+                          child: _buildLogo(),
+                        ),
+                        const SizedBox(height: 28),
+                        // Header with its own stagger
+                        SlideTransition(
+                          position: _headerSlideAnim,
+                          child: _buildHeader(),
+                        ),
+                        const SizedBox(height: 32),
+                        // Email field stagger
+                        SlideTransition(
+                          position: _emailSlideAnim,
+                          child: _buildEmailField(),
+                        ),
+                        const SizedBox(height: 12),
+                        // Password field stagger
+                        SlideTransition(
+                          position: _passwordSlideAnim,
+                          child: _buildPasswordField(),
+                        ),
+                        const SizedBox(height: 24),
+                        // Button stagger
+                        SlideTransition(
+                          position: _buttonSlideAnim,
+                          child: _buildLoginButton(),
+                        ),
+                        const SizedBox(height: 18),
+                        _buildFooterNote(),
+                      ],
                     ),
                   ),
                 ),
@@ -204,32 +268,29 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildLogo() {
     return Center(
-      child: ScaleTransition(
-        scale: _pulseAnim,
-        child: Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: _primary.withOpacity(0.25),
-                blurRadius: 30,
-                spreadRadius: -4,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Image.asset(
-              'assets/images/logo.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: _primaryLight,
-                child:
-                    const Icon(Icons.school_rounded, color: _primary, size: 48),
-              ),
+      child: Container(
+        width: 96,
+        height: 96,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: _primary.withOpacity(0.28),
+              blurRadius: 28,
+              spreadRadius: -4,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Image.asset(
+            'assets/images/logo.jpg',
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: _primaryLight,
+              child:
+                  const Icon(Icons.school_rounded, color: _primary, size: 48),
             ),
           ),
         ),
@@ -255,7 +316,11 @@ class _LoginScreenState extends State<LoginScreen>
       Text(
         'Sign in to continue',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
+        style: TextStyle(
+            fontSize: 14,
+            color: isDark
+                ? const Color(0xFF94A3B8)
+                : Colors.grey.shade500),
       ),
     ]);
   }
@@ -265,32 +330,54 @@ class _LoginScreenState extends State<LoginScreen>
     required String hint,
     required IconData icon,
     Widget? suffix,
+    required bool isFocused,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey.shade200;
-    final fillColor = isDark ? const Color(0xFF1E293B) : Colors.grey.shade50;
-    final iconBg = isDark ? const Color(0xFF253043) : _primaryLight;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : Colors.grey.shade200;
+    final focusedBorderColor = _primary;
+    final fillColor = isDark
+        ? (isFocused ? const Color(0xFF253043) : const Color(0xFF1E293B))
+        : (isFocused ? const Color(0xFFFFF8F6) : Colors.grey.shade50);
+    final iconBg = isFocused
+        ? _primary.withOpacity(0.12)
+        : (isDark ? const Color(0xFF253043) : _primaryLight);
 
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400, fontSize: 14),
-      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500, fontSize: 14),
-      prefixIcon: Container(
+      hintStyle: TextStyle(
+          color: isDark
+              ? const Color(0xFF64748B)
+              : Colors.grey.shade400,
+          fontSize: 14),
+      labelStyle: TextStyle(
+          color: isFocused
+              ? _primary
+              : (isDark
+                  ? const Color(0xFF94A3B8)
+                  : Colors.grey.shade500),
+          fontSize: 14),
+      prefixIcon: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
         margin: const EdgeInsets.only(left: 14, right: 10),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: iconBg,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: _primary, size: 18),
+        child: Icon(icon,
+            color: isFocused ? _primary : _primary.withOpacity(0.7),
+            size: 18),
       ),
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffix,
       filled: true,
       fillColor: fillColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: borderColor)),
@@ -299,52 +386,123 @@ class _LoginScreenState extends State<LoginScreen>
           borderSide: BorderSide(color: borderColor)),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _primary, width: 1.5)),
+          borderSide: BorderSide(color: focusedBorderColor, width: 1.8)),
       errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.red.shade400)),
       focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5)),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.8)),
     );
   }
 
   Widget _buildEmailField() {
-    return TextFormField(
-      controller: _emailController,
-      keyboardType: TextInputType.emailAddress,
-      decoration: _fieldDecoration(
-          label: 'Email', hint: 'your@email.com', icon: Icons.email_outlined),
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Please enter your email';
-        if (!v.contains('@')) return 'Please enter a valid email';
-        return null;
+    return ValueListenableBuilder<bool>(
+      valueListenable: _emailFocused,
+      builder: (context, isFocused, _) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: _primary.withOpacity(0.18),
+                      blurRadius: 16,
+                      spreadRadius: -2,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : [],
+          ),
+          child: TextFormField(
+            controller: _emailController,
+            focusNode: _emailFocus,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) =>
+                FocusScope.of(context).requestFocus(_passwordFocus),
+            decoration: _fieldDecoration(
+              label: 'Email',
+              hint: 'your@email.com',
+              icon: Icons.email_outlined,
+              isFocused: isFocused,
+            ),
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter your email';
+              if (!v.contains('@')) return 'Please enter a valid email';
+              return null;
+            },
+          ),
+        );
       },
     );
   }
 
   Widget _buildPasswordField() {
-    return TextFormField(
-      controller: _passwordController,
-      obscureText: _obscurePassword,
-      decoration: _fieldDecoration(
-        label: 'Password',
-        hint: '••••••••',
-        icon: Icons.lock_outlined,
-        suffix: IconButton(
-          icon: Icon(
-            _obscurePassword
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
-            color: Colors.grey.shade400,
-            size: 20,
+    return ValueListenableBuilder<bool>(
+      valueListenable: _passwordFocused,
+      builder: (context, isFocused, _) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: _primary.withOpacity(0.18),
+                      blurRadius: 16,
+                      spreadRadius: -2,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : [],
           ),
-          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-        ),
-      ),
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Please enter your password';
-        return null;
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _obscurePassword,
+            builder: (context, obscure, _) {
+              return TextFormField(
+                controller: _passwordController,
+                focusNode: _passwordFocus,
+                obscureText: obscure,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _login(),
+                decoration: _fieldDecoration(
+                  label: 'Password',
+                  hint: '••••••••',
+                  icon: Icons.lock_outlined,
+                  isFocused: isFocused,
+                  suffix: IconButton(
+                    icon: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, anim) =>
+                          ScaleTransition(scale: anim, child: child),
+                      child: Icon(
+                        obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        key: ValueKey(obscure),
+                        color: isFocused
+                            ? _primary.withOpacity(0.7)
+                            : Colors.grey.shade400,
+                        size: 20,
+                      ),
+                    ),
+                    onPressed: () =>
+                        _obscurePassword.value = !_obscurePassword.value,
+                  ),
+                ),
+                validator: (v) {
+                  if (v == null || v.isEmpty)
+                    return 'Please enter your password';
+                  return null;
+                },
+              );
+            },
+          ),
+        );
       },
     );
   }
@@ -352,58 +510,82 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildLoginButton() {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
-        return Container(
-          height: 54,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: const LinearGradient(
-              colors: [_primary, _primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _primary.withOpacity(0.4),
-                blurRadius: 20,
-                spreadRadius: -4,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: authProvider.isLoading ? null : _login,
-              child: Center(
-                child: authProvider.isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Sign In',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
-                              )),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded,
-                              color: Colors.white, size: 18),
-                        ],
+        return ValueListenableBuilder<bool>(
+          valueListenable: _buttonPressed,
+          builder: (context, pressed, _) {
+            return GestureDetector(
+              onTapDown: (_) => _buttonPressed.value = true,
+              onTapUp: (_) => _buttonPressed.value = false,
+              onTapCancel: () => _buttonPressed.value = false,
+              child: AnimatedScale(
+                scale: pressed ? 0.96 : 1.0,
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOut,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 54,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      colors: pressed
+                          ? [_primaryDark, _primaryDark]
+                          : [_primary, _primaryDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: pressed
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: _primary.withOpacity(0.38),
+                              blurRadius: 20,
+                              spreadRadius: -4,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: authProvider.isLoading ? null : _login,
+                      splashColor: Colors.white.withOpacity(0.1),
+                      highlightColor: Colors.white.withOpacity(0.05),
+                      child: Center(
+                        child: authProvider.isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Sign In',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward_rounded,
+                                      color: Colors.white, size: 18),
+                                ],
+                              ),
                       ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -418,7 +600,9 @@ class _LoginScreenState extends State<LoginScreen>
           color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+            color: isDark
+                ? const Color(0xFF334155)
+                : Colors.grey.shade200,
           ),
         ),
         child: Row(
@@ -426,13 +610,17 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             Icon(Icons.info_outline_rounded,
                 size: 14,
-                color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
+                color: isDark
+                    ? const Color(0xFF64748B)
+                    : Colors.grey.shade400),
             const SizedBox(width: 6),
             Text(
               'Contact admin to create an account',
               style: TextStyle(
                 fontSize: 12,
-                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : Colors.grey.shade500,
               ),
             ),
           ],
