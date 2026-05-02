@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Traits\SyncsToFirestore;
 
 class AttendanceSession extends Model
 {
+    use SyncsToFirestore;
     protected $fillable = [
         'teacher_id',
         'faculty_id',

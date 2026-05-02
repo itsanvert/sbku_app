@@ -55,6 +55,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
               .toList() ??
           [];
 
+      if (!mounted) return;
       setState(() {
         if (loadMore) {
           _records.addAll(data);
@@ -65,6 +66,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -271,11 +273,13 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       final dateStr =
           '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
       final data = await _service.getDailyReport(dateStr);
+      if (!mounted) return;
       setState(() {
         _dailyData = data;
         _dailyLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _dailyLoading = false);
     }
   }
@@ -307,11 +311,13 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
     try {
       final data =
           await _service.getMonthlyReport(_selectedMonth, _selectedMonthYear);
+      if (!mounted) return;
       setState(() {
         _monthlyData = data;
         _monthlyLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _monthlyLoading = false);
     }
   }
@@ -321,11 +327,13 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
     setState(() => _yearlyLoading = true);
     try {
       final data = await _service.getYearlyReport(_selectedYear);
+      if (!mounted) return;
       setState(() {
         _yearlyData = data;
         _yearlyLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _yearlyLoading = false);
     }
   }
