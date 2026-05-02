@@ -106,7 +106,7 @@ class StudentCreate extends Component
         return view('livewire.students.student-create', [
             'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
-            'schedules' => Schedule::orderBy('day_of_the_week')->get(),
+            'schedules' => Schedule::orderBy('name')->get(),
             'genders' => ['male' => 'Male', 'female' => 'Female'],
             'shifts' => Shift::orderBy('name')->get(),
         ]);
