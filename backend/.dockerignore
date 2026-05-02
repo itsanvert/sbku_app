@@ -7,3 +7,4 @@ storage/framework/sessions/*
 storage/framework/views/*.php
 storage/logs/*.log
 tests
+public/storage
