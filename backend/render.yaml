@@ -2,6 +2,7 @@ services:
   - type: web
     name: sbkuapp
     env: docker
+    rootDir: backend # Added this back to point to the backend folder
     plan: free
     region: singapore
     envVars:
