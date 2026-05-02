@@ -2,14 +2,14 @@ services:
   - type: web
     name: sbkuapp
     env: docker
-    rootDir: backend # Added this back to point to the backend folder
+    rootDir: backend
     plan: free
     region: singapore
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: "false"
+        value: "true"
       - key: APP_KEY
         generateValue: true
       - key: DB_CONNECTION
