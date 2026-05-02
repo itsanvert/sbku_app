@@ -9,7 +9,7 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: "false"
+        value: "true"
       - key: APP_URL
         value: https://sbkuapp.onrender.com
       - key: APP_KEY

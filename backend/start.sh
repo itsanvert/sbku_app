@@ -12,7 +12,10 @@ fi
 # Run migrations
 php artisan migrate --force
 
-# Optimize Laravel
+# Clear caches to ensure fresh production assets
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
 php artisan optimize
 
 # Start Apache
