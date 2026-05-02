@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: sbku-backend
+    env: docker
+    rootDir: backend
+    plan: free
+    region: singapore # Change this if you prefer another region
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          type: web
+          name: sbku-backend
+          property: host
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: sbku-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: sbku-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: sbku-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: sbku-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: sbku-db
+          property: password
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FIREBASE_PROJECT_ID
+        value: sbkuapp-vert25
+      - key: FIREBASE_CREDENTIALS
+        value: /etc/secrets/firebase-credentials.json
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/firebase-credentials.json
+    secretFiles:
+      - key: firebase-credentials.json
+        name: firebase-credentials.json
+
+databases:
+  - name: sbku-db
+    plan: free
+    region: singapore
