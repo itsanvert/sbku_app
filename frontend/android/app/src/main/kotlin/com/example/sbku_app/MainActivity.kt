@@ -1,4 +1,4 @@
-package com.example.sbku_app
+package com.sbkuapp.sbku
 
 import io.flutter.embedding.android.FlutterActivity
 

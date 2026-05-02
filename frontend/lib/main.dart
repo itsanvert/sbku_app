@@ -9,8 +9,23 @@ import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+  }
 
   // Lock to portrait for a consistent login experience
   await SystemChrome.setPreferredOrientations([
@@ -87,6 +102,24 @@ class _AuthCheckState extends State<AuthCheck> {
   void initState() {
     super.initState();
     _checkAuth();
+    _setupFirebaseMessaging();
+  }
+
+  void _setupFirebaseMessaging() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Got a message whilst in the foreground!');
+      print('Message data: ${message.data}');
+
+      if (message.notification != null) {
+        print('Message also contained a notification: ${message.notification}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${message.notification!.title}: ${message.notification!.body}'),
+            backgroundColor: Theme.of(context).primaryColor,
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _checkAuth() async {
