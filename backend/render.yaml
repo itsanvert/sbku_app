@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sbku-backend
+    name: sbkuapp
     env: docker
     plan: free
     region: singapore
@@ -15,23 +15,23 @@ services:
         value: pgsql
       - key: DB_HOST
         fromDatabase:
-          name: sbku-db
+          name: sbkuapp-db
           property: host
       - key: DB_PORT
         fromDatabase:
-          name: sbku-db
+          name: sbkuapp-db
           property: port
       - key: DB_DATABASE
         fromDatabase:
-          name: sbku-db
+          name: sbkuapp-db
           property: database
       - key: DB_USERNAME
         fromDatabase:
-          name: sbku-db
+          name: sbkuapp-db
           property: user
       - key: DB_PASSWORD
         fromDatabase:
-          name: sbku-db
+          name: sbkuapp-db
           property: password
       - key: SESSION_DRIVER
         value: file
@@ -49,6 +49,6 @@ services:
         value: "true"
 
 databases:
-  - name: sbku-db
+  - name: sbkuapp-db
     plan: free
     region: singapore
