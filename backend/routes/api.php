@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/password', [ProfileController::class, 'updatePassword']);
     Route::post('/user/profile-photo', [ProfileController::class, 'updateProfilePhoto']);
     Route::delete('/user/profile-photo', [ProfileController::class, 'deleteProfilePhoto']);
+    Route::post('/user/fcm-token', [ProfileController::class, 'updateFcmToken']);
 
     // Teachers
     Route::apiResource('teachers', TeacherController::class)

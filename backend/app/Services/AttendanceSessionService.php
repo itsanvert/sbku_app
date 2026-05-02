@@ -21,17 +21,24 @@ class AttendanceSessionService
     public function startSession(array $validated): AttendanceSession
     {
         $session = AttendanceSession::create([
-            'teacher_id'  => $validated['teacher_id'],
-            'faculty_id'  => $validated['faculty_id'] ?? null,
-            'major_id'    => $validated['major_id'] ?? null,
-            'schedule_id' => $validated['schedule_id'] ?? null,
-            'latitude'    => $validated['latitude'] ?? null,
-            'longitude'   => $validated['longitude'] ?? null,
-            'started_at'  => now(),
-            'is_active'   => true,
+            'teacher_id'         => $validated['teacher_id'],
+            'faculty_id'         => $validated['faculty_id']   ?? null,
+            'major_id'           => $validated['major_id']     ?? null,
+            'schedule_id'        => $validated['schedule_id']  ?? null,
+            'syllabus_id'        => $validated['syllabus_id']  ?? null,
+            'subject_id'         => $validated['subject_id']   ?? null,
+            'year_id'            => $validated['year_id']      ?? null,
+            'semester_id'        => $validated['semester_id']  ?? null,
+            'day_of_week'        => $validated['day_of_week']  ?? null,
+            'session_start_time' => $validated['start_time']   ?? null,
+            'session_end_time'   => $validated['end_time']     ?? null,
+            'latitude'           => $validated['latitude']     ?? null,
+            'longitude'          => $validated['longitude']    ?? null,
+            'started_at'         => \Carbon\Carbon::today()->setTimeFromTimeString($validated['start_time'] ?? '00:00'),
+            'is_active'          => true,
         ]);
 
-        return $session->load(['teacher.user', 'faculty', 'major']);
+        return $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus']);
     }
 
     /**
@@ -85,13 +92,17 @@ class AttendanceSessionService
                 'ended_at'  => now(),
             ]);
 
-            // Get eligible students
+            // Get eligible students — filtered by major, faculty, and year (from syllabus)
             $query = Student::query();
             if ($session->faculty_id) {
                 $query->where('faculty_id', $session->faculty_id);
             }
             if ($session->major_id) {
                 $query->where('major_id', $session->major_id);
+            }
+            // Narrow to the specific year from syllabus if available
+            if ($session->year_id) {
+                $query->where('year', $session->year_id);
             }
 
             $allStudents = $query->pluck('id');

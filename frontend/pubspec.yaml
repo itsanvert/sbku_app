@@ -32,6 +32,10 @@ dependencies:
   share_plus: ^12.0.2
   reorderable_grid_view: ^2.2.8
   get_it: ^8.0.2
+  firebase_core: ^4.7.0
+  firebase_auth: ^6.4.0
+  cloud_firestore: ^6.3.0
+  firebase_messaging: ^16.2.0
 
 dev_dependencies:
   flutter_test:

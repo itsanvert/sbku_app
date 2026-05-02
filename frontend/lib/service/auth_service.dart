@@ -238,4 +238,13 @@ class AuthService {
       };
     }
   }
+
+  // Update FCM token
+  Future<void> updateFcmToken(String token) async {
+    try {
+      await _apiService.post('user/fcm-token', {'token': token}, requiresAuth: true);
+    } catch (e) {
+      print('Failed to update FCM token: $e');
+    }
+  }
 }

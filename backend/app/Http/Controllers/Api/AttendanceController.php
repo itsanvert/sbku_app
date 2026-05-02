@@ -108,6 +108,7 @@ class AttendanceController extends Controller
             ->select(
                 'students.id as student_id',
                 'users.name as student_name',
+                'students.profile_image_path',
                 DB::raw("COUNT(*) as total_days"),
                 DB::raw("SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) as present_days"),
                 DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent_days"),
@@ -142,6 +143,7 @@ class AttendanceController extends Controller
             ->select(
                 'students.id as student_id',
                 'users.name as student_name',
+                'students.profile_image_path',
                 DB::raw("COUNT(*) as total_days"),
                 DB::raw("SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) as present_days"),
                 DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent_days"),

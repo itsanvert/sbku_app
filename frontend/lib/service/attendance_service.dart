@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:sbku_app/service/api_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AttendanceService {
   final ApiService _api = ApiService();
@@ -63,6 +64,24 @@ class AttendanceService {
       return List<Map<String, dynamic>>.from(jsonDecode(response.body));
     }
     throw Exception('Failed to load active sessions');
+  }
+
+  /// Listen to active attendance sessions in real-time from Firestore
+  Stream<List<Map<String, dynamic>>> listenToActiveSessions({int? teacherId}) {
+    Query query = FirebaseFirestore.instance.collection('attendance_sessions')
+        .where('is_active', isEqualTo: true);
+        
+    if (teacherId != null) {
+      query = query.where('teacher_id', isEqualTo: teacherId);
+    }
+    
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return data;
+      }).toList();
+    });
   }
 
   /// Get session details.

@@ -17,8 +17,10 @@ return new class extends Migration
             $table->string('permission_image')->nullable()->after('permission_reason');
         });
 
-        // Add 'P' to the status enum (using raw SQL for safety with enums)
-        DB::statement("ALTER TABLE attendances MODIFY COLUMN status ENUM('Y', 'N', 'P') DEFAULT 'N'");
+        // Cross-platform way to update the column (works for both MySQL and PostgreSQL)
+        Schema::table('attendances', function (Blueprint $table) {
+            $table->string('status')->default('N')->change();
+        });
     }
 
     /**
@@ -28,8 +30,7 @@ return new class extends Migration
     {
         Schema::table('attendances', function (Blueprint $table) {
             $table->dropColumn(['permission_reason', 'permission_image']);
+            $table->string('status')->default('N')->change();
         });
-
-        DB::statement("ALTER TABLE attendances MODIFY COLUMN status ENUM('Y', 'N') DEFAULT 'N'");
     }
 };

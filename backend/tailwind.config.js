@@ -3,10 +3,11 @@ import forms from "@tailwindcss/forms";
 
 export default {
     content: [
-        "./vendor/livewire/flux/**/*.blade.php", // 👈 REQUIRED
-        "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
-        "./storage/framework/views/*.php",
-        "./resources/views/**/*.blade.php",
+        './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
+        './vendor/livewire/flux-pro/stubs/**/*.blade.php',
+        './vendor/livewire/flux/stubs/**/*.blade.php',
+        './storage/framework/views/*.php',
+        './resources/views/**/*.blade.php',
     ],
 
     theme: {
