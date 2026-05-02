@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('attendance_sessions', function (Blueprint $table) {
-            if (Schema::hasColumn('attendance_sessions', 'student_id')) {
-                $table->dropColumn('student_id');
-            }
+        Schema::create('teams', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->index();
+            $table->string('name');
+            $table->boolean('personal_team');
+            $table->timestamps();
         });
     }
 
@@ -23,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('attendance_sessions', function (Blueprint $table) {
-            $table->unsignedBigInteger('student_id')->nullable();
-        });
+        Schema::dropIfExists('teams');
     }
 };
