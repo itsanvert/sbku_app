@@ -61,7 +61,7 @@ class StudentIndex extends Component
     public function students()
     {
         $query = Student::query()
-            ->with(['user', 'major', 'faculty'])
+            ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
             ->join('users', 'students.user_id', '=', 'users.id')
             ->leftJoin('faculties', 'students.faculty_id', '=', 'faculties.id')
             ->leftJoin('majors', 'students.major_id', '=', 'majors.id')
