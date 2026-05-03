@@ -3,6 +3,7 @@ import 'package:sbku_app/presentation/screens/attendance/attendance_history_scre
 import 'package:sbku_app/presentation/screens/attendance/teacher_start_attendance_session_screen.dart';
 import 'package:sbku_app/presentation/screens/attendance/qr_scan_attendance_screen.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_sessions_list.dart';
+import 'package:sbku_app/presentation/screens/messages/message_list_screen.dart';
 
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
@@ -72,6 +73,11 @@ class AttendanceListCategoryScreen extends StatelessWidget {
         icon: Icons.history,
         label: 'ប្រវត្តិវត្តមានរបស់ខ្ញុំ',
         screen: StudentAttendanceHistoryScreen(),
+      ),
+      ListCardItem(
+        icon: Icons.notifications_active_outlined,
+        label: 'សារជូនដំណឹង',
+        screen: MessageListScreen(),
       ),
     ];
   }
