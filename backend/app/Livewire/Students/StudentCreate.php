@@ -8,6 +8,7 @@ use App\Models\Major;
 use App\Models\Faculty;
 use App\Models\Shift;
 use App\Models\Schedule;
+use App\Models\AcademicClass;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
@@ -33,6 +34,7 @@ class StudentCreate extends Component
     public $dob = '';
     public $faculty_id = '';
     public $major_id = '';
+    public $academic_class_id = '';
     public $year = '';
     public $shift_id = '';
     public $schedule_id = '';
@@ -52,6 +54,7 @@ class StudentCreate extends Component
             'dob' => 'nullable|date',
             'faculty_id' => 'required|exists:faculties,id',
             'major_id' => 'required|exists:majors,id',
+            'academic_class_id' => 'nullable|exists:academic_classes,id',
             'year' => 'required',
             'shift_id' => 'required|exists:shifts,id',
             'schedule_id' => 'required|exists:schedules,id',
@@ -60,9 +63,15 @@ class StudentCreate extends Component
         ];
     }
 
-    public function updated($property)
+    public function updatedFacultyId()
     {
-        $this->validateOnly($property);
+        $this->major_id = '';
+        $this->academic_class_id = '';
+    }
+
+    public function updatedMajorId()
+    {
+        $this->academic_class_id = '';
     }
 
     public function save()
@@ -82,6 +91,7 @@ class StudentCreate extends Component
                 'dob' => $this->dob,
                 'faculty_id' => $this->faculty_id,
                 'major_id' => $this->major_id,
+                'academic_class_id' => $this->academic_class_id ?: null,
                 'year' => $this->year,
                 'shift_id' => $this->shift_id,
                 'schedule_id' => $this->schedule_id,
@@ -104,10 +114,16 @@ class StudentCreate extends Component
     public function render()
     {
         return view('livewire.students.student-create', [
-            'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
-            'schedules' => Schedule::orderBy('name')->get(),
-            'genders' => ['male' => 'Male', 'female' => 'Female'],
+            'majors' => $this->faculty_id 
+                ? Major::where('faculty_id', $this->faculty_id)->orderBy('name')->get() 
+                : collect(),
+            'academic_classes' => $this->major_id 
+                ? AcademicClass::where('major_id', $this->major_id)->orderBy('name')->get() 
+                : collect(),
+            'schedules' => Schedule::all()->sortBy(function($s) {
+                return $s->full_display;
+            }),
             'shifts' => Shift::orderBy('name')->get(),
         ]);
     }

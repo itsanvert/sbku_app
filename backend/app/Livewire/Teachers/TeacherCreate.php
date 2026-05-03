@@ -30,12 +30,12 @@ class TeacherCreate extends Component
         Teacher Fields
     --------------------------------- */
     public $gender = '';
+    public $faculty_id = '';
     public $major_id = '';
     public $year = '';
     public $schedule_id = '';
     public $shift_id = '';
     public $phone = '';
-    public $faculty_id = '';
 
     /* ---------------------------------
         Validation Rules
@@ -48,27 +48,21 @@ class TeacherCreate extends Component
             'password'   => 'required|min:8',
             'role'       => 'required|in:admin,user,student,teacher',
             'gender'     => 'required|in:male,female',
+            'faculty_id' => 'required|exists:faculties,id',
             'major_id'   => 'required|exists:majors,id',
             'year'       => 'required',
             'schedule_id'   => 'required|exists:schedules,id',
             'shift_id'   => 'required|exists:shifts,id',
             'phone'      => 'required|string|max:20',
-            'faculty_id' => 'required|exists:faculties,id',
             'photo'      => 'nullable|image|max:1024', // 1MB Max
         ];
     }
 
-    /* ---------------------------------
-        Real-Time Validation (Optional)
-    --------------------------------- */
-    public function updated($property)
+    public function updatedFacultyId()
     {
-        $this->validateOnly($property);
+        $this->major_id = '';
     }
 
-    /* ---------------------------------
-        Save Teacher
-    --------------------------------- */
     public function save()
     {
         $validated = $this->validate();
@@ -84,13 +78,12 @@ class TeacherCreate extends Component
 
             $teacherData = [
                 'gender'     => $this->gender,
+                'faculty_id' => $this->faculty_id,
                 'major_id'   => $this->major_id,
                 'year'       => $this->year,
-                'role'       => $this->role,
                 'schedule_id'   => $this->schedule_id,
                 'shift_id'   => $this->shift_id,
                 'phone'      => $this->phone,
-                'faculty_id' => $this->faculty_id,
             ];
 
             if ($this->photo) {
@@ -98,47 +91,24 @@ class TeacherCreate extends Component
             }
 
             // The User observer has already created a skeleton Teacher record.
-            // We now update it with the specific teacher details.
             $user->teacher()->update($teacherData);
         });
 
         $this->reset();
-
-         // notify index
-
-session()->flash('success', 'Teacher created successfully!');
+        $this->dispatch('teacherCreated');
+        session()->flash('success', 'Teacher created successfully!');
     }
 
-    /* ---------------------------------
-        Reset Form Cleanly
-    --------------------------------- */
-    protected function resetForm()
-    {
-        $this->reset([
-            'name',
-            'email',
-            'password',
-            'gender',
-            'major_id',
-            'year',
-            'schedule_id',
-            'shift_id',
-            'phone',
-            'faculty_id',
-        ]);
-
-        $this->role = 'teacher';
-    }
-
-    /* ---------------------------------
-        Render
-    --------------------------------- */
     public function render()
     {
         return view('livewire.teachers.teacher-create', [
-            'majors' => Major::orderBy('name')->get(),
             'faculties' => Faculty::orderBy('name')->get(),
-            'schedules' => Schedule::orderBy('name')->get(),
+            'majors' => $this->faculty_id 
+                ? Major::where('faculty_id', $this->faculty_id)->orderBy('name')->get() 
+                : collect(),
+            'schedules' => Schedule::all()->sortBy(function($s) {
+                return $s->full_display;
+            }),
             'shifts' => Shift::orderBy('name')->get(),
         ]);
     }

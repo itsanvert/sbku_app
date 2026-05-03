@@ -38,21 +38,26 @@ class TeacherEdit extends Component
 
     public function mount($teacherId)
     {
-    $teacher = Teacher::with('user')->findOrFail($teacherId);
+        $teacher = Teacher::with('user')->findOrFail($teacherId);
 
-    $this->teacherId  = $teacher->id;
-    $this->userId     = $teacher->user->id;
-    $this->name       = $teacher->user->name;
-    $this->email      = $teacher->user->email;
-    $this->role       = $teacher->user->role;
-    $this->gender     = $teacher->gender;
-    $this->major_id   = $teacher->major_id;
-    $this->year       = $teacher->year;
-    $this->schedule_id     = $teacher->schedule_id;
-    $this->shift_id     = $teacher->shift_id;
-    $this->phone      = $teacher->phone;
-    $this->faculty_id = $teacher->faculty_id;
-    $this->existingPhoto = $teacher->profile_image_path;
+        $this->teacherId  = $teacher->id;
+        $this->userId     = $teacher->user->id;
+        $this->name       = $teacher->user->name;
+        $this->email      = $teacher->user->email;
+        $this->role       = $teacher->user->role;
+        $this->gender     = $teacher->gender;
+        $this->major_id   = $teacher->major_id;
+        $this->year       = $teacher->year;
+        $this->schedule_id = $teacher->schedule_id;
+        $this->shift_id     = $teacher->shift_id;
+        $this->phone      = $teacher->phone;
+        $this->faculty_id = $teacher->faculty_id;
+        $this->existingPhoto = $teacher->profile_image_path;
+    }
+
+    public function updatedFacultyId()
+    {
+        $this->major_id = '';
     }
 
     public function save()
@@ -69,7 +74,10 @@ class TeacherEdit extends Component
         if ($this->password) {
             $userData['password'] = Hash::make($this->password);
         }
-        $teacher->user->update($userData);
+        $studentUser = $teacher->user;
+        if($studentUser) {
+             $studentUser->update($userData);
+        }
 
         $teacherData = [
             'gender'     => $this->gender,
@@ -86,17 +94,20 @@ class TeacherEdit extends Component
         }
 
         $teacher->update($teacherData);
-    $this->dispatch('teacherUpdated');
-}
+        $this->dispatch('teacherUpdated');
+    }
 
-
-   public function render()
-{
-    return view('livewire.teachers.teacher-edit', [
-        'majors'    => Major::orderBy('name')->get(),
-        'faculties' => Faculty::orderBy('name')->get(),
-        'schedules' => Schedule::orderBy('id')->get(),
-        'shifts'    => Shift::orderBy('name')->get(),
-    ]);
-}
+    public function render()
+    {
+        return view('livewire.teachers.teacher-edit', [
+            'faculties' => Faculty::orderBy('name')->get(),
+            'majors' => $this->faculty_id 
+                ? Major::where('faculty_id', $this->faculty_id)->orderBy('name')->get() 
+                : collect(),
+            'schedules' => Schedule::all()->sortBy(function($s) {
+                return $s->full_display;
+            }),
+            'shifts'    => Shift::orderBy('name')->get(),
+        ]);
+    }
 }
