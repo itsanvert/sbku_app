@@ -36,7 +36,7 @@ class AttendanceSessionIndex extends Component
 
     public function getSessionsProperty()
     {
-        return AttendanceSession::with(['teacher.user', 'faculty', 'major', 'schedule'])
+        return AttendanceSession::with(['teacher.user', 'faculty', 'major', 'academicClass', 'schedule', 'shift'])
             ->withCount('attendances')
             ->when($this->search, function ($query) {
                 // simple search
