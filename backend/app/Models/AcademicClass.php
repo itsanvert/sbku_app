@@ -5,12 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\SyncsToFirestore;
 
-class Subject extends Model
+class AcademicClass extends Model
 {
     use SyncsToFirestore;
     protected $fillable = [
         'name',
         'code',
-        'credit_hours',
+        'major_id',
+        'academic_year',
+        'semester',
     ];
+
+    public function major()
+    {
+        return $this->belongsTo(Major::class);
+    }
 }
