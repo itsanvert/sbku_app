@@ -21,6 +21,7 @@ class Syllabus extends Model
         'day_of_week',
         'start_time',
         'end_time',
+        'academic_class_id',
     ];
 
     protected $casts = [
@@ -54,6 +55,11 @@ class Syllabus extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function academicClass(): BelongsTo
+    {
+        return $this->belongsTo(AcademicClass::class);
     }
 
     // ── Query Scopes (used by ScheduleConflictDetector) ───────────────────────
