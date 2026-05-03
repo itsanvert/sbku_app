@@ -9,9 +9,16 @@ use App\Livewire\Subjects\SubjectIndex;
 use App\Livewire\Faculties\FacultyIndex;
 use App\Livewire\Majors\MajorIndex;
 use App\Livewire\Classes\ClassIndex;
+use App\Livewire\Schedules\ScheduleIndex;
+use App\Livewire\Shifts\ShiftIndex;
 Route::get('/', function () {
     return view('auth.login');
 });
+
+// Explicitly block registration routes
+Route::any('/register', function () {
+    abort(404);
+})->name('register');
 
 Route::middleware([
     'auth:sanctum',
@@ -79,6 +86,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/faculties', FacultyIndex::class)->middleware('role:admin')->name('faculties.index');
     Route::get('/majors', MajorIndex::class)->middleware('role:admin')->name('majors.index');
     Route::get('/classes', ClassIndex::class)->middleware('role:admin')->name('classes.index');
+    Route::get('/schedules', ScheduleIndex::class)->middleware('role:admin')->name('schedules.index');
+    Route::get('/shifts', ShiftIndex::class)->middleware('role:admin')->name('shifts.index');
     
     // Attendance routes
     Route::prefix('attendance')->name('attendance.')->group(function() {

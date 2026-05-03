@@ -52,6 +52,8 @@
                         <flux:navlist.item icon="building-library" href="{{ route('faculties.index') }}" :current="request()->routeIs('faculties.index')">Faculty</flux:navlist.item>
                         <flux:navlist.item icon="academic-cap" href="{{ route('majors.index') }}" :current="request()->routeIs('majors.index')">Major</flux:navlist.item>
                         <flux:navlist.item icon="user-group" href="{{ route('classes.index') }}" :current="request()->routeIs('classes.index')">Class</flux:navlist.item>
+                        <flux:navlist.item icon="clock" href="{{ route('schedules.index') }}" :current="request()->routeIs('schedules.index')">Schedule</flux:navlist.item>
+                        <flux:navlist.item icon="arrow-path" href="{{ route('shifts.index') }}" :current="request()->routeIs('shifts.index')">Shift</flux:navlist.item>
                     @endif
 
                     @guest
