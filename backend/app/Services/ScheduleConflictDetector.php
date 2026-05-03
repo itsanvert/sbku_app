@@ -104,7 +104,16 @@ class ScheduleConflictDetector
             ->whereNotNull('start_time')
             ->whereNotNull('end_time')
             ->with(['subject:id,name,code', 'major:id,name'])
-            ->orderByRaw("FIELD(day_of_week,'monday','tuesday','wednesday','thursday','friday','saturday','sunday')")
+            ->orderByRaw("CASE 
+                WHEN day_of_week = 'monday' THEN 1 
+                WHEN day_of_week = 'tuesday' THEN 2 
+                WHEN day_of_week = 'wednesday' THEN 3 
+                WHEN day_of_week = 'thursday' THEN 4 
+                WHEN day_of_week = 'friday' THEN 5 
+                WHEN day_of_week = 'saturday' THEN 6 
+                WHEN day_of_week = 'sunday' THEN 7 
+                ELSE 8 
+            END")
             ->orderBy('start_time')
             ->get();
     }
