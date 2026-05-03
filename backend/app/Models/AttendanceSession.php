@@ -18,6 +18,8 @@ class AttendanceSession extends Model
         'subject_id',
         'year_id',
         'semester_id',
+        'academic_class_id',
+        'shift_id',
         'day_of_week',
         'session_start_time',
         'session_end_time',
@@ -86,6 +88,16 @@ class AttendanceSession extends Model
     public function subject()
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function academicClass()
+    {
+        return $this->belongsTo(AcademicClass::class);
+    }
+
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class);
     }
 
     public function attendances()

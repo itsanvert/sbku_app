@@ -26,6 +26,8 @@ class AttendanceCreate extends Component
     public string|int $major_id    = '';
     public string      $year_id     = '';
     public int|string  $semester_id = '';
+    public string|int  $academic_class_id = '';
+    public string|int  $shift_id = '';
     public string      $day_of_week = '';
     public string      $start_time  = '';
     public string      $end_time    = '';
@@ -61,7 +63,7 @@ class AttendanceCreate extends Component
     {
         $this->reset([
             'syllabus_id', 'faculty_id', 'major_id',
-            'year_id', 'semester_id', 'day_of_week',
+            'year_id', 'semester_id', 'academic_class_id', 'shift_id', 'day_of_week',
             'start_time', 'end_time', 'subject_id',
             'selectedSyllabus', 'enrolledStudents',
         ]);
@@ -74,7 +76,7 @@ class AttendanceCreate extends Component
     {
         if (!$value) {
             $this->reset([
-                'faculty_id', 'major_id', 'year_id', 'semester_id',
+                'faculty_id', 'major_id', 'year_id', 'semester_id', 'academic_class_id', 'shift_id',
                 'day_of_week', 'start_time', 'end_time', 'subject_id',
                 'selectedSyllabus', 'enrolledStudents',
             ]);
@@ -89,18 +91,25 @@ class AttendanceCreate extends Component
         }
 
         $this->selectedSyllabus = $syllabus;
-        $this->faculty_id       = $syllabus->faculty_id  ?? '';
-        $this->major_id         = $syllabus->major_id    ?? '';
-        $this->year_id          = $syllabus->year_id     ?? '';
-        $this->semester_id      = $syllabus->semester_id ?? '';
-        $this->subject_id       = $syllabus->subject_id  ?? '';
-        $this->day_of_week      = $syllabus->day_of_week ?? '';
+        $this->faculty_id       = $syllabus->faculty_id       ?? '';
+        $this->major_id         = $syllabus->major_id         ?? '';
+        $this->year_id          = $syllabus->year_id          ?? '';
+        $this->semester_id      = $syllabus->semester_id      ?? '';
+        $this->academic_class_id = $syllabus->academic_class_id ?? '';
+        $this->shift_id         = $syllabus->shift_id         ?? '';
+        $this->subject_id       = $syllabus->subject_id       ?? '';
+        $this->day_of_week      = $syllabus->day_of_week      ?? '';
         $this->start_time       = $syllabus->start_time  ? \Carbon\Carbon::parse($syllabus->start_time)->format('H:i') : '';
         $this->end_time         = $syllabus->end_time    ? \Carbon\Carbon::parse($syllabus->end_time)->format('H:i')   : '';
 
-        // Count students enrolled in the same major/year/semester
-        $this->enrolledStudents = Student::where('major_id', $syllabus->major_id)
-            ->where('year', $syllabus->year_id)
+        // Count students enrolled in the same class (or major/year if class not set)
+        $this->enrolledStudents = Student::when($this->academic_class_id, function($q) {
+                $q->where('academic_class_id', $this->academic_class_id);
+            })
+            ->when(!$this->academic_class_id, function($q) use ($syllabus) {
+                $q->where('major_id', $syllabus->major_id)
+                  ->where('year', $syllabus->year_id);
+            })
             ->count();
     }
 
@@ -118,6 +127,8 @@ class AttendanceCreate extends Component
             'subject_id'         => $this->subject_id    ?: null,
             'year_id'            => $this->year_id       ?: null,
             'semester_id'        => $this->semester_id   ?: null,
+            'academic_class_id'  => $this->academic_class_id ?: null,
+            'shift_id'           => $this->shift_id      ?: null,
             'day_of_week'        => $this->day_of_week   ?: null,
             'session_start_time' => $this->start_time    ?: null,
             'session_end_time'   => $this->end_time      ?: null,
@@ -142,7 +153,16 @@ class AttendanceCreate extends Component
                 ->whereNotNull('day_of_week')
                 ->whereNotNull('start_time')
                 ->with(['subject', 'major', 'shift'])
-                ->orderByRaw("FIELD(day_of_week,'monday','tuesday','wednesday','thursday','friday','saturday','sunday')")
+                ->orderByRaw("CASE 
+                    WHEN day_of_week = 'monday' THEN 1 
+                    WHEN day_of_week = 'tuesday' THEN 2 
+                    WHEN day_of_week = 'wednesday' THEN 3 
+                    WHEN day_of_week = 'thursday' THEN 4 
+                    WHEN day_of_week = 'friday' THEN 5 
+                    WHEN day_of_week = 'saturday' THEN 6 
+                    WHEN day_of_week = 'sunday' THEN 7 
+                    ELSE 8 
+                END")
                 ->orderBy('start_time')
                 ->get()
             : collect();
