@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\Message;
 use App\Models\Student;
+use App\Models\User;
+use App\Services\PushNotificationService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,6 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 class AttendanceSessionService
 {
+    public function __construct(
+        private readonly PushNotificationService $pushService,
+    ) {}
+
     /**
      * Start a new attendance session.
      */
@@ -29,6 +36,8 @@ class AttendanceSessionService
             'subject_id'         => $validated['subject_id']   ?? null,
             'year_id'            => $validated['year_id']      ?? null,
             'semester_id'        => $validated['semester_id']  ?? null,
+            'academic_class_id'  => $validated['academic_class_id'] ?? null,
+            'shift_id'           => $validated['shift_id']     ?? null,
             'day_of_week'        => $validated['day_of_week']  ?? null,
             'session_start_time' => $validated['start_time']   ?? null,
             'session_end_time'   => $validated['end_time']     ?? null,
@@ -38,7 +47,100 @@ class AttendanceSessionService
             'is_active'          => true,
         ]);
 
-        return $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus']);
+        $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus', 'shift', 'academicClass']);
+
+        // Send push notifications to eligible students
+        $this->notifyStudentsOfNewSession($session);
+
+        return $session;
+    }
+
+    /**
+     * Send FCM push notifications and create a Firestore message
+     * when a new attendance session starts.
+     */
+    protected function notifyStudentsOfNewSession(AttendanceSession $session): void
+    {
+        try {
+            $teacherName = $session->teacher?->user?->name ?? 'Teacher';
+            $subjectName = $session->subject?->name ?? 'Class';
+            $majorName   = $session->major?->name ?? '';
+            $shiftName   = $session->shift?->name ?? '';
+            $className   = $session->academicClass?->name ?? '';
+            $timeSlot    = '';
+
+            if ($session->session_start_time && $session->session_end_time) {
+                $timeSlot = \Carbon\Carbon::parse($session->session_start_time)->format('H:i')
+                    . ' - ' . \Carbon\Carbon::parse($session->session_end_time)->format('H:i');
+            }
+
+            $title = "📋 Attendance Open: {$subjectName}";
+            $body  = "{$teacherName} has started attendance check-in";
+            if ($timeSlot) {
+                $body .= " ({$timeSlot})";
+            }
+            if ($className) {
+                $body .= " — Class: {$className}";
+            } elseif ($majorName) {
+                $body .= " — {$majorName}";
+            }
+
+            // Build the notification data payload for the Flutter app
+            $data = [
+                'type'              => 'attendance_session_started',
+                'session_id'        => (string) $session->id,
+                'teacher_name'      => $teacherName,
+                'subject_name'      => $subjectName,
+                'major_name'        => $majorName,
+                'class_name'        => $className,
+                'shift_name'        => $shiftName,
+                'time_slot'         => $timeSlot,
+                'day_of_week'       => $session->day_of_week ?? '',
+                'qr_token'          => $session->qr_token ?? '',
+                'started_at'        => $session->started_at?->toIso8601String() ?? '',
+            ];
+
+            // 1. Create a Message record (syncs to Firestore automatically via SyncsToFirestore trait)
+            Message::create([
+                'sender_id'   => $session->teacher?->user_id,
+                'receiver_id' => null, // broadcast
+                'title'       => $title,
+                'body'        => $body,
+                'type'        => 'alert',
+                'metadata'    => $data,
+            ]);
+
+            // 2. Find eligible students and send individual push notifications
+            $query = Student::with('user')->whereNotNull('user_id');
+
+            if ($session->academic_class_id) {
+                $query->where('academic_class_id', $session->academic_class_id);
+            } elseif ($session->major_id) {
+                $query->where('major_id', $session->major_id);
+                if ($session->year_id) {
+                    $query->where('year', $session->year_id);
+                }
+            }
+
+            if ($session->shift_id) {
+                $query->where('shift_id', $session->shift_id);
+            }
+
+            $students = $query->get();
+
+            foreach ($students as $student) {
+                if ($student->user && $student->user->fcm_token) {
+                    $this->pushService->sendToUser($student->user, $title, $body, $data);
+                }
+            }
+
+            // 3. Also broadcast to the 'all' topic as a fallback
+            $this->pushService->sendToTopic('all', $title, $body, $data);
+
+        } catch (\Exception $e) {
+            \Log::warning("Failed to notify students about session #{$session->id}: " . $e->getMessage());
+            // Don't fail the session creation if notifications fail
+        }
     }
 
     /**
@@ -94,15 +196,19 @@ class AttendanceSessionService
 
             // Get eligible students — filtered by major, faculty, and year (from syllabus)
             $query = Student::query();
-            if ($session->faculty_id) {
-                $query->where('faculty_id', $session->faculty_id);
-            }
-            if ($session->major_id) {
-                $query->where('major_id', $session->major_id);
-            }
-            // Narrow to the specific year from syllabus if available
-            if ($session->year_id) {
-                $query->where('year', $session->year_id);
+            if ($session->academic_class_id) {
+                $query->where('academic_class_id', $session->academic_class_id);
+            } else {
+                if ($session->faculty_id) {
+                    $query->where('faculty_id', $session->faculty_id);
+                }
+                if ($session->major_id) {
+                    $query->where('major_id', $session->major_id);
+                }
+                // Narrow to the specific year from syllabus if available
+                if ($session->year_id) {
+                    $query->where('year', $session->year_id);
+                }
             }
 
             $allStudents = $query->pluck('id');

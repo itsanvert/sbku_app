@@ -119,7 +119,9 @@ class AttendanceCreate extends Component
     {
         $this->validate();
 
-        AttendanceSession::create([
+        $service = app(\App\Services\AttendanceSessionService::class);
+
+        $service->startSession([
             'teacher_id'         => $this->teacher_id,
             'faculty_id'         => $this->faculty_id   ?: null,
             'major_id'           => $this->major_id      ?: null,
@@ -130,15 +132,13 @@ class AttendanceCreate extends Component
             'academic_class_id'  => $this->academic_class_id ?: null,
             'shift_id'           => $this->shift_id      ?: null,
             'day_of_week'        => $this->day_of_week   ?: null,
-            'session_start_time' => $this->start_time    ?: null,
-            'session_end_time'   => $this->end_time      ?: null,
+            'start_time'         => $this->start_time    ?: null,
+            'end_time'           => $this->end_time      ?: null,
             'latitude'           => $this->latitude,
             'longitude'          => $this->longitude,
-            'started_at'         => \Carbon\Carbon::today()->setTimeFromTimeString($this->start_time),
-            'is_active'          => true,
         ]);
 
-        session()->flash('message', 'Attendance session started successfully.');
+        session()->flash('message', 'Attendance session started — students have been notified!');
 
         $this->redirectRoute('attendance.sessions.index', navigate: true);
     }
