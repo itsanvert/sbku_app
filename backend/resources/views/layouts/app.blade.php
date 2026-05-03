@@ -48,6 +48,12 @@
                         <flux:navlist.item icon="bookmark" href="{{ route('subjects.index') }}" :current="request()->routeIs('subjects.index')">Subject</flux:navlist.item>
                     @endif
 
+                    @if(auth()->user()->role === 'admin')
+                        <flux:navlist.item icon="building-library" href="{{ route('faculties.index') }}" :current="request()->routeIs('faculties.index')">Faculty</flux:navlist.item>
+                        <flux:navlist.item icon="academic-cap" href="{{ route('majors.index') }}" :current="request()->routeIs('majors.index')">Major</flux:navlist.item>
+                        <flux:navlist.item icon="user-group" href="{{ route('classes.index') }}" :current="request()->routeIs('classes.index')">Class</flux:navlist.item>
+                    @endif
+
                     @guest
                     @else
                         @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-sessions'))

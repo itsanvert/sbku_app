@@ -30,7 +30,7 @@ class StudentService
             ]);
 
             $studentData = collect($validated)
-                ->only(['gender', 'dob', 'faculty_id', 'major_id', 'year', 'shift', 'generation'])
+                ->only(['gender', 'dob', 'faculty_id', 'major_id', 'year', 'shift', 'generation', 'academic_class_id'])
                 ->toArray();
 
             if ($photo) {
@@ -60,7 +60,7 @@ class StudentService
 
             // Update student fields
             $studentData = collect($validated)
-                ->only(['gender', 'dob', 'faculty_id', 'major_id', 'year', 'shift', 'generation'])
+                ->only(['gender', 'dob', 'faculty_id', 'major_id', 'year', 'shift', 'generation', 'academic_class_id'])
                 ->toArray();
 
             if ($photo) {
