@@ -9,6 +9,7 @@ use App\Livewire\Subjects\SubjectIndex;
 use App\Livewire\Faculties\FacultyIndex;
 use App\Livewire\Majors\MajorIndex;
 use App\Livewire\Classes\ClassIndex;
+use App\Livewire\Schedules\ScheduleIndex;
 Route::get('/', function () {
     return view('auth.login');
 });
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/faculties', FacultyIndex::class)->middleware('role:admin')->name('faculties.index');
     Route::get('/majors', MajorIndex::class)->middleware('role:admin')->name('majors.index');
     Route::get('/classes', ClassIndex::class)->middleware('role:admin')->name('classes.index');
+    Route::get('/schedules', ScheduleIndex::class)->middleware('role:admin')->name('schedules.index');
     
     // Attendance routes
     Route::prefix('attendance')->name('attendance.')->group(function() {

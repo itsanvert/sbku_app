@@ -57,7 +57,7 @@ class TeacherIndex extends Component
     public function teachers()
     {
         return Teacher::query()
-            ->with('user')
+            ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
             ->when($this->search, function ($q) {
                 $q->whereHas('user', function($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
