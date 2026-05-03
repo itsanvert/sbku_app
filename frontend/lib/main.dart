@@ -8,6 +8,7 @@ import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
+import 'package:sbku_app/service/notification_service.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -23,6 +24,16 @@ Future<void> main() async {
   try {
     await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    
+    // Request notification permissions (required on iOS and Android 13+)
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Subscribe to the 'all' topic for broadcast notifications
+    await FirebaseMessaging.instance.subscribeToTopic('all');
   } catch (e) {
     print('Firebase initialization failed: $e');
   }
@@ -97,29 +108,22 @@ class AuthCheck extends StatefulWidget {
 
 class _AuthCheckState extends State<AuthCheck> {
   bool _isChecking = true;
+  bool _notificationsInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _checkAuth();
-    _setupFirebaseMessaging();
   }
 
-  void _setupFirebaseMessaging() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
-
-      if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${message.notification!.title}: ${message.notification!.body}'),
-            backgroundColor: Theme.of(context).primaryColor,
-          ),
-        );
-      }
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize notifications once we have a valid context
+    if (!_notificationsInitialized) {
+      _notificationsInitialized = true;
+      NotificationService().initialize(context);
+    }
   }
 
   Future<void> _checkAuth() async {
