@@ -32,6 +32,7 @@ class UpdateStudentRequest extends FormRequest
             'year'       => 'sometimes|required|integer',
             'shift'      => 'sometimes|required|string',
             'generation' => 'sometimes|required|string',
+            'academic_class_id' => 'nullable|exists:academic_classes,id',
             'photo'      => 'nullable|image|max:1024',
         ];
     }
