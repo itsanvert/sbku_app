@@ -38,6 +38,7 @@ class MigrateToFirestore extends Command
         \App\Models\AttendanceSession::class,
         \App\Models\Attendance::class,
         \App\Models\AcademicClass::class,
+        \App\Models\Message::class,
     ];
 
     /**
@@ -98,7 +99,7 @@ class MigrateToFirestore extends Command
                 
                 $bar->finish();
                 $this->newLine();
-                $this->info("Successfully migrated r{$collectionName}.");
+                $this->info("Successfully migrated {$collectionName}.");
             } catch (Exception $e) {
                 $this->newLine();
                 $this->error("Failed to migrate {$modelClass}: " . $e->getMessage());
