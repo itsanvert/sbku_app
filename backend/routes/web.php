@@ -15,6 +15,11 @@ Route::get('/', function () {
     return view('auth.login');
 });
 
+// Explicitly block registration routes
+Route::any('/register', function () {
+    abort(404);
+})->name('register');
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
