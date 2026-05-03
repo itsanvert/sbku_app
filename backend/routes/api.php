@@ -99,8 +99,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('syllabus', [SyllabusController::class, 'index']);
 
     // Faculty, Major, Subject, Class
-    Route::apiResource('faculties', FacultyController::class);
-    Route::apiResource('majors', MajorController::class);
-    Route::apiResource('subjects', SubjectController::class);
-    Route::apiResource('classes', AcademicClassController::class);
+    Route::apiResource('faculties', FacultyController::class)->names('api.faculties');
+    Route::apiResource('majors', MajorController::class)->names('api.majors');
+    Route::apiResource('subjects', SubjectController::class)->names('api.subjects');
+    Route::apiResource('classes', AcademicClassController::class)->names('api.classes');
 });
