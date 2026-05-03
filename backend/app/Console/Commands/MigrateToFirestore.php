@@ -37,6 +37,7 @@ class MigrateToFirestore extends Command
         \App\Models\Schedule::class,
         \App\Models\AttendanceSession::class,
         \App\Models\Attendance::class,
+        \App\Models\AcademicClass::class,
     ];
 
     /**

@@ -6,6 +6,9 @@ use App\Livewire\Students\StudentIndex;
 use App\Livewire\Teachers\TeacherIndex;
 use App\Livewire\Syllabuses\SyllabusIndex;
 use App\Livewire\Subjects\SubjectIndex;
+use App\Livewire\Faculties\FacultyIndex;
+use App\Livewire\Majors\MajorIndex;
+use App\Livewire\Classes\ClassIndex;
 Route::get('/', function () {
     return view('auth.login');
 });
@@ -73,6 +76,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/students', StudentIndex::class)->middleware('role:admin,manage-students')->name('students.index');
     Route::get('/syllabus', SyllabusIndex::class)->middleware('role:admin,manage-syllabus')->name('syllabuses.index');
     Route::get('/subjects', SubjectIndex::class)->middleware('role:admin,manage-subjects')->name('subjects.index');
+    Route::get('/faculties', FacultyIndex::class)->middleware('role:admin')->name('faculties.index');
+    Route::get('/majors', MajorIndex::class)->middleware('role:admin')->name('majors.index');
+    Route::get('/classes', ClassIndex::class)->middleware('role:admin')->name('classes.index');
     
     // Attendance routes
     Route::prefix('attendance')->name('attendance.')->group(function() {

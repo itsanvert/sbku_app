@@ -30,6 +30,7 @@ class StoreStudentRequest extends FormRequest
             'year'       => 'required|integer',
             'shift'      => 'required|string',
             'generation' => 'required|string',
+            'academic_class_id' => 'nullable|exists:academic_classes,id',
             'photo'      => 'nullable|image|max:1024',
         ];
     }

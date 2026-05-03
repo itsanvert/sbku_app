@@ -9,6 +9,10 @@ use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AttendanceSessionController;
 use App\Http\Controllers\Api\SyllabusController;
+use App\Http\Controllers\Api\FacultyController;
+use App\Http\Controllers\Api\MajorController;
+use App\Http\Controllers\Api\SubjectController;
+use App\Http\Controllers\Api\AcademicClassController;
 
 
 /*
@@ -93,4 +97,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Syllabus
     Route::get('syllabus', [SyllabusController::class, 'index']);
+
+    // Faculty, Major, Subject, Class
+    Route::apiResource('faculties', FacultyController::class);
+    Route::apiResource('majors', MajorController::class);
+    Route::apiResource('subjects', SubjectController::class);
+    Route::apiResource('classes', AcademicClassController::class);
 });
