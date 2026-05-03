@@ -15,6 +15,7 @@ class MessageService {
         .orderBy('created_at', descending: true)
         .limit(50)
         .snapshots()
+        .handleError((e) => print('Firestore Stream Error: $e'))
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
