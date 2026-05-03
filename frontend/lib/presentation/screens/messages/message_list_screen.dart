@@ -31,7 +31,14 @@ class _MessageListScreenState extends State<MessageListScreen> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            final error = snapshot.error.toString();
+            if (error.contains('permission-denied')) {
+              return _buildPermissionError();
+            }
+            return Center(child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text('Error: $error', textAlign: TextAlign.center),
+            ));
           }
 
           final messages = snapshot.data ?? [];
@@ -58,6 +65,37 @@ class _MessageListScreenState extends State<MessageListScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildPermissionError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_person_outlined, size: 80, color: Colors.orange.withOpacity(0.5)),
+            const SizedBox(height: 24),
+            const Text(
+              'រកមិនឃើញទិន្នន័យ ឬមិនមានការអនុញ្ញាត',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'សូមទាក់ទងអ្នកគ្រប់គ្រង ដើម្បីរៀបចំការអនុញ្ញាត Firestore Rules សម្រាប់ collection "messages"។',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => setState(() {}),
+              child: const Text('ព្យាយាមម្ដងទៀត'),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -107,7 +145,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.between,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(

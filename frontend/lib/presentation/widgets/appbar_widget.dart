@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sbku_app/presentation/screens/messages/message_list_screen.dart';
 
 enum AppBarType {
   home, // Logo + Title + Actions
@@ -339,7 +340,12 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       return [
         _circularActionIcon(
           icon: Icons.notifications_none_rounded,
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MessageListScreen()),
+            );
+          },
         ),
         const SizedBox(width: 8),
       ];
@@ -358,7 +364,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withOpacity(0.08),
         ),
         child: Material(
           color: Colors.transparent,
