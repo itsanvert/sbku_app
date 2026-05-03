@@ -11,6 +11,8 @@ use App\Livewire\Majors\MajorIndex;
 use App\Livewire\Classes\ClassIndex;
 use App\Livewire\Schedules\ScheduleIndex;
 use App\Livewire\Shifts\ShiftIndex;
+use App\Livewire\Admin\MessageCenter;
+
 Route::get('/', function () {
     return view('auth.login');
 });
@@ -88,6 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/classes', ClassIndex::class)->middleware('role:admin')->name('classes.index');
     Route::get('/schedules', ScheduleIndex::class)->middleware('role:admin')->name('schedules.index');
     Route::get('/shifts', ShiftIndex::class)->middleware('role:admin')->name('shifts.index');
+    Route::get('/messages', MessageCenter::class)->name('messages');
     
     // Attendance routes
     Route::prefix('attendance')->name('attendance.')->group(function() {
