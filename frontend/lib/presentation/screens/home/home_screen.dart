@@ -62,6 +62,11 @@ class HomePageScreen extends StatelessWidget {
                   label: 'តារាងមុខវិជ្ជា',
                   screen: SyllabusListViewScreen(),
                 ),
+                FeatureItem(
+                  icon: Icons.notifications_active_outlined,
+                  label: 'សារជូនដំណឹង',
+                  screen: const MessageListScreen(),
+                ),
               ],
             ),
             Padding(
