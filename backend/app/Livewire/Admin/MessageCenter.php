@@ -5,9 +5,11 @@ namespace App\Livewire\Admin;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\PushNotificationService;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
 class MessageCenter extends Component
 {
     use WithPagination;
