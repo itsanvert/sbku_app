@@ -19,6 +19,7 @@ class Student extends Model
         'shift_id',
         'schedule_id',
         'generation',
+        'academic_class_id',
         'profile_image_path',
     ];
 
@@ -77,5 +78,10 @@ class Student extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function academicClass(): BelongsTo
+    {
+        return $this->belongsTo(AcademicClass::class);
     }
 }

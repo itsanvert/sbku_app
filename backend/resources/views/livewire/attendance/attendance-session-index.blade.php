@@ -79,8 +79,20 @@
                                     </td>
 
                                     <td class="px-4 py-3 text-sm text-zinc-500">
-                                        <div>{{ $session->faculty->name ?? '' }} - {{ $session->major->name ?? '' }}</div>
-                                        <div class="text-xs text-zinc-400">{{ $session->schedule->name ?? '' }}</div>
+                                        <div class="font-medium text-zinc-900">{{ $session->academicClass->name ?? ($session->major->name ?? '—') }}</div>
+                                        <div class="text-xs text-zinc-400">
+                                            {{ $session->faculty->name ?? '' }} 
+                                            @if($session->academicClass)
+                                                ({{ $session->major->name ?? '' }})
+                                            @endif
+                                            @if($session->shift)
+                                                <span class="ml-1 text-blue-500 font-medium">— {{ $session->shift->name }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="text-[10px] text-zinc-400 mt-0.5">
+                                            <flux:icon name="clock" class="inline w-3 h-3 mr-0.5" />
+                                            {{ $session->schedule->full_display ?? ($session->schedule->name ?? '—') }}
+                                        </div>
                                     </td>
 
                                     <td class="px-4 py-3 text-sm text-zinc-500">

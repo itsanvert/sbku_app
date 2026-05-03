@@ -30,7 +30,7 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         $students = Student::query()
-            ->with(['user', 'major', 'faculty'])
+            ->with(['user', 'major', 'faculty', 'academicClass'])
             ->whereHas('user', function($q) use ($request) {
                 $q->when($request->search, function($query) use ($request) {
                     $query->where('name', 'like', '%'.$request->search.'%')
@@ -59,7 +59,7 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         return response()->json(
-            $student->load(['user', 'major', 'faculty'])
+            $student->load(['user', 'major', 'faculty', 'academicClass'])
         );
     }
 

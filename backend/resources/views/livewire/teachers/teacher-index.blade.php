@@ -122,7 +122,9 @@
 
                                     {{-- Schedule --}}
                                     <td class="px-4 py-3 text-sm text-zinc-500">
-                                        {{ $teacher->schedule->day_of_the_week ?? '—' }}
+                                        <div class="truncate max-w-[150px]" title="{{ $teacher->schedule->full_display ?? '—' }}">
+                                            {{ $teacher->schedule->full_display ?? '—' }}
+                                        </div>
                                     </td>
 
                                     {{-- Shift --}}
