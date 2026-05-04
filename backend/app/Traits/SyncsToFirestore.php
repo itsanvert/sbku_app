@@ -59,7 +59,7 @@ trait SyncsToFirestore
             $data['_synced_at'] = now()->toIso8601String();
             $data['_sync_event'] = $event;
 
-            $firestore->database()->collection($collection)->document($documentId)->set($data);
+            $firestore->collection($collection)->document($documentId)->set($data);
         } catch (Exception $e) {
             \Log::error("Firestore Sync Error for {$this->getFirestoreCollectionName()} [{$this->getKey()}]: " . $e->getMessage());
         }
@@ -71,11 +71,11 @@ trait SyncsToFirestore
     public function deleteFromFirestore()
     {
         try {
-            $firestore = app('firebase.firestore');
+            $firestore = \Kreait\Laravel\Firebase\Facades\Firebase::firestore()->database();
             $collection = $this->getFirestoreCollectionName();
             $documentId = (string) $this->getKey();
 
-            $firestore->database()->collection($collection)->document($documentId)->delete();
+            $firestore->collection($collection)->document($documentId)->delete();
         } catch (Exception $e) {
             \Log::error("Firestore Delete Error for {$this->getFirestoreCollectionName()} [{$this->getKey()}]: " . $e->getMessage());
         }
