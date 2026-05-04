@@ -12,6 +12,7 @@ import 'package:sbku_app/service/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -24,6 +25,10 @@ Future<void> main() async {
   
   try {
     await Firebase.initializeApp();
+    
+    // Sign in anonymously to satisfy Firestore rules (request.auth != null)
+    await FirebaseAuth.instance.signInAnonymously();
+    
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     
     // Create Android Notification Channel

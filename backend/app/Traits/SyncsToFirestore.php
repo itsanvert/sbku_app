@@ -49,7 +49,7 @@ trait SyncsToFirestore
     public function syncToFirestore($event = 'updated')
     {
         try {
-            $firestore = app('firebase.firestore');
+            $firestore = \Kreait\Laravel\Firebase\Facades\Firebase::firestore()->database();
             $collection = $this->getFirestoreCollectionName();
             $documentId = (string) $this->getKey();
 
