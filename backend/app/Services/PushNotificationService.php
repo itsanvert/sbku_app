@@ -40,7 +40,7 @@ class PushNotificationService
     public function sendToToken($token, $title, $body, array $data = [])
     {
         try {
-            $messaging = app('firebase.messaging');
+            $messaging = \Kreait\Laravel\Firebase\Facades\Firebase::messaging();
 
             $notification = Notification::create($title, $body);
 
@@ -68,7 +68,7 @@ class PushNotificationService
     public function sendToTopic($topic, $title, $body, array $data = [])
     {
         try {
-            $messaging = app('firebase.messaging');
+            $messaging = \Kreait\Laravel\Firebase\Facades\Firebase::messaging();
 
             $notification = Notification::create($title, $body);
 
