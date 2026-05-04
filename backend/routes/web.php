@@ -133,5 +133,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('export.excel');
     });
 
+    // Temporary migration route for messages (Remove after use)
+    Route::get('/admin/migrate-messages', function () {
+        if (auth()->user()?->role !== 'admin') abort(403);
+        
+        \Illuminate\Support\Facades\Artisan::call('firestore:migrate', ['--model' => 'Message']);
+        return "Migration completed: <br>" . nl2br(\Illuminate\Support\Facades\Artisan::output());
+    });
 });
 
