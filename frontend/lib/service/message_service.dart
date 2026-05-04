@@ -16,15 +16,22 @@ class MessageService {
         .limit(50)
         .snapshots()
         .map((snapshot) {
+      print('Firestore Snapshot: Found ${snapshot.docs.length} documents in "messages"');
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return data;
       }).where((data) {
-        // Filter in memory for broadcast or specific user
         final receiverId = data['receiver_id'];
+        
+        // Debug each message
+        print('Checking message: title="${data['title']}", receiverId=$receiverId, currentUserId=$userId');
+
         if (receiverId == null) return true; // Broadcast
-        if (userId != null && receiverId == userId) return true; // Private
+        
+        // Use string comparison to avoid int-vs-string type issues
+        if (userId != null && receiverId.toString() == userId.toString()) return true; 
+        
         return false;
       }).toList();
     });

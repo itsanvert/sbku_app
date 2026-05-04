@@ -35,7 +35,8 @@ class _MessageListScreenState extends State<MessageListScreen> {
             if (error.contains('permission-denied')) {
               return _buildPermissionError();
             }
-            return Center(child: Padding(
+            return Center(
+                child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Text('Error: $error', textAlign: TextAlign.center),
             ));
@@ -50,7 +51,8 @@ class _MessageListScreenState extends State<MessageListScreen> {
                 children: [
                   Icon(Icons.mail_outline, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
-                  const Text('គ្មានសារថ្មីទេ', style: TextStyle(color: Colors.grey)),
+                  const Text('គ្មានសារថ្មីទេ',
+                      style: TextStyle(color: Colors.grey)),
                 ],
               ),
             );
@@ -76,7 +78,8 @@ class _MessageListScreenState extends State<MessageListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_person_outlined, size: 80, color: Colors.orange.withOpacity(0.5)),
+            Icon(Icons.lock_person_outlined,
+                size: 80, color: Colors.orange.withOpacity(0.5)),
             const SizedBox(height: 24),
             const Text(
               'រកមិនឃើញទិន្នន័យ ឬមិនមានការអនុញ្ញាត',
@@ -106,13 +109,14 @@ class _MessageListScreenState extends State<MessageListScreen> {
     final createdAt = msg['created_at'];
     final type = msg['type'] ?? 'info';
     final metadata = msg['metadata'] ?? {};
-    
+
     DateTime? date;
     if (createdAt != null) {
       date = DateTime.tryParse(createdAt.toString());
     }
 
-    final isAttendance = type == 'alert' && metadata['type'] == 'attendance_session_started';
+    final isAttendance =
+        type == 'alert' && metadata['type'] == 'attendance_session_started';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -181,7 +185,8 @@ class _MessageListScreenState extends State<MessageListScreen> {
                     if (isAttendance) ...[
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -208,7 +213,8 @@ class _MessageListScreenState extends State<MessageListScreen> {
 
   void _showMessageDetail(Map<String, dynamic> msg) {
     final metadata = msg['metadata'] ?? {};
-    final isAttendance = msg['type'] == 'alert' && metadata['type'] == 'attendance_session_started';
+    final isAttendance = msg['type'] == 'alert' &&
+        metadata['type'] == 'attendance_session_started';
 
     showModalBottomSheet(
       context: context,
@@ -247,9 +253,10 @@ class _MessageListScreenState extends State<MessageListScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                msg['created_at'] != null 
-                  ? DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.parse(msg['created_at']))
-                  : '',
+                msg['created_at'] != null
+                    ? DateFormat('dd MMM yyyy, hh:mm a')
+                        .format(DateTime.parse(msg['created_at']))
+                    : '',
                 style: TextStyle(color: Colors.grey[500], fontSize: 13),
               ),
               const Divider(height: 32),
@@ -257,7 +264,6 @@ class _MessageListScreenState extends State<MessageListScreen> {
                 msg['body'] ?? '',
                 style: const TextStyle(fontSize: 15, height: 1.5),
               ),
-              
               if (isAttendance) ...[
                 const SizedBox(height: 24),
                 _buildAttendanceDetails(metadata),
@@ -269,19 +275,20 @@ class _MessageListScreenState extends State<MessageListScreen> {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const QrScanAttendanceScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => const QrScanAttendanceScreen()),
                       );
                     },
                     icon: const Icon(Icons.qr_code_scanner),
                     label: const Text('ចុះវត្តមានឥឡូវនេះ (Scan QR)'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
               ],
-              
               const SizedBox(height: 40),
             ],
           ),
@@ -316,8 +323,12 @@ class _MessageListScreenState extends State<MessageListScreen> {
         children: [
           Icon(icon, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
-          Text('$label: ', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+          Text('$label: ',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+          Expanded(
+              child: Text(value,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13))),
         ],
       ),
     );
@@ -328,25 +339,35 @@ class _MessageListScreenState extends State<MessageListScreen> {
       return Icons.notifications_active;
     }
     switch (type) {
-      case 'announcement': return Icons.campaign;
-      case 'private': return Icons.person;
-      case 'alert': return Icons.warning;
-      default: return Icons.info;
+      case 'announcement':
+        return Icons.campaign;
+      case 'private':
+        return Icons.person;
+      case 'alert':
+        return Icons.warning;
+      default:
+        return Icons.info;
     }
   }
 
   Color _getTypeColor(String type) {
     switch (type) {
-      case 'announcement': return Colors.purple;
-      case 'private': return Colors.blue;
-      case 'alert': return Colors.orange;
-      default: return Colors.blue;
+      case 'announcement':
+        return Colors.purple;
+      case 'private':
+        return Colors.blue;
+      case 'alert':
+        return Colors.orange;
+      default:
+        return Colors.blue;
     }
   }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       return DateFormat('h:mm a').format(date);
     }
     return DateFormat('dd MMM').format(date);

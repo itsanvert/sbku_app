@@ -39,26 +39,29 @@ class MessageCenter extends Component
             'type' => $this->type,
         ]);
 
+        $pushStatus = '';
         if ($this->send_push) {
+            $success = false;
             if ($this->receiver_id) {
                 $user = User::find($this->receiver_id);
                 if ($user) {
-                    $pushService->sendToUser($user, $this->title, $this->body, [
+                    $success = $pushService->sendToUser($user, $this->title, $this->body, [
                         'message_id' => (string)$message->id,
                         'type' => $this->type,
                     ]);
                 }
             } else {
                 // Broadcast to a topic (e.g. 'all')
-                $pushService->sendToTopic('all', $this->title, $this->body, [
+                $success = $pushService->sendToTopic('all', $this->title, $this->body, [
                     'message_id' => (string)$message->id,
                     'type' => $this->type,
                 ]);
             }
+            $pushStatus = $success ? ' (Push sent)' : ' (Push failed - check logs)';
         }
 
         $this->reset(['title', 'body', 'receiver_id']);
-        session()->flash('message', 'Message sent successfully!');
+        session()->flash('message', 'Message saved successfully!' . $pushStatus);
     }
 
     public function render()

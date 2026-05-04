@@ -45,7 +45,7 @@ class Message extends Model
     public function toFirestoreArray()
     {
         $data = $this->toArray();
-        $data['sender_name'] = $this->sender->name ?? 'System';
+        $data['sender_name'] = $this->sender?->name ?? 'System';
         return $data;
     }
 }

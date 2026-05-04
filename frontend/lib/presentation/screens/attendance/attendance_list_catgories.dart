@@ -74,11 +74,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
         label: 'ប្រវត្តិវត្តមានរបស់ខ្ញុំ',
         screen: StudentAttendanceHistoryScreen(),
       ),
-      ListCardItem(
-        icon: Icons.notifications_active_outlined,
-        label: 'សារជូនដំណឹង',
-        screen: MessageListScreen(),
-      ),
+     
     ];
   }
 }
