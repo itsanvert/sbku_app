@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sbku_app/presentation/screens/attendance/qr_scan_attendance_screen.dart';
 
 /// A service that listens for attendance session notifications
@@ -10,8 +11,23 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+
   /// Initialize foreground notification listeners.
   void initialize(BuildContext context) {
+    // Initialize local notifications
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    
+    _notificationsPlugin.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse details) {
+        print('Notification tapped: ${details.payload}');
+      },
+    );
+
     // Listen for foreground FCM messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (context.mounted) {
@@ -55,7 +71,6 @@ class NotificationService {
   void _listenToFirestoreMessages(BuildContext context) {
     FirebaseFirestore.instance
         .collection('messages')
-        .where('type', isEqualTo: 'alert')
         .orderBy('created_at', descending: true)
         .limit(1)
         .snapshots()
@@ -65,16 +80,26 @@ class NotificationService {
         if (change.type == DocumentChangeType.added) {
           final data = change.doc.data();
           if (data != null) {
-            final metadata = data['metadata'];
-            if (metadata != null && metadata['type'] == 'attendance_session_started') {
-              // Check if this notification is recent (within last 30 seconds)
-              final createdAt = data['created_at'];
-              if (createdAt != null) {
-                final createdTime = DateTime.tryParse(createdAt.toString());
-                if (createdTime != null &&
-                    DateTime.now().difference(createdTime).inSeconds < 30) {
+            // Check if this notification is very recent (within last 10 seconds)
+            // to avoid showing old alerts on app start
+            final createdAt = data['created_at'];
+            if (createdAt != null) {
+              final createdTime = DateTime.tryParse(createdAt.toString());
+              if (createdTime != null &&
+                  DateTime.now().difference(createdTime).inSeconds < 10) {
+                
+                final metadata = data['metadata'];
+                final title = data['title'] ?? 'New Message';
+                final body = data['body'] ?? '';
+
+                if (metadata != null && metadata['type'] == 'attendance_session_started') {
                   if (context.mounted) {
                     _showAttendanceAlert(context, Map<String, dynamic>.from(metadata));
+                  }
+                } else {
+                  // Show a SnackBar for other new messages
+                  if (context.mounted) {
+                    _showGenericNotification(context, title, body);
                   }
                 }
               }
@@ -82,6 +107,8 @@ class NotificationService {
           }
         }
       }
+    }, onError: (e) {
+      print('NotificationService Firestore Error: $e');
     });
   }
 
@@ -320,6 +347,7 @@ class NotificationService {
 
   void _showGenericNotification(
       BuildContext context, String title, String body) {
+    // 1. Show SnackBar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(
@@ -336,6 +364,26 @@ class NotificationService {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 5),
       ),
+    );
+
+    // 2. Also show a system notification (important for foreground visibility)
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'high_importance_channel',
+      'High Importance Notifications',
+      channelDescription: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    
+    _notificationsPlugin.show(
+      id: DateTime.now().millisecond % 100000,
+      title: title,
+      body: body,
+      notificationDetails: platformChannelSpecifics,
     );
   }
 }
