@@ -17,6 +17,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   bool _isEditing = false;
+  bool _isPickingImage = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -35,28 +36,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-      maxWidth: 800,
-    );
+    if (_isPickingImage) return;
+    setState(() => _isPickingImage = true);
 
-    if (image != null && mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.uploadProfilePhoto(image.path);
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 800,
+      );
 
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile photo updated successfully')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    authProvider.errorMessage ?? 'Failed to update photo')),
-          );
+      if (image != null && mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final success = await authProvider.uploadProfilePhoto(image.path);
+
+        if (mounted) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profile photo updated successfully')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(
+                      authProvider.errorMessage ?? 'Failed to update photo')),
+            );
+          }
         }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isPickingImage = false);
       }
     }
   }

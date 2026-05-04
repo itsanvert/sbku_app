@@ -107,6 +107,8 @@ class NotificationService {
           }
         }
       }
+    }, onError: (e) {
+      print('NotificationService Firestore Error: $e');
     });
   }
 
