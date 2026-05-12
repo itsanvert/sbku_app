@@ -9,6 +9,8 @@ use App\Models\Student;
 use App\Models\User;
 use App\Services\PushNotificationService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 /**
  * Encapsulates attendance session business logic.
@@ -22,11 +24,37 @@ class AttendanceSessionService
         private readonly PushNotificationService $pushService,
     ) {}
 
-    /**
-     * Start a new attendance session.
-     */
     public function startSession(array $validated): AttendanceSession
     {
+        $now = now();
+        $startTimeString = $validated['start_time'] ?? '00:00';
+        $endTimeString = $validated['end_time'] ?? null;
+
+        // Parse start and end times
+        $scheduledStart = Carbon::today()->setTimeFromTimeString($startTimeString);
+        $scheduledEnd = $endTimeString ? Carbon::today()->setTimeFromTimeString($endTimeString) : null;
+
+        // Smart Date Logic: 
+        // 1. If end_time is before start_time, it must be the next day (e.g., 11 PM to 1 AM)
+        if ($scheduledEnd && $scheduledEnd->lessThan($scheduledStart)) {
+            $scheduledEnd->addDay();
+        }
+
+        // 2. If it's late at night and we're starting a session for early morning, 
+        // it's likely intended for tomorrow.
+        if ($now->hour > 18 && $scheduledStart->hour < 6) {
+            $scheduledStart->addDay();
+            if ($scheduledEnd) $scheduledEnd->addDay();
+        }
+
+        // Generate a fresh QR token
+        $freshToken = Str::uuid()->toString();
+
+        // A session should only be initialized as active if the current time 
+        // is within its scheduled window.
+        $shouldBeActive = $now->greaterThanOrEqualTo($scheduledStart) && 
+                         (!$scheduledEnd || $now->lessThanOrEqualTo($scheduledEnd));
+
         $session = AttendanceSession::create([
             'teacher_id'         => $validated['teacher_id'],
             'faculty_id'         => $validated['faculty_id']   ?? null,
@@ -39,12 +67,14 @@ class AttendanceSessionService
             'academic_class_id'  => $validated['academic_class_id'] ?? null,
             'shift_id'           => $validated['shift_id']     ?? null,
             'day_of_week'        => $validated['day_of_week']  ?? null,
-            'session_start_time' => $validated['start_time']   ?? null,
-            'session_end_time'   => $validated['end_time']     ?? null,
+            'session_start_time' => $startTimeString,
+            'session_end_time'   => $endTimeString,
             'latitude'           => $validated['latitude']     ?? null,
             'longitude'          => $validated['longitude']    ?? null,
-            'started_at'         => \Carbon\Carbon::today()->setTimeFromTimeString($validated['start_time'] ?? '00:00'),
-            'is_active'          => true,
+            'started_at'         => $scheduledStart,
+            'expires_at'         => $scheduledEnd,
+            'qr_token'           => $freshToken,
+            'is_active'          => $shouldBeActive,
         ]);
 
         $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus', 'shift', 'academicClass']);
@@ -98,6 +128,7 @@ class AttendanceSessionService
                 'day_of_week'       => $session->day_of_week ?? '',
                 'qr_token'          => $session->qr_token ?? '',
                 'started_at'        => $session->started_at?->toIso8601String() ?? '',
+                'expires_at'        => $session->expires_at?->toIso8601String() ?? '',
             ];
 
             // 1. Create a Message record (syncs to Firestore automatically via SyncsToFirestore trait)
@@ -146,24 +177,31 @@ class AttendanceSessionService
     /**
      * Process a student QR check-in.
      *
+     * Validates:
+     *  - Session is still active
+     *  - Current time is within the session's scheduled window
+     *  - QR token matches (ensures the student scanned the current session's QR)
+     *  - Student has not already checked in
+     *
      * @throws \Exception if validation fails
      */
     public function checkIn(AttendanceSession $session, Student $student, string $qrToken): Attendance
     {
-        if (!$session->is_active) {
-            throw new \Exception('Session is no longer active', 422);
-        }
+        // 1. Validate session window and status
+        $this->validateSessionAccess($session);
 
+        // 2. Validate QR token
         if ($session->qr_token !== $qrToken) {
-            throw new \Exception('Invalid QR token', 422);
+            throw new \Exception('QR កូដមិនត្រឹមត្រូវ ឬផុតកំណត់។ សូមស្កេន QR ថ្មី។', 422);
         }
 
+        // 5. Check for duplicate check-in
         $existing = Attendance::where('session_id', $session->id)
             ->where('student_id', $student->id)
             ->first();
 
         if ($existing) {
-            throw new \Exception('Already checked in', 409);
+            throw new \Exception('អ្នកបានចុះវត្តមានរួចហើយ។', 409);
         }
 
         return Attendance::create([
@@ -173,7 +211,82 @@ class AttendanceSessionService
             'student_id'      => $student->id,
             'schedule_id'     => $session->schedule_id,
             'session_id'      => $session->id,
+            'verify_status'   => 'pending',
         ]);
+    }
+
+    /**
+     * Validate if a session is currently accessible for check-in.
+     * 
+     * @throws \Exception if session is closed or out of time window
+     */
+    public function validateSessionAccess(AttendanceSession $session): void
+    {
+        // Check if session is explicitly closed
+        if (!$session->is_active) {
+            throw new \Exception('វេនវត្តមានបានបិទរួចហើយ។ មិនអាចចុះវត្តមានបានទេ។', 422);
+        }
+
+        $now = now();
+        // Use started_at date as the base for time comparisons
+        $baseDate = $session->started_at ? $session->started_at->copy()->startOfDay() : Carbon::today();
+
+        // Check if session hasn't started yet based on scheduled start time
+        if ($session->session_start_time) {
+            $scheduledStart = $baseDate->copy()->setTimeFromTimeString($session->session_start_time);
+            if ($now->lessThan($scheduledStart)) {
+                throw new \Exception('វេនវត្តមានមិនទាន់ចាប់ផ្តើមទេ។ សូមរង់ចាំដល់ម៉ោង ' . $session->session_start_time, 422);
+            }
+        }
+
+        // Check if session has expired based on scheduled end time
+        if ($session->session_end_time) {
+            $scheduledEnd = $baseDate->copy()->setTimeFromTimeString($session->session_end_time);
+            if ($now->greaterThan($scheduledEnd)) {
+                // Auto-end the session since it has expired logically
+                $this->autoEndExpiredSession($session);
+                throw new \Exception('ពេលវេលាវេនវត្តមានបានផុតកំណត់។ មិនអាចចុះវត្តមានបានទេ។', 422);
+            }
+        }
+    }
+
+    /**
+     * Auto-end an expired session (triggered when a student tries to check in
+     * after the session's scheduled end time).
+     */
+    protected function autoEndExpiredSession(AttendanceSession $session): void
+    {
+        if (!$session->is_active) return;
+
+        try {
+            $this->endSession($session);
+        } catch (\Exception $e) {
+            // Session may have already been ended by another request
+            \Log::info("Auto-end for session #{$session->id}: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * Renew the QR token for a session.
+     *
+     * Called when a new session period starts to ensure that old QR codes
+     * from previous sessions cannot be reused.
+     *
+     * @throws \Exception if the session is not active
+     */
+    public function renewToken(AttendanceSession $session): AttendanceSession
+    {
+        if (!$session->is_active) {
+            throw new \Exception('Cannot renew token for an inactive session', 422);
+        }
+
+        $newToken = Str::uuid()->toString();
+
+        $session->update([
+            'qr_token' => $newToken,
+        ]);
+
+        return $session->fresh();
     }
 
     /**
@@ -184,8 +297,15 @@ class AttendanceSessionService
      */
     public function endSession(AttendanceSession $session): array
     {
+        // If already inactive, just return current stats instead of failing.
+        // This satisfies the "unenable to close session" requirement for redundant calls.
         if (!$session->is_active) {
-            throw new \Exception('Session already ended', 422);
+            return [
+                'session'       => $session->load(['attendances.student.user']),
+                'total_present' => $session->attendances()->where('status', 'Y')->count(),
+                'total_absent'  => $session->attendances()->where('status', 'N')->count(),
+                'message'       => 'Session was already closed.',
+            ];
         }
 
         DB::transaction(function () use ($session) {

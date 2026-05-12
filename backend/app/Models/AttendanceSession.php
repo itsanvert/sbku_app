@@ -31,9 +31,18 @@ class AttendanceSession extends Model
         'expires_at',
         'time_limit_minutes',
         'is_active',
+        'room_id',
     ];
 
     protected $casts = [
+        'teacher_id'         => 'integer',
+        'faculty_id'         => 'integer',
+        'major_id'           => 'integer',
+        'schedule_id'        => 'integer',
+        'syllabus_id'        => 'integer',
+        'subject_id'         => 'integer',
+        'academic_class_id'  => 'integer',
+        'shift_id'           => 'integer',
         'started_at'         => 'datetime',
         'ended_at'           => 'datetime',
         'expires_at'         => 'datetime',
@@ -42,9 +51,10 @@ class AttendanceSession extends Model
         'longitude'          => 'decimal:7',
         'time_limit_minutes' => 'integer',
         'semester_id'        => 'integer',
+        'room_id'            => 'integer',
     ];
 
-    protected $appends = ['teacher_name'];
+    protected $appends = ['teacher_name', 'scheduled_time_range', 'room_name', 'attendances_count'];
 
     // ── Boot ───────────────────────────────────────────────────
     protected static function boot()
@@ -100,6 +110,11 @@ class AttendanceSession extends Model
         return $this->belongsTo(Shift::class);
     }
 
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
     public function attendances()
     {
         return $this->hasMany(Attendance::class, 'session_id');
@@ -109,14 +124,74 @@ class AttendanceSession extends Model
 
     public function getTeacherNameAttribute()
     {
-        return $this->teacher?->name;
+        return $this->teacher?->user?->name;
+    }
+
+    public function getRoomNameAttribute()
+    {
+        return $this->room?->name ?: ($this->schedule?->room?->name ?? '—');
+    }
+
+    public function getScheduledTimeRangeAttribute()
+    {
+        if ($this->schedule) {
+            $start = $this->schedule->start_time ? $this->schedule->start_time->format('H:i') : '—';
+            $end = $this->schedule->end_time ? $this->schedule->end_time->format('H:i') : '—';
+            return "{$start} - {$end}";
+        }
+
+        if ($this->syllabus) {
+            return "{$this->syllabus->start_time} - {$this->syllabus->end_time}";
+        }
+        
+        if ($this->session_start_time && $this->session_end_time) {
+            return "{$this->session_start_time} - {$this->session_end_time}";
+        }
+        
+        return '—';
+    }
+
+    public function getScheduledDayTimeAttribute()
+    {
+        $day = $this->day_of_week ?: ($this->schedule?->day_of_the_week ?? ($this->syllabus?->day_of_week ?? '—'));
+        return ucfirst($day) . ' (' . $this->scheduled_time_range . ')';
+    }
+
+    public function getAttendancesCountAttribute()
+    {
+        return $this->attendances()->count();
+    }
+
+    /**
+     * Override the sync data to ensure relationships needed by the Flutter app
+     * are present in the Firestore document.
+     */
+    public function toFirestoreArray()
+    {
+        // Load relationships if not already present
+        if (!$this->relationLoaded('teacher')) $this->load('teacher.user');
+        if (!$this->relationLoaded('faculty')) $this->load('faculty');
+        if (!$this->relationLoaded('major')) $this->load('major');
+        if (!$this->relationLoaded('schedule')) $this->load('schedule');
+        if (!$this->relationLoaded('room')) $this->load('room');
+
+        $data = $this->toArray();
+        
+        // Ensure count is explicitly set (in case it wasn't in toArray)
+        $data['attendances_count'] = $this->attendances_count;
+        
+        return $data;
     }
 
     // ── Scopes ─────────────────────────────────────────────────
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', now());
+            });
     }
 
     /**

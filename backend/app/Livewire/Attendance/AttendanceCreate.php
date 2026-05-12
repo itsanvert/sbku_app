@@ -32,6 +32,7 @@ class AttendanceCreate extends Component
     public string      $start_time  = '';
     public string      $end_time    = '';
     public string|int  $subject_id  = '';
+    public string|int  $room_id     = '';
 
     // Location
     public string $latitude  = '11.5564';
@@ -64,7 +65,7 @@ class AttendanceCreate extends Component
         $this->reset([
             'syllabus_id', 'faculty_id', 'major_id',
             'year_id', 'semester_id', 'academic_class_id', 'shift_id', 'day_of_week',
-            'start_time', 'end_time', 'subject_id',
+            'start_time', 'end_time', 'subject_id', 'room_id',
             'selectedSyllabus', 'enrolledStudents',
         ]);
     }
@@ -136,6 +137,7 @@ class AttendanceCreate extends Component
             'end_time'           => $this->end_time      ?: null,
             'latitude'           => $this->latitude,
             'longitude'          => $this->longitude,
+            'room_id'            => $this->room_id ?: null,
         ]);
 
         session()->flash('message', 'Attendance session started — students have been notified!');
@@ -172,6 +174,7 @@ class AttendanceCreate extends Component
             'syllabuses' => $syllabuses,
             'faculties'  => Faculty::orderBy('name')->get(),
             'majors'     => Major::orderBy('name')->get(),
+            'rooms'      => \App\Models\Room::orderBy('name')->get(),
         ]);
     }
 }

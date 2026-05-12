@@ -155,8 +155,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: isPresent
-                    ? Colors.green.withValues(alpha: isDark ? 0.15 : 0.08)
-                    : Colors.red.withValues(alpha: isDark ? 0.15 : 0.08),
+                    ? Colors.green.withOpacity(isDark ? 0.15 : 0.08)
+                    : Colors.red.withOpacity(isDark ? 0.15 : 0.08),
                 backgroundImage: NetworkImage(avatarUrl),
               ),
               title: Text(studentName,
@@ -174,8 +174,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isPresent
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : Colors.red.withValues(alpha: 0.1),
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -419,9 +419,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
+              color: Colors.orange.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
             ),
             child: Row(
               children: [
@@ -594,9 +594,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           children: [
@@ -605,7 +605,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                     fontSize: 20, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
             Text(label,
-                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8)),
+                style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
                 textAlign: TextAlign.center),
           ],
         ),
@@ -713,7 +713,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _rateColor(rate).withValues(alpha: 0.1),
+                        color: _rateColor(rate).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -763,9 +763,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _rateColor(rate).withValues(alpha: 0.1),
+              color: _rateColor(rate).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _rateColor(rate).withValues(alpha: 0.3)),
+              border: Border.all(color: _rateColor(rate).withOpacity(0.3)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -843,7 +843,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
+                    color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.file_download_outlined, color: Colors.orange),
@@ -926,7 +926,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -1181,7 +1181,7 @@ class _StudentAttendanceHistoryScreenState
                                   margin: const EdgeInsets.only(bottom: 8),
                                   child: ListTile(
                                     leading: CircleAvatar(
-                                      backgroundColor: statusColor.withValues(alpha: 0.1),
+                                      backgroundColor: statusColor.withOpacity(0.1),
                                       child: Icon(statusIcon, color: statusColor),
                                     ),
                                     title: Text(
@@ -1236,7 +1236,7 @@ class _StudentAttendanceHistoryScreenState
                 fontSize: 22, fontWeight: FontWeight.bold, color: color)),
         const SizedBox(height: 4),
         Text(label,
-            style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.9))),
+            style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
       ],
     );
   }

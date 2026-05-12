@@ -31,8 +31,10 @@
                     <thead>
                         <tr class="border-b border-zinc-200 bg-zinc-50">
                             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Name</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Day</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Time Range</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Teacher / Subject</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Class / Room</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Day / Time</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Dates</th>
                             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Actions</th>
                         </tr>
                     </thead>
@@ -40,10 +42,24 @@
                         @forelse ($schedules as $schedule)
                             <tr class="hover:bg-zinc-50/70 transition-colors duration-100">
                                 <td class="px-4 py-3 font-medium text-zinc-900">{{ $schedule->name }}</td>
-                                <td class="px-4 py-3 text-sm text-zinc-500">{{ $schedule->day_of_the_week ?? '—' }}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    <div class="text-zinc-900 font-medium">{{ $schedule->teacher?->user?->name ?? '—' }}</div>
+                                    <div class="text-zinc-500 text-xs">{{ $schedule->subject?->name ?? '—' }}</div>
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    <div class="text-zinc-900">{{ $schedule->academicClass?->name ?? '—' }}</div>
+                                    <div class="text-zinc-500 text-xs">{{ $schedule->room?->name ?? '—' }}</div>
+                                </td>
                                 <td class="px-4 py-3 text-sm text-zinc-500">
+                                    <div>{{ $schedule->day_of_the_week ?? '—' }}</div>
                                     @if($schedule->start_time && $schedule->end_time)
-                                        {{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}
+                                        <div class="text-xs">{{ $schedule->time_range }}</div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-sm text-zinc-500">
+                                    @if($schedule->start_date && $schedule->end_date)
+                                        <div class="text-xs">{{ $schedule->start_date->format('Y-m-d') }}</div>
+                                        <div class="text-xs">to {{ $schedule->end_date->format('Y-m-d') }}</div>
                                     @else
                                         —
                                     @endif
@@ -57,7 +73,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-4 py-10 text-center text-zinc-500">No schedules found.</td>
+                                <td colspan="6" class="px-4 py-10 text-center text-zinc-500">No schedules found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -77,6 +93,47 @@
                 <form wire:submit.prevent="store" class="p-6 space-y-4">
                     <flux:input label="Schedule Name" wire:model="name" placeholder="e.g. Morning Shift A" />
                     
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select label="Teacher" wire:model="teacher_id">
+                            <flux:select.option value="">Select Teacher</flux:select.option>
+                            @foreach($teachers as $teacher)
+                                <flux:select.option value="{{ $teacher->id }}">{{ $teacher->user->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:select label="Subject" wire:model="subject_id">
+                            <flux:select.option value="">Select Subject</flux:select.option>
+                            @foreach($subjects as $subject)
+                                <flux:select.option value="{{ $subject->id }}">{{ $subject->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select label="Class" wire:model="class_id">
+                            <flux:select.option value="">Select Class</flux:select.option>
+                            @foreach($academicClasses as $class)
+                                <flux:select.option value="{{ $class->id }}">{{ $class->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:select label="Room" wire:model="room_id">
+                            <flux:select.option value="">Select Room</flux:select.option>
+                            @foreach($rooms as $room)
+                                <flux:select.option value="{{ $room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+
+                    <flux:select label="Link to Syllabus" wire:model="syllabus_id">
+                        <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
+                        @foreach($syllabuses as $syllabus)
+                            <flux:select.option value="{{ $syllabus->id }}">
+                                {{ $syllabus->subject->name }} - {{ $syllabus->teacher->user->name }} ({{ $syllabus->day_of_week }})
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+
                     <flux:select label="Day of the Week" wire:model="day_of_the_week">
                         <flux:select.option value="">Select Day</flux:select.option>
                         <flux:select.option value="Monday">Monday</flux:select.option>
@@ -91,6 +148,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input label="Start Time" type="time" wire:model="start_time" />
                         <flux:input label="End Time" type="time" wire:model="end_time" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:input label="Start Date" type="date" wire:model="start_date" />
+                        <flux:input label="End Date" type="date" wire:model="end_date" />
                     </div>
 
                     <div class="flex justify-end gap-2 pt-4">
@@ -113,6 +175,47 @@
                 <form wire:submit.prevent="update" class="p-6 space-y-4">
                     <flux:input label="Schedule Name" wire:model="name" />
                     
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select label="Teacher" wire:model="teacher_id">
+                            <flux:select.option value="">Select Teacher</flux:select.option>
+                            @foreach($teachers as $teacher)
+                                <flux:select.option value="{{ $teacher->id }}">{{ $teacher->user->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:select label="Subject" wire:model="subject_id">
+                            <flux:select.option value="">Select Subject</flux:select.option>
+                            @foreach($subjects as $subject)
+                                <flux:select.option value="{{ $subject->id }}">{{ $subject->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select label="Class" wire:model="class_id">
+                            <flux:select.option value="">Select Class</flux:select.option>
+                            @foreach($academicClasses as $class)
+                                <flux:select.option value="{{ $class->id }}">{{ $class->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:select label="Room" wire:model="room_id">
+                            <flux:select.option value="">Select Room</flux:select.option>
+                            @foreach($rooms as $room)
+                                <flux:select.option value="{{ $room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+
+                    <flux:select label="Link to Syllabus" wire:model="syllabus_id">
+                        <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
+                        @foreach($syllabuses as $syllabus)
+                            <flux:select.option value="{{ $syllabus->id }}">
+                                {{ $syllabus->subject->name }} - {{ $syllabus->teacher->user->name }} ({{ $syllabus->day_of_week }})
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+
                     <flux:select label="Day of the Week" wire:model="day_of_the_week">
                         <flux:select.option value="Monday">Monday</flux:select.option>
                         <flux:select.option value="Tuesday">Tuesday</flux:select.option>
@@ -126,6 +229,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input label="Start Time" type="time" wire:model="start_time" />
                         <flux:input label="End Time" type="time" wire:model="end_time" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:input label="Start Date" type="date" wire:model="start_date" />
+                        <flux:input label="End Date" type="date" wire:model="end_date" />
                     </div>
 
                     <div class="flex justify-end gap-2 pt-4">

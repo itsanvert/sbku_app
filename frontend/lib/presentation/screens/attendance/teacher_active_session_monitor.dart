@@ -37,7 +37,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
   // State
   bool _isLoading = true;
   bool _isEnding = false;
-  Timer? _refreshTimer;
+  StreamSubscription? _attendanceSub;
 
   late TabController _tabController;
 
@@ -45,43 +45,62 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadApprovals();
-    // Auto-refresh every 6 seconds
-    _refreshTimer = Timer.periodic(const Duration(seconds: 6), (_) {
-      _loadApprovals(silent: true);
-    });
+    _loadInitialSession();
+    _setupAttendanceStream();
   }
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    _attendanceSub?.cancel();
     _tabController.dispose();
     super.dispose();
   }
 
-  /// Fetch approval list from backend
-  Future<void> _loadApprovals({bool silent = false}) async {
-    if (!silent) setState(() => _isLoading = true);
-
+  /// Load initial session data via API
+  Future<void> _loadInitialSession() async {
+    setState(() => _isLoading = true);
     try {
       final data = await _service.getApprovalList(widget.sessionId);
+      if (mounted) {
+        setState(() {
+          _sessionData = data['session'] as Map<String, dynamic>?;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Setup real-time listener for attendances
+  void _setupAttendanceStream() {
+    _attendanceSub = _service
+        .listenToSessionAttendances(widget.sessionId)
+        .listen((attendances) {
       if (!mounted) return;
 
-      final attendances = data['attendances'] as Map<String, dynamic>? ?? {};
-
       setState(() {
-        _sessionData = data['session'] as Map<String, dynamic>?;
-        _pending =
-            List<Map<String, dynamic>>.from(attendances['pending'] ?? []);
-        _approved =
-            List<Map<String, dynamic>>.from(attendances['approved'] ?? []);
-        _rejected =
-            List<Map<String, dynamic>>.from(attendances['rejected'] ?? []);
-        _isLoading = false;
+        _pending = attendances
+            .where((a) => a['verify_status'] == 'pending')
+            .toList();
+        _approved = attendances
+            .where((a) => a['verify_status'] == 'approved')
+            .toList();
+        _rejected = attendances
+            .where((a) => a['verify_status'] == 'rejected')
+            .toList();
+
+        // Sort by time descending
+        _pending.sort((a, b) => (b['check_in_time'] ?? '').compareTo(a['check_in_time'] ?? ''));
+        _approved.sort((a, b) => (b['verified_at'] ?? '').compareTo(a['verified_at'] ?? ''));
+        _rejected.sort((a, b) => (b['verified_at'] ?? '').compareTo(a['verified_at'] ?? ''));
       });
-    } catch (e) {
-      if (!silent && mounted) setState(() => _isLoading = false);
-    }
+    });
+  }
+
+  /// Manual refresh (still useful to re-fetch session details)
+  Future<void> _loadApprovals({bool silent = false}) async {
+    await _loadInitialSession();
   }
 
   /// Approve a single student check-in
@@ -449,6 +468,15 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
             ),
             child: Column(
               children: [
+                Text(
+                  'បន្ទប់: ${_sessionData?["room_name"] ?? "—"}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.blue.shade200 : primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Text(
                   'សូមឱ្យសិស្សស្កេន QR',
                   style: TextStyle(
