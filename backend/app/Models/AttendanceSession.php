@@ -173,6 +173,7 @@ class AttendanceSession extends Model
         if (!$this->relationLoaded('faculty')) $this->load('faculty');
         if (!$this->relationLoaded('major')) $this->load('major');
         if (!$this->relationLoaded('schedule')) $this->load('schedule');
+        if (!$this->relationLoaded('room')) $this->load('room');
 
         $data = $this->toArray();
         

@@ -19,24 +19,55 @@ class _TeacherActiveSessionsListScreenState
   final AttendanceService _service = AttendanceService();
 
   // ── Database Source ────────────────────────────────────────────────────────
-  // We use the REST API (MySQL) first as requested. The Firestore stream 
-  // is available for real-time migration later.
-  Future<List<Map<String, dynamic>>>? _sessionsFuture;
+  // We use both Firestore (for real-time) and MySQL (for reliable fallback).
+  Stream<List<Map<String, dynamic>>>? _sessionsStream;
+  List<Map<String, dynamic>>? _localSessions;
+  bool _isInitialSyncing = true;
 
   @override
   void initState() {
     super.initState();
-    _refreshSessions();
+    _initialSync();
   }
 
-  void _refreshSessions() {
-    // Access teacherId from Provider
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final teacherId = auth.user?.teacherId;
+  Future<void> _initialSync() async {
+    setState(() => _isInitialSyncing = true);
     
-    if (teacherId != null) {
+    // 1. Start Firestore stream
+    _setupStream();
+    
+    // 2. Fetch from local MySQL as a fast fallback
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final user = auth.user;
+      final teacherId = user?.teacherId;
+      final role = user?.role?.toLowerCase() ?? '';
+
+      if (teacherId != null || role == 'admin' || role == 'super_admin') {
+        final filterId = (role == 'admin' || role == 'super_admin') ? null : teacherId;
+        final data = await _service.getActiveSessions(teacherId: filterId);
+        setState(() {
+          _localSessions = data;
+          _isInitialSyncing = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Initial MySQL fetch failed: $e');
+      setState(() => _isInitialSyncing = false);
+    }
+  }
+
+  void _setupStream() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.user;
+    final teacherId = user?.teacherId;
+    final role = user?.role?.toLowerCase() ?? '';
+
+    if (teacherId != null || role == 'admin' || role == 'super_admin') {
       setState(() {
-        _sessionsFuture = _service.getActiveSessions(teacherId: teacherId);
+        // If admin, pass null to see ALL active sessions in Firestore
+        final filterId = (role == 'admin' || role == 'super_admin') ? null : teacherId;
+        _sessionsStream = _service.listenToActiveSessions(teacherId: filterId);
       });
     }
   }
@@ -50,21 +81,40 @@ class _TeacherActiveSessionsListScreenState
       appBar: AppBarWidget.simple(title: 'វេនកំពុងដំណើរការ'),
       body: RefreshIndicator(
         onRefresh: () async {
-          _refreshSessions();
-          await _sessionsFuture;
+          // Manual refresh from MySQL (REST API)
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final teacherId = auth.user?.teacherId;
+          if (teacherId != null) {
+            await _service.getActiveSessions(teacherId: teacherId);
+          }
+          // Also restart the Firestore stream just in case
+          _setupStream();
         },
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _sessionsFuture,
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _sessionsStream,
           builder: (context, snapshot) {
+            // Determine which data to show: Firestore (Real-time) vs Local (MySQL Fallback)
+            List<Map<String, dynamic>> rawList = [];
+            bool isRealtime = false;
+            
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              rawList = snapshot.data!;
+              isRealtime = true;
+            } else if (_localSessions != null) {
+              rawList = _localSessions!;
+              isRealtime = false;
+            }
+
             // ── Loading ─────────────────────────────────────────────
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(color: theme.primaryColor),
+            if (snapshot.connectionState == ConnectionState.waiting && rawList.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(),
               );
             }
 
             // ── Error ───────────────────────────────────────────────
-            if (snapshot.hasError) {
+            if (snapshot.hasError && rawList.isEmpty) {
+              final errorMsg = snapshot.error.toString();
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
@@ -73,20 +123,31 @@ class _TeacherActiveSessionsListScreenState
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline,
+                        Icon(Icons.cloud_off,
                             size: 48,
-                            color: isDark
-                                ? Colors.redAccent.shade100
-                                : Colors.red[400]),
+                            color: isDark ? Colors.redAccent.shade100 : Colors.red[400]),
                         const SizedBox(height: 12),
                         const Text(
-                          'Failed to load sessions (MySQL)',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          'មិនអាចភ្ជាប់ទៅកាន់សេវាកម្មបានទេ',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                        const SizedBox(height: 4),
-                        Text(snapshot.error.toString(), 
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 12),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            'Local error: ${_localSessions == null ? "Fetch failed" : "No sessions found"}\nCloud: $errorMsg',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: theme.hintColor),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _initialSync,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('ព្យាយាមម្តងទៀត'),
                         ),
                       ],
                     ),
@@ -95,9 +156,31 @@ class _TeacherActiveSessionsListScreenState
               );
             }
 
-            final sessions = snapshot.data ?? [];
+            final now = DateTime.now();
 
-            // ── Empty ───────────────────────────────────────────────
+            // Filter only sessions that are active AND not expired
+            final sessions = rawList.where((s) {
+              final isActive = s['is_active'] == true || s['is_active'] == 1 || s['is_active'] == '1';
+              if (!isActive) return false;
+
+              // Check expiration if available
+              final expiresAtStr = s['expires_at'];
+              if (expiresAtStr != null && expiresAtStr.toString().isNotEmpty) {
+                try {
+                  final expiresAt = DateTime.parse(expiresAtStr.toString());
+                  if (expiresAt.isBefore(now)) return false;
+                } catch (_) {}
+              }
+              return true;
+            }).toList();
+
+            // Sort by started_at descending (newest first)
+            sessions.sort((a, b) {
+              final aTime = DateTime.tryParse(a['started_at']?.toString() ?? '') ?? DateTime(2000);
+              final bTime = DateTime.tryParse(b['started_at']?.toString() ?? '') ?? DateTime(2000);
+              return bTime.compareTo(aTime);
+            });
+
             if (sessions.isEmpty) {
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -131,7 +214,6 @@ class _TeacherActiveSessionsListScreenState
               );
             }
 
-            // ── Session List ────────────────────────────────────────
             return ListView.builder(
               itemCount: sessions.length,
               padding: const EdgeInsets.all(16),
@@ -144,19 +226,16 @@ class _TeacherActiveSessionsListScreenState
                 final facultyName = session['faculty']?['name'] ?? '';
                 final checkedIn = session['attendances_count'] ?? 0;
                 final startedAt = session['started_at'] ?? '';
-                final isActive = session['is_active'] == true || session['is_active'] == 1;
+                final isActive =
+                    session['is_active'] == true || session['is_active'] == 1;
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: isActive
-                          ? Colors.green.withValues(
-                              alpha: isDark ? 0.15 : 0.1,
-                            )
-                          : Colors.grey.withValues(
-                              alpha: isDark ? 0.15 : 0.1,
-                            ),
+                          ? Colors.green.withOpacity(isDark ? 0.15 : 0.1)
+                          : Colors.grey.withOpacity(isDark ? 0.15 : 0.1),
                       child: Icon(
                         isActive ? Icons.check_circle : Icons.pause_circle,
                         color: isActive
@@ -184,7 +263,7 @@ class _TeacherActiveSessionsListScreenState
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.15),
+                              color: Colors.green.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -214,12 +293,37 @@ class _TeacherActiveSessionsListScreenState
                           ),
                       ],
                     ),
-                    subtitle: Text(
-                      '$facultyName • ${_formatDate(startedAt)}\n$checkedIn នាក់បានចូលរួម\nម៉ោងចាប់ផ្តើម: ${_formatTime(startedAt)}',
-                      style: TextStyle(
-                        height: 1.5,
-                        color: theme.textTheme.bodySmall?.color,
-                      ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$facultyName • ${_formatDate(startedAt)}\n$checkedIn នាក់បានចូលរួម\nម៉ោងចាប់ផ្តើម: ${_formatTime(startedAt)}',
+                          style: TextStyle(
+                            height: 1.5,
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (session['_source'] == 'firestore' || isRealtime)
+                                ? Colors.blue.withOpacity(0.1)
+                                : Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            (session['_source'] == 'firestore' || isRealtime) ? 'Live Cloud' : 'Local System',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: (session['_source'] == 'firestore' || isRealtime)
+                                  ? Colors.blue.shade300
+                                  : Colors.orange.shade300,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     trailing: Icon(
                       Icons.arrow_forward_ios,
@@ -235,7 +339,7 @@ class _TeacherActiveSessionsListScreenState
                             qrToken: session['qr_token'] ?? '',
                           ),
                         ),
-                      ).then((_) => _refreshSessions());
+                      );
                     },
                   ),
                 );

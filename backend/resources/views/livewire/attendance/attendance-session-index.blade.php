@@ -41,7 +41,7 @@
                             <col class="w-28"> {{-- Target --}}
                             <col class="w-24"> {{-- Count --}}
                             <col class="w-32"> {{-- Start Time --}}
-                            <col class="w-24"> {{-- Location --}}
+                            <col class="w-24"> {{-- Room --}}
                             <col class="w-24"> {{-- Time Limit --}}
                         </colgroup>
                         <thead>
@@ -54,7 +54,7 @@
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 select-none">Class Detail</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 select-none">Count</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 select-none">Started At</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 select-none">Coords</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 select-none">Room</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 select-none">Limit</th>
                             </tr>
                         </thead>
@@ -103,8 +103,9 @@
                                         {{ $session->started_at->format('M d, H:i A') }}
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs text-zinc-400">
-                                        {{ number_format($session->latitude, 4) }}, {{ number_format($session->longitude, 4) }}
+                                    <td class="px-4 py-3 text-sm text-zinc-500">
+                                        <div class="font-medium">{{ $session->room->name ?? '—' }}</div>
+                                        <div class="text-[10px] text-zinc-400">{{ number_format($session->latitude, 4) }}, {{ number_format($session->longitude, 4) }}</div>
                                     </td>
 
                                     <td class="px-4 py-3 text-sm text-zinc-500">

@@ -68,14 +68,28 @@ class AttendanceService {
 
   /// Listen to active attendance sessions in real-time from Firestore
   Stream<List<Map<String, dynamic>>> listenToActiveSessions({int? teacherId}) {
-    Query query = FirebaseFirestore.instance.collection('attendance_sessions')
-        .where('is_active', isEqualTo: true);
+    Query query = FirebaseFirestore.instance.collection('attendance_sessions');
         
     if (teacherId != null) {
       query = query.where('teacher_id', isEqualTo: teacherId);
     }
     
     return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return data;
+      }).toList();
+    });
+  }
+
+  /// Listen to attendances for a specific session in real-time from Firestore
+  Stream<List<Map<String, dynamic>>> listenToSessionAttendances(int sessionId) {
+    return FirebaseFirestore.instance
+        .collection('attendances')
+        .where('session_id', isEqualTo: sessionId)
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = int.tryParse(doc.id) ?? 0;
