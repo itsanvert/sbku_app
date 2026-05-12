@@ -56,6 +56,7 @@ class AttendanceSessionService
         $isActive = $isManualStart || ($now->greaterThanOrEqualTo($scheduledStart) && 
                     (!$scheduledEnd || $now->lessThanOrEqualTo($scheduledEnd)));
 
+
         $session = AttendanceSession::create([
             'teacher_id'         => $validated['teacher_id'],
             'faculty_id'         => $validated['faculty_id']   ?? null,
@@ -76,6 +77,8 @@ class AttendanceSessionService
             'expires_at'         => $scheduledEnd,
             'qr_token'           => $freshToken,
             'is_active'          => $isActive,
+            'is_active'          => $isActive,
+
         ]);
 
         $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus', 'shift', 'academicClass']);
@@ -213,7 +216,84 @@ class AttendanceSessionService
             'schedule_id'     => $session->schedule_id,
             'session_id'      => $session->id,
             'verify_status'   => 'pending',
+<<<<<<< uat
         ]);
+    }
+
+    /**
+     * Validate if a session is currently accessible for check-in.
+     * 
+     * @throws \Exception if session is closed or out of time window
+     */
+    public function validateSessionAccess(AttendanceSession $session): void
+    {
+        // Check if session is explicitly closed
+        if (!$session->is_active) {
+            throw new \Exception('វេនវត្តមានបានបិទរួចហើយ។ មិនអាចចុះវត្តមានបានទេ។', 422);
+        }
+
+        $now = now();
+        // Use started_at date as the base for time comparisons
+        $baseDate = $session->started_at ? $session->started_at->copy()->startOfDay() : Carbon::today();
+
+        // Check if session hasn't started yet based on scheduled start time
+        if ($session->session_start_time) {
+            $scheduledStart = $baseDate->copy()->setTimeFromTimeString($session->session_start_time);
+            if ($now->lessThan($scheduledStart)) {
+                throw new \Exception('វេនវត្តមានមិនទាន់ចាប់ផ្តើមទេ។ សូមរង់ចាំដល់ម៉ោង ' . $session->session_start_time, 422);
+            }
+        }
+
+        // Check if session has expired based on scheduled end time
+        if ($session->session_end_time) {
+            $scheduledEnd = $baseDate->copy()->setTimeFromTimeString($session->session_end_time);
+            if ($now->greaterThan($scheduledEnd)) {
+                // Auto-end the session since it has expired logically
+                $this->autoEndExpiredSession($session);
+                throw new \Exception('ពេលវេលាវេនវត្តមានបានផុតកំណត់។ មិនអាចចុះវត្តមានបានទេ។', 422);
+            }
+        }
+    }
+
+    /**
+     * Auto-end an expired session (triggered when a student tries to check in
+     * after the session's scheduled end time).
+     */
+    protected function autoEndExpiredSession(AttendanceSession $session): void
+    {
+        if (!$session->is_active) return;
+
+        try {
+            $this->endSession($session);
+        } catch (\Exception $e) {
+            // Session may have already been ended by another request
+            \Log::info("Auto-end for session #{$session->id}: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * Renew the QR token for a session.
+     *
+     * Called when a new session period starts to ensure that old QR codes
+     * from previous sessions cannot be reused.
+     *
+     * @throws \Exception if the session is not active
+     */
+    public function renewToken(AttendanceSession $session): AttendanceSession
+    {
+        if (!$session->is_active) {
+            throw new \Exception('Cannot renew token for an inactive session', 422);
+        }
+
+        $newToken = Str::uuid()->toString();
+
+        $session->update([
+            'qr_token' => $newToken,
+=======
+>>>>>>> dev
+        ]);
+
+        return $session->fresh();
     }
 
     /**

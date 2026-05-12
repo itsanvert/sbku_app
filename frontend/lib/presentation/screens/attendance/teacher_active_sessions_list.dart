@@ -24,6 +24,8 @@ class _TeacherActiveSessionsListScreenState
   List<Map<String, dynamic>>? _localSessions;
   bool _isInitialSyncing = true;
   bool _useCloud = false; // Default to Local first as requested
+  bool _useCloud = false; // Default to Local first as requested
+
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _TeacherActiveSessionsListScreenState
     _setupStream();
     
     // 2. Fetch from local MySQL
+
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final user = auth.user;
@@ -63,6 +66,7 @@ class _TeacherActiveSessionsListScreenState
       _useCloud = !_useCloud;
     });
   }
+
 
   void _setupStream() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -131,6 +135,7 @@ class _TeacherActiveSessionsListScreenState
                           color: isCloudActive 
                               ? (hasCloudData ? Colors.green : Colors.orange)
                               : Colors.blue,
+
                         ),
                         const SizedBox(height: 8),
                         Padding(
@@ -200,6 +205,7 @@ class _TeacherActiveSessionsListScreenState
             // ── Error ───────────────────────────────────────────────
             if (_useCloud && snapshot.hasError && rawList.isEmpty) {
               final errorMsg = snapshot.error.toString();
+
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
@@ -291,6 +297,7 @@ class _TeacherActiveSessionsListScreenState
                                 ? const Color(0xFF94A3B8)
                                 : Colors.grey[600],
                           ),
+
                         ),
                       ],
                     ),
