@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
-import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
-import 'package:sbku_app/service/attendance_service.dart';
-import 'package:intl/intl.dart';
-import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+
+import 'package:sbku_app/providers/auth_provider.dart';
+import 'package:sbku_app/service/attendance_service.dart';
+import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
+import 'package:intl/intl.dart';
 
 class TeacherActiveSessionsListScreen extends StatefulWidget {
   const TeacherActiveSessionsListScreen({super.key});
@@ -24,8 +24,6 @@ class _TeacherActiveSessionsListScreenState
   List<Map<String, dynamic>>? _localSessions;
   bool _isInitialSyncing = true;
   bool _useCloud = false; // Default to Local first as requested
-  bool _useCloud = false; // Default to Local first as requested
-
 
   @override
   void initState() {
@@ -40,7 +38,6 @@ class _TeacherActiveSessionsListScreenState
     _setupStream();
     
     // 2. Fetch from local MySQL
-
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final user = auth.user;
@@ -67,7 +64,6 @@ class _TeacherActiveSessionsListScreenState
     });
   }
 
-
   void _setupStream() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.user;
@@ -80,6 +76,26 @@ class _TeacherActiveSessionsListScreenState
         final filterId = (role == 'admin' || role == 'super_admin') ? null : teacherId;
         _sessionsStream = _service.listenToActiveSessions(teacherId: filterId);
       });
+    }
+  }
+
+  String _formatTime(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().isEmpty) return '--:--';
+    try {
+      final date = DateTime.parse(dateStr.toString());
+      return DateFormat('hh:mm a').format(date);
+    } catch (e) {
+      return dateStr.toString();
+    }
+  }
+
+  String _formatDate(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().isEmpty) return '';
+    try {
+      final date = DateTime.parse(dateStr.toString());
+      return DateFormat('EEE, dd MMM').format(date);
+    } catch (e) {
+      return '';
     }
   }
 
@@ -100,7 +116,6 @@ class _TeacherActiveSessionsListScreenState
               builder: (context, snapshot) {
                 bool isCloudActive = _useCloud;
                 bool hasCloudData = snapshot.hasData && !snapshot.hasError;
-                bool isConnecting = snapshot.connectionState == ConnectionState.waiting;
                 
                 return Container(
                   margin: const EdgeInsets.only(right: 16),
@@ -135,28 +150,9 @@ class _TeacherActiveSessionsListScreenState
                           color: isCloudActive 
                               ? (hasCloudData ? Colors.green : Colors.orange)
                               : Colors.blue,
-
                         ),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Text(
-                            'Local error: ${_localSessions == null ? "Fetch failed" : "No sessions found"}\nCloud: $errorMsg',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: theme.hintColor),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: _initialSync,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('ព្យាយាមម្តងទៀត'),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -187,7 +183,6 @@ class _TeacherActiveSessionsListScreenState
                 rawList = snapshot.data!;
                 isRealtime = true;
               } else {
-                // If Cloud requested but empty/null, show nothing or MySQL if desired
                 rawList = []; 
               }
             } else {
@@ -205,7 +200,6 @@ class _TeacherActiveSessionsListScreenState
             // ── Error ───────────────────────────────────────────────
             if (_useCloud && snapshot.hasError && rawList.isEmpty) {
               final errorMsg = snapshot.error.toString();
-
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
@@ -297,7 +291,6 @@ class _TeacherActiveSessionsListScreenState
                                 ? const Color(0xFF94A3B8)
                                 : Colors.grey[600],
                           ),
-
                         ),
                       ],
                     ),
@@ -419,15 +412,15 @@ class _TeacherActiveSessionsListScreenState
                     ),
                     trailing: Icon(
                       Icons.arrow_forward_ios,
-                      size: 16,
-                      color: theme.iconTheme.color,
+                      size: 14,
+                      color: theme.hintColor,
                     ),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => TeacherActiveSessionScreen(
-                            sessionId: session['id'],
+                            sessionId: session['id'] is int ? session['id'] : int.parse(session['id'].toString()),
                             qrToken: session['qr_token'] ?? '',
                           ),
                         ),
@@ -441,30 +434,5 @@ class _TeacherActiveSessionsListScreenState
         ),
       ),
     );
-  }
-
-  String _formatTime(String? dateTimeStr) {
-    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
-    try {
-      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
-        final now = DateTime.now();
-        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
-        dateTimeStr = '$datePrefix $dateTimeStr';
-      }
-      final dt = DateTime.parse(dateTimeStr);
-      return DateFormat('h:mm a').format(dt);
-    } catch (_) {
-      return dateTimeStr ?? '--:--';
-    }
-  }
-
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '--';
-    try {
-      final dt = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return dateStr;
-    }
   }
 }
