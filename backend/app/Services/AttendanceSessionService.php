@@ -50,10 +50,11 @@ class AttendanceSessionService
         // Generate a fresh QR token
         $freshToken = Str::uuid()->toString();
 
-        // A session should only be initialized as active if the current time 
-        // is within its scheduled window.
-        $shouldBeActive = $now->greaterThanOrEqualTo($scheduledStart) && 
-                         (!$scheduledEnd || $now->lessThanOrEqualTo($scheduledEnd));
+        // If a teacher is manually starting a session, it should be active 
+        // immediately so they can see the QR code and monitor check-ins.
+        $isManualStart = true; // For now, assume all calls to startSession are manual starts
+        $isActive = $isManualStart || ($now->greaterThanOrEqualTo($scheduledStart) && 
+                    (!$scheduledEnd || $now->lessThanOrEqualTo($scheduledEnd)));
 
         $session = AttendanceSession::create([
             'teacher_id'         => $validated['teacher_id'],
@@ -74,7 +75,7 @@ class AttendanceSessionService
             'started_at'         => $scheduledStart,
             'expires_at'         => $scheduledEnd,
             'qr_token'           => $freshToken,
-            'is_active'          => $shouldBeActive,
+            'is_active'          => $isActive,
         ]);
 
         $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus', 'shift', 'academicClass']);
