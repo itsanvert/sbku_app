@@ -23,6 +23,7 @@ class _TeacherActiveSessionsListScreenState
   Stream<List<Map<String, dynamic>>>? _sessionsStream;
   List<Map<String, dynamic>>? _localSessions;
   bool _isInitialSyncing = true;
+  bool _useCloud = false; // Default to Local first as requested
 
   @override
   void initState() {
@@ -33,10 +34,10 @@ class _TeacherActiveSessionsListScreenState
   Future<void> _initialSync() async {
     setState(() => _isInitialSyncing = true);
     
-    // 1. Start Firestore stream
+    // 1. Setup Firestore stream regardless of mode (so it's ready)
     _setupStream();
     
-    // 2. Fetch from local MySQL as a fast fallback
+    // 2. Fetch from local MySQL
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final user = auth.user;
@@ -55,6 +56,12 @@ class _TeacherActiveSessionsListScreenState
       debugPrint('Initial MySQL fetch failed: $e');
       setState(() => _isInitialSyncing = false);
     }
+  }
+
+  void _toggleSource() {
+    setState(() {
+      _useCloud = !_useCloud;
+    });
   }
 
   void _setupStream() {
@@ -78,7 +85,62 @@ class _TeacherActiveSessionsListScreenState
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBarWidget.simple(title: 'វេនកំពុងដំណើរការ'),
+      appBar: AppBar(
+        title: const Text('វេនកំពុងដំណើរការ'),
+        actions: [
+          // Source Toggle Indicator
+          GestureDetector(
+            onTap: _toggleSource,
+            child: StreamBuilder(
+              stream: _sessionsStream,
+              builder: (context, snapshot) {
+                bool isCloudActive = _useCloud;
+                bool hasCloudData = snapshot.hasData && !snapshot.hasError;
+                bool isConnecting = snapshot.connectionState == ConnectionState.waiting;
+                
+                return Container(
+                  margin: const EdgeInsets.only(right: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isCloudActive 
+                        ? (hasCloudData ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1))
+                        : Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isCloudActive 
+                          ? (hasCloudData ? Colors.green : Colors.orange)
+                          : Colors.blue,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isCloudActive ? Icons.cloud_done : Icons.storage,
+                        size: 14,
+                        color: isCloudActive 
+                            ? (hasCloudData ? Colors.green : Colors.orange)
+                            : Colors.blue,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isCloudActive ? 'Cloud' : 'Local',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isCloudActive 
+                              ? (hasCloudData ? Colors.green : Colors.orange)
+                              : Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           // Manual refresh from MySQL (REST API)
@@ -87,8 +149,8 @@ class _TeacherActiveSessionsListScreenState
           if (teacherId != null) {
             await _service.getActiveSessions(teacherId: teacherId);
           }
-          // Also restart the Firestore stream just in case
-          _setupStream();
+          // Also restart the Firestore stream
+          _initialSync();
         },
         child: StreamBuilder<List<Map<String, dynamic>>>(
           stream: _sessionsStream,
@@ -97,23 +159,28 @@ class _TeacherActiveSessionsListScreenState
             List<Map<String, dynamic>> rawList = [];
             bool isRealtime = false;
             
-            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-              rawList = snapshot.data!;
-              isRealtime = true;
-            } else if (_localSessions != null) {
-              rawList = _localSessions!;
+            if (_useCloud) {
+              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                rawList = snapshot.data!;
+                isRealtime = true;
+              } else {
+                // If Cloud requested but empty/null, show nothing or MySQL if desired
+                rawList = []; 
+              }
+            } else {
+              rawList = _localSessions ?? [];
               isRealtime = false;
             }
 
             // ── Loading ─────────────────────────────────────────────
-            if (snapshot.connectionState == ConnectionState.waiting && rawList.isEmpty) {
+            if (_useCloud && snapshot.connectionState == ConnectionState.waiting && rawList.isEmpty) {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             }
 
             // ── Error ───────────────────────────────────────────────
-            if (snapshot.hasError && rawList.isEmpty) {
+            if (_useCloud && snapshot.hasError && rawList.isEmpty) {
               final errorMsg = snapshot.error.toString();
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
