@@ -98,6 +98,22 @@ class User extends Authenticatable
         return $this->defaultProfilePhotoUrl();
     }
     /**
+     * Check if user is Super Admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
+     * Check if user is an Administrator (Super Admin or Admin).
+     */
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, ['super_admin', 'admin']);
+    }
+
+    /**
      * The "booted" method of the model.
      */
     protected static function booted(): void

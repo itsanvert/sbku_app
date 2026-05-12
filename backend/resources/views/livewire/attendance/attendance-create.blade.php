@@ -212,6 +212,17 @@
                         </flux:field>
                     </div>
 
+                    <flux:field>
+                        <flux:label>Room / Location Name</flux:label>
+                        <flux:select wire:model="room_id" placeholder="— Select Room (Optional) —" class="w-full">
+                            <flux:select.option value="">— Use default / No Room —</flux:select.option>
+                            @foreach($rooms as $room)
+                                <flux:select.option value="{{ $room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:error name="room_id" />
+                    </flux:field>
+
                     <p class="text-xs text-zinc-400 flex items-center gap-1">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

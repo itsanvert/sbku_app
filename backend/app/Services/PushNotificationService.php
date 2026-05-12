@@ -44,7 +44,8 @@ class PushNotificationService
 
             $notification = Notification::create($title, $body);
 
-            $message = CloudMessage::withTarget('token', $token)
+            $message = CloudMessage::new()
+                ->withToken($token)
                 ->withNotification($notification)
                 ->withData($data);
 
@@ -72,7 +73,8 @@ class PushNotificationService
 
             $notification = Notification::create($title, $body);
 
-            $message = CloudMessage::withTarget('topic', $topic)
+            $message = CloudMessage::new()
+                ->withTopic($topic)
                 ->withNotification($notification)
                 ->withData($data);
 

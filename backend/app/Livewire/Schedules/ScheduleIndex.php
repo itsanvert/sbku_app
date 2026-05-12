@@ -20,19 +20,33 @@ class ScheduleIndex extends Component
     public $day_of_the_week;
     public $start_time;
     public $end_time;
+    public $start_date;
+    public $end_date;
+    public $class_id;
+    public $teacher_id;
+    public $subject_id;
+    public $room_id;
+    public $syllabus_id;
 
     protected $rules = [
         'name' => 'required|min:2',
         'day_of_the_week' => 'nullable|string',
         'start_time' => 'nullable',
         'end_time' => 'nullable',
+        'start_date' => 'nullable|date',
+        'end_date' => 'nullable|date',
+        'class_id' => 'nullable|exists:academic_classes,id',
+        'teacher_id' => 'nullable|exists:teachers,id',
+        'subject_id' => 'nullable|exists:subjects,id',
+        'room_id' => 'nullable|exists:rooms,id',
+        'syllabus_id' => 'nullable|exists:syllabuses,id',
     ];
 
     public function updatingSearch() { $this->resetPage(); }
 
     public function openCreateModal()
     {
-        $this->reset(['name', 'day_of_the_week', 'start_time', 'end_time']);
+        $this->reset(['name', 'day_of_the_week', 'start_time', 'end_time', 'start_date', 'end_date', 'class_id', 'teacher_id', 'subject_id', 'room_id', 'syllabus_id']);
         $this->showCreateModal = true;
     }
 
@@ -44,6 +58,13 @@ class ScheduleIndex extends Component
             'day_of_the_week' => $this->day_of_the_week,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'class_id' => $this->class_id ?: null,
+            'teacher_id' => $this->teacher_id ?: null,
+            'subject_id' => $this->subject_id ?: null,
+            'room_id' => $this->room_id ?: null,
+            'syllabus_id' => $this->syllabus_id ?: null,
         ]);
         $this->showCreateModal = false;
         session()->flash('message', 'Schedule created successfully.');
@@ -55,9 +76,15 @@ class ScheduleIndex extends Component
         $schedule = Schedule::findOrFail($id);
         $this->name = $schedule->name;
         $this->day_of_the_week = $schedule->day_of_the_week;
-        // Format times for input[type="time"] if they are Carbon objects
         $this->start_time = $schedule->start_time ? $schedule->start_time->format('H:i') : null;
         $this->end_time = $schedule->end_time ? $schedule->end_time->format('H:i') : null;
+        $this->start_date = $schedule->start_date ? $schedule->start_date->format('Y-m-d') : null;
+        $this->end_date = $schedule->end_date ? $schedule->end_date->format('Y-m-d') : null;
+        $this->class_id = $schedule->class_id;
+        $this->teacher_id = $schedule->teacher_id;
+        $this->subject_id = $schedule->subject_id;
+        $this->room_id = $schedule->room_id;
+        $this->syllabus_id = $schedule->syllabus_id;
         $this->showEditModal = true;
     }
 
@@ -71,6 +98,13 @@ class ScheduleIndex extends Component
             'day_of_the_week' => $this->day_of_the_week,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'class_id' => $this->class_id ?: null,
+            'teacher_id' => $this->teacher_id ?: null,
+            'subject_id' => $this->subject_id ?: null,
+            'room_id' => $this->room_id ?: null,
+            'syllabus_id' => $this->syllabus_id ?: null,
         ]);
 
         $this->showEditModal = false;
@@ -86,9 +120,15 @@ class ScheduleIndex extends Component
     public function render()
     {
         return view('livewire.schedules.schedule-index', [
-            'schedules' => Schedule::where('name', 'like', '%' . $this->search . '%')
+            'schedules' => Schedule::with(['teacher.user', 'subject', 'academicClass', 'room'])
+                ->where('name', 'like', '%' . $this->search . '%')
                 ->orWhere('day_of_the_week', 'like', '%' . $this->search . '%')
                 ->paginate(10),
+            'teachers' => \App\Models\Teacher::with('user')->get(),
+            'subjects' => \App\Models\Subject::orderBy('name')->get(),
+            'academicClasses' => \App\Models\AcademicClass::orderBy('name')->get(),
+            'rooms' => \App\Models\Room::orderBy('name')->get(),
+            'syllabuses' => \App\Models\Syllabus::with(['subject', 'teacher.user'])->get(),
         ])->layout('layouts.app');
     }
 }

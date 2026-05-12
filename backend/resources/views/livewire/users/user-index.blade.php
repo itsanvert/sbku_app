@@ -26,12 +26,12 @@
                             class="w-52"
                         />
 
-                        <flux:select wire:model.live="role" size="sm" class="w-32">
+                        <flux:select wire:model.live="role" size="sm" class="w-40">
                             <flux:select.option value="">All Roles</flux:select.option>
+                            <flux:select.option value="super_admin">Super Admin</flux:select.option>
                             <flux:select.option value="admin">Admin</flux:select.option>
-                            <flux:select.option value="user">User</flux:select.option>
-                            <flux:select.option value="student">Student</flux:select.option>
                             <flux:select.option value="teacher">Teacher</flux:select.option>
+                            <flux:select.option value="student">Student</flux:select.option>
                         </flux:select>
 
                         @if(count($selected) > 0)
@@ -99,14 +99,16 @@
                                     </td>
 
                                     <td class="px-4 py-3">
-                                        @if(($user->role ?? 'user') === 'admin')
-                                            <flux:badge color="red" size="sm">Admin</flux:badge>
-                                        @elseif(($user->role ?? 'user') === 'teacher')
+                                        @if($user->role === 'super_admin')
+                                            <flux:badge color="red" variant="solid" size="sm">Super Admin</flux:badge>
+                                        @elseif($user->role === 'admin')
+                                            <flux:badge color="orange" size="sm">Admin</flux:badge>
+                                        @elseif($user->role === 'teacher')
                                             <flux:badge color="green" size="sm">Teacher</flux:badge>
-                                        @elseif(($user->role ?? 'user') === 'student')
+                                        @elseif($user->role === 'student')
                                             <flux:badge color="yellow" size="sm">Student</flux:badge>
                                         @else
-                                            <flux:badge color="blue" size="sm">User</flux:badge>
+                                            <flux:badge color="blue" size="sm">{{ ucfirst($user->role ?? 'User') }}</flux:badge>
                                         @endif
                                     </td>
 
