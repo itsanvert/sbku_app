@@ -131,6 +131,31 @@ class AttendanceService {
     throw Exception('Failed to end session');
   }
 
+  /// Renew the QR token for a session.
+  ///
+  /// Called when a new session period begins so old QR codes are invalidated
+  /// and students must scan the fresh QR code.
+  Future<Map<String, dynamic>> renewSessionToken(int sessionId) async {
+    final response = await _api.post(
+      'attendance-sessions/$sessionId/renew-token',
+      {},
+      requiresAuth: true,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    String errorMessage = 'Failed to renew QR token';
+    try {
+      final errorBody = jsonDecode(response.body);
+      if (errorBody is Map && errorBody.containsKey('message')) {
+        errorMessage = errorBody['message'];
+      }
+    } catch (_) {}
+    throw Exception(errorMessage);
+  }
+
   // ── Attendance Reports ───────────────────────────────────────
 
   /// Get attendances with optional filters.
