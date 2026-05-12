@@ -11,6 +11,13 @@ class UserIndex extends Component
 {
     use WithPagination;
 
+    public function mount()
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized access to user management.');
+        }
+    }
+
     public $search       = '';
     public $role         = '';
     public $sortBy        = 'id';

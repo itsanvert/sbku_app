@@ -20,7 +20,7 @@ class AttendanceListCategoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
     final role = user?.role?.toLowerCase();
-    final bool showTeacherMenu = role == 'teacher' || role == 'admin';
+    final bool showTeacherMenu = role == 'teacher' || role == 'admin' || role == 'super_admin';
 
     return Scaffold(
       appBar: AppBarWidget.simple(
@@ -39,11 +39,11 @@ class AttendanceListCategoryScreen extends StatelessWidget {
 
   List<ListCardItem> _teacherMenuItems() {
     return [
-      ListCardItem(
-        icon: Icons.add_location_alt,
-        label: 'បើកវេនវត្តមាន',
-        screen: TeacherStartAttendanceScreen(),
-      ),
+      // ListCardItem(
+      //   icon: Icons.add_location_alt,
+      //   label: 'បើកវេនវត្តមាន',
+      //   screen: TeacherStartAttendanceScreen(),
+      // ),
       ListCardItem(
         icon: Icons.list_alt,
         label: 'វេនកំពុងដំណើរការ',

@@ -68,14 +68,28 @@ class AttendanceService {
 
   /// Listen to active attendance sessions in real-time from Firestore
   Stream<List<Map<String, dynamic>>> listenToActiveSessions({int? teacherId}) {
-    Query query = FirebaseFirestore.instance.collection('attendance_sessions')
-        .where('is_active', isEqualTo: true);
+    Query query = FirebaseFirestore.instance.collection('attendance_sessions');
         
     if (teacherId != null) {
       query = query.where('teacher_id', isEqualTo: teacherId);
     }
     
     return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return data;
+      }).toList();
+    });
+  }
+
+  /// Listen to attendances for a specific session in real-time from Firestore
+  Stream<List<Map<String, dynamic>>> listenToSessionAttendances(int sessionId) {
+    return FirebaseFirestore.instance
+        .collection('attendances')
+        .where('session_id', isEqualTo: sessionId)
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = int.tryParse(doc.id) ?? 0;
@@ -129,6 +143,31 @@ class AttendanceService {
       return jsonDecode(response.body);
     }
     throw Exception('Failed to end session');
+  }
+
+  /// Renew the QR token for a session.
+  ///
+  /// Called when a new session period begins so old QR codes are invalidated
+  /// and students must scan the fresh QR code.
+  Future<Map<String, dynamic>> renewSessionToken(int sessionId) async {
+    final response = await _api.post(
+      'attendance-sessions/$sessionId/renew-token',
+      {},
+      requiresAuth: true,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    String errorMessage = 'Failed to renew QR token';
+    try {
+      final errorBody = jsonDecode(response.body);
+      if (errorBody is Map && errorBody.containsKey('message')) {
+        errorMessage = errorBody['message'];
+      }
+    } catch (_) {}
+    throw Exception(errorMessage);
   }
 
   // ── Attendance Reports ───────────────────────────────────────

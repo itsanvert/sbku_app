@@ -136,6 +136,33 @@ class AttendanceSessionController extends Controller
     }
 
     /**
+     * Renew the QR token for a session.
+     *
+     * Called when the teacher wants to regenerate the QR code
+     * (e.g. at the start of a new session period).
+     */
+    public function renewToken($id)
+    {
+        $session = AttendanceSession::findOrFail($id);
+
+        try {
+            $updated = $this->sessionService->renewToken($session);
+
+            return response()->json([
+                'message'  => 'QR token renewed successfully',
+                'session'  => $updated,
+                'qr_token' => $updated->qr_token,
+            ]);
+        } catch (\Exception $e) {
+            $code = $e->getCode() ?: 422;
+            return response()->json(
+                ['message' => $e->getMessage()],
+                is_int($code) ? $code : 422,
+            );
+        }
+    }
+
+    /**
      * List all check-ins for a session, grouped by verify_status.
      */
     public function approvalList($id)
