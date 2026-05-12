@@ -23,6 +23,10 @@ class _TeacherActiveSessionsListScreenState
   Stream<List<Map<String, dynamic>>>? _sessionsStream;
   List<Map<String, dynamic>>? _localSessions;
   bool _isInitialSyncing = true;
+<<<<<<< feature/implement-the-time-of-start-end-session-trigger
+  bool _useCloud = false; // Default to Local first as requested
+=======
+>>>>>>> dev
 
   @override
   void initState() {
@@ -33,10 +37,17 @@ class _TeacherActiveSessionsListScreenState
   Future<void> _initialSync() async {
     setState(() => _isInitialSyncing = true);
     
+<<<<<<< feature/implement-the-time-of-start-end-session-trigger
+    // 1. Setup Firestore stream regardless of mode (so it's ready)
+    _setupStream();
+    
+    // 2. Fetch from local MySQL
+=======
     // 1. Start Firestore stream
     _setupStream();
     
     // 2. Fetch from local MySQL as a fast fallback
+>>>>>>> dev
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final user = auth.user;
@@ -57,6 +68,15 @@ class _TeacherActiveSessionsListScreenState
     }
   }
 
+<<<<<<< feature/implement-the-time-of-start-end-session-trigger
+  void _toggleSource() {
+    setState(() {
+      _useCloud = !_useCloud;
+    });
+  }
+
+=======
+>>>>>>> dev
   void _setupStream() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.user;
@@ -78,6 +98,54 @@ class _TeacherActiveSessionsListScreenState
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+<<<<<<< feature/implement-the-time-of-start-end-session-trigger
+      appBar: AppBar(
+        title: const Text('វេនកំពុងដំណើរការ'),
+        actions: [
+          // Source Toggle Indicator
+          GestureDetector(
+            onTap: _toggleSource,
+            child: StreamBuilder(
+              stream: _sessionsStream,
+              builder: (context, snapshot) {
+                bool isCloudActive = _useCloud;
+                bool hasCloudData = snapshot.hasData && !snapshot.hasError;
+                bool isConnecting = snapshot.connectionState == ConnectionState.waiting;
+                
+                return Container(
+                  margin: const EdgeInsets.only(right: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isCloudActive 
+                        ? (hasCloudData ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1))
+                        : Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isCloudActive 
+                          ? (hasCloudData ? Colors.green : Colors.orange)
+                          : Colors.blue,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isCloudActive ? Icons.cloud_done : Icons.storage,
+                        size: 14,
+                        color: isCloudActive 
+                            ? (hasCloudData ? Colors.green : Colors.orange)
+                            : Colors.blue,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isCloudActive ? 'Cloud' : 'Local',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isCloudActive 
+                              ? (hasCloudData ? Colors.green : Colors.orange)
+                              : Colors.blue,
+=======
       appBar: AppBarWidget.simple(title: 'វេនកំពុងដំណើរការ'),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -123,6 +191,125 @@ class _TeacherActiveSessionsListScreenState
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Icon(Icons.cloud_off,
+                            size: 48,
+                            color: isDark ? Colors.redAccent.shade100 : Colors.red[400]),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'មិនអាចភ្ជាប់ទៅកាន់សេវាកម្មបានទេ',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+>>>>>>> dev
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            'Local error: ${_localSessions == null ? "Fetch failed" : "No sessions found"}\nCloud: $errorMsg',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: theme.hintColor),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _initialSync,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('ព្យាយាមម្តងទៀត'),
+                        ),
+                      ],
+                    ),
+                  ),
+<<<<<<< feature/implement-the-time-of-start-end-session-trigger
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Manual refresh from MySQL (REST API)
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final teacherId = auth.user?.teacherId;
+          if (teacherId != null) {
+            await _service.getActiveSessions(teacherId: teacherId);
+          }
+          // Also restart the Firestore stream
+          _initialSync();
+        },
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _sessionsStream,
+          builder: (context, snapshot) {
+            // Determine which data to show: Firestore (Real-time) vs Local (MySQL Fallback)
+            List<Map<String, dynamic>> rawList = [];
+            bool isRealtime = false;
+            
+            if (_useCloud) {
+              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                rawList = snapshot.data!;
+                isRealtime = true;
+              } else {
+                // If Cloud requested but empty/null, show nothing or MySQL if desired
+                rawList = []; 
+              }
+            } else {
+              rawList = _localSessions ?? [];
+              isRealtime = false;
+            }
+
+            // ── Loading ─────────────────────────────────────────────
+            if (_useCloud && snapshot.connectionState == ConnectionState.waiting && rawList.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            // ── Error ───────────────────────────────────────────────
+            if (_useCloud && snapshot.hasError && rawList.isEmpty) {
+              final errorMsg = snapshot.error.toString();
+=======
+                ),
+              );
+            }
+
+            final now = DateTime.now();
+
+            // Filter only sessions that are active AND not expired
+            final sessions = rawList.where((s) {
+              final isActive = s['is_active'] == true || s['is_active'] == 1 || s['is_active'] == '1';
+              if (!isActive) return false;
+
+              // Check expiration if available
+              final expiresAtStr = s['expires_at'];
+              if (expiresAtStr != null && expiresAtStr.toString().isNotEmpty) {
+                try {
+                  final expiresAt = DateTime.parse(expiresAtStr.toString());
+                  if (expiresAt.isBefore(now)) return false;
+                } catch (_) {}
+              }
+              return true;
+            }).toList();
+
+            // Sort by started_at descending (newest first)
+            sessions.sort((a, b) {
+              final aTime = DateTime.tryParse(a['started_at']?.toString() ?? '') ?? DateTime(2000);
+              final bTime = DateTime.tryParse(b['started_at']?.toString() ?? '') ?? DateTime(2000);
+              return bTime.compareTo(aTime);
+            });
+
+            if (sessions.isEmpty) {
+>>>>>>> dev
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+<<<<<<< feature/implement-the-time-of-start-end-session-trigger
                         Icon(Icons.cloud_off,
                             size: 48,
                             color: isDark ? Colors.redAccent.shade100 : Colors.red[400]),
@@ -206,6 +393,24 @@ class _TeacherActiveSessionsListScreenState
                                 ? const Color(0xFF94A3B8)
                                 : Colors.grey[600],
                           ),
+=======
+                        Icon(
+                          Icons.event_busy,
+                          size: 64,
+                          color: isDark
+                              ? const Color(0xFF475569)
+                              : Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'មិនមានវេនកំពុងដំណើរការ',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.grey[600],
+                          ),
+>>>>>>> dev
                         ),
                       ],
                     ),
