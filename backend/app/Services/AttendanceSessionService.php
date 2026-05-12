@@ -52,10 +52,7 @@ class AttendanceSessionService
 
         // If a teacher is manually starting a session, it should be active 
         // immediately so they can see the QR code and monitor check-ins.
-        $isManualStart = true; // For now, assume all calls to startSession are manual starts
-        $isActive = $isManualStart || ($now->greaterThanOrEqualTo($scheduledStart) && 
-                    (!$scheduledEnd || $now->lessThanOrEqualTo($scheduledEnd)));
-
+        $isActive = true; 
 
         $session = AttendanceSession::create([
             'teacher_id'         => $validated['teacher_id'],
@@ -73,12 +70,11 @@ class AttendanceSessionService
             'session_end_time'   => $endTimeString,
             'latitude'           => $validated['latitude']     ?? null,
             'longitude'          => $validated['longitude']    ?? null,
+            'room_id'            => $validated['room_id']      ?? null,
             'started_at'         => $scheduledStart,
             'expires_at'         => $scheduledEnd,
             'qr_token'           => $freshToken,
             'is_active'          => $isActive,
-            'is_active'          => $isActive,
-
         ]);
 
         $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus', 'shift', 'academicClass']);
@@ -174,32 +170,17 @@ class AttendanceSessionService
 
         } catch (\Exception $e) {
             \Log::warning("Failed to notify students about session #{$session->id}: " . $e->getMessage());
-            // Don't fail the session creation if notifications fail
         }
     }
 
-    /**
-     * Process a student QR check-in.
-     *
-     * Validates:
-     *  - Session is still active
-     *  - Current time is within the session's scheduled window
-     *  - QR token matches (ensures the student scanned the current session's QR)
-     *  - Student has not already checked in
-     *
-     * @throws \Exception if validation fails
-     */
     public function checkIn(AttendanceSession $session, Student $student, string $qrToken): Attendance
     {
-        // 1. Validate session window and status
         $this->validateSessionAccess($session);
 
-        // 2. Validate QR token
         if ($session->qr_token !== $qrToken) {
             throw new \Exception('QR កូដមិនត្រឹមត្រូវ ឬផុតកំណត់។ សូមស្កេន QR ថ្មី។', 422);
         }
 
-        // 5. Check for duplicate check-in
         $existing = Attendance::where('session_id', $session->id)
             ->where('student_id', $student->id)
             ->first();
@@ -216,27 +197,18 @@ class AttendanceSessionService
             'schedule_id'     => $session->schedule_id,
             'session_id'      => $session->id,
             'verify_status'   => 'pending',
-<<<<<<< uat
         ]);
     }
 
-    /**
-     * Validate if a session is currently accessible for check-in.
-     * 
-     * @throws \Exception if session is closed or out of time window
-     */
     public function validateSessionAccess(AttendanceSession $session): void
     {
-        // Check if session is explicitly closed
         if (!$session->is_active) {
             throw new \Exception('វេនវត្តមានបានបិទរួចហើយ។ មិនអាចចុះវត្តមានបានទេ។', 422);
         }
 
         $now = now();
-        // Use started_at date as the base for time comparisons
         $baseDate = $session->started_at ? $session->started_at->copy()->startOfDay() : Carbon::today();
 
-        // Check if session hasn't started yet based on scheduled start time
         if ($session->session_start_time) {
             $scheduledStart = $baseDate->copy()->setTimeFromTimeString($session->session_start_time);
             if ($now->lessThan($scheduledStart)) {
@@ -244,21 +216,15 @@ class AttendanceSessionService
             }
         }
 
-        // Check if session has expired based on scheduled end time
         if ($session->session_end_time) {
             $scheduledEnd = $baseDate->copy()->setTimeFromTimeString($session->session_end_time);
             if ($now->greaterThan($scheduledEnd)) {
-                // Auto-end the session since it has expired logically
                 $this->autoEndExpiredSession($session);
                 throw new \Exception('ពេលវេលាវេនវត្តមានបានផុតកំណត់។ មិនអាចចុះវត្តមានបានទេ។', 422);
             }
         }
     }
 
-    /**
-     * Auto-end an expired session (triggered when a student tries to check in
-     * after the session's scheduled end time).
-     */
     protected function autoEndExpiredSession(AttendanceSession $session): void
     {
         if (!$session->is_active) return;
@@ -266,95 +232,10 @@ class AttendanceSessionService
         try {
             $this->endSession($session);
         } catch (\Exception $e) {
-            // Session may have already been ended by another request
             \Log::info("Auto-end for session #{$session->id}: {$e->getMessage()}");
         }
     }
 
-    /**
-     * Renew the QR token for a session.
-     *
-     * Called when a new session period starts to ensure that old QR codes
-     * from previous sessions cannot be reused.
-     *
-     * @throws \Exception if the session is not active
-     */
-    public function renewToken(AttendanceSession $session): AttendanceSession
-    {
-        if (!$session->is_active) {
-            throw new \Exception('Cannot renew token for an inactive session', 422);
-        }
-
-        $newToken = Str::uuid()->toString();
-
-        $session->update([
-            'qr_token' => $newToken,
-=======
->>>>>>> dev
-        ]);
-
-        return $session->fresh();
-    }
-
-    /**
-     * Validate if a session is currently accessible for check-in.
-     * 
-     * @throws \Exception if session is closed or out of time window
-     */
-    public function validateSessionAccess(AttendanceSession $session): void
-    {
-        // Check if session is explicitly closed
-        if (!$session->is_active) {
-            throw new \Exception('វេនវត្តមានបានបិទរួចហើយ។ មិនអាចចុះវត្តមានបានទេ។', 422);
-        }
-
-        $now = now();
-        // Use started_at date as the base for time comparisons
-        $baseDate = $session->started_at ? $session->started_at->copy()->startOfDay() : Carbon::today();
-
-        // Check if session hasn't started yet based on scheduled start time
-        if ($session->session_start_time) {
-            $scheduledStart = $baseDate->copy()->setTimeFromTimeString($session->session_start_time);
-            if ($now->lessThan($scheduledStart)) {
-                throw new \Exception('វេនវត្តមានមិនទាន់ចាប់ផ្តើមទេ។ សូមរង់ចាំដល់ម៉ោង ' . $session->session_start_time, 422);
-            }
-        }
-
-        // Check if session has expired based on scheduled end time
-        if ($session->session_end_time) {
-            $scheduledEnd = $baseDate->copy()->setTimeFromTimeString($session->session_end_time);
-            if ($now->greaterThan($scheduledEnd)) {
-                // Auto-end the session since it has expired logically
-                $this->autoEndExpiredSession($session);
-                throw new \Exception('ពេលវេលាវេនវត្តមានបានផុតកំណត់។ មិនអាចចុះវត្តមានបានទេ។', 422);
-            }
-        }
-    }
-
-    /**
-     * Auto-end an expired session (triggered when a student tries to check in
-     * after the session's scheduled end time).
-     */
-    protected function autoEndExpiredSession(AttendanceSession $session): void
-    {
-        if (!$session->is_active) return;
-
-        try {
-            $this->endSession($session);
-        } catch (\Exception $e) {
-            // Session may have already been ended by another request
-            \Log::info("Auto-end for session #{$session->id}: {$e->getMessage()}");
-        }
-    }
-
-    /**
-     * Renew the QR token for a session.
-     *
-     * Called when a new session period starts to ensure that old QR codes
-     * from previous sessions cannot be reused.
-     *
-     * @throws \Exception if the session is not active
-     */
     public function renewToken(AttendanceSession $session): AttendanceSession
     {
         if (!$session->is_active) {
@@ -370,16 +251,8 @@ class AttendanceSessionService
         return $session->fresh();
     }
 
-    /**
-     * End a session and finalize all attendance records.
-     *
-     * - Rejects unverified pending check-ins
-     * - Creates absent records for students who didn't check in
-     */
     public function endSession(AttendanceSession $session): array
     {
-        // If already inactive, just return current stats instead of failing.
-        // This satisfies the "unenable to close session" requirement for redundant calls.
         if (!$session->is_active) {
             return [
                 'session'       => $session->load(['attendances.student.user']),
@@ -395,27 +268,18 @@ class AttendanceSessionService
                 'ended_at'  => now(),
             ]);
 
-            // Get eligible students — filtered by major, faculty, and year (from syllabus)
             $query = Student::query();
             if ($session->academic_class_id) {
                 $query->where('academic_class_id', $session->academic_class_id);
             } else {
-                if ($session->faculty_id) {
-                    $query->where('faculty_id', $session->faculty_id);
-                }
-                if ($session->major_id) {
-                    $query->where('major_id', $session->major_id);
-                }
-                // Narrow to the specific year from syllabus if available
-                if ($session->year_id) {
-                    $query->where('year', $session->year_id);
-                }
+                if ($session->faculty_id) $query->where('faculty_id', $session->faculty_id);
+                if ($session->major_id) $query->where('major_id', $session->major_id);
+                if ($session->year_id) $query->where('year', $session->year_id);
             }
 
             $allStudents = $query->pluck('id');
             $checkedInStudents = $session->attendances()->pluck('student_id');
 
-            // Reject unverified pending check-ins
             $session->attendances()
                 ->where('verify_status', 'pending')
                 ->update([
@@ -425,7 +289,6 @@ class AttendanceSessionService
                     'status'        => 'N',
                 ]);
 
-            // Create absent records
             $absentStudents = $allStudents->diff($checkedInStudents);
             foreach ($absentStudents as $studentId) {
                 Attendance::create([
@@ -446,9 +309,6 @@ class AttendanceSessionService
         ];
     }
 
-    /**
-     * Verify (approve/reject) a student attendance check-in.
-     */
     public function verifyAttendance(
         Attendance $attendance,
         string $action,
