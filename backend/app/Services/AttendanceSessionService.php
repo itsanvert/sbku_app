@@ -24,20 +24,36 @@ class AttendanceSessionService
         private readonly PushNotificationService $pushService,
     ) {}
 
-    /**
-     * Start a new attendance session.
-     */
     public function startSession(array $validated): AttendanceSession
     {
-        // Calculate expires_at from session_end_time if provided
-        $expiresAt = null;
-        $endTime = $validated['end_time'] ?? null;
-        if ($endTime) {
-            $expiresAt = Carbon::today()->setTimeFromTimeString($endTime);
+        $now = now();
+        $startTimeString = $validated['start_time'] ?? '00:00';
+        $endTimeString = $validated['end_time'] ?? null;
+
+        // Parse start and end times
+        $scheduledStart = Carbon::today()->setTimeFromTimeString($startTimeString);
+        $scheduledEnd = $endTimeString ? Carbon::today()->setTimeFromTimeString($endTimeString) : null;
+
+        // Smart Date Logic: 
+        // 1. If end_time is before start_time, it must be the next day (e.g., 11 PM to 1 AM)
+        if ($scheduledEnd && $scheduledEnd->lessThan($scheduledStart)) {
+            $scheduledEnd->addDay();
         }
 
-        // Generate a fresh QR token for every new session
+        // 2. If it's late at night and we're starting a session for early morning, 
+        // it's likely intended for tomorrow.
+        if ($now->hour > 18 && $scheduledStart->hour < 6) {
+            $scheduledStart->addDay();
+            if ($scheduledEnd) $scheduledEnd->addDay();
+        }
+
+        // Generate a fresh QR token
         $freshToken = Str::uuid()->toString();
+
+        // A session should only be initialized as active if the current time 
+        // is within its scheduled window.
+        $shouldBeActive = $now->greaterThanOrEqualTo($scheduledStart) && 
+                         (!$scheduledEnd || $now->lessThanOrEqualTo($scheduledEnd));
 
         $session = AttendanceSession::create([
             'teacher_id'         => $validated['teacher_id'],
@@ -51,14 +67,14 @@ class AttendanceSessionService
             'academic_class_id'  => $validated['academic_class_id'] ?? null,
             'shift_id'           => $validated['shift_id']     ?? null,
             'day_of_week'        => $validated['day_of_week']  ?? null,
-            'session_start_time' => $validated['start_time']   ?? null,
-            'session_end_time'   => $endTime,
+            'session_start_time' => $startTimeString,
+            'session_end_time'   => $endTimeString,
             'latitude'           => $validated['latitude']     ?? null,
             'longitude'          => $validated['longitude']    ?? null,
-            'started_at'         => Carbon::today()->setTimeFromTimeString($validated['start_time'] ?? '00:00'),
-            'expires_at'         => $expiresAt,
+            'started_at'         => $scheduledStart,
+            'expires_at'         => $scheduledEnd,
             'qr_token'           => $freshToken,
-            'is_active'          => true,
+            'is_active'          => $shouldBeActive,
         ]);
 
         $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus', 'shift', 'academicClass']);

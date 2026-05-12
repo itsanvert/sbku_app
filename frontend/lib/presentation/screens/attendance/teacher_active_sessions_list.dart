@@ -3,6 +3,8 @@ import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:intl/intl.dart';
+import 'package:sbku_app/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class TeacherActiveSessionsListScreen extends StatefulWidget {
   const TeacherActiveSessionsListScreen({super.key});
@@ -15,25 +17,27 @@ class TeacherActiveSessionsListScreen extends StatefulWidget {
 class _TeacherActiveSessionsListScreenState
     extends State<TeacherActiveSessionsListScreen> {
   final AttendanceService _service = AttendanceService();
-  List<Map<String, dynamic>> _sessions = [];
-  bool _isLoading = true;
+
+  // ── Database Source ────────────────────────────────────────────────────────
+  // We use the REST API (MySQL) first as requested. The Firestore stream 
+  // is available for real-time migration later.
+  Future<List<Map<String, dynamic>>>? _sessionsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadSessions();
+    _refreshSessions();
   }
 
-  Future<void> _loadSessions() async {
-    setState(() => _isLoading = true);
-    try {
-      final sessions = await _service.getActiveSessions();
+  void _refreshSessions() {
+    // Access teacherId from Provider
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final teacherId = auth.user?.teacherId;
+    
+    if (teacherId != null) {
       setState(() {
-        _sessions = sessions;
-        _isLoading = false;
+        _sessionsFuture = _service.getActiveSessions(teacherId: teacherId);
       });
-    } catch (e) {
-      setState(() => _isLoading = false);
     }
   }
 
@@ -44,99 +48,202 @@ class _TeacherActiveSessionsListScreenState
 
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'វេនកំពុងដំណើរការ'),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: theme.primaryColor),
-            )
-          : _sessions.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.event_busy,
-                        size: 64,
-                        color: isDark
-                            ? const Color(0xFF475569)
-                            : Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'មិនមានវេនកំពុងដំណើរការ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark
-                              ? const Color(0xFF94A3B8)
-                              : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadSessions,
-                  color: theme.primaryColor,
-                  child: ListView.builder(
-                    itemCount: _sessions.length,
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (context, index) {
-                      final session = _sessions[index];
-                      final teacherName = session['teacher_name'] ??
-                          session['teacher']?['user']?['name'] ??
-                          'Teacher';
-                      final facultyName = session['faculty']?['name'] ?? '';
-                      final checkedIn = session['attendances_count'] ?? 0;
-                      final startedAt = session['started_at'] ?? '';
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _refreshSessions();
+          await _sessionsFuture;
+        },
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _sessionsFuture,
+          builder: (context, snapshot) {
+            // ── Loading ─────────────────────────────────────────────
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: CircularProgressIndicator(color: theme.primaryColor),
+              );
+            }
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.green.withValues(
+            // ── Error ───────────────────────────────────────────────
+            if (snapshot.hasError) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 48,
+                            color: isDark
+                                ? Colors.redAccent.shade100
+                                : Colors.red[400]),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Failed to load sessions (MySQL)',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(snapshot.error.toString(), 
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final sessions = snapshot.data ?? [];
+
+            // ── Empty ───────────────────────────────────────────────
+            if (sessions.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          size: 64,
+                          color: isDark
+                              ? const Color(0xFF475569)
+                              : Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'មិនមានវេនកំពុងដំណើរការ',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            // ── Session List ────────────────────────────────────────
+            return ListView.builder(
+              itemCount: sessions.length,
+              padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                final session = sessions[index];
+                final teacherName = session['teacher_name'] ??
+                    session['teacher']?['user']?['name'] ??
+                    'Teacher';
+                final facultyName = session['faculty']?['name'] ?? '';
+                final checkedIn = session['attendances_count'] ?? 0;
+                final startedAt = session['started_at'] ?? '';
+                final isActive = session['is_active'] == true || session['is_active'] == 1;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: isActive
+                          ? Colors.green.withValues(
+                              alpha: isDark ? 0.15 : 0.1,
+                            )
+                          : Colors.grey.withValues(
                               alpha: isDark ? 0.15 : 0.1,
                             ),
-                            child: Icon(
-                              Icons.check_circle,
-                              color: isDark
-                                  ? Colors.green.shade300
-                                  : Colors.green[700],
-                            ),
-                          ),
-                          title: Text(
+                      child: Icon(
+                        isActive ? Icons.check_circle : Icons.pause_circle,
+                        color: isActive
+                            ? (isDark
+                                ? Colors.green.shade300
+                                : Colors.green[700])
+                            : (isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey[600]),
+                      ),
+                    ),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             teacherName,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: theme.textTheme.titleMedium?.color,
                             ),
                           ),
-                          subtitle: Text(
-                            '$facultyName • ${_formatDate(startedAt)}\n$checkedIn នាក់បានចូលរួម\nម៉ោងចាប់ផ្តើម: ${_formatTime(startedAt)}',
-                            style: TextStyle(
-                              height: 1.5,
-                              color: theme.textTheme.bodySmall?.color,
+                        ),
+                        if (isActive)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? Colors.green.shade300
+                                        : Colors.green[700],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          trailing: Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: theme.iconTheme.color,
+                      ],
+                    ),
+                    subtitle: Text(
+                      '$facultyName • ${_formatDate(startedAt)}\n$checkedIn នាក់បានចូលរួម\nម៉ោងចាប់ផ្តើម: ${_formatTime(startedAt)}',
+                      style: TextStyle(
+                        height: 1.5,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: theme.iconTheme.color,
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TeacherActiveSessionScreen(
+                            sessionId: session['id'],
+                            qrToken: session['qr_token'] ?? '',
                           ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => TeacherActiveSessionScreen(
-                                  sessionId: session['id'],
-                                  qrToken: session['qr_token'] ?? '',
-                                ),
-                              ),
-                            ).then((_) => _loadSessions());
-                          },
                         ),
-                      );
+                      ).then((_) => _refreshSessions());
                     },
                   ),
-                ),
+                );
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 

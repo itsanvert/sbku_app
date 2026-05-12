@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Syllabus extends Model
 {
@@ -24,9 +25,13 @@ class Syllabus extends Model
         'academic_class_id',
     ];
 
+    /**
+     * Keep times as plain strings (H:i:s) — consistent with Schedule model.
+     * This avoids timezone shifting when comparing or displaying time values.
+     */
     protected $casts = [
         'semester_id' => 'integer',
-        'start_time'  => 'string', // Keep as H:i string for simple comparison
+        'start_time'  => 'string',
         'end_time'    => 'string',
     ];
 
@@ -62,10 +67,90 @@ class Syllabus extends Model
         return $this->belongsTo(AcademicClass::class);
     }
 
-    // ── Query Scopes (used by ScheduleConflictDetector) ───────────────────────
+    /**
+     * The concrete time slots (Schedule rows) derived from this syllabus entry.
+     * A syllabus defines the course; Schedules define individual occurrences.
+     */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    /**
+     * All attendance sessions ever run under this syllabus (across all its Schedules).
+     */
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class);
+    }
+
+    // ── Accessors ─────────────────────────────────────────────────────────────
+
+    /**
+     * A concise, human-readable label for dropdowns and display.
+     * Example: "Advanced Mathematics — Monday 08:00-10:00"
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $name = $this->subject?->name ?? 'Unknown Subject';
+
+        if ($this->day_of_week && $this->start_time && $this->end_time) {
+            $name .= ' — ' . ucfirst($this->day_of_week)
+                   . ' ' . substr($this->start_time, 0, 5)
+                   . '-' . substr($this->end_time, 0, 5);
+        }
+
+        return $name;
+    }
+
+    /**
+     * Human-readable time range: "08:00 - 10:00"
+     */
+    public function getTimeRangeAttribute(): string
+    {
+        if ($this->start_time && $this->end_time) {
+            return substr($this->start_time, 0, 5) . ' - ' . substr($this->end_time, 0, 5);
+        }
+        return '—';
+    }
+
+    // ── Scopes ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Filter to a specific semester.
+     */
+    public function scopeForSemester($query, int $semesterId)
+    {
+        return $query->where('semester_id', $semesterId);
+    }
+
+    /**
+     * Filter to a specific year level.
+     */
+    public function scopeForYear($query, string $yearId)
+    {
+        return $query->where('year_id', $yearId);
+    }
+
+    /**
+     * Filter to a specific teacher.
+     */
+    public function scopeForTeacher($query, int $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
+    }
+
+    /**
+     * Filter to a specific academic class.
+     */
+    public function scopeForClass($query, int $classId)
+    {
+        return $query->where('academic_class_id', $classId);
+    }
 
     /**
      * Scope: find overlapping syllabus rows for a teacher on a given day.
+     * Used by ScheduleConflictDetector.
      */
     public function scopeTeacherOverlap(
         $query,
@@ -85,6 +170,7 @@ class Syllabus extends Model
 
     /**
      * Scope: find overlapping rows for a class group on a given day.
+     * Used by ScheduleConflictDetector.
      */
     public function scopeClassGroupOverlap(
         $query,

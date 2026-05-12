@@ -39,7 +39,7 @@ class AttendanceSessionPolicy
      */
     public function end(User $user, AttendanceSession $session): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isAdmin()) {
             return true;
         }
 
@@ -51,7 +51,7 @@ class AttendanceSessionPolicy
      */
     public function verify(User $user, AttendanceSession $session): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isAdmin()) {
             return true;
         }
 
