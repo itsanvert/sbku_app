@@ -14,8 +14,8 @@
 
             <flux:select wire:model="role" label="Role Assignment">
                 <flux:select.option value="">-- Select Role --</flux:select.option>
-                <flux:select.option value="admin">Administrator (Full Access)</flux:select.option>
-                <flux:select.option value="user">Standard User</flux:select.option>
+                <flux:select.option value="super_admin">Super Admin (Full Access)</flux:select.option>
+                <flux:select.option value="admin">Admin (Staff)</flux:select.option>
                 <flux:select.option value="student">Student</flux:select.option>
                 <flux:select.option value="teacher">Teacher</flux:select.option>
             </flux:select>

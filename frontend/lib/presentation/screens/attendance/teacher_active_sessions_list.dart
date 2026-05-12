@@ -3,6 +3,8 @@ import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:intl/intl.dart';
+import 'package:sbku_app/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class TeacherActiveSessionsListScreen extends StatefulWidget {
   const TeacherActiveSessionsListScreen({super.key});
@@ -15,25 +17,58 @@ class TeacherActiveSessionsListScreen extends StatefulWidget {
 class _TeacherActiveSessionsListScreenState
     extends State<TeacherActiveSessionsListScreen> {
   final AttendanceService _service = AttendanceService();
-  List<Map<String, dynamic>> _sessions = [];
-  bool _isLoading = true;
+
+  // ── Database Source ────────────────────────────────────────────────────────
+  // We use both Firestore (for real-time) and MySQL (for reliable fallback).
+  Stream<List<Map<String, dynamic>>>? _sessionsStream;
+  List<Map<String, dynamic>>? _localSessions;
+  bool _isInitialSyncing = true;
 
   @override
   void initState() {
     super.initState();
-    _loadSessions();
+    _initialSync();
   }
 
-  Future<void> _loadSessions() async {
-    setState(() => _isLoading = true);
+  Future<void> _initialSync() async {
+    setState(() => _isInitialSyncing = true);
+    
+    // 1. Start Firestore stream
+    _setupStream();
+    
+    // 2. Fetch from local MySQL as a fast fallback
     try {
-      final sessions = await _service.getActiveSessions();
-      setState(() {
-        _sessions = sessions;
-        _isLoading = false;
-      });
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final user = auth.user;
+      final teacherId = user?.teacherId;
+      final role = user?.role?.toLowerCase() ?? '';
+
+      if (teacherId != null || role == 'admin' || role == 'super_admin') {
+        final filterId = (role == 'admin' || role == 'super_admin') ? null : teacherId;
+        final data = await _service.getActiveSessions(teacherId: filterId);
+        setState(() {
+          _localSessions = data;
+          _isInitialSyncing = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      debugPrint('Initial MySQL fetch failed: $e');
+      setState(() => _isInitialSyncing = false);
+    }
+  }
+
+  void _setupStream() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.user;
+    final teacherId = user?.teacherId;
+    final role = user?.role?.toLowerCase() ?? '';
+
+    if (teacherId != null || role == 'admin' || role == 'super_admin') {
+      setState(() {
+        // If admin, pass null to see ALL active sessions in Firestore
+        final filterId = (role == 'admin' || role == 'super_admin') ? null : teacherId;
+        _sessionsStream = _service.listenToActiveSessions(teacherId: filterId);
+      });
     }
   }
 
@@ -44,99 +79,275 @@ class _TeacherActiveSessionsListScreenState
 
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'វេនកំពុងដំណើរការ'),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: theme.primaryColor),
-            )
-          : _sessions.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.event_busy,
-                        size: 64,
-                        color: isDark
-                            ? const Color(0xFF475569)
-                            : Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'មិនមានវេនកំពុងដំណើរការ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark
-                              ? const Color(0xFF94A3B8)
-                              : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadSessions,
-                  color: theme.primaryColor,
-                  child: ListView.builder(
-                    itemCount: _sessions.length,
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (context, index) {
-                      final session = _sessions[index];
-                      final teacherName = session['teacher_name'] ??
-                          session['teacher']?['user']?['name'] ??
-                          'Teacher';
-                      final facultyName = session['faculty']?['name'] ?? '';
-                      final checkedIn = session['attendances_count'] ?? 0;
-                      final startedAt = session['started_at'] ?? '';
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Manual refresh from MySQL (REST API)
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final teacherId = auth.user?.teacherId;
+          if (teacherId != null) {
+            await _service.getActiveSessions(teacherId: teacherId);
+          }
+          // Also restart the Firestore stream just in case
+          _setupStream();
+        },
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _sessionsStream,
+          builder: (context, snapshot) {
+            // Determine which data to show: Firestore (Real-time) vs Local (MySQL Fallback)
+            List<Map<String, dynamic>> rawList = [];
+            bool isRealtime = false;
+            
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              rawList = snapshot.data!;
+              isRealtime = true;
+            } else if (_localSessions != null) {
+              rawList = _localSessions!;
+              isRealtime = false;
+            }
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.green.withValues(
-                              alpha: isDark ? 0.15 : 0.1,
-                            ),
-                            child: Icon(
-                              Icons.check_circle,
-                              color: isDark
-                                  ? Colors.green.shade300
-                                  : Colors.green[700],
-                            ),
+            // ── Loading ─────────────────────────────────────────────
+            if (snapshot.connectionState == ConnectionState.waiting && rawList.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            // ── Error ───────────────────────────────────────────────
+            if (snapshot.hasError && rawList.isEmpty) {
+              final errorMsg = snapshot.error.toString();
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.cloud_off,
+                            size: 48,
+                            color: isDark ? Colors.redAccent.shade100 : Colors.red[400]),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'មិនអាចភ្ជាប់ទៅកាន់សេវាកម្មបានទេ',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            'Local error: ${_localSessions == null ? "Fetch failed" : "No sessions found"}\nCloud: $errorMsg',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: theme.hintColor),
                           ),
-                          title: Text(
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _initialSync,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('ព្យាយាមម្តងទៀត'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final now = DateTime.now();
+
+            // Filter only sessions that are active AND not expired
+            final sessions = rawList.where((s) {
+              final isActive = s['is_active'] == true || s['is_active'] == 1 || s['is_active'] == '1';
+              if (!isActive) return false;
+
+              // Check expiration if available
+              final expiresAtStr = s['expires_at'];
+              if (expiresAtStr != null && expiresAtStr.toString().isNotEmpty) {
+                try {
+                  final expiresAt = DateTime.parse(expiresAtStr.toString());
+                  if (expiresAt.isBefore(now)) return false;
+                } catch (_) {}
+              }
+              return true;
+            }).toList();
+
+            // Sort by started_at descending (newest first)
+            sessions.sort((a, b) {
+              final aTime = DateTime.tryParse(a['started_at']?.toString() ?? '') ?? DateTime(2000);
+              final bTime = DateTime.tryParse(b['started_at']?.toString() ?? '') ?? DateTime(2000);
+              return bTime.compareTo(aTime);
+            });
+
+            if (sessions.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          size: 64,
+                          color: isDark
+                              ? const Color(0xFF475569)
+                              : Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'មិនមានវេនកំពុងដំណើរការ',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: sessions.length,
+              padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                final session = sessions[index];
+                final teacherName = session['teacher_name'] ??
+                    session['teacher']?['user']?['name'] ??
+                    'Teacher';
+                final facultyName = session['faculty']?['name'] ?? '';
+                final checkedIn = session['attendances_count'] ?? 0;
+                final startedAt = session['started_at'] ?? '';
+                final isActive =
+                    session['is_active'] == true || session['is_active'] == 1;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: isActive
+                          ? Colors.green.withOpacity(isDark ? 0.15 : 0.1)
+                          : Colors.grey.withOpacity(isDark ? 0.15 : 0.1),
+                      child: Icon(
+                        isActive ? Icons.check_circle : Icons.pause_circle,
+                        color: isActive
+                            ? (isDark
+                                ? Colors.green.shade300
+                                : Colors.green[700])
+                            : (isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey[600]),
+                      ),
+                    ),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             teacherName,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: theme.textTheme.titleMedium?.color,
                             ),
                           ),
-                          subtitle: Text(
-                            '$facultyName • ${_formatDate(startedAt)}\n$checkedIn នាក់បានចូលរួម\nម៉ោងចាប់ផ្តើម: ${_formatTime(startedAt)}',
-                            style: TextStyle(
-                              height: 1.5,
-                              color: theme.textTheme.bodySmall?.color,
+                        ),
+                        if (isActive)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? Colors.green.shade300
+                                        : Colors.green[700],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          trailing: Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: theme.iconTheme.color,
+                      ],
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$facultyName • ${_formatDate(startedAt)}\n$checkedIn នាក់បានចូលរួម\nម៉ោងចាប់ផ្តើម: ${_formatTime(startedAt)}',
+                          style: TextStyle(
+                            height: 1.5,
+                            color: theme.textTheme.bodySmall?.color,
                           ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => TeacherActiveSessionScreen(
-                                  sessionId: session['id'],
-                                  qrToken: session['qr_token'] ?? '',
-                                ),
-                              ),
-                            ).then((_) => _loadSessions());
-                          },
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (session['_source'] == 'firestore' || isRealtime)
+                                ? Colors.blue.withOpacity(0.1)
+                                : Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            (session['_source'] == 'firestore' || isRealtime) ? 'Live Cloud' : 'Local System',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: (session['_source'] == 'firestore' || isRealtime)
+                                  ? Colors.blue.shade300
+                                  : Colors.orange.shade300,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: theme.iconTheme.color,
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TeacherActiveSessionScreen(
+                            sessionId: session['id'],
+                            qrToken: session['qr_token'] ?? '',
+                          ),
                         ),
                       );
                     },
                   ),
-                ),
+                );
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 

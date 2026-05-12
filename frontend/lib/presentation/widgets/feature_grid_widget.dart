@@ -164,13 +164,13 @@ class _FeatureGridState extends State<FeatureGrid> {
                   color: effectiveBackgroundColor,
                   borderRadius: BorderRadius.circular(widget.borderRadius),
                   border: Border.all(
-                    color: featureIconColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                    color: featureIconColor.withOpacity(isDark ? 0.3 : 0.2),
                     width: 1.5,
                   ),
                   boxShadow: [
 
                     BoxShadow(
-                      color: effectiveShadowColor.withValues(alpha: isDark ? 0.2 : 0.03),
+                      color: effectiveShadowColor.withOpacity(isDark ? 0.2 : 0.03),
                       blurRadius: 10,
                       spreadRadius: -2,
                       offset: const Offset(0, 4),
@@ -188,7 +188,7 @@ class _FeatureGridState extends State<FeatureGrid> {
                       height: 52,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: featureIconColor.withValues(alpha: 0.08),
+                        color: featureIconColor.withOpacity(0.08),
                       ),
                       child: Center(
                         child: Icon(

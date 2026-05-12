@@ -28,27 +28,27 @@
                 <flux:navlist variant="pill" class="mt-6">
                     <flux:navlist.item icon="home" href="{{ route('dashboard') }}" :current="request()->routeIs('dashboard')">Dashboard</flux:navlist.item>
 
-                    @if(auth()->user()->role === 'admin' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-users'))
+                    @if(auth()->user()->isSuperAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-users'))
                         <flux:navlist.item icon="user" href="{{ route('users.index') }}" :current="request()->routeIs('users.index')">User</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->role === 'admin' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-teachers'))
+                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-teachers'))
                         <flux:navlist.item icon="academic-cap" href="{{ route('teachers.index') }}" :current="request()->routeIs('teachers.index')">Teacher</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->role === 'admin' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-students'))
+                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-students'))
                         <flux:navlist.item icon="users" href="{{ route('students.index') }}" :current="request()->routeIs('students.index')">Student</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->role === 'admin' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-syllabus'))
+                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-syllabus'))
                         <flux:navlist.item icon="book-open" href="{{ route('syllabuses.index') }}" :current="request()->routeIs('syllabuses.index')">Syllabus</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->role === 'admin' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-subjects'))
+                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-subjects'))
                         <flux:navlist.item icon="bookmark" href="{{ route('subjects.index') }}" :current="request()->routeIs('subjects.index')">Subject</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->role === 'admin')
+                    @if(auth()->user()->isAdmin())
                         <flux:navlist.item icon="building-library" href="{{ route('faculties.index') }}" :current="request()->routeIs('faculties.index')">Faculty</flux:navlist.item>
                         <flux:navlist.item icon="academic-cap" href="{{ route('majors.index') }}" :current="request()->routeIs('majors.index')">Major</flux:navlist.item>
                         <flux:navlist.item icon="user-group" href="{{ route('classes.index') }}" :current="request()->routeIs('classes.index')">Class</flux:navlist.item>
@@ -59,11 +59,11 @@
 
                     @guest
                     @else
-                        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-sessions'))
+                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-sessions'))
                             <flux:navlist.item icon="calendar-days" href="{{ route('attendance.sessions.index') }}" :current="request()->routeIs('attendance.sessions.*')">Sessions</flux:navlist.item>
                         @endif
 
-                        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher' || auth()->user()->role === 'student' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-attendance'))
+                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher' || auth()->user()->role === 'student' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-attendance'))
                             <flux:navlist.item icon="clipboard-document-check" href="{{ route('attendance.records.index') }}" :current="request()->routeIs('attendance.records.*')">Records</flux:navlist.item>
                         @endif
                     @endguest

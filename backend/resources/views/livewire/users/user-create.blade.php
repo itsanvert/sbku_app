@@ -14,10 +14,10 @@
 
             <flux:select wire:model="role" label="Role Assignment">
                 <flux:select.option value="">-- Select Role --</flux:select.option>
-                <x-select.option value="admin">Administrator (Full Access)</x-select.option>
-                <x-select.option value="user">Standard User</x-select.option>
-                <x-select.option value="student">Student</x-select.option>
-                <x-select.option value="teacher">Teacher</x-select.option>
+                <flux:select.option value="super_admin">Super Admin (Full Access)</flux:select.option>
+                <flux:select.option value="admin">Admin (Staff)</flux:select.option>
+                <flux:select.option value="student">Student</flux:select.option>
+                <flux:select.option value="teacher">Teacher</flux:select.option>
             </flux:select>
 
             <div class="flex items-center justify-end gap-3 pt-4 mt-6 border-t border-gray-100">

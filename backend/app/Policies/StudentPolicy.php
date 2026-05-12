@@ -39,7 +39,7 @@ class StudentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role === 'admin';
+        return $user->isAdmin();
     }
 
     /**
@@ -47,7 +47,7 @@ class StudentPolicy
      */
     public function update(User $user, Student $student): bool
     {
-        return $user->role === 'admin';
+        return $user->isAdmin();
     }
 
     /**
@@ -55,6 +55,6 @@ class StudentPolicy
      */
     public function delete(User $user, Student $student): bool
     {
-        return $user->role === 'admin';
+        return $user->isAdmin();
     }
 }
