@@ -132,8 +132,26 @@ class _TeacherActiveSessionsListScreenState
                               ? (hasCloudData ? Colors.green : Colors.orange)
                               : Colors.blue,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            'Local error: ${_localSessions == null ? "Fetch failed" : "No sessions found"}\nCloud: $errorMsg',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: theme.hintColor),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _initialSync,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('ព្យាយាមម្តងទៀត'),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
