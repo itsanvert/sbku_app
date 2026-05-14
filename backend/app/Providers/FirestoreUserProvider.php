@@ -49,25 +49,26 @@ class FirestoreUserProvider implements UserProvider
         $userData = $cacheKey ? Cache::get($cacheKey) : null;
 
         if (!$userData) {
-            $query = $this->firestore->collection('users');
-            if (!$query) return null;
-
-            foreach ($credentials as $key => $value) {
-                if (!str_contains($key, 'password')) {
-                    $query = $query->where($key, '==', $value);
+            try {
+                $filters = [];
+                foreach ($credentials as $key => $value) {
+                    if (!str_contains($key, 'password')) {
+                        $filters[$key] = $value; // Use simple key-value for equality
+                    }
                 }
-            }
 
-            $snapshot = $query->documents();
-            foreach ($snapshot as $doc) {
-                $userData = $doc->data();
-                $userData['id'] = $doc->id();
-                
-                if ($cacheKey) {
-                    Cache::put($cacheKey, $userData, 300);
-                    Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
+                $results = $this->firestore->list('users', $filters);
+
+                if (!empty($results)) {
+                    $userData = $results[0]; // list() already includes the 'id'
+                    
+                    if ($cacheKey) {
+                        Cache::put($cacheKey, $userData, 300);
+                        Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
+                    }
                 }
-                break;
+            } catch (\Exception $e) {
+                // Handle or log exception
             }
         }
 
@@ -85,9 +86,9 @@ class FirestoreUserProvider implements UserProvider
     }
 
     /**
-     * Create a User model instance from Firestore data.
+     * Create a model instance from Firestore data.
      */
-    protected function hydrateUser(array $data)
+    protected function modelInstance(array $data)
     {
         $user = new User();
         $user->forceFill($data);
