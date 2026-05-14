@@ -20,8 +20,8 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
 fi
 
-# Run migrations (Disabled for Firestore migration)
-# php artisan migrate --force
+# Run migrations
+php artisan migrate --force
 
 # Clear caches to ensure fresh production assets
 php artisan config:clear
