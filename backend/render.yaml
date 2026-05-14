@@ -15,27 +15,7 @@ services:
       - key: APP_KEY
         value: base64:eOvGzttB2Sme3+YwJb7hse7ds1qCpwJ7HJ/KIdwHXKA=
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: sbkuapp-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: sbkuapp-db
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: sbkuapp-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: sbkuapp-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: sbkuapp-db
-          property: password
+        value: sqlite
       - key: SESSION_DRIVER
         value: file
       - key: CACHE_STORE
@@ -53,7 +33,3 @@ services:
       - key: GOOGLE_CLOUD_USE_REST
         value: "true"
 
-databases:
-  - name: sbkuapp-db
-    plan: free
-    region: singapore
