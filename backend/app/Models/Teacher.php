@@ -51,29 +51,29 @@ class Teacher extends Model
     public function getAvatarUrlAttribute()
     {
         $baseUrl = request()->getSchemeAndHttpHost() . '/api/storage/';
-        return $this->profile_image_path 
+        return $this->profile_image_path
             ? $baseUrl . $this->profile_image_path
             : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=6366f1&color=ffffff';
     }
-public function user()
-{
-    return $this->belongsTo(User::class);
-}
-public function faculty()
-{
-    return $this->belongsTo(Faculty::class);
-}
-public function major()
-{
-    return $this->belongsTo(Major::class);
-}
-public function schedule()
-{
-    return $this->belongsTo(Schedule::class);
-}
-public function shift()
-{
-    return $this->belongsTo(Shift::class);
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function faculty()
+    {
+        return $this->belongsTo(Faculty::class);
+    }
+    public function major()
+    {
+        return $this->belongsTo(Major::class);
+    }
+    public function schedule()
+    {
+        return $this->belongsTo(Schedule::class);
+    }
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class);
 
-}
+    }
 }
