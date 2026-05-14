@@ -54,7 +54,7 @@ trait SyncsToFirestore
             $documentId = (string) $this->getKey();
 
             $data = $this->toFirestoreArray();
-            
+
             // Add a timestamp for the sync
             $data['_synced_at'] = now()->toIso8601String();
             $data['_sync_event'] = $event;
