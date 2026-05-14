@@ -82,14 +82,18 @@ class User extends Authenticatable
             return $baseUrl . $this->profile_photo_path;
         }
 
-        // 2. Fall back to Teacher profile image
-        if ($this->teacher && $this->teacher->profile_image_path) {
-            return $baseUrl . $this->teacher->profile_image_path;
+        // 2. Fall back to Teacher profile image (handles both Model and Firestore array)
+        $teacher = $this->teacher;
+        $teacherPath = is_array($teacher) ? ($teacher['profile_image_path'] ?? null) : ($teacher->profile_image_path ?? null);
+        if ($teacherPath) {
+            return $baseUrl . $teacherPath;
         }
 
-        // 3. Fall back to Student profile image
-        if ($this->student && $this->student->profile_image_path) {
-            return $baseUrl . $this->student->profile_image_path;
+        // 3. Fall back to Student profile image (handles both Model and Firestore array)
+        $student = $this->student;
+        $studentPath = is_array($student) ? ($student['profile_image_path'] ?? null) : ($student->profile_image_path ?? null);
+        if ($studentPath) {
+            return $baseUrl . $studentPath;
         }
 
         // 4. Default ui-avatars
@@ -125,15 +129,27 @@ class User extends Authenticatable
         });
     }
 
-    // relationship model the teacher to users
-    public function teacher()
+    /**
+     * Get the teacher profile from Firestore.
+     */
+    public function getTeacherAttribute()
     {
-        return $this->hasOne(Teacher::class);
+        // Cache the result for the duration of the request
+        return $this->attributes['teacher_profile'] ??= app(\App\Services\FirestoreService::class)
+            ->list('teachers', ['user_id' => (int)$this->id])[0] ?? null;
     }
 
-    // relationship model the student to users
-    public function student()
+    /**
+     * Get the student profile from Firestore.
+     */
+    public function getStudentAttribute()
     {
-        return $this->hasOne(Student::class);
+        // Cache the result for the duration of the request
+        return $this->attributes['student_profile'] ??= app(\App\Services\FirestoreService::class)
+            ->list('students', ['user_id' => (int)$this->id])[0] ?? null;
     }
+
+    // Traditional relationships commented out to prevent SQL queries
+    // public function teacher() { return $this->hasOne(Teacher::class); }
+    // public function student() { return $this->hasOne(Student::class); }
 }
