@@ -20,8 +20,13 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
 fi
 
-# Run migrations
-php artisan migrate --force
+# Run migrations (Disabled for Firestore migration)
+# php artisan migrate --force
+
+# Force DB connection to sqlite for all artisan commands to bypass PostgreSQL checks
+export DB_CONNECTION=sqlite
+export DB_DATABASE=:memory:
+export DB_HOST=127.0.0.1
 
 # Clear caches to ensure fresh production assets
 php artisan config:clear
