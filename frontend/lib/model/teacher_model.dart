@@ -5,16 +5,16 @@ import 'package:sbku_app/service/api_service.dart';
 // The backend appends computed attributes: name, email, avatar_url via Eloquent accessors.
 
 class Teacher {
-  final int id;
-  final int? userId;
+  final String id;
+  final String? userId;
   final String name;
   final String? email;
   final String? gender;
   final String? phone;
-  final int? majorId;
-  final int? facultyId;
-  final int? scheduleId;
-  final int? shiftId;
+  final String? majorId;
+  final String? facultyId;
+  final String? scheduleId;
+  final String? shiftId;
   final String? year;
   final String role;
   final String? profileImagePath;
@@ -56,17 +56,17 @@ class Teacher {
     // Handle both paginated list items and single-record responses
     // Backend appends 'name', 'email', 'avatar_url' as computed attributes
     return Teacher(
-      id: _parseInt(json['id']) ?? 0,
-      userId: _parseInt(json['user_id']),
+      id: json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString(),
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ??
           json['user']?['email']?.toString(),
       gender: json['gender']?.toString(),
       phone: json['phone']?.toString(),
-      majorId: _parseInt(json['major_id']),
-      facultyId: _parseInt(json['faculty_id']),
-      scheduleId: _parseInt(json['schedule_id']),
-      shiftId: _parseInt(json['shift_id']),
+      majorId: json['major_id']?.toString(),
+      facultyId: json['faculty_id']?.toString(),
+      scheduleId: json['schedule_id']?.toString(),
+      shiftId: json['shift_id']?.toString(),
       year: json['year']?.toString(),
       role: json['role']?.toString() ?? 'teacher',
       profileImagePath: json['profile_image_path']?.toString(),

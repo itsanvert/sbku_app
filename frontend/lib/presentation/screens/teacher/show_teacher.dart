@@ -3,7 +3,7 @@ import 'package:sbku_app/model/teacher_model.dart';
 import 'package:sbku_app/service/teacher_service.dart';
 
 class ShowTeacherScreen extends StatelessWidget {
-  final int teacherId;
+  final String teacherId;
 
   const ShowTeacherScreen({super.key, required this.teacherId});
 

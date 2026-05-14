@@ -420,7 +420,7 @@ class _TeacherActiveSessionsListScreenState
                         context,
                         MaterialPageRoute(
                           builder: (context) => TeacherActiveSessionScreen(
-                            sessionId: session['id'] is int ? session['id'] : int.parse(session['id'].toString()),
+                            sessionId: session['id'].toString(),
                             qrToken: session['qr_token'] ?? '',
                           ),
                         ),

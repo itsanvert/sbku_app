@@ -205,7 +205,7 @@ class StudentFormController {
   // ---------------------------
   StudentModel toStudentModel({String? existingId}) {
     return StudentModel(
-      id: existingId != null ? int.parse(existingId) : int.parse(idController.text.trim()),
+      id: existingId != null ? existingId : idController.text.trim(),
       name: nameController.text.trim(),
       gender: selectedGender,
       dob: dobController.text.trim(),

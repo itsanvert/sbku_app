@@ -84,14 +84,14 @@ class User extends Authenticatable
 
         // 2. Fall back to Teacher profile image (handles both Model and Firestore array)
         $teacher = $this->teacher;
-        $teacherPath = is_array($teacher) ? ($teacher['profile_image_path'] ?? null) : ($teacher->profile_image_path ?? null);
+        $teacherPath = data_get($teacher, 'profile_image_path');
         if ($teacherPath) {
             return $baseUrl . $teacherPath;
         }
 
         // 3. Fall back to Student profile image (handles both Model and Firestore array)
         $student = $this->student;
-        $studentPath = is_array($student) ? ($student['profile_image_path'] ?? null) : ($student->profile_image_path ?? null);
+        $studentPath = data_get($student, 'profile_image_path');
         if ($studentPath) {
             return $baseUrl . $studentPath;
         }
@@ -152,9 +152,12 @@ class User extends Authenticatable
      */
     public function getTeacherAttribute()
     {
+        // Check if user_id is numeric to decide on cast
+        $uid = is_numeric($this->id) ? (int)$this->id : $this->id;
+        
         // Cache the result for the duration of the request
         return $this->attributes['teacher_profile'] ??= app(\App\Services\FirestoreService::class)
-            ->list('teachers', ['user_id' => (int)$this->id])[0] ?? null;
+            ->list('teachers', ['user_id' => $uid])[0] ?? null;
     }
 
     /**
@@ -162,9 +165,12 @@ class User extends Authenticatable
      */
     public function getStudentAttribute()
     {
+        // Check if user_id is numeric to decide on cast
+        $uid = is_numeric($this->id) ? (int)$this->id : $this->id;
+
         // Cache the result for the duration of the request
         return $this->attributes['student_profile'] ??= app(\App\Services\FirestoreService::class)
-            ->list('students', ['user_id' => (int)$this->id])[0] ?? null;
+            ->list('students', ['user_id' => $uid])[0] ?? null;
     }
 
     // Traditional relationships commented out to prevent SQL queries
