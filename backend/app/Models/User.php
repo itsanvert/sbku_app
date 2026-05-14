@@ -108,6 +108,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Mock method to satisfy Jetstream templates after disabling Teams.
+     */
+    public function hasTeamPermission($team, string $permission): bool
+    {
+        return true;
+    }
+
+    public function currentTeam()
+    {
+        return null;
+    }
+
+    public function allTeams()
+    {
+        return collect([]);
+    }
+
+    /**
      * Check if user is an Administrator (Super Admin or Admin).
      */
     public function isAdmin(): bool
@@ -134,9 +152,10 @@ class User extends Authenticatable
      */
     public function getTeacherAttribute()
     {
-        // Cache the result for the duration of the request
-        return $this->attributes['teacher_profile'] ??= app(\App\Services\FirestoreService::class)
-            ->list('teachers', ['user_id' => (int)$this->id])[0] ?? null;
+        return Cache::remember("user_teacher_profile_{$this->id}", 300, function () {
+            return app(\App\Services\FirestoreService::class)
+                ->list('teachers', ['user_id' => (int)$this->id])[0] ?? null;
+        });
     }
 
     /**
@@ -144,9 +163,10 @@ class User extends Authenticatable
      */
     public function getStudentAttribute()
     {
-        // Cache the result for the duration of the request
-        return $this->attributes['student_profile'] ??= app(\App\Services\FirestoreService::class)
-            ->list('students', ['user_id' => (int)$this->id])[0] ?? null;
+        return Cache::remember("user_student_profile_{$this->id}", 300, function () {
+            return app(\App\Services\FirestoreService::class)
+                ->list('students', ['user_id' => (int)$this->id])[0] ?? null;
+        });
     }
 
     // Traditional relationships commented out to prevent SQL queries
