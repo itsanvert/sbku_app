@@ -8,7 +8,6 @@ use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Student;
 use App\Services\AttendanceSessionService;
-use App\Services\FirestoreService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -27,8 +26,8 @@ class AttendanceSessionController extends Controller
 
     public function __construct(
         private readonly AttendanceSessionService $sessionService,
-        private readonly FirestoreService $firestore,
-    ) {}
+    ) {
+    }
 
     /**
      * Start a new attendance session (teacher).
@@ -38,8 +37,8 @@ class AttendanceSessionController extends Controller
         $session = $this->sessionService->startSession($request->validated());
 
         return response()->json([
-            'message'  => 'Session started successfully',
-            'session'  => $session,
+            'message' => 'Session started successfully',
+            'session' => $session,
             'qr_token' => $session->qr_token,
         ], 201);
     }
@@ -49,13 +48,12 @@ class AttendanceSessionController extends Controller
      */
     public function active(Request $request)
     {
-        $filters = ['is_active' => true];
-        
-        if ($request->teacher_id) {
-            $filters['teacher_id'] = (int) $request->teacher_id;
-        }
-
-        $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
+        $sessions = AttendanceSession::active()
+            ->with(['teacher.user', 'faculty', 'major', 'schedule'])
+            ->withCount('attendances')
+            ->when($request->teacher_id, fn($q) => $q->where('teacher_id', $request->teacher_id))
+            ->orderBy('started_at', 'desc')
+            ->get();
 
         return response()->json($sessions);
     }
@@ -65,11 +63,13 @@ class AttendanceSessionController extends Controller
      */
     public function show($id)
     {
-        $session = $this->firestore->getDocument('attendance_sessions', (string)$id);
-
-        if (!$session) {
-            return response()->json(['message' => 'Session not found'], 404);
-        }
+        $session = AttendanceSession::with([
+            'teacher.user',
+            'faculty',
+            'major',
+            'schedule',
+            'attendances.student.user',
+        ])->findOrFail($id);
 
         return response()->json($session);
     }
@@ -99,7 +99,7 @@ class AttendanceSessionController extends Controller
             );
 
             return response()->json([
-                'message'    => 'Check-in successful',
+                'message' => 'Check-in successful',
                 'attendance' => $attendance->load('student.user'),
             ], 201);
         } catch (\Exception $e) {
@@ -122,10 +122,10 @@ class AttendanceSessionController extends Controller
             $result = $this->sessionService->endSession($session);
 
             return response()->json([
-                'message'       => 'Session ended successfully',
-                'session'       => $result['session'],
+                'message' => 'Session ended successfully',
+                'session' => $result['session'],
                 'total_present' => $result['total_present'],
-                'total_absent'  => $result['total_absent'],
+                'total_absent' => $result['total_absent'],
             ]);
         } catch (\Exception $e) {
             $code = $e->getCode() ?: 422;
@@ -150,8 +150,8 @@ class AttendanceSessionController extends Controller
             $updated = $this->sessionService->renewToken($session);
 
             return response()->json([
-                'message'  => 'QR token renewed successfully',
-                'session'  => $updated,
+                'message' => 'QR token renewed successfully',
+                'session' => $updated,
                 'qr_token' => $updated->qr_token,
             ]);
         } catch (\Exception $e) {
@@ -182,37 +182,37 @@ class AttendanceSessionController extends Controller
             ->map(function ($a) {
                 $student = $a->student;
                 return [
-                    'id'                   => $a->id,
-                    'student_id'           => $a->student_id,
-                    'student_name'         => $student?->user?->name ?? $student?->name ?? 'Unknown',
-                    'student_code'         => $student?->student_code ?? '',
-                    'avatar_url'           => $student?->avatar_url,
-                    'faculty'              => $student?->faculty?->name ?? '—',
-                    'major'                => $student?->major?->name ?? '—',
-                    'year'                 => $student?->year ?? '—',
-                    'shift'                => $student?->shift?->name ?? '—',
-                    'generation'           => $student?->generation ?? '—',
-                    'check_in_time'        => $a->check_in_time?->format('H:i:s'),
-                    'status'               => $a->status,
-                    'permission_reason'    => $a->permission_reason,
+                    'id' => $a->id,
+                    'student_id' => $a->student_id,
+                    'student_name' => $student?->user?->name ?? $student?->name ?? 'Unknown',
+                    'student_code' => $student?->student_code ?? '',
+                    'avatar_url' => $student?->avatar_url,
+                    'faculty' => $student?->faculty?->name ?? '—',
+                    'major' => $student?->major?->name ?? '—',
+                    'year' => $student?->year ?? '—',
+                    'shift' => $student?->shift?->name ?? '—',
+                    'generation' => $student?->generation ?? '—',
+                    'check_in_time' => $a->check_in_time?->format('H:i:s'),
+                    'status' => $a->status,
+                    'permission_reason' => $a->permission_reason,
                     'permission_image_url' => $a->permission_image_url,
-                    'verify_status'        => $a->verify_status,
-                    'reject_reason'        => $a->reject_reason,
-                    'verified_at'          => $a->verified_at?->format('H:i:s'),
+                    'verify_status' => $a->verify_status,
+                    'reject_reason' => $a->reject_reason,
+                    'verified_at' => $a->verified_at?->format('H:i:s'),
                 ];
             });
 
         $grouped = [
-            'pending'  => $attendances->where('verify_status', 'pending')->values(),
+            'pending' => $attendances->where('verify_status', 'pending')->values(),
             'approved' => $attendances->where('verify_status', 'approved')->values(),
             'rejected' => $attendances->where('verify_status', 'rejected')->values(),
         ];
 
         return response()->json([
-            'session'     => $session,
+            'session' => $session,
             'attendances' => $grouped,
-            'counts'      => [
-                'pending'  => $grouped['pending']->count(),
+            'counts' => [
+                'pending' => $grouped['pending']->count(),
                 'approved' => $grouped['approved']->count(),
                 'rejected' => $grouped['rejected']->count(),
             ],
@@ -240,7 +240,7 @@ class AttendanceSessionController extends Controller
             );
 
             return response()->json([
-                'message'    => $request->action === 'approved'
+                'message' => $request->action === 'approved'
                     ? 'Attendance approved successfully.'
                     : 'Attendance rejected — student marked as absent.',
                 'attendance' => $result,

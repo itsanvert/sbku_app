@@ -4,11 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\SyncsToFirestore;
 
 class Student extends Model
 {
-    use SyncsToFirestore;
     protected $appends = ['name', 'email', 'avatar_url'];
 
     protected $fillable = [
