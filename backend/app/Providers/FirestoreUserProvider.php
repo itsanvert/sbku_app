@@ -24,7 +24,7 @@ class FirestoreUserProvider implements UserProvider
             return $this->firestore->getDocument('users', (string)$identifier);
         });
 
-        return $userData ? $this->modelInstance($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function retrieveByToken($identifier, $token)
@@ -72,7 +72,7 @@ class FirestoreUserProvider implements UserProvider
             }
         }
 
-        return $userData ? $this->modelInstance($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
