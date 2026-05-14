@@ -50,9 +50,23 @@ return [
              *
              */
 
-            'credentials' => (($cred = env('FIREBASE_CREDENTIALS')) && str_starts_with($cred, 'storage/')) 
-                ? realpath(storage_path(str_replace('storage/', '', $cred))) 
-                : $cred,
+            'credentials' => (static function () {
+                $credentials = env('FIREBASE_CREDENTIALS');
+
+                if (!$credentials) {
+                    return null;
+                }
+
+                if (str_starts_with(trim($credentials), '{')) {
+                    return $credentials;
+                }
+
+                if (str_starts_with($credentials, 'storage/')) {
+                    return storage_path(str_replace('storage/', '', $credentials));
+                }
+
+                return $credentials;
+            })(),
 
             /*
              * ------------------------------------------------------------------------

@@ -9,6 +9,17 @@ if [ "$DB_CONNECTION" = "sqlite" ]; then
     touch database/database.sqlite
 fi
 
+# Fix Firebase permissions on Render
+if [ -f "/etc/secrets/firebase-credentials.json" ]; then
+    echo "Found Firebase credentials in /etc/secrets, preparing for use..."
+    mkdir -p storage/app
+    cp /etc/secrets/firebase-credentials.json storage/app/firebase-credentials.json
+    chmod 644 storage/app/firebase-credentials.json
+    # We update the environment variables so Laravel and Google SDK use the readable copy
+    export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
+    export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
+fi
+
 # Run migrations
 php artisan migrate --force
 
