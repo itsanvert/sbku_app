@@ -40,34 +40,66 @@ class FirestoreService
     }
 
     /**
-     * List documents in a collection with filters.
+     * Count documents in a collection with optional filters.
      */
-    public function list(string $collection, array $filters = [], string $orderBy = null, string $direction = 'asc')
+    public function count(string $collection, array $filters = []): int
     {
-        $query = $this->db->collection($collection);
+        try {
+            $query = $this->db->collection($collection);
 
-        foreach ($filters as $field => $value) {
-            if (is_array($value)) {
-                $query = $query->where($field, $value[0], $value[1]);
-            } else {
-                $query = $query->where($field, '=', $value);
+            foreach ($filters as $field => $value) {
+                if (is_array($value) && count($value) === 3) {
+                    $query = $query->where($value[0], $value[1], $value[2]);
+                } else {
+                    $query = $query->where($field, '=', $value);
+                }
             }
+
+            return $query->count();
+        } catch (\Exception $e) {
+            \Log::error("Firestore count error for $collection: " . $e->getMessage());
+            return 0;
         }
+    }
 
-        if ($orderBy) {
-            $query = $query->orderBy($orderBy, $direction);
+    /**
+     * List documents with filtering and sorting.
+     */
+    public function list(string $collection, array $filters = [], string $sortBy = null, string $sortDir = 'asc'): array
+    {
+        try {
+            $query = $this->db->collection($collection);
+
+            foreach ($filters as $field => $value) {
+                if (is_array($value) && count($value) === 3) {
+                    // Handle [field, operator, value]
+                    $query = $query->where($value[0], $value[1], $value[2]);
+                } else {
+                    // Handle field => value
+                    $query = $query->where($field, '=', $value);
+                }
+            }
+
+            if ($sortBy) {
+                $query = $query->orderBy($sortBy, $sortDir);
+            }
+
+            $documents = $query->documents();
+            $results = [];
+
+            foreach ($documents as $doc) {
+                if ($doc->exists()) {
+                    $data = $doc->data();
+                    $data['id'] = $doc->id();
+                    $results[] = $data;
+                }
+            }
+
+            return $results;
+        } catch (\Exception $e) {
+            \Log::error("Firestore list error for $collection: " . $e->getMessage());
+            return [];
         }
-
-        $documents = $query->documents();
-        $results = [];
-
-        foreach ($documents as $document) {
-            $data = $document->data();
-            $data['id'] = $document->id();
-            $results[] = $data;
-        }
-
-        return $results;
     }
 
     /**
