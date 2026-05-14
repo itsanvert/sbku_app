@@ -212,7 +212,7 @@ class AttendanceController extends Controller
 
         $total = $totalQuery->count();
         $present = (clone $totalQuery)->present()->count();
-        
+
         // Anti-cheating status summary
         $pending = (clone $totalQuery)->pending()->count();
         $approved = (clone $totalQuery)->approved()->count();
@@ -289,26 +289,34 @@ class AttendanceController extends Controller
         if ($request->studentId || $request->student_id) {
             $query->forStudent($request->studentId ?? $request->student_id);
         }
-        if ($request->date) $query->forDate($request->date);
-        if ($request->month && $request->year) $query->forMonth($request->month, $request->year);
-        elseif ($request->year) $query->forYear($request->year);
-        if ($request->status) $query->where('status', $request->status);
+        if ($request->date)
+            $query->forDate($request->date);
+        if ($request->month && $request->year)
+            $query->forMonth($request->month, $request->year);
+        elseif ($request->year)
+            $query->forYear($request->year);
+        if ($request->status)
+            $query->where('status', $request->status);
 
         $records = $query->orderBy('attendance_date', 'desc')->get();
 
         // Build a human-readable filter summary for the report header
         $filterParts = [];
-        if ($request->date)   $filterParts[] = 'Date: ' . $request->date;
-        if ($request->month)  $filterParts[] = 'Month: ' . $request->month;
-        if ($request->year)   $filterParts[] = 'Year: ' . $request->year;
-        if ($request->status) $filterParts[] = 'Status: ' . $request->status;
+        if ($request->date)
+            $filterParts[] = 'Date: ' . $request->date;
+        if ($request->month)
+            $filterParts[] = 'Month: ' . $request->month;
+        if ($request->year)
+            $filterParts[] = 'Year: ' . $request->year;
+        if ($request->status)
+            $filterParts[] = 'Status: ' . $request->status;
         $filterInfo = $filterParts ? implode(' | ', $filterParts) : 'All records';
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
-            'records'     => $records,
-            'title'       => 'Attendance Report',
-            'reportedBy'  => auth()->user()?->name ?? 'System',
-            'filterInfo'  => $filterInfo,
+            'records' => $records,
+            'title' => 'Attendance Report',
+            'reportedBy' => auth()->user()?->name ?? 'System',
+            'filterInfo' => $filterInfo,
         ])->setPaper('a4', 'landscape');
 
         return $pdf->download('attendance-report-' . now()->format('Y-m-d') . '.pdf');
@@ -320,11 +328,11 @@ class AttendanceController extends Controller
     public function exportExcel(Request $request)
     {
         $query = Attendance::with([
-            'student.user', 
-            'student.faculty', 
-            'student.major', 
-            'student.shift', 
-            'schedule', 
+            'student.user',
+            'student.faculty',
+            'student.major',
+            'student.shift',
+            'schedule',
             'session.teacher.user',
             'session.faculty',
             'session.major'
@@ -333,19 +341,27 @@ class AttendanceController extends Controller
         if ($request->studentId || $request->student_id) {
             $query->forStudent($request->studentId ?? $request->student_id);
         }
-        if ($request->date) $query->forDate($request->date);
-        if ($request->month && $request->year) $query->forMonth($request->month, $request->year);
-        elseif ($request->year) $query->forYear($request->year);
-        if ($request->status) $query->where('status', $request->status);
+        if ($request->date)
+            $query->forDate($request->date);
+        if ($request->month && $request->year)
+            $query->forMonth($request->month, $request->year);
+        elseif ($request->year)
+            $query->forYear($request->year);
+        if ($request->status)
+            $query->where('status', $request->status);
 
         $records = $query->orderBy('attendance_date', 'desc')->get();
 
         // Build a human-readable filter summary
         $filterParts = [];
-        if ($request->date)   $filterParts[] = 'Date: ' . $request->date;
-        if ($request->month)  $filterParts[] = 'Month: ' . $request->month;
-        if ($request->year)   $filterParts[] = 'Year: ' . $request->year;
-        if ($request->status) $filterParts[] = 'Status: ' . $request->status;
+        if ($request->date)
+            $filterParts[] = 'Date: ' . $request->date;
+        if ($request->month)
+            $filterParts[] = 'Month: ' . $request->month;
+        if ($request->year)
+            $filterParts[] = 'Year: ' . $request->year;
+        if ($request->status)
+            $filterParts[] = 'Status: ' . $request->status;
         $filterInfo = $filterParts ? implode(' | ', $filterParts) : 'All records';
 
         return (new \App\Exports\AttendanceExport(
