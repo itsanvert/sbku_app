@@ -152,10 +152,9 @@ class User extends Authenticatable
      */
     public function getTeacherAttribute()
     {
-        return Cache::remember("user_teacher_profile_{$this->id}", 300, function () {
-            return app(\App\Services\FirestoreService::class)
-                ->list('teachers', ['user_id' => (int)$this->id])[0] ?? null;
-        });
+        // Cache the result for the duration of the request
+        return $this->attributes['teacher_profile'] ??= app(\App\Services\FirestoreService::class)
+            ->list('teachers', ['user_id' => (int)$this->id])[0] ?? null;
     }
 
     /**
@@ -163,10 +162,9 @@ class User extends Authenticatable
      */
     public function getStudentAttribute()
     {
-        return Cache::remember("user_student_profile_{$this->id}", 300, function () {
-            return app(\App\Services\FirestoreService::class)
-                ->list('students', ['user_id' => (int)$this->id])[0] ?? null;
-        });
+        // Cache the result for the duration of the request
+        return $this->attributes['student_profile'] ??= app(\App\Services\FirestoreService::class)
+            ->list('students', ['user_id' => (int)$this->id])[0] ?? null;
     }
 
     // Traditional relationships commented out to prevent SQL queries
