@@ -22,53 +22,57 @@ class FirestoreUserProvider implements UserProvider
         $data = $this->firestore->getDocument('users', (string)$identifier);
         
         if (!$data) {
-            return null;
-        }
+        $userData = Cache::remember("user_auth_id_{$identifier}", 300, function () use ($identifier) {
+            return $this->firestore->getDocument('users', (string)$identifier);
+        });
 
-        return $this->hydrateUser($data);
+        return $userData ? $this->modelInstance($userData) : null;
     }
 
     public function retrieveByToken($identifier, $token)
     {
-        $users = $this->firestore->list('users', [
-            'id' => $identifier,
-            'remember_token' => $token
-        ]);
-
-        return !empty($users) ? $this->hydrateUser($users[0]) : null;
+        return null;
     }
 
     public function updateRememberToken(Authenticatable $user, $token)
     {
-        $this->firestore->set('users', (string)$user->getAuthIdentifier(), [
-            'remember_token' => $token
-        ]);
+        // Not implemented for Firestore
     }
 
     public function retrieveByCredentials(array $credentials)
     {
-        if (empty($credentials) ||
-           (count($credentials) === 1 &&
-            array_key_exists('password', $credentials))) {
+        if (empty($credentials) || (count($credentials) === 1 && array_key_exists('password', $credentials))) {
             return null;
         }
 
-        $query = $this->firestore->collection('users');
-        
-        foreach ($credentials as $key => $value) {
-            if (str_contains($key, 'password')) continue;
-            $query = $query->where($key, '=', $value);
+        $email = $credentials['email'] ?? null;
+        $cacheKey = $email ? "user_auth_email_" . md5($email) : null;
+
+        $userData = $cacheKey ? Cache::get($cacheKey) : null;
+
+        if (!$userData) {
+            $query = $this->firestore->db->collection('users');
+
+            foreach ($credentials as $key => $value) {
+                if (!str_contains($key, 'password')) {
+                    $query = $query->where($key, '==', $value);
+                }
+            }
+
+            $snapshot = $query->documents();
+            foreach ($snapshot as $doc) {
+                $userData = $doc->data();
+                $userData['id'] = $doc->id();
+                
+                if ($cacheKey) {
+                    Cache::put($cacheKey, $userData, 300);
+                    Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
+                }
+                break;
+            }
         }
 
-        $documents = $query->documents();
-        
-        foreach ($documents as $document) {
-            $data = $document->data();
-            $data['id'] = $document->id();
-            return $this->hydrateUser($data);
-        }
-
-        return null;
+        return $userData ? $this->modelInstance($userData) : null;
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
