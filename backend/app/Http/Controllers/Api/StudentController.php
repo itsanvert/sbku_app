@@ -25,10 +25,30 @@ class StudentController extends Controller
 
     public function __construct(
         private readonly StudentService $studentService,
+        private readonly \App\Services\FirestoreService $firestore,
     ) {}
 
     public function index(Request $request)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $filters = [];
+            if ($request->search) {
+                // Firestore doesn't support 'like' easily, so we might just filter in memory
+                // for small lists or use a prefix search if implemented.
+                // For now, let's just fetch all or filter by simple equality if possible.
+            }
+
+            $students = $this->firestore->list('students', $filters);
+
+            return response()->json([
+                'data'         => $students,
+                'current_page' => 1,
+                'last_page'    => 1,
+                'total'        => count($students),
+                'per_page'     => count($students),
+            ]);
+        }
+
         $students = Student::query()
             ->with(['user', 'major', 'faculty', 'academicClass'])
             ->whereHas('user', function($q) use ($request) {
@@ -40,8 +60,6 @@ class StudentController extends Controller
             ->orderBy($request->sort_by ?? 'id', $request->sort_dir ?? 'asc')
             ->paginate($request->per_page ?? 10);
 
-        // Return raw paginator JSON — Flutter's StudentPaginated.fromJson()
-        // expects current_page, last_page, total at top level
         return response()->json($students);
     }
 

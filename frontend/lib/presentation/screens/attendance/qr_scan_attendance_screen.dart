@@ -133,9 +133,8 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
       if (user == null) throw Exception('សូមចូលគណនីជាមុន');
 
       final result = await _attendanceService.checkInWithQr(
-        sessionId:
-            sessionId is int ? sessionId : int.parse(sessionId.toString()),
-        studentId: user.id,
+        sessionId: sessionId.toString(),
+        studentId: user.id.toString(),
         qrToken: qrToken.toString(),
       );
 

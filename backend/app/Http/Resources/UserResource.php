@@ -25,8 +25,8 @@ class UserResource extends JsonResource
             'profile_photo_url'  => $this->profile_photo_url,
             'two_factor_enabled' => $this->two_factor_secret !== null,
             'role'               => $this->role,
-            'student_id'         => $this->student?->id,
-            'teacher_id'         => $this->teacher?->id,
+            'student_id'         => $this->student_id ?? data_get($this->student, 'id'),
+            'teacher_id'         => $this->teacher_id ?? data_get($this->teacher, 'id'),
             'created_at'         => $this->created_at,
             'updated_at'         => $this->updated_at,
         ];

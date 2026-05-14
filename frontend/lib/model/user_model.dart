@@ -1,7 +1,7 @@
 import 'package:sbku_app/service/api_service.dart';
 
 class User {
-  final int id;
+  final String id;
   final String name;
   final String email;
   final String? emailVerifiedAt;
@@ -10,8 +10,8 @@ class User {
   final String? createdAt;
   final String? updatedAt;
   final String? role;
-  final int? studentId;
-  final int? teacherId;
+  final String? studentId;
+  final String? teacherId;
 
   User({
     required this.id,
@@ -34,7 +34,7 @@ class User {
                                json['profile_image_url']?.toString();
 
     return User(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       emailVerifiedAt: json['email_verified_at'],
@@ -43,8 +43,8 @@ class User {
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
       role: json['role'] ?? json['role_id']?.toString(),
-      studentId: json['student_id'],
-      teacherId: json['teacher_id'],
+      studentId: json['student_id']?.toString(),
+      teacherId: json['teacher_id']?.toString(),
     );
   }
 
@@ -99,7 +99,7 @@ class User {
   }
 
   User copyWith({
-    int? id,
+    String? id,
     String? name,
     String? email,
     String? emailVerifiedAt,
@@ -108,8 +108,8 @@ class User {
     String? createdAt,
     String? updatedAt,
     String? role,
-    int? studentId,
-    int? teacherId,
+    String? studentId,
+    String? teacherId,
   }) {
     return User(
       id: id ?? this.id,
