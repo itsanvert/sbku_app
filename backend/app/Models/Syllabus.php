@@ -31,8 +31,8 @@ class Syllabus extends Model
      */
     protected $casts = [
         'semester_id' => 'integer',
-        'start_time'  => 'string',
-        'end_time'    => 'string',
+        'start_time' => 'string',
+        'end_time' => 'string',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────────
@@ -96,8 +96,8 @@ class Syllabus extends Model
 
         if ($this->day_of_week && $this->start_time && $this->end_time) {
             $name .= ' — ' . ucfirst($this->day_of_week)
-                   . ' ' . substr($this->start_time, 0, 5)
-                   . '-' . substr($this->end_time, 0, 5);
+                . ' ' . substr($this->start_time, 0, 5)
+                . '-' . substr($this->end_time, 0, 5);
         }
 
         return $name;
@@ -154,17 +154,17 @@ class Syllabus extends Model
      */
     public function scopeTeacherOverlap(
         $query,
-        int    $teacherId,
+        int $teacherId,
         string $day,
         string $start,
         string $end,
-        ?int   $excludeId = null
+        ?int $excludeId = null
     ) {
         return $query
-            ->where('teacher_id',  $teacherId)
+            ->where('teacher_id', $teacherId)
             ->where('day_of_week', $day)
-            ->where('start_time',  '<', $end)
-            ->where('end_time',    '>', $start)
+            ->where('start_time', '<', $end)
+            ->where('end_time', '>', $start)
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId));
     }
 
@@ -174,21 +174,21 @@ class Syllabus extends Model
      */
     public function scopeClassGroupOverlap(
         $query,
-        int    $majorId,
+        int $majorId,
         string $yearId,
-        int    $semesterId,
+        int $semesterId,
         string $day,
         string $start,
         string $end,
-        ?int   $excludeId = null
+        ?int $excludeId = null
     ) {
         return $query
-            ->where('major_id',    $majorId)
-            ->where('year_id',     $yearId)
+            ->where('major_id', $majorId)
+            ->where('year_id', $yearId)
             ->where('semester_id', $semesterId)
             ->where('day_of_week', $day)
-            ->where('start_time',  '<', $end)
-            ->where('end_time',    '>', $start)
+            ->where('start_time', '<', $end)
+            ->where('end_time', '>', $start)
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId));
     }
 }
