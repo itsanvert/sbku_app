@@ -6,7 +6,7 @@ class MessageService {
   /// Get messages from Firestore.
   /// If [receiverId] is null, it fetches broadcast messages (receiver_id is null).
   /// If [receiverId] is provided, it fetches messages for that specific user.
-  Stream<List<Map<String, dynamic>>> listenToMessages({int? userId}) {
+  Stream<List<Map<String, dynamic>>> listenToMessages({String? userId}) {
     // We want broadcast messages (receiver_id == null) OR messages for this user
     // Since Firestore doesn't support OR on null values easily across collections without multiple queries,
     // we fetch recently updated messages from the 'messages' collection.

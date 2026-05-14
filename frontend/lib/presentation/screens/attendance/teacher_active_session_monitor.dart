@@ -10,7 +10,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 /// Teacher Active Session Monitor — with anti-cheating approval checklist
 /// ─────────────────────────────────────────────────────────────────────────────
 class TeacherActiveSessionScreen extends StatefulWidget {
-  final int sessionId;
+  final String sessionId;
   final String qrToken;
 
   const TeacherActiveSessionScreen({
@@ -189,7 +189,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     try {
       await _service.verifyAttendance(
         sessionId: widget.sessionId,
-        attendanceId: id is int ? id : int.parse(id.toString()),
+        attendanceId: id.toString(),
         action: action,
         reason: reason,
       );
