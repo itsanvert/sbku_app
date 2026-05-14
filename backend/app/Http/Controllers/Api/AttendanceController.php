@@ -5,42 +5,45 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Student;
+use App\Services\FirestoreService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
+    public function __construct(
+        private readonly FirestoreService $firestore,
+    ) {}
     /**
      * List attendances with filters.
      */
     public function index(Request $request)
     {
-        $query = Attendance::query()
-            ->with(['student.user', 'schedule', 'session']);
+        $filters = [];
 
         if ($request->student_id) {
-            $query->forStudent($request->student_id);
+            $filters['student_id'] = (int) $request->student_id;
         }
 
         if ($request->date) {
-            $query->forDate($request->date);
-        }
-
-        if ($request->month && $request->year) {
-            $query->forMonth($request->month, $request->year);
-        } elseif ($request->year) {
-            $query->forYear($request->year);
+            $filters['attendance_date'] = $request->date;
         }
 
         if ($request->status) {
-            $query->where('status', $request->status);
+            $filters['status'] = $request->status;
         }
 
-        $attendances = $query
-            ->orderBy($request->sort_by ?? 'attendance_date', $request->sort_dir ?? 'desc')
-            ->paginate($request->per_page ?? 20);
+        $attendances = $this->firestore->list(
+            'attendances', 
+            $filters, 
+            $request->sort_by ?? 'attendance_date', 
+            $request->sort_dir ?? 'desc'
+        );
 
-        return response()->json($attendances);
+        return response()->json([
+            'data' => $attendances,
+            'total' => count($attendances),
+        ]);
     }
 
     /**

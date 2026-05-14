@@ -36,35 +36,8 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Register Firestore User Provider for Authentication
-        Auth::provider('firestore', function ($app, array $config) {
-            return new \App\Providers\FirestoreUserProvider($app->make(FirestoreService::class));
-        });
-
-        // Register custom Token Guard for API (Stateless)
-        Auth::viaRequest('firestore-token', function (Request $request) {
-            $token = $request->bearerToken();
-            if (!$token) return null;
-
-            try {
-                $decoded = base64_decode($token);
-                if (str_starts_with($decoded, 'user_')) {
-                    $parts = explode('_', $decoded);
-                    $userId = $parts[1];
-                    
-                    $firestore = app(FirestoreService::class);
-                    $userData = $firestore->getDocument('users', (string)$userId);
-                    
-                    if ($userData) {
-                        $user = new User();
-                        $user->forceFill($userData);
-                        $user->exists = true;
-                        return $user;
-                    }
-                }
-            } catch (\Exception $e) {
-                return null;
-            }
-            return null;
+        \Illuminate\Support\Facades\Auth::provider('firestore', function ($app, array $config) {
+            return new \App\Providers\FirestoreUserProvider($app->make(\App\Services\FirestoreService::class));
         });
     }
 }
