@@ -23,6 +23,11 @@ fi
 # Run migrations (Disabled for Firestore migration)
 # php artisan migrate --force
 
+# Force DB connection to sqlite for all artisan commands to bypass PostgreSQL checks
+export DB_CONNECTION=sqlite
+export DB_DATABASE=:memory:
+export DB_HOST=127.0.0.1
+
 # Clear caches to ensure fresh production assets
 php artisan config:clear
 php artisan view:clear
