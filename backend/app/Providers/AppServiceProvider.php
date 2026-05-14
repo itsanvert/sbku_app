@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Services\FirestoreService;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {

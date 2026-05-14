@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Traits\ApiResponse;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -45,7 +46,8 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $token = $user->createToken('mobile-app')->plainTextToken;
+        // Mock token for now to avoid Sanctum DB dependency
+        $token = base64_encode('user_' . $user->id . '_' . time());
 
         // Flat format for Flutter AuthService compatibility
         // Flat format for Flutter AuthService compatibility
@@ -63,15 +65,19 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request)
     {
-        $user = User::where('email', $request->email)->first();
+        $credentials = $request->only('email', 'password');
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!Auth::attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        $token = $user->createToken('mobile-app')->plainTextToken;
+        $user = Auth::user();
+        
+        // Mock token for now to avoid Sanctum DB dependency
+        // In a full migration, we would use a Firestore-backed token store
+        $token = base64_encode('user_' . $user->id . '_' . time());
 
         // Flat format for Flutter AuthService compatibility
         // Flat format for Flutter AuthService compatibility
