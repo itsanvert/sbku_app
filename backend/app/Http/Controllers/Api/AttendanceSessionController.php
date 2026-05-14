@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Student;
 use App\Services\AttendanceSessionService;
+use App\Services\FirestoreService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -26,6 +27,7 @@ class AttendanceSessionController extends Controller
 
     public function __construct(
         private readonly AttendanceSessionService $sessionService,
+        private readonly FirestoreService $firestore,
     ) {}
 
     /**
@@ -47,12 +49,13 @@ class AttendanceSessionController extends Controller
      */
     public function active(Request $request)
     {
-        $sessions = AttendanceSession::active()
-            ->with(['teacher.user', 'faculty', 'major', 'schedule'])
-            ->withCount('attendances')
-            ->when($request->teacher_id, fn($q) => $q->where('teacher_id', $request->teacher_id))
-            ->orderBy('started_at', 'desc')
-            ->get();
+        $filters = ['is_active' => true];
+        
+        if ($request->teacher_id) {
+            $filters['teacher_id'] = (int) $request->teacher_id;
+        }
+
+        $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
 
         return response()->json($sessions);
     }
@@ -62,13 +65,11 @@ class AttendanceSessionController extends Controller
      */
     public function show($id)
     {
-        $session = AttendanceSession::with([
-            'teacher.user',
-            'faculty',
-            'major',
-            'schedule',
-            'attendances.student.user',
-        ])->findOrFail($id);
+        $session = $this->firestore->getDocument('attendance_sessions', (string)$id);
+
+        if (!$session) {
+            return response()->json(['message' => 'Session not found'], 404);
+        }
 
         return response()->json($session);
     }
