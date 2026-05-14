@@ -1048,7 +1048,7 @@ class _StudentAttendanceHistoryScreenState
   int _page = 1;
   bool _hasMore = true;
 
-  int? _studentId;
+  String? _studentId;
 
   @override
   void initState() {

@@ -10,6 +10,19 @@ class TeacherController extends Controller
 {
     public function index(Request $request)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $firestore = app(\App\Services\FirestoreService::class);
+            $teachers = $firestore->list('teachers');
+
+            return response()->json([
+                'data'         => $teachers,
+                'current_page' => 1,
+                'last_page'    => 1,
+                'total'        => count($teachers),
+                'per_page'     => count($teachers),
+            ]);
+        }
+
         $teachers = Teacher::query()
             ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
             ->whereHas('user', function($q) use ($request) {

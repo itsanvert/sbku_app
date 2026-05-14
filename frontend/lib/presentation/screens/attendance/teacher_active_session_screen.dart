@@ -83,7 +83,7 @@ class _TeacherStartAttendanceScreenState
           context,
           MaterialPageRoute(
             builder: (context) => TeacherActiveSessionScreen(
-              sessionId: session.id.hashCode, // Use hashCode as a simple int ID
+              sessionId: session.id, // Pass String ID directly
               qrToken: 'QR_${session.id}', // Simple QR token
             ),
           ),

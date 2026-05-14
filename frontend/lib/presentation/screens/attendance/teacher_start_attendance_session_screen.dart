@@ -25,10 +25,10 @@ class _TeacherStartAttendanceScreenState
   bool _locationFailed = false;
   Position? _currentLocation;
 
-  int? _teacherId;
-  int? _facultyId;
-  int? _majorId;
-  int? _scheduleId;
+  String? _teacherId;
+  String? _facultyId;
+  String? _majorId;
+  String? _scheduleId;
 
   @override
   void initState() {
@@ -117,7 +117,7 @@ class _TeacherStartAttendanceScreenState
           context,
           MaterialPageRoute(
             builder: (context) => TeacherActiveSessionScreen(
-              sessionId: session['id'],
+              sessionId: session['id'].toString(),
               qrToken: qrToken,
             ),
           ),

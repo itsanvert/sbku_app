@@ -17,17 +17,11 @@ class ShowStudentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final StudentService service = StudentService();
-    final int? id = int.tryParse(studentId);
-
-    if (id == null) {
-      return const Scaffold(body: Center(child: Text('Invalid Student ID')));
-    }
-
     return Scaffold(
       backgroundColor:
           _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
       body: FutureBuilder<Student>(
-        future: service.getStudent(id),
+        future: service.getStudent(studentId),
         builder: (context, snapshot) {
           // ── Loading ──────────────────────────────────────────────
           if (snapshot.connectionState == ConnectionState.waiting) {

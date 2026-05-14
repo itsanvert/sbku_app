@@ -20,14 +20,11 @@ class FirestoreUserProvider implements UserProvider
 
     public function retrieveById($identifier)
     {
-        $data = $this->firestore->getDocument('users', (string)$identifier);
-        
-        if (!$data) {
         $userData = Cache::remember("user_auth_id_{$identifier}", 300, function () use ($identifier) {
             return $this->firestore->getDocument('users', (string)$identifier);
         });
 
-        return $userData ? $this->modelInstance($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function retrieveByToken($identifier, $token)
@@ -52,7 +49,7 @@ class FirestoreUserProvider implements UserProvider
         $userData = $cacheKey ? Cache::get($cacheKey) : null;
 
         if (!$userData) {
-            $query = $this->firestore->db->collection('users');
+            $query = $this->firestore->collection('users');
 
             foreach ($credentials as $key => $value) {
                 if (!str_contains($key, 'password')) {
@@ -73,7 +70,7 @@ class FirestoreUserProvider implements UserProvider
             }
         }
 
-        return $userData ? $this->modelInstance($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
