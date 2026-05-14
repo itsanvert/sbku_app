@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Services\FirestoreService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 
@@ -20,6 +19,9 @@ class FirestoreUserProvider implements UserProvider
 
     public function retrieveById($identifier)
     {
+        $data = $this->firestore->getDocument('users', (string)$identifier);
+        
+        if (!$data) {
         $userData = Cache::remember("user_auth_id_{$identifier}", 300, function () use ($identifier) {
             return $this->firestore->getDocument('users', (string)$identifier);
         });
@@ -49,29 +51,24 @@ class FirestoreUserProvider implements UserProvider
         $userData = $cacheKey ? Cache::get($cacheKey) : null;
 
         if (!$userData) {
-            try {
-                $query = $this->firestore->db->collection('users');
+            $query = $this->firestore->db->collection('users');
 
-                foreach ($credentials as $key => $value) {
-                    if (!str_contains($key, 'password')) {
-                        $query = $query->where($key, '==', $value);
-                    }
+            foreach ($credentials as $key => $value) {
+                if (!str_contains($key, 'password')) {
+                    $query = $query->where($key, '==', $value);
                 }
+            }
 
-                $snapshot = $query->documents();
-                foreach ($snapshot as $doc) {
-                    $userData = $doc->data();
-                    $userData['id'] = $doc->id();
-                    
-                    if ($cacheKey) {
-                        Cache::put($cacheKey, $userData, 300);
-                        Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
-                    }
-                    break;
+            $snapshot = $query->documents();
+            foreach ($snapshot as $doc) {
+                $userData = $doc->data();
+                $userData['id'] = $doc->id();
+                
+                if ($cacheKey) {
+                    Cache::put($cacheKey, $userData, 300);
+                    Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
                 }
-            } catch (\Exception $e) {
-                \Log::error("Firestore auth error: " . $e->getMessage());
-                return null;
+                break;
             }
         }
 
@@ -89,9 +86,9 @@ class FirestoreUserProvider implements UserProvider
     }
 
     /**
-     * Create a model instance from Firestore data.
+     * Create a User model instance from Firestore data.
      */
-    protected function modelInstance(array $data)
+    protected function hydrateUser(array $data)
     {
         $user = new User();
         $user->forceFill($data);
