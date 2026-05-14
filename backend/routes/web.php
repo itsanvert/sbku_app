@@ -27,37 +27,51 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        $teacherCount = \App\Models\Teacher::count();
-        $studentCount = \App\Models\Student::count();
-        $userCount = \App\Models\User::count();
-        $attendanceCount = \App\Models\Attendance::count();
-        $activeSessions = \App\Models\AttendanceSession::where('is_active', true)->count();
+    Route::get('/dashboard', function (\App\Services\FirestoreService $firestore) {
+        $teacherCount = $firestore->count('teachers');
+        $studentCount = $firestore->count('students');
+        $userCount = $firestore->count('users');
+        $attendanceCount = $firestore->count('attendances');
+        $activeSessions = $firestore->count('attendance_sessions', ['is_active' => true]);
 
         // 1. Daily Attendance Data (Last 7 days)
-        $dailyData = \App\Models\Attendance::selectRaw('DATE(created_at) as date, count(*) as count')
-            ->where('created_at', '>=', now()->subDays(6)->startOfDay())
-            ->groupBy('date')
-            ->get()
-            ->pluck('count', 'date');
+        // Note: For a high-performance production dashboard, you'd typically 
+        // pre-calculate these or use a summary document in Firestore.
+        $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
+        $recentAttendances = $firestore->list('attendances', [
+            ['attendance_date', '>=', $sevenDaysAgo]
+        ]);
         
         $dates = [];
         $counts = [];
+        
+        // Group by date in PHP since Firestore doesn't have native SQL group-by
+        $dailyData = [];
+        foreach ($recentAttendances as $attendance) {
+            $date = $attendance['attendance_date'] ?? null;
+            if ($date) {
+                $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+            }
+        }
+
         for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->format('Y-m-d');
-            $dates[] = now()->subDays($i)->format('M d (D)'); 
-            $counts[] = $dailyData[$date] ?? 0;
+            $dateObj = now()->subDays($i);
+            $dateKey = $dateObj->format('Y-m-d');
+            $dates[] = $dateObj->format('M d (D)'); 
+            $counts[] = $dailyData[$dateKey] ?? 0;
         }
 
         // 2. Attendance Status Distribution
-        $statusCounts = \App\Models\Attendance::selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->get()
-            ->pluck('count', 'status');
-        
-        $presentCount = $statusCounts['Y'] ?? 0;
-        $absentCount = $statusCounts['N'] ?? 0;
-        $permissionCount = $statusCounts['P'] ?? 0;
+        $presentCount = 0;
+        $absentCount = 0;
+        $permissionCount = 0;
+
+        foreach ($recentAttendances as $attendance) {
+            $status = $attendance['status'] ?? '';
+            if ($status === 'Y') $presentCount++;
+            elseif ($status === 'N') $absentCount++;
+            elseif ($status === 'P') $permissionCount++;
+        }
 
         return view('dashboard', compact(
             'teacherCount', 
