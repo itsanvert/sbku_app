@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
+use App\Services\FirestoreService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
-use App\Services\FirestoreService;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class FirestoreUserProvider implements UserProvider
 {
@@ -19,39 +19,56 @@ class FirestoreUserProvider implements UserProvider
 
     public function retrieveById($identifier)
     {
-        $userData = $this->firestore->find('users', $identifier);
-        if (!$userData) return null;
+        $data = $this->firestore->getDocument('users', (string)$identifier);
+        
+        if (!$data) {
+            return null;
+        }
 
-        return $this->arrayToUser($userData);
+        return $this->hydrateUser($data);
     }
 
     public function retrieveByToken($identifier, $token)
     {
-        // For simplicity, we'll implement this if needed for "remember me"
-        return null;
+        $users = $this->firestore->list('users', [
+            'id' => $identifier,
+            'remember_token' => $token
+        ]);
+
+        return !empty($users) ? $this->hydrateUser($users[0]) : null;
     }
 
     public function updateRememberToken(Authenticatable $user, $token)
     {
-        $this->firestore->update('users', $user->getAuthIdentifier(), [
+        $this->firestore->set('users', (string)$user->getAuthIdentifier(), [
             'remember_token' => $token
         ]);
     }
 
     public function retrieveByCredentials(array $credentials)
     {
-        if (empty($credentials) || (count($credentials) === 1 && array_key_exists('password', $credentials))) {
+        if (empty($credentials) ||
+           (count($credentials) === 1 &&
+            array_key_exists('password', $credentials))) {
             return null;
         }
 
-        $email = $credentials['email'] ?? null;
-        if (!$email) return null;
-
-        $results = $this->firestore->all('users', [['email', '=', $email]], [], 1);
+        $query = $this->firestore->collection('users');
         
-        if ($results->isEmpty()) return null;
+        foreach ($credentials as $key => $value) {
+            if (str_contains($key, 'password')) continue;
+            $query = $query->where($key, '=', $value);
+        }
 
-        return $this->arrayToUser($results->first());
+        $documents = $query->documents();
+        
+        foreach ($documents as $document) {
+            $data = $document->data();
+            $data['id'] = $document->id();
+            return $this->hydrateUser($data);
+        }
+
+        return null;
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
@@ -61,10 +78,13 @@ class FirestoreUserProvider implements UserProvider
 
     public function rehashPasswordIfRequired(Authenticatable $user, array $credentials, bool $force = false)
     {
-        // Not implemented for now
+        return false;
     }
 
-    protected function arrayToUser(array $data)
+    /**
+     * Create a User model instance from Firestore data.
+     */
+    protected function hydrateUser(array $data)
     {
         $user = new User();
         $user->forceFill($data);

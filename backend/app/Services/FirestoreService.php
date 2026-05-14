@@ -4,8 +4,7 @@ namespace App\Services;
 
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Google\Cloud\Firestore\FirestoreClient;
-use Google\Cloud\Firestore\DocumentReference;
-use Illuminate\Support\Str;
+use Google\Cloud\Firestore\Query;
 
 class FirestoreService
 {
@@ -13,99 +12,78 @@ class FirestoreService
 
     public function __construct()
     {
-        $this->db = Firebase::project('app')->firestore()->database();
+        $this->db = Firebase::firestore()->database();
     }
 
     /**
-     * Get the Firestore database instance.
+     * Get a collection.
      */
-    public function db()
+    public function collection(string $name)
     {
-        return $this->db;
+        return $this->db->collection($name);
     }
 
     /**
-     * Find a document by ID.
+     * Get a document by ID.
      */
-    public function find(string $collection, $id)
+    public function getDocument(string $collection, string $id)
     {
-        $doc = $this->db->collection($collection)->document((string)$id)->snapshot();
-        return $doc->exists() ? array_merge(['id' => $doc->id()], $doc->data()) : null;
+        $doc = $this->db->collection($collection)->document($id)->snapshot();
+        
+        if (!$doc->exists()) {
+            return null;
+        }
+
+        $data = $doc->data();
+        $data['id'] = $doc->id();
+        return $data;
     }
 
     /**
-     * Get all documents in a collection with optional filters.
+     * List documents in a collection with filters.
      */
-    public function all(string $collection, array $where = [], array $orderBy = [], $limit = null)
+    public function list(string $collection, array $filters = [], string $orderBy = null, string $direction = 'asc')
     {
         $query = $this->db->collection($collection);
 
-        foreach ($where as $w) {
-            $query = $query->where($w[0], $w[1], $w[2]);
+        foreach ($filters as $field => $value) {
+            if (is_array($value)) {
+                $query = $query->where($field, $value[0], $value[1]);
+            } else {
+                $query = $query->where($field, '=', $value);
+            }
         }
 
-        foreach ($orderBy as $field => $direction) {
-            $query = $query->orderBy($field, $direction);
-        }
-
-        if ($limit) {
-            $query = $query->limit($limit);
+        if ($orderBy) {
+            $query = $query->orderBy($orderBy, $direction);
         }
 
         $documents = $query->documents();
         $results = [];
-        foreach ($documents as $doc) {
-            $results[] = array_merge(['id' => $doc->id()], $doc->data());
+
+        foreach ($documents as $document) {
+            $data = $document->data();
+            $data['id'] = $document->id();
+            $results[] = $data;
         }
-        return collect($results);
+
+        return $results;
     }
 
     /**
-     * Create a new document.
+     * Create or update a document.
      */
-    public function create(string $collection, array $data, $id = null)
+    public function set(string $collection, string $id, array $data)
     {
-        $data['created_at'] = now()->toIso8601String();
-        $data['updated_at'] = now()->toIso8601String();
-
-        $colRef = $this->db->collection($collection);
-        if ($id) {
-            $colRef->document((string)$id)->set($data);
-            return array_merge(['id' => (string)$id], $data);
-        } else {
-            $docRef = $colRef->add($data);
-            return array_merge(['id' => $docRef->id()], $data);
-        }
-    }
-
-    /**
-     * Update a document.
-     */
-    public function update(string $collection, $id, array $data)
-    {
-        $data['updated_at'] = now()->toIso8601String();
-        $this->db->collection($collection)->document((string)$id)->update($this->formatUpdateData($data));
-        return true;
+        $this->db->collection($collection)->document($id)->set($data, ['merge' => true]);
+        return $this->getDocument($collection, $id);
     }
 
     /**
      * Delete a document.
      */
-    public function delete(string $collection, $id)
+    public function delete(string $collection, string $id)
     {
-        $this->db->collection($collection)->document((string)$id)->delete();
-        return true;
-    }
-
-    /**
-     * Helper to format update data (handling nested arrays if needed).
-     */
-    protected function formatUpdateData(array $data)
-    {
-        $formatted = [];
-        foreach ($data as $key => $value) {
-            $formatted[] = ['path' => $key, 'value' => $value];
-        }
-        return $formatted;
+        $this->db->collection($collection)->document($id)->delete();
     }
 }
