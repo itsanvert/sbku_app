@@ -61,7 +61,7 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => env('AUTH_PROVIDER_DRIVER', 'eloquent'),
+            'driver' => 'firestore',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 

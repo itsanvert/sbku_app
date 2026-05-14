@@ -23,15 +23,13 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // Set Google Application Credentials if not already set or if using a file path
-        // This helps the underlying Google Cloud SDK find the credentials
+        // Fix for Firestore credentials on Windows/Environments without gRPC
         if ($firebaseConfig = config('firebase.projects.app.credentials')) {
             if (is_string($firebaseConfig) && file_exists($firebaseConfig)) {
-                putenv('GOOGLE_APPLICATION_CREDENTIALS=' . realpath($firebaseConfig));
+                putenv('GOOGLE_APPLICATION_CREDENTIALS=' . $firebaseConfig);
             }
         }
 
-        // Register Firestore User Provider for Authentication
         \Illuminate\Support\Facades\Auth::provider('firestore', function ($app, array $config) {
             return new \App\Providers\FirestoreUserProvider($app->make(\App\Services\FirestoreService::class));
         });

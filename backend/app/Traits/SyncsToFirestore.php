@@ -40,7 +40,7 @@ trait SyncsToFirestore
      */
     public function toFirestoreArray()
     {
-        return $this->toArray();
+        return $this->getAttributes();
     }
 
     /**
