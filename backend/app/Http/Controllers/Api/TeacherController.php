@@ -8,11 +8,14 @@ use Illuminate\Http\Request;
 
 class TeacherController extends Controller
 {
+    public function __construct(
+        private readonly \App\Services\FirestoreService $firestore,
+    ) {}
+
     public function index(Request $request)
     {
         if (config('app.env') === 'production' || $request->has('firestore')) {
-            $firestore = app(\App\Services\FirestoreService::class);
-            $teachers = $firestore->list('teachers');
+            $teachers = $this->firestore->list('teachers');
 
             return response()->json([
                 'data'         => $teachers,

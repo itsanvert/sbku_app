@@ -50,6 +50,7 @@ class FirestoreUserProvider implements UserProvider
 
         if (!$userData) {
             $query = $this->firestore->collection('users');
+            if (!$query) return null;
 
             foreach ($credentials as $key => $value) {
                 if (!str_contains($key, 'password')) {
