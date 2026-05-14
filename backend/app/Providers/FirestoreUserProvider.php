@@ -20,9 +20,6 @@ class FirestoreUserProvider implements UserProvider
 
     public function retrieveById($identifier)
     {
-        $data = $this->firestore->getDocument('users', (string)$identifier);
-        
-        if (!$data) {
         $userData = Cache::remember("user_auth_id_{$identifier}", 300, function () use ($identifier) {
             return $this->firestore->getDocument('users', (string)$identifier);
         });
@@ -87,9 +84,9 @@ class FirestoreUserProvider implements UserProvider
     }
 
     /**
-     * Create a User model instance from Firestore data.
+     * Create a model instance from Firestore data.
      */
-    protected function hydrateUser(array $data)
+    protected function modelInstance(array $data)
     {
         $user = new User();
         $user->forceFill($data);
