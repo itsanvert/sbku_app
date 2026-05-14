@@ -12,7 +12,13 @@ class FirestoreService
 
     public function __construct()
     {
-        $this->db = Firebase::firestore()->database();
+        try {
+            $this->db = Firebase::firestore()->database();
+        } catch (\Exception $e) {
+            \Log::error("Failed to initialize Firestore: " . $e->getMessage());
+            // We don't throw here to avoid 500ing every request if Firestore is down
+            // but subsequent calls to list/get will fail if $this->db is null.
+        }
     }
 
     /**
@@ -20,6 +26,7 @@ class FirestoreService
      */
     public function collection(string $name)
     {
+        if (!$this->db) return null;
         return $this->db->collection($name);
     }
 
@@ -28,6 +35,7 @@ class FirestoreService
      */
     public function getDocument(string $collection, string $id)
     {
+        if (!$this->db) return null;
         $doc = $this->db->collection($collection)->document($id)->snapshot();
         
         if (!$doc->exists()) {
@@ -44,6 +52,7 @@ class FirestoreService
      */
     public function count(string $collection, array $filters = []): int
     {
+        if (!$this->db) return 0;
         try {
             $query = $this->db->collection($collection);
 
@@ -67,6 +76,7 @@ class FirestoreService
      */
     public function list(string $collection, array $filters = [], string $sortBy = null, string $sortDir = 'asc'): array
     {
+        if (!$this->db) return [];
         try {
             $query = $this->db->collection($collection);
 
