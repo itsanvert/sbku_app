@@ -52,8 +52,7 @@ class _StudentAttendanceStatusScreenState
       final user = authProvider.user;
       if (user == null) throw Exception('Not authenticated');
 
-      final int sid = user.studentId ??
-          (user.id is int ? user.id as int : int.parse(user.id.toString()));
+      final String sid = user.studentId ?? user.id;
 
       final result = await _service.getStudentHistory(sid);
 

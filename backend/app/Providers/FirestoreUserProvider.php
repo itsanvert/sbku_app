@@ -24,7 +24,7 @@ class FirestoreUserProvider implements UserProvider
             return $this->firestore->getDocument('users', (string)$identifier);
         });
 
-        return $userData ? $this->modelInstance($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function retrieveByToken($identifier, $token)
@@ -49,30 +49,28 @@ class FirestoreUserProvider implements UserProvider
         $userData = $cacheKey ? Cache::get($cacheKey) : null;
 
         if (!$userData) {
-            try {
-                $filters = [];
-                foreach ($credentials as $key => $value) {
-                    if (!str_contains($key, 'password')) {
-                        $filters[$key] = $value; // Use simple key-value for equality
-                    }
-                }
+            $query = $this->firestore->collection('users');
 
-                $results = $this->firestore->list('users', $filters);
-
-                if (!empty($results)) {
-                    $userData = $results[0]; // list() already includes the 'id'
-                    
-                    if ($cacheKey) {
-                        Cache::put($cacheKey, $userData, 300);
-                        Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
-                    }
+            foreach ($credentials as $key => $value) {
+                if (!str_contains($key, 'password')) {
+                    $query = $query->where($key, '==', $value);
                 }
-            } catch (\Exception $e) {
-                // Handle or log exception
+            }
+
+            $snapshot = $query->documents();
+            foreach ($snapshot as $doc) {
+                $userData = $doc->data();
+                $userData['id'] = $doc->id();
+                
+                if ($cacheKey) {
+                    Cache::put($cacheKey, $userData, 300);
+                    Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
+                }
+                break;
             }
         }
 
-        return $userData ? $this->modelInstance($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
@@ -86,9 +84,9 @@ class FirestoreUserProvider implements UserProvider
     }
 
     /**
-     * Create a model instance from Firestore data.
+     * Create a User model instance from Firestore data.
      */
-    protected function modelInstance(array $data)
+    protected function hydrateUser(array $data)
     {
         $user = new User();
         $user->forceFill($data);

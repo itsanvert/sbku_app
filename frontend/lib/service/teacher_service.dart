@@ -28,7 +28,7 @@ class TeacherService {
     throw Exception('Failed to load teachers: ${response.statusCode}');
   }
 
-  Future<Teacher> getTeacher(int id) async {
+  Future<Teacher> getTeacher(String id) async {
     final response = await _api.get('teachers/$id');
 
     if (response.statusCode == 200) {

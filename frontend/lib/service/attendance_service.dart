@@ -10,10 +10,10 @@ class AttendanceService {
 
   /// Start a new attendance session (teacher).
   Future<Map<String, dynamic>> startSession({
-    required int teacherId,
-    int? facultyId,
-    int? majorId,
-    int? scheduleId,
+    required String teacherId,
+    String? facultyId,
+    String? majorId,
+    String? scheduleId,
     double? latitude,
     double? longitude,
   }) async {
@@ -52,7 +52,7 @@ class AttendanceService {
   }
 
   /// Get active attendance sessions.
-  Future<List<Map<String, dynamic>>> getActiveSessions({int? teacherId}) async {
+  Future<List<Map<String, dynamic>>> getActiveSessions({String? teacherId}) async {
     String endpoint = 'attendance-sessions/active';
     if (teacherId != null) {
       endpoint += '?teacher_id=$teacherId';
@@ -67,7 +67,7 @@ class AttendanceService {
   }
 
   /// Listen to active attendance sessions in real-time from Firestore
-  Stream<List<Map<String, dynamic>>> listenToActiveSessions({int? teacherId}) {
+  Stream<List<Map<String, dynamic>>> listenToActiveSessions({String? teacherId}) {
     Query query = FirebaseFirestore.instance.collection('attendance_sessions');
         
     if (teacherId != null) {
@@ -77,14 +77,14 @@ class AttendanceService {
     return query.snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        data['id'] = int.tryParse(doc.id) ?? 0;
+        data['id'] = doc.id;
         return data;
       }).toList();
     });
   }
 
   /// Listen to attendances for a specific session in real-time from Firestore
-  Stream<List<Map<String, dynamic>>> listenToSessionAttendances(int sessionId) {
+  Stream<List<Map<String, dynamic>>> listenToSessionAttendances(String sessionId) {
     return FirebaseFirestore.instance
         .collection('attendances')
         .where('session_id', isEqualTo: sessionId)
@@ -92,14 +92,14 @@ class AttendanceService {
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        data['id'] = int.tryParse(doc.id) ?? 0;
+        data['id'] = doc.id;
         return data;
       }).toList();
     });
   }
 
   /// Get session details.
-  Future<Map<String, dynamic>> getSession(int id) async {
+  Future<Map<String, dynamic>> getSession(String id) async {
     final response = await _api.get('attendance-sessions/$id');
 
     if (response.statusCode == 200) {
@@ -110,8 +110,8 @@ class AttendanceService {
 
   /// Student check-in via QR code.
   Future<Map<String, dynamic>> checkInWithQr({
-    required int sessionId,
-    required int studentId,
+    required String sessionId,
+    required String studentId,
     required String qrToken,
   }) async {
     final response = await _api.post(
@@ -132,7 +132,7 @@ class AttendanceService {
   }
 
   /// End a session.
-  Future<Map<String, dynamic>> endSession(int sessionId) async {
+  Future<Map<String, dynamic>> endSession(String sessionId) async {
     final response = await _api.post(
       'attendance-sessions/$sessionId/end',
       {},
@@ -149,7 +149,7 @@ class AttendanceService {
   ///
   /// Called when a new session period begins so old QR codes are invalidated
   /// and students must scan the fresh QR code.
-  Future<Map<String, dynamic>> renewSessionToken(int sessionId) async {
+  Future<Map<String, dynamic>> renewSessionToken(String sessionId) async {
     final response = await _api.post(
       'attendance-sessions/$sessionId/renew-token',
       {},
@@ -174,7 +174,7 @@ class AttendanceService {
 
   /// Get attendances with optional filters.
   Future<Map<String, dynamic>> getAttendances({
-    int? studentId,
+    String? studentId,
     String? date,
     int? month,
     int? year,
@@ -234,7 +234,7 @@ class AttendanceService {
     String? date,
     int? month,
     int? year,
-    int? studentId,
+    String? studentId,
   }) async {
     final params = <String>[
       if (date != null) 'date=$date',
@@ -250,7 +250,7 @@ class AttendanceService {
     String? date,
     int? month,
     int? year,
-    int? studentId,
+    String? studentId,
   }) async {
     final params = <String>[
       if (date != null) 'date=$date',
@@ -262,7 +262,7 @@ class AttendanceService {
   }
 
   /// Student's own attendance history.
-  Future<Map<String, dynamic>> getStudentHistory(int studentId,
+  Future<Map<String, dynamic>> getStudentHistory(String studentId,
       {int? month, int? year, int page = 1}) async {
     final params = <String>[
       'page=$page',
@@ -281,7 +281,7 @@ class AttendanceService {
   }
 
   /// Get list of students who checked in to a session, for teacher approval.
-  Future<Map<String, dynamic>> getApprovalList(int sessionId) async {
+  Future<Map<String, dynamic>> getApprovalList(String sessionId) async {
     final response = await _api.get('attendance-sessions/$sessionId/approvals',
         requiresAuth: true);
 
@@ -294,8 +294,8 @@ class AttendanceService {
   /// Approve or reject a single student check-in.
   /// [action] must be 'approved' or 'rejected'.
   Future<Map<String, dynamic>> verifyAttendance({
-    required int sessionId,
-    required int attendanceId,
+    required String sessionId,
+    required String attendanceId,
     required String action, // 'approved' | 'rejected'
     String? reason,
   }) async {
@@ -318,11 +318,11 @@ class AttendanceService {
 
   /// Student request permission for a date.
   Future<Map<String, dynamic>> requestPermission({
-    required int studentId,
+    required String studentId,
     required String attendanceDate, // YYYY-MM-DD
     required String reason,
     String? imagePath,
-    int? scheduleId,
+    String? scheduleId,
   }) async {
     final fields = <String, String>{
       'student_id': studentId.toString(),

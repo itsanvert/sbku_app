@@ -34,12 +34,5 @@ php artisan view:clear
 php artisan route:clear
 php artisan optimize
 
-# Configure Apache to listen on Render's dynamic PORT
-if [ -n "$PORT" ]; then
-    # Replace literal ${PORT} (from Dockerfile) or default 80 with the actual runtime port
-    sed -i "s/\${PORT}/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
-    sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
-fi
-
 # Start Apache
 apache2-foreground

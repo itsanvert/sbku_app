@@ -27,7 +27,7 @@ class StudentService {
     throw Exception('Failed to load students: ${response.statusCode}');
   }
 
-  Future<Student> getStudent(int id) async {
+  Future<Student> getStudent(String id) async {
     final response = await _api.get('students/$id');
 
     if (response.statusCode == 200) {
@@ -37,7 +37,7 @@ class StudentService {
     throw Exception('Student not found');
   }
 
-  Future<void> deleteStudent(int id) async {
+  Future<void> deleteStudent(String id) async {
     final response = await _api.delete('students/$id');
 
     if (response.statusCode != 200) {

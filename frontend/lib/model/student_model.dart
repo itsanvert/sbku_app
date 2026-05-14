@@ -1,10 +1,10 @@
 class Student {
-  final int id;
+  final String id;
   final String name;
   final String? email;
   final String? gender;
   final String? dob;
-  final int? userId;
+  final String? userId;
   final String? faculty;
   final String? major;
   final int? year;
@@ -31,8 +31,8 @@ class Student {
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      id: _parseInt(json['id'])!,
-      userId: _parseInt(json['user_id']),
+      id: json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString(),
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? json['user']?['email']?.toString(),
       gender: json['gender']?.toString(),
