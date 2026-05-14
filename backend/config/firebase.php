@@ -50,7 +50,9 @@ return [
              *
              */
 
-            'credentials' => env('FIREBASE_CREDENTIALS', env('GOOGLE_APPLICATION_CREDENTIALS')),
+            'credentials' => (($cred = env('FIREBASE_CREDENTIALS')) && str_starts_with($cred, 'storage/')) 
+                ? realpath(storage_path(str_replace('storage/', '', $cred))) 
+                : $cred,
 
             /*
              * ------------------------------------------------------------------------

@@ -78,53 +78,68 @@ class StudentCreate extends Component
     {
         $validated = $this->validate();
 
-        DB::transaction(function () use ($validated) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => 'student',
-            ]);
+        $firestore = app(\App\Services\FirestoreService::class);
 
-            $studentData = [
-                'gender' => $this->gender,
-                'dob' => $this->dob,
-                'faculty_id' => $this->faculty_id,
-                'major_id' => $this->major_id,
-                'academic_class_id' => $this->academic_class_id ?: null,
-                'year' => $this->year,
-                'shift_id' => $this->shift_id,
-                'schedule_id' => $this->schedule_id,
-                'generation' => $this->generation,
-            ];
+        // 1. Create User in Firestore
+        $userData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'student',
+        ];
 
-            if ($this->photo) {
-                $studentData['profile_image_path'] = $this->photo->store('profile-photos', 'public');
-            }
+        // We check if user already exists in Firestore by email
+        $existing = $firestore->all('users', [['email', '=', $validated['email']]], [], 1);
+        if (!$existing->isEmpty()) {
+            $this->addError('email', 'The email has already been taken in Firestore.');
+            return;
+        }
 
-            // The User observer has already created a skeleton Student record.
-            $user->student()->update($studentData);
-        });
+        $user = $firestore->create('users', $userData);
+        $userId = $user['id'];
+
+        // 2. Prepare Student Data
+        $studentData = [
+            'user_id' => $userId,
+            'gender' => $this->gender,
+            'dob' => $this->dob,
+            'faculty_id' => (int)$this->faculty_id,
+            'major_id' => (int)$this->major_id,
+            'academic_class_id' => $this->academic_class_id ? (int)$this->academic_class_id : null,
+            'year' => $this->year,
+            'shift_id' => (int)$this->shift_id,
+            'schedule_id' => (int)$this->schedule_id,
+            'generation' => $this->generation,
+        ];
+
+        if ($this->photo) {
+            $studentData['profile_image_path'] = $this->photo->store('profile-photos', 'public');
+        }
+
+        // 3. Create Student record in Firestore
+        // Note: In Firestore we can use a separate collection or subcollection.
+        // Here we'll use a 'students' collection for consistency.
+        $firestore->create('students', $studentData);
 
         $this->reset();
         $this->dispatch('studentCreated');
-        session()->flash('success', 'Student created successfully!');
+        session()->flash('success', 'Student created successfully in Firestore!');
     }
 
     public function render()
     {
+        $firestore = app(\App\Services\FirestoreService::class);
+
         return view('livewire.students.student-create', [
-            'faculties' => Faculty::orderBy('name')->get(),
+            'faculties' => $firestore->all('faculties', [], ['name' => 'asc']),
             'majors' => $this->faculty_id 
-                ? Major::where('faculty_id', $this->faculty_id)->orderBy('name')->get() 
+                ? $firestore->all('majors', [['faculty_id', '=', (int)$this->faculty_id]], ['name' => 'asc'])
                 : collect(),
             'academic_classes' => $this->major_id 
-                ? AcademicClass::where('major_id', $this->major_id)->orderBy('name')->get() 
+                ? $firestore->all('academic_classes', [['major_id', '=', (int)$this->major_id]], ['name' => 'asc'])
                 : collect(),
-            'schedules' => Schedule::all()->sortBy(function($s) {
-                return $s->full_display;
-            }),
-            'shifts' => Shift::orderBy('name')->get(),
+            'schedules' => $firestore->all('schedules')->sortBy('full_display'),
+            'shifts' => $firestore->all('shifts', [], ['name' => 'asc']),
         ]);
     }
 }
