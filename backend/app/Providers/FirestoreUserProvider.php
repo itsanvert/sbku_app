@@ -18,6 +18,19 @@ class FirestoreUserProvider implements UserProvider
         $this->firestore = $firestore;
     }
 
+    /**
+     * Create a User model instance from Firestore data.
+     * This method MUST be public as it is called by the provider itself 
+     * and potentially by other internal Laravel auth components.
+     */
+    public function hydrateUser(array $data)
+    {
+        $user = new User();
+        $user->forceFill($data);
+        $user->exists = true;
+        return $user;
+    }
+
     public function retrieveById($identifier)
     {
         $userData = Cache::remember("user_auth_id_{$identifier}", 300, function () use ($identifier) {
@@ -68,7 +81,7 @@ class FirestoreUserProvider implements UserProvider
                     }
                 }
             } catch (\Exception $e) {
-                // Handle or log exception
+                \Log::error("Firestore auth error: " . $e->getMessage());
             }
         }
 
@@ -83,16 +96,5 @@ class FirestoreUserProvider implements UserProvider
     public function rehashPasswordIfRequired(Authenticatable $user, array $credentials, bool $force = false)
     {
         return false;
-    }
-
-    /**
-     * Create a model instance from Firestore data.
-     */
-    protected function modelInstance(array $data)
-    {
-        $user = new User();
-        $user->forceFill($data);
-        $user->exists = true;
-        return $user;
     }
 }
