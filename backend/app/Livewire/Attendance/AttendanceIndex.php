@@ -109,44 +109,39 @@ class AttendanceIndex extends Component
             }
 
             $items = $collection->forPage($this->getPage(), 20)->map(function ($data) {
-                // Separate relations from attributes
-                $studentUserData = [
-                    'id'   => $data['user_id'] ?? null,
-                    'name' => $data['student_name'] ?? '—',
-                ];
-                $studentData = [
-                    'id'   => $data['student_id'] ?? null,
-                    'name' => $data['student_name'] ?? '—',
-                ];
-                $sessionData = [
-                    'id' => $data['session_id'] ?? null,
-                ];
-                $facultyData = [
-                    'id' => $data['faculty_id'] ?? null, 
-                    'name' => $data['faculty_name'] ?? '—'
-                ];
-                $majorData = [
-                    'id' => $data['major_id'] ?? null, 
-                    'name' => $data['major_name'] ?? '—'
-                ];
-
-                // Remove potentially conflicting keys
-                $cleanData = array_diff_key($data, array_flip(['student', 'session']));
-
                 $a = new Attendance();
-                $a->forceFill($cleanData);
+                $a->forceFill($data);
                 $a->exists = true;
 
                 // 1. Mock Student relationship
-                $s = (new \App\Models\Student())->forceFill($studentData);
-                $u = (new \App\Models\User())->forceFill($studentUserData);
+                $s = new \App\Models\Student();
+                $s->forceFill([
+                    'id'   => $data['student_id'] ?? null,
+                    'name' => $data['student_name'] ?? '—',
+                ]);
+                
+                $u = new \App\Models\User();
+                $u->forceFill([
+                    'id'   => $data['user_id'] ?? null,
+                    'name' => $data['student_name'] ?? '—',
+                ]);
                 $s->setRelation('user', $u);
                 $a->setRelation('student', $s);
 
                 // 2. Mock Session relationship
-                $sess = (new \App\Models\AttendanceSession())->forceFill($sessionData);
-                $sess->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
-                $sess->setRelation('major', (new \App\Models\Major())->forceFill($majorData));
+                $sess = new \App\Models\AttendanceSession();
+                $sess->forceFill([
+                    'id' => $data['session_id'] ?? null,
+                ]);
+                
+                $fac = new \App\Models\Faculty();
+                $fac->forceFill(['id' => $data['faculty_id'] ?? null, 'name' => $data['faculty_name'] ?? '—']);
+                $sess->setRelation('faculty', $fac);
+
+                $maj = new \App\Models\Major();
+                $maj->forceFill(['id' => $data['major_id'] ?? null, 'name' => $data['major_name'] ?? '—']);
+                $sess->setRelation('major', $maj);
+
                 $a->setRelation('session', $sess);
 
                 return $a;
