@@ -28,23 +28,23 @@
                 <flux:navlist variant="pill" class="mt-6">
                     <flux:navlist.item icon="home" href="{{ route('dashboard') }}" :current="request()->routeIs('dashboard')">Dashboard</flux:navlist.item>
 
-                    @if(auth()->user()->isSuperAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-users'))
+                    @if(auth()->user()->isSuperAdmin())
                         <flux:navlist.item icon="user" href="{{ route('users.index') }}" :current="request()->routeIs('users.index')">User</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-teachers'))
+                    @if(auth()->user()->isAdmin())
                         <flux:navlist.item icon="academic-cap" href="{{ route('teachers.index') }}" :current="request()->routeIs('teachers.index')">Teacher</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-students'))
+                    @if(auth()->user()->isAdmin())
                         <flux:navlist.item icon="users" href="{{ route('students.index') }}" :current="request()->routeIs('students.index')">Student</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-syllabus'))
+                    @if(auth()->user()->isAdmin())
                         <flux:navlist.item icon="book-open" href="{{ route('syllabuses.index') }}" :current="request()->routeIs('syllabuses.index')">Syllabus</flux:navlist.item>
                     @endif
 
-                    @if(auth()->user()->isAdmin() || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'manage-subjects'))
+                    @if(auth()->user()->isAdmin())
                         <flux:navlist.item icon="bookmark" href="{{ route('subjects.index') }}" :current="request()->routeIs('subjects.index')">Subject</flux:navlist.item>
                     @endif
 
@@ -59,11 +59,11 @@
 
                     @guest
                     @else
-                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-sessions'))
+                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher')
                             <flux:navlist.item icon="calendar-days" href="{{ route('attendance.sessions.index') }}" :current="request()->routeIs('attendance.sessions.*')">Sessions</flux:navlist.item>
                         @endif
 
-                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher' || auth()->user()->role === 'student' || auth()->user()->hasTeamPermission(auth()->user()->currentTeam, 'view-attendance'))
+                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher' || auth()->user()->role === 'student')
                             <flux:navlist.item icon="clipboard-document-check" href="{{ route('attendance.records.index') }}" :current="request()->routeIs('attendance.records.*')">Records</flux:navlist.item>
                         @endif
                     @endguest
@@ -96,42 +96,6 @@
 
                         <div class="border-t border-gray-200"></div>
 
-                        @if (Laravel\Jetstream\Jetstream::hasTeamFeatures() && Auth::user()->currentTeam)
-                             <!-- Team Management -->
-                            <div class="block px-4 py-2 text-xs text-gray-400">
-                                {{ __('Manage Team') }}
-                            </div>
-
-                            <!-- Team Settings -->
-                            <flux:menu.item icon="cog-6-tooth" href="{{ route('teams.show', Auth::user()->currentTeam->id) }}">
-                                {{ __('Team Settings') }}
-                            </flux:menu.item>
-
-                            @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
-                                <flux:menu.item icon="plus" href="{{ route('teams.create') }}">
-                                    {{ __('Create New Team') }}
-                                </flux:menu.item>
-                            @endcan
-
-                            @if (Auth::user()->allTeams()->count() > 1)
-                                <div class="border-t border-gray-200"></div>
-
-                                <div class="block px-4 py-2 text-xs text-gray-400">
-                                    {{ __('Switch Teams') }}
-                                </div>
-
-                                @foreach (Auth::user()->allTeams() as $team)
-                                    <flux:menu.item onclick="document.getElementById('switch-team-{{ $team->id }}').submit()">
-                                        <div class="flex items-center gap-2">
-                                            @if (Auth::user()->isCurrentTeam($team))
-                                                <flux:icon name="check" variant="solid" class="w-4 h-4 text-green-500" />
-                                            @endif
-                                            {{ $team->name }}
-                                        </div>
-                                    </flux:menu.item>
-                                @endforeach
-                            @endif
-                        @endif
 
                         <div class="border-t border-gray-200"></div>
 
@@ -146,15 +110,6 @@
                     @csrf
                 </form>
 
-                @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())
-                    @foreach (Auth::user()->allTeams() as $team)
-                        <form method="POST" action="{{ route('current-team.update') }}" id="switch-team-{{ $team->id }}" class="hidden">
-                            @method('PUT')
-                            @csrf
-                            <input type="hidden" name="team_id" value="{{ $team->id }}">
-                        </form>
-                    @endforeach
-                @endif
             </flux:sidebar>
 
             <div class="flex-1 flex flex-col min-w-0">
