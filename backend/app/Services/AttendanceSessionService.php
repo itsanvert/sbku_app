@@ -79,7 +79,7 @@ class AttendanceSessionService
             'updated_at'         => now()->format('Y-m-d H:i:s'),
         ];
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $id = $this->firestore->create('attendance_sessions', $data);
             $session = new AttendanceSession();
             $session->forceFill(array_merge(['id' => $id], $data));
@@ -89,11 +89,11 @@ class AttendanceSessionService
         }
 
         // Try to load some basic names for the notification
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $teacher = $this->firestore->getDocument('teachers', $data['teacher_id']);
             $subject = $data['subject_id'] ? $this->firestore->getDocument('subjects', $data['subject_id']) : null;
             
-            // Mock relationships for the notification logic
+            // Hydrate relationships for the notification logic
             $session->setRelation('teacher', (new \App\Models\Teacher())->forceFill($teacher ?: []));
             if ($subject) $session->setRelation('subject', (new \App\Models\Subject())->forceFill($subject));
         } else {
@@ -210,7 +210,7 @@ class AttendanceSessionService
         }
 
         // 3. Prevent duplicate check-ins
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $exists = $this->firestore->list('attendances', [
                 'session_id' => (string)$session->id,
                 'student_id' => (string)$student->id
@@ -240,7 +240,7 @@ class AttendanceSessionService
             'updated_at'      => now()->format('Y-m-d H:i:s'),
         ];
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $id = $this->firestore->create('attendances', $data);
             $attendance = new Attendance();
             $attendance->forceFill(array_merge(['id' => $id], $data));
@@ -296,7 +296,7 @@ class AttendanceSessionService
 
         $newToken = Str::uuid()->toString();
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->update('attendance_sessions', (string)$session->id, [
                 'qr_token' => $newToken,
                 'updated_at' => now()->format('Y-m-d H:i:s'),
@@ -335,7 +335,7 @@ class AttendanceSessionService
             ];
         }
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->update('attendance_sessions', (string)$session->id, [
                 'is_active' => false,
                 'ended_at'  => now()->format('Y-m-d H:i:s'),
@@ -441,7 +441,7 @@ class AttendanceSessionService
             'updated_at'    => now()->format('Y-m-d H:i:s'),
         ];
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->update('attendances', (string)$attendance->id, $data);
             $attendance->forceFill($data);
         } else {

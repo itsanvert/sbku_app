@@ -41,7 +41,7 @@ class StudentEdit extends Component
 
     public function mount($studentId)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             $student = $firestore->getDocument('students', (string)$studentId);
             if (!$student) abort(404);
@@ -102,7 +102,7 @@ class StudentEdit extends Component
             'photo' => 'nullable|image|max:1024',
         ]);
 
-        if ($isProd) {
+        if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             $userData = ['name' => $this->name, 'email' => $this->email, 'updated_at' => now()->format('Y-m-d H:i:s')];
             if ($this->password) {
@@ -163,7 +163,7 @@ class StudentEdit extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             return view('livewire.students.student-edit', [
                 'faculties' => collect($firestore->list('faculties'))->sortBy('name'),

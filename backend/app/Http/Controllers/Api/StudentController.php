@@ -30,14 +30,8 @@ class StudentController extends Controller
 
     public function index(Request $request)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $filters = [];
-            if ($request->search) {
-                // Firestore doesn't support 'like' easily, so we might just filter in memory
-                // for small lists or use a prefix search if implemented.
-                // For now, let's just fetch all or filter by simple equality if possible.
-            }
-
             $students = $this->firestore->list('students', $filters);
 
             return response()->json([
@@ -76,7 +70,7 @@ class StudentController extends Controller
 
     public function show(Request $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $student = $this->firestore->getDocument('students', (string)$id);
             if (!$student) {
                 return response()->json(['message' => 'Student not found'], 404);
@@ -92,7 +86,7 @@ class StudentController extends Controller
 
     public function update(UpdateStudentRequest $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $data = $request->validated();
             $student = $this->firestore->set('students', (string)$id, $data);
             return response()->json($student);
@@ -110,7 +104,7 @@ class StudentController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $this->firestore->delete('students', (string)$id);
             return response()->json(['message' => 'Student deleted']);
         }

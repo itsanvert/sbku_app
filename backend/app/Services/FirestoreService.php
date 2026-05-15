@@ -16,9 +16,15 @@ class FirestoreService
             $this->db = Firebase::firestore()->database();
         } catch (\Exception $e) {
             \Log::error("Failed to initialize Firestore: " . $e->getMessage());
-            // We don't throw here to avoid 500ing every request if Firestore is down
-            // but subsequent calls to list/get will fail if $this->db is null.
         }
+    }
+
+    /**
+     * Determine if Firestore is the active/primary data source.
+     */
+    public static function isActive(): bool
+    {
+        return config('auth.providers.users.driver') === 'firestore' || config('app.env') === 'production';
     }
 
     /**

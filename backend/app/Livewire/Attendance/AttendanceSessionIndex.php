@@ -12,7 +12,7 @@ class AttendanceSessionIndex extends Component
 {
     use WithPagination;
     
-    public function __construct()
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -43,7 +43,7 @@ class AttendanceSessionIndex extends Component
 
     public function getSessionsProperty()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $filters = [];
             if ($this->search) {
                 // Firestore search is limited, but we can try to filter by teacher name if we stored it
@@ -81,7 +81,7 @@ class AttendanceSessionIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 foreach ($this->selected as $id) {
                     $this->firestore->delete('attendance_sessions', (string)$id);
                 }

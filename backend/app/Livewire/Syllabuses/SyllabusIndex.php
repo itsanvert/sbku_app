@@ -13,8 +13,8 @@ use Livewire\Attributes\Computed;
 class SyllabusIndex extends Component
 {
     use WithPagination;
-    
-    public function __construct()
+
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -41,11 +41,26 @@ class SyllabusIndex extends Component
         'closeModal' => 'closeModals',
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingFacultyId() { $this->resetPage(); }
-    public function updatingMajorId() { $this->resetPage(); }
-    public function updatingShiftId() { $this->resetPage(); }
-    public function updatingYearId() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingFacultyId()
+    {
+        $this->resetPage();
+    }
+    public function updatingMajorId()
+    {
+        $this->resetPage();
+    }
+    public function updatingShiftId()
+    {
+        $this->resetPage();
+    }
+    public function updatingYearId()
+    {
+        $this->resetPage();
+    }
 
     public function sort($column)
     {
@@ -68,24 +83,27 @@ class SyllabusIndex extends Component
             if ($this->search) {
                 $collection = $collection->filter(fn($s) => str_contains(strtolower($s['subject_name'] ?? ''), strtolower($this->search)));
             }
-            if ($this->faculty_id) $collection = $collection->filter(fn($s) => ($s['faculty_id'] ?? '') == $this->faculty_id);
-            if ($this->major_id) $collection = $collection->filter(fn($s) => ($s['major_id'] ?? '') == $this->major_id);
-            if ($this->shift_id) $collection = $collection->filter(fn($s) => ($s['shift_id'] ?? '') == $this->shift_id);
+            if ($this->faculty_id)
+                $collection = $collection->filter(fn($s) => ($s['faculty_id'] ?? '') == $this->faculty_id);
+            if ($this->major_id)
+                $collection = $collection->filter(fn($s) => ($s['major_id'] ?? '') == $this->major_id);
+            if ($this->shift_id)
+                $collection = $collection->filter(fn($s) => ($s['shift_id'] ?? '') == $this->shift_id);
 
             // Map to Model objects
-            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $s = new Syllabus();
                 $s->forceFill($data);
                 $s->exists = true;
-                
+
                 // Mock subject relationship
                 $subj = new \App\Models\Subject();
                 $subj->forceFill(['name' => $data['subject_name'] ?? '—', 'code' => $data['subject_code'] ?? '—']);
                 $s->setRelation('subject', $subj);
-                
+
                 return $s;
             });
-            
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
@@ -120,7 +138,7 @@ class SyllabusIndex extends Component
             $query->where('year_id', $this->year_id);
         }
 
-        return $query->orderBy($this->sortBy == 'subject_name' ? 'subjects.name' : 'syllabuses.'.$this->sortBy, $this->sortDirection)
+        return $query->orderBy($this->sortBy == 'subject_name' ? 'subjects.name' : 'syllabuses.' . $this->sortBy, $this->sortDirection)
             ->paginate(10);
     }
 
@@ -147,7 +165,7 @@ class SyllabusIndex extends Component
     {
         if ($this->deleteSyllabusId) {
             if (config('app.env') === 'production') {
-                $this->firestore->delete('syllabuses', (string)$this->deleteSyllabusId);
+                $this->firestore->delete('syllabuses', (string) $this->deleteSyllabusId);
             } else {
                 Syllabus::findOrFail($this->deleteSyllabusId)->delete();
             }
