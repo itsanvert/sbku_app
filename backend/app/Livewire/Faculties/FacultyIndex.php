@@ -9,6 +9,13 @@ use Livewire\WithPagination;
 class FacultyIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public $search = '';
     public $showCreateModal = false;
@@ -33,9 +40,17 @@ class FacultyIndex extends Component
     public function store()
     {
         $this->validate();
-        Faculty::create([
-            'name' => $this->name,
-        ]);
+        
+        if (config('app.env') === 'production') {
+            $this->firestore->create('faculties', [
+                'name' => $this->name,
+            ]);
+        } else {
+            Faculty::create([
+                'name' => $this->name,
+            ]);
+        }
+        
         $this->showCreateModal = false;
         session()->flash('message', 'Faculty created successfully.');
     }
@@ -43,21 +58,36 @@ class FacultyIndex extends Component
     public function edit($id)
     {
         $this->editFacultyId = $id;
-        $faculty = Faculty::findOrFail($id);
-        $this->name = $faculty->name;
+        
+        if (config('app.env') === 'production') {
+            $faculty = $this->firestore->getDocument('faculties', (string)$id);
+            $this->name = $faculty['name'] ?? '';
+        } else {
+            $faculty = Faculty::findOrFail($id);
+            $this->name = $faculty->name;
+        }
+        
         $this->showEditModal = true;
     }
 
     public function update()
     {
-        $this->validate([
-            'name' => 'required|min:3|unique:faculties,name,' . $this->editFacultyId,
-        ]);
-
-        $faculty = Faculty::findOrFail($this->editFacultyId);
-        $faculty->update([
-            'name' => $this->name,
-        ]);
+        if (config('app.env') === 'production') {
+            $this->validate([
+                'name' => 'required|min:3',
+            ]);
+            $this->firestore->update('faculties', (string)$this->editFacultyId, [
+                'name' => $this->name,
+            ]);
+        } else {
+            $this->validate([
+                'name' => 'required|min:3|unique:faculties,name,' . $this->editFacultyId,
+            ]);
+            $faculty = Faculty::findOrFail($this->editFacultyId);
+            $faculty->update([
+                'name' => $this->name,
+            ]);
+        }
 
         $this->showEditModal = false;
         session()->flash('message', 'Faculty updated successfully.');
@@ -65,15 +95,39 @@ class FacultyIndex extends Component
 
     public function delete($id)
     {
-        Faculty::findOrFail($id)->delete();
+        if (config('app.env') === 'production') {
+            $this->firestore->delete('faculties', (string)$id);
+        } else {
+            Faculty::findOrFail($id)->delete();
+        }
         session()->flash('message', 'Faculty deleted successfully.');
     }
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            $faculties = $this->firestore->list('faculties');
+            $collection = collect($faculties);
+            if ($this->search) {
+                $collection = $collection->filter(fn($f) => str_contains(strtolower($f['name'] ?? ''), strtolower($this->search)));
+            }
+            
+            $items = $collection->forPage($this->getPage(), 10);
+            
+            $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+        } else {
+            $paginated = Faculty::where('name', 'like', '%' . $this->search . '%')
+                ->paginate(10);
+        }
+
         return view('livewire.faculties.faculty-index', [
-            'faculties' => Faculty::where('name', 'like', '%' . $this->search . '%')
-                ->paginate(10),
+            'faculties' => $paginated,
         ])->layout('layouts.app');
     }
 }
