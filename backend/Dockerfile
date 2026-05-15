@@ -2,7 +2,7 @@
 FROM composer:latest AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
+RUN composer install --no-interaction --no-scripts --no-dev --ignore-platform-reqs
 
 # --- Stage 2: Node Dependencies & Build Assets ---
 FROM node:20 AS assets
@@ -48,9 +48,15 @@ WORKDIR /var/www/html
 # Copy project files from local
 COPY . .
 
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Copy dependencies from stages
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=assets /app/public/build ./public/build
+
+# Finalize autoloader and run scripts (package:discover, etc.)
+RUN composer dump-autoload --optimize --no-dev
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
