@@ -88,12 +88,24 @@ class ProfileController extends Controller
 
         $user->updateProfilePhoto($request->file('photo'));
 
-        // Sync with related role models for dynamic across-the-app reflect
-        if ($user->teacher) {
-            $user->teacher->update(['profile_image_path' => $user->profile_photo_path]);
-        }
-        if ($user->student) {
-            $user->student->update(['profile_image_path' => $user->profile_photo_path]);
+        $photoPath = $user->profile_photo_path;
+
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $firestore = app(\App\Services\FirestoreService::class);
+            
+            if ($teacher = $user->teacher) {
+                $firestore->set('teachers', (string)$teacher['id'], ['profile_image_path' => $photoPath]);
+            }
+            if ($student = $user->student) {
+                $firestore->set('students', (string)$student['id'], ['profile_image_path' => $photoPath]);
+            }
+        } else {
+            if ($user->teacher) {
+                $user->teacher->update(['profile_image_path' => $photoPath]);
+            }
+            if ($user->student) {
+                $user->student->update(['profile_image_path' => $photoPath]);
+            }
         }
 
         // Flat format for Flutter AuthService compatibility

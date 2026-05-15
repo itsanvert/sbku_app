@@ -49,8 +49,17 @@ class AttendanceController extends Controller
     /**
      * Show a single attendance record.
      */
-    public function show(Attendance $attendance)
+    public function show(Request $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $attendance = $this->firestore->getDocument('attendances', (string)$id);
+            if (!$attendance) {
+                return response()->json(['message' => 'Attendance record not found'], 404);
+            }
+            return response()->json($attendance);
+        }
+
+        $attendance = Attendance::findOrFail($id);
         return response()->json(
             $attendance->load(['student.user', 'schedule', 'session'])
         );
@@ -181,6 +190,30 @@ class AttendanceController extends Controller
      */
     public function studentHistory(Request $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $filters = ['student_id' => $id]; // Firestore ID is a string
+            
+            if ($request->month && $request->year) {
+                 // Filtering by month/year in Firestore would require a specific field or range query
+                 // For now, let's just fetch and return, or assume the frontend handles it if it's a small list.
+            }
+
+            $attendances = $this->firestore->list('attendances', $filters, 'attendance_date', 'desc');
+            
+            return response()->json([
+                'summary' => [
+                    'total' => count($attendances),
+                    'present' => count(array_filter($attendances, fn($a) => $a['status'] === 'Y')),
+                    'absent' => count(array_filter($attendances, fn($a) => $a['status'] === 'N')),
+                    'attendance_rate' => count($attendances) > 0 ? round((count(array_filter($attendances, fn($a) => $a['status'] === 'Y')) / count($attendances)) * 100, 1) : 0,
+                ],
+                'attendances' => [
+                    'data' => $attendances,
+                    'total' => count($attendances),
+                ],
+            ]);
+        }
+
         // Resolve student model. Check if $id is student.id or student.user_id
         $student = Student::where('id', $id)
             ->orWhere('user_id', $id)
