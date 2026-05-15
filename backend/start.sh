@@ -3,6 +3,16 @@
 # Exit on error
 set -e
 
+# Normalize DB_CONNECTION: strip CR/LF and quotes, make lowercase so comparisons work
+if [ -n "$DB_CONNECTION" ]; then
+    DB_CONNECTION="$(printf '%s' "$DB_CONNECTION" | tr -d '\r' | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')"
+fi
+
+# If DB_DATABASE references a sqlite file, prefer sqlite connection
+if [ -n "$DB_DATABASE" ] && printf '%s' "$DB_DATABASE" | grep -qi "sqlite"; then
+    DB_CONNECTION=sqlite
+fi
+
 # Create sqlite database if it doesn't exist (if still using it)
 if [ "$DB_CONNECTION" = "sqlite" ]; then
     mkdir -p database
