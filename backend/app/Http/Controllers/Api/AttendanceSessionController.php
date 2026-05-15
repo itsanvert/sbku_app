@@ -91,15 +91,6 @@ class AttendanceSessionController extends Controller
             return response()->json(['message' => 'You are not registered as a student. Cannot check in.'], 403);
         }
 
-        // Convert student data to a Model instance if it's an array (from Firestore)
-        if (is_array($studentData)) {
-            $student = new Student();
-            $student->forceFill($studentData);
-            $student->exists = true;
-        } else {
-            $student = $studentData;
-        }
-
         if (config('app.env') === 'production' || $request->has('firestore')) {
             $sessionData = $this->firestore->getDocument('attendance_sessions', (string)$id);
             if (!$sessionData) {
@@ -108,7 +99,6 @@ class AttendanceSessionController extends Controller
             $session = new AttendanceSession();
             $session->forceFill($sessionData);
             $session->exists = true;
-            $session->id = $id; // Ensure ID is set
         } else {
             $session = AttendanceSession::findOrFail($id);
         }
