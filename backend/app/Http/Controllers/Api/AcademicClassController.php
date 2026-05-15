@@ -4,13 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicClass;
+use App\Services\FirestoreService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AcademicClassController extends Controller
 {
-    public function index(): JsonResponse
+    public function __construct(
+        private readonly FirestoreService $firestore
+    ) {}
+
+    public function index(Request $request): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $classes = $this->firestore->list('academic_classes');
+            return response()->json([
+                'success' => true,
+                'data' => $classes
+            ]);
+        }
+
         $classes = AcademicClass::with('major.faculty')->get();
         return response()->json([
             'success' => true,
@@ -31,11 +44,21 @@ class AcademicClassController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:academic_classes,code',
-            'major_id' => 'required|exists:majors,id',
+            'code' => 'required|string|max:50',
+            'major_id' => 'required',
             'academic_year' => 'required|string|max:50',
             'semester' => 'required|integer|min:1|max:2',
         ]);
+
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $id = $validated['code']; // Or generate a UUID
+            $class = $this->firestore->set('academic_classes', $id, $validated);
+            return response()->json([
+                'success' => true,
+                'message' => 'Class created in Firestore',
+                'data' => $class
+            ], 201);
+        }
 
         $class = AcademicClass::create($validated);
 
@@ -53,8 +76,17 @@ class AcademicClassController extends Controller
         ], 201);
     }
 
-    public function show(AcademicClass $academicClass): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $class = $this->firestore->getDocument('academic_classes', (string)$id);
+            if (!$class) {
+                return response()->json(['success' => false, 'message' => 'Class not found'], 404);
+            }
+            return response()->json(['success' => true, 'data' => $class]);
+        }
+
+        $academicClass = AcademicClass::findOrFail($id);
         return response()->json([
             'success' => true,
             'data' => [
@@ -70,8 +102,18 @@ class AcademicClassController extends Controller
         ]);
     }
 
-    public function update(Request $request, AcademicClass $academicClass): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $class = $this->firestore->set('academic_classes', (string)$id, $request->all());
+            return response()->json([
+                'success' => true,
+                'message' => 'Class updated in Firestore',
+                'data' => $class
+            ]);
+        }
+
+        $academicClass = AcademicClass::findOrFail($id);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:academic_classes,code,' . $academicClass->id,
@@ -96,8 +138,17 @@ class AcademicClassController extends Controller
         ]);
     }
 
-    public function destroy(AcademicClass $academicClass): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $this->firestore->delete('academic_classes', (string)$id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Class deleted from Firestore'
+            ]);
+        }
+
+        $academicClass = AcademicClass::findOrFail($id);
         $academicClass->delete();
 
         return response()->json([

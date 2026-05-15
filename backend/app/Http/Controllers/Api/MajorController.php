@@ -4,19 +4,33 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Major;
+use App\Services\FirestoreService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MajorController extends Controller
 {
-    public function index(): JsonResponse
+    public function __construct(
+        private readonly FirestoreService $firestore
+    ) {}
+
+    public function index(Request $request): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $majors = $this->firestore->list('majors');
+            return response()->json([
+                'success' => true,
+                'data' => $majors
+            ]);
+        }
+
         $majors = Major::with('faculty')->get();
         return response()->json([
             'success' => true,
             'data' => $majors->map(fn($m) => [
                 'id' => (string)$m->id,
                 'name' => $m->name,
+                'code' => $m->code,
                 'faculty_id' => (string)$m->faculty_id,
                 'faculty_name' => $m->faculty->name ?? 'Unknown',
             ])
@@ -27,8 +41,19 @@ class MajorController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'faculty_id' => 'required|exists:faculties,id',
+            'code' => 'required|string|max:50',
+            'faculty_id' => 'required',
         ]);
+
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $id = $validated['code'];
+            $major = $this->firestore->set('majors', $id, $validated);
+            return response()->json([
+                'success' => true,
+                'message' => 'Major created in Firestore',
+                'data' => $major
+            ], 201);
+        }
 
         $major = Major::create($validated);
 
@@ -38,28 +63,50 @@ class MajorController extends Controller
             'data' => [
                 'id' => (string)$major->id,
                 'name' => $major->name,
+                'code' => $major->code,
                 'faculty_id' => (string)$major->faculty_id,
             ]
         ], 201);
     }
 
-    public function show(Major $major): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $major = $this->firestore->getDocument('majors', (string)$id);
+            if (!$major) {
+                return response()->json(['success' => false, 'message' => 'Major not found'], 404);
+            }
+            return response()->json(['success' => true, 'data' => $major]);
+        }
+
+        $major = Major::findOrFail($id);
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => (string)$major->id,
                 'name' => $major->name,
+                'code' => $major->code,
                 'faculty_id' => (string)$major->faculty_id,
                 'faculty_name' => $major->faculty->name ?? 'Unknown',
             ]
         ]);
     }
 
-    public function update(Request $request, Major $major): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $major = $this->firestore->set('majors', (string)$id, $request->all());
+            return response()->json([
+                'success' => true,
+                'message' => 'Major updated in Firestore',
+                'data' => $major
+            ]);
+        }
+
+        $major = Major::findOrFail($id);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:majors,code,' . $major->id,
             'faculty_id' => 'required|exists:faculties,id',
         ]);
 
@@ -71,13 +118,23 @@ class MajorController extends Controller
             'data' => [
                 'id' => (string)$major->id,
                 'name' => $major->name,
+                'code' => $major->code,
                 'faculty_id' => (string)$major->faculty_id,
             ]
         ]);
     }
 
-    public function destroy(Major $major): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $this->firestore->delete('majors', (string)$id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Major deleted from Firestore'
+            ]);
+        }
+
+        $major = Major::findOrFail($id);
         $major->delete();
 
         return response()->json([
