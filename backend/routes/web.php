@@ -123,21 +123,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('records.index');
 
         // Excel Export route
-        Route::get('/export/excel', function() {
+        Route::get('/export/excel', function(\App\Services\FirestoreService $firestore) {
             $ids = session('attendance_export_ids');
             $filterInfo = session('attendance_export_filter', 'All records');
             
             if (!$ids || empty($ids)) {
                 return redirect()->back()->with('error', 'No records selected for export.');
             }
-            $records = \App\Models\Attendance::with([
-                'student.user',
-                'student.faculty',
-                'student.major',
-                'session.teacher.user',
-                'session.faculty',
-                'session.major',
-            ])->whereIn('id', $ids)->get();
+
+            if (config('app.env') === 'production') {
+                $records = [];
+                foreach ($ids as $id) {
+                    $data = $firestore->getDocument('attendances', (string)$id);
+                    if ($data) $records[] = $data;
+                }
+                $records = collect($records);
+            } else {
+                $records = \App\Models\Attendance::with([
+                    'student.user',
+                    'student.faculty',
+                    'student.major',
+                    'session.teacher.user',
+                    'session.faculty',
+                    'session.major',
+                ])->whereIn('id', $ids)->get();
+            }
             
             return (new \App\Exports\AttendanceExport(
                 $records, 

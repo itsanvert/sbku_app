@@ -45,19 +45,20 @@ class StudentCreate extends Component
     --------------------------------- */
     protected function rules()
     {
+        $isProd = config('app.env') === 'production';
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
+            'email' => 'required|email|max:255' . ($isProd ? '' : '|unique:users,email'),
             'password' => 'required|min:8',
             'role' => 'required|in:admin,user,student,teacher',
             'gender' => 'required|in:male,female',
             'dob' => 'nullable|date',
-            'faculty_id' => 'required|exists:faculties,id',
-            'major_id' => 'required|exists:majors,id',
-            'academic_class_id' => 'nullable|exists:academic_classes,id',
+            'faculty_id' => 'required' . ($isProd ? '' : '|exists:faculties,id'),
+            'major_id' => 'required' . ($isProd ? '' : '|exists:majors,id'),
+            'academic_class_id' => 'nullable' . ($isProd ? '' : '|exists:academic_classes,id'),
             'year' => 'required',
-            'shift_id' => 'required|exists:shifts,id',
-            'schedule_id' => 'required|exists:schedules,id',
+            'shift_id' => 'required' . ($isProd ? '' : '|exists:shifts,id'),
+            'schedule_id' => 'required' . ($isProd ? '' : '|exists:schedules,id'),
             'generation' => 'required',
             'photo' => 'nullable|image|max:1024',
         ];
@@ -77,34 +78,69 @@ class StudentCreate extends Component
     public function save()
     {
         $validated = $this->validate();
+        $firestore = app(\App\Services\FirestoreService::class);
 
-        DB::transaction(function () use ($validated) {
-            $user = User::create([
+        if (config('app.env') === 'production') {
+            $userData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'student',
-            ]);
+                'created_at' => now()->format('Y-m-d H:i:s'),
+                'updated_at' => now()->format('Y-m-d H:i:s'),
+            ];
+            $userId = $firestore->create('users', $userData);
 
             $studentData = [
+                'user_id' => (string)$userId,
+                'user_name' => $validated['name'],
+                'user_email' => $validated['email'],
                 'gender' => $this->gender,
                 'dob' => $this->dob,
-                'faculty_id' => $this->faculty_id,
-                'major_id' => $this->major_id,
-                'academic_class_id' => $this->academic_class_id ?: null,
+                'faculty_id' => (string)$this->faculty_id,
+                'major_id' => (string)$this->major_id,
+                'academic_class_id' => $this->academic_class_id ? (string)$this->academic_class_id : null,
                 'year' => $this->year,
-                'shift_id' => $this->shift_id,
-                'schedule_id' => $this->schedule_id,
+                'shift_id' => (string)$this->shift_id,
+                'schedule_id' => (string)$this->schedule_id,
                 'generation' => $this->generation,
+                'created_at' => now()->format('Y-m-d H:i:s'),
+                'updated_at' => now()->format('Y-m-d H:i:s'),
             ];
 
             if ($this->photo) {
                 $studentData['profile_image_path'] = $this->photo->store('profile-photos', 'public');
             }
 
-            // The User observer has already created a skeleton Student record.
-            $user->student()->update($studentData);
-        });
+            $firestore->create('students', $studentData);
+        } else {
+            DB::transaction(function () use ($validated) {
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => 'student',
+                ]);
+
+                $studentData = [
+                    'gender' => $this->gender,
+                    'dob' => $this->dob,
+                    'faculty_id' => $this->faculty_id,
+                    'major_id' => $this->major_id,
+                    'academic_class_id' => $this->academic_class_id ?: null,
+                    'year' => $this->year,
+                    'shift_id' => $this->shift_id,
+                    'schedule_id' => $this->schedule_id,
+                    'generation' => $this->generation,
+                ];
+
+                if ($this->photo) {
+                    $studentData['profile_image_path'] = $this->photo->store('profile-photos', 'public');
+                }
+
+                $user->student()->update($studentData);
+            });
+        }
 
         $this->reset();
         $this->dispatch('studentCreated');
@@ -113,6 +149,21 @@ class StudentCreate extends Component
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            $firestore = app(\App\Services\FirestoreService::class);
+            return view('livewire.students.student-create', [
+                'faculties' => collect($firestore->list('faculties'))->sortBy('name'),
+                'majors' => $this->faculty_id
+                    ? collect($firestore->list('majors', ['faculty_id' => (string)$this->faculty_id]))->sortBy('name')
+                    : collect(),
+                'academic_classes' => $this->major_id
+                    ? collect($firestore->list('academic_classes', ['major_id' => (string)$this->major_id]))->sortBy('name')
+                    : collect(),
+                'schedules' => collect($firestore->list('schedules')),
+                'shifts' => collect($firestore->list('shifts'))->sortBy('name'),
+            ]);
+        }
+
         return view('livewire.students.student-create', [
             'faculties' => Faculty::orderBy('name')->get(),
             'majors' => $this->faculty_id

@@ -52,7 +52,7 @@ class AttendanceSessionController extends Controller
         $filters = ['is_active' => true];
         
         if ($request->teacher_id) {
-            $filters['teacher_id'] = (int) $request->teacher_id;
+            $filters['teacher_id'] = (string) $request->teacher_id;
         }
 
         $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
@@ -81,21 +81,35 @@ class AttendanceSessionController extends Controller
     {
         $request->validate([
             'qr_token' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
-        $student = Student::where('user_id', $request->user()->id)->first();
-
-        if (!$student) {
+        $studentData = $request->user()->student;
+        
+        if (!$studentData) {
             return response()->json(['message' => 'You are not registered as a student. Cannot check in.'], 403);
         }
 
-        $session = AttendanceSession::findOrFail($id);
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $sessionData = $this->firestore->getDocument('attendance_sessions', (string)$id);
+            if (!$sessionData) {
+                return response()->json(['message' => 'Session not found'], 404);
+            }
+            $session = new AttendanceSession();
+            $session->forceFill($sessionData);
+            $session->exists = true;
+        } else {
+            $session = AttendanceSession::findOrFail($id);
+        }
 
         try {
             $attendance = $this->sessionService->checkIn(
                 $session,
                 $student,
                 $request->qr_token,
+                (string)($request->latitude ?? '0'),
+                (string)($request->longitude ?? '0')
             );
 
             return response()->json([
@@ -116,7 +130,17 @@ class AttendanceSessionController extends Controller
      */
     public function end($id)
     {
-        $session = AttendanceSession::findOrFail($id);
+        if (config('app.env') === 'production' || request()->has('firestore')) {
+            $sessionData = $this->firestore->getDocument('attendance_sessions', (string)$id);
+            if (!$sessionData) {
+                return response()->json(['message' => 'Session not found'], 404);
+            }
+            $session = new AttendanceSession();
+            $session->forceFill($sessionData);
+            $session->exists = true;
+        } else {
+            $session = AttendanceSession::findOrFail($id);
+        }
 
         try {
             $result = $this->sessionService->endSession($session);
@@ -144,7 +168,17 @@ class AttendanceSessionController extends Controller
      */
     public function renewToken($id)
     {
-        $session = AttendanceSession::findOrFail($id);
+        if (config('app.env') === 'production' || request()->has('firestore')) {
+            $sessionData = $this->firestore->getDocument('attendance_sessions', (string)$id);
+            if (!$sessionData) {
+                return response()->json(['message' => 'Session not found'], 404);
+            }
+            $session = new AttendanceSession();
+            $session->forceFill($sessionData);
+            $session->exists = true;
+        } else {
+            $session = AttendanceSession::findOrFail($id);
+        }
 
         try {
             $updated = $this->sessionService->renewToken($session);
@@ -168,37 +202,57 @@ class AttendanceSessionController extends Controller
      */
     public function approvalList($id)
     {
-        $session = AttendanceSession::with([
-            'teacher.user',
-            'faculty',
-            'major',
-        ])->findOrFail($id);
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $session = $this->firestore->getDocument('attendance_sessions', (string)$id);
+            if (!$session) {
+                return response()->json(['message' => 'Session not found'], 404);
+            }
+        } else {
+            $session = AttendanceSession::with([
+                'teacher.user',
+                'faculty',
+                'major',
+            ])->findOrFail($id);
+        }
 
-        $attendances = Attendance::with(['student.user', 'student.faculty', 'student.major', 'student.shift'])
-            ->where('session_id', $id)
-            ->whereIn('status', ['Y', 'P'])
-            ->orderBy('check_in_time')
-            ->get()
-            ->map(function ($a) {
-                $student = $a->student;
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $attendances = $this->firestore->list('attendances', ['session_id' => $id]);
+            // Convert to a collection to use map/filter
+            $attendances = collect($attendances)
+                ->filter(fn($a) => in_array($a['status'] ?? '', ['Y', 'P']))
+                ->values();
+        } else {
+            $attendances = Attendance::with(['student.user', 'student.faculty', 'student.major', 'student.shift'])
+                ->where('session_id', $id)
+                ->whereIn('status', ['Y', 'P'])
+                ->orderBy('check_in_time')
+                ->get();
+        }
+
+        $attendances = $attendances->map(function ($a) {
+                // Handle both Eloquent and Firestore array formats
+                $status = data_get($a, 'status');
+                $verifyStatus = data_get($a, 'verify_status');
+                $checkInTime = data_get($a, 'check_in_time');
+                
                 return [
-                    'id' => $a->id,
-                    'student_id' => $a->student_id,
-                    'student_name' => $student?->user?->name ?? $student?->name ?? 'Unknown',
-                    'student_code' => $student?->student_code ?? '',
-                    'avatar_url' => $student?->avatar_url,
-                    'faculty' => $student?->faculty?->name ?? '—',
-                    'major' => $student?->major?->name ?? '—',
-                    'year' => $student?->year ?? '—',
-                    'shift' => $student?->shift?->name ?? '—',
-                    'generation' => $student?->generation ?? '—',
-                    'check_in_time' => $a->check_in_time?->format('H:i:s'),
-                    'status' => $a->status,
-                    'permission_reason' => $a->permission_reason,
-                    'permission_image_url' => $a->permission_image_url,
-                    'verify_status' => $a->verify_status,
-                    'reject_reason' => $a->reject_reason,
-                    'verified_at' => $a->verified_at?->format('H:i:s'),
+                    'id' => data_get($a, 'id'),
+                    'student_id' => data_get($a, 'student_id'),
+                    'student_name' => data_get($a, 'student_name') ?? data_get($a, 'student.user.name') ?? 'Unknown',
+                    'student_code' => data_get($a, 'student_code') ?? '',
+                    'avatar_url' => data_get($a, 'avatar_url') ?? data_get($a, 'student.avatar_url'),
+                    'faculty' => data_get($a, 'faculty_name') ?? data_get($a, 'student.faculty.name') ?? '—',
+                    'major' => data_get($a, 'major_name') ?? data_get($a, 'student.major.name') ?? '—',
+                    'year' => data_get($a, 'year') ?? data_get($a, 'student.year') ?? '—',
+                    'shift' => data_get($a, 'shift_name') ?? data_get($a, 'student.shift.name') ?? '—',
+                    'generation' => data_get($a, 'generation') ?? data_get($a, 'student.generation') ?? '—',
+                    'check_in_time' => $checkInTime,
+                    'status' => $status,
+                    'permission_reason' => data_get($a, 'permission_reason'),
+                    'permission_image_url' => data_get($a, 'permission_image_url'),
+                    'verify_status' => $verifyStatus,
+                    'reject_reason' => data_get($a, 'reject_reason'),
+                    'verified_at' => data_get($a, 'verified_at'),
                 ];
             });
 
@@ -229,8 +283,20 @@ class AttendanceSessionController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
-        $session = AttendanceSession::findOrFail($sessionId);
-        $attendance = Attendance::where('session_id', $sessionId)->findOrFail($attendanceId);
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $session = $this->firestore->getDocument('attendance_sessions', (string)$sessionId);
+            if (!$session) return response()->json(['message' => 'Session not found'], 404);
+
+            $attendanceData = $this->firestore->getDocument('attendances', (string)$attendanceId);
+            if (!$attendanceData) return response()->json(['message' => 'Attendance record not found'], 404);
+            
+            $attendance = new Attendance();
+            $attendance->forceFill($attendanceData);
+            $attendance->exists = true;
+        } else {
+            $session = AttendanceSession::findOrFail($sessionId);
+            $attendance = Attendance::where('session_id', $sessionId)->findOrFail($attendanceId);
+        }
 
         try {
             $result = $this->sessionService->verifyAttendance(

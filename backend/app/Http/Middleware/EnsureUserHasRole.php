@@ -21,6 +21,11 @@ class EnsureUserHasRole
              abort(403);
         }
 
+        // Global bypass for super_admin
+        if ($user->role === 'super_admin') {
+            return $next($request);
+        }
+
         foreach ($rolesAndPermissions as $item) {
             // Priority 1: Check global database role field
             if ($user->role === $item) {

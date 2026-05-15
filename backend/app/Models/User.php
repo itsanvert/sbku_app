@@ -107,23 +107,6 @@ class User extends Authenticatable
         return $this->role === 'super_admin';
     }
 
-    /**
-     * Mock method to satisfy Jetstream templates after disabling Teams.
-     */
-    public function hasTeamPermission($team, string $permission): bool
-    {
-        return true;
-    }
-
-    public function currentTeam()
-    {
-        return null;
-    }
-
-    public function allTeams()
-    {
-        return collect([]);
-    }
 
     /**
      * Check if user is an Administrator (Super Admin or Admin).

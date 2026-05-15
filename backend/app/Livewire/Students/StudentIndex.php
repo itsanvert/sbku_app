@@ -13,6 +13,13 @@ use Livewire\Attributes\Computed;
 class StudentIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public $search = '';
     public $role = '';
@@ -60,6 +67,29 @@ class StudentIndex extends Component
     #[Computed]
     public function students()
     {
+        if (config('app.env') === 'production') {
+            $students = $this->firestore->list('students');
+            $collection = collect($students);
+
+            if ($this->search) {
+                $collection = $collection->filter(fn($s) => 
+                    str_contains(strtolower($s['user_name'] ?? ''), strtolower($this->search)) ||
+                    str_contains(strtolower($s['user_email'] ?? ''), strtolower($this->search)) ||
+                    str_contains(strtolower($s['phone'] ?? ''), strtolower($this->search))
+                );
+            }
+
+            $items = $collection->forPage($this->getPage(), 10);
+            
+            return new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+        }
+
         $query = Student::query()
             ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
             ->join('users', 'students.user_id', '=', 'users.id')
@@ -165,6 +195,14 @@ class StudentIndex extends Component
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            return view('livewire.students.student-index', [
+                'faculties' => collect($this->firestore->list('faculties')),
+                'majors' => collect($this->firestore->list('majors')),
+                'shifts' => collect($this->firestore->list('shifts')),
+            ])->layout('layouts.app');
+        }
+
         return view('livewire.students.student-index', [
             'faculties' => Faculty::orderBy('name')->get(),
             'majors' => Major::orderBy('name')->get(),

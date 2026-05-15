@@ -10,6 +10,13 @@ use Livewire\Attributes\Computed;
 class TeacherIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public $search       = '';
     public $role         = '';
@@ -56,6 +63,28 @@ class TeacherIndex extends Component
     #[Computed]
     public function teachers()
     {
+        if (config('app.env') === 'production') {
+            $teachers = $this->firestore->list('teachers');
+            $collection = collect($teachers);
+
+            if ($this->search) {
+                $collection = $collection->filter(fn($t) => 
+                    str_contains(strtolower($t['user_name'] ?? ''), strtolower($this->search)) ||
+                    str_contains(strtolower($t['user_email'] ?? ''), strtolower($this->search))
+                );
+            }
+
+            $items = $collection->forPage($this->getPage(), 10);
+            
+            return new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+        }
+
         return Teacher::query()
             ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
             ->when($this->search, function ($q) {

@@ -10,6 +10,13 @@ use Livewire\WithPagination;
 class ClassIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public $search = '';
     public $showCreateModal = false;
@@ -41,14 +48,31 @@ class ClassIndex extends Component
 
     public function store()
     {
-        $this->validate();
-        AcademicClass::create([
-            'name' => $this->name,
-            'code' => $this->code,
-            'major_id' => $this->major_id,
-            'academic_year' => $this->academic_year,
-            'semester' => $this->semester,
-        ]);
+        if (config('app.env') === 'production') {
+            $this->validate([
+                'name' => 'required|min:2',
+                'code' => 'required',
+                'major_id' => 'required',
+                'academic_year' => 'required',
+                'semester' => 'required|integer|min:1|max:2',
+            ]);
+            $this->firestore->create('academic_classes', [
+                'name' => $this->name,
+                'code' => $this->code,
+                'major_id' => $this->major_id,
+                'academic_year' => $this->academic_year,
+                'semester' => $this->semester,
+            ]);
+        } else {
+            $this->validate();
+            AcademicClass::create([
+                'name' => $this->name,
+                'code' => $this->code,
+                'major_id' => $this->major_id,
+                'academic_year' => $this->academic_year,
+                'semester' => $this->semester,
+            ]);
+        }
         $this->showCreateModal = false;
         session()->flash('message', 'Class created successfully.');
     }
@@ -56,33 +80,61 @@ class ClassIndex extends Component
     public function edit($id)
     {
         $this->editClassId = $id;
-        $class = AcademicClass::findOrFail($id);
-        $this->name = $class->name;
-        $this->code = $class->code;
-        $this->major_id = $class->major_id;
-        $this->academic_year = $class->academic_year;
-        $this->semester = $class->semester;
+        
+        if (config('app.env') === 'production') {
+            $class = $this->firestore->getDocument('academic_classes', (string)$id);
+            $this->name = $class['name'] ?? '';
+            $this->code = $class['code'] ?? '';
+            $this->major_id = $class['major_id'] ?? '';
+            $this->academic_year = $class['academic_year'] ?? '';
+            $this->semester = $class['semester'] ?? 1;
+        } else {
+            $class = AcademicClass::findOrFail($id);
+            $this->name = $class->name;
+            $this->code = $class->code;
+            $this->major_id = $class->major_id;
+            $this->academic_year = $class->academic_year;
+            $this->semester = $class->semester;
+        }
+        
         $this->showEditModal = true;
     }
 
     public function update()
     {
-        $this->validate([
-            'name' => 'required|min:2',
-            'code' => 'required|unique:academic_classes,code,' . $this->editClassId,
-            'major_id' => 'required|exists:majors,id',
-            'academic_year' => 'required',
-            'semester' => 'required|integer|min:1|max:2',
-        ]);
+        if (config('app.env') === 'production') {
+            $this->validate([
+                'name' => 'required|min:2',
+                'code' => 'required',
+                'major_id' => 'required',
+                'academic_year' => 'required',
+                'semester' => 'required|integer|min:1|max:2',
+            ]);
+            $this->firestore->update('academic_classes', (string)$this->editClassId, [
+                'name' => $this->name,
+                'code' => $this->code,
+                'major_id' => $this->major_id,
+                'academic_year' => $this->academic_year,
+                'semester' => $this->semester,
+            ]);
+        } else {
+            $this->validate([
+                'name' => 'required|min:2',
+                'code' => 'required|unique:academic_classes,code,' . $this->editClassId,
+                'major_id' => 'required|exists:majors,id',
+                'academic_year' => 'required',
+                'semester' => 'required|integer|min:1|max:2',
+            ]);
 
-        $class = AcademicClass::findOrFail($this->editClassId);
-        $class->update([
-            'name' => $this->name,
-            'code' => $this->code,
-            'major_id' => $this->major_id,
-            'academic_year' => $this->academic_year,
-            'semester' => $this->semester,
-        ]);
+            $class = AcademicClass::findOrFail($this->editClassId);
+            $class->update([
+                'name' => $this->name,
+                'code' => $this->code,
+                'major_id' => $this->major_id,
+                'academic_year' => $this->academic_year,
+                'semester' => $this->semester,
+            ]);
+        }
 
         $this->showEditModal = false;
         session()->flash('message', 'Class updated successfully.');
@@ -90,12 +142,42 @@ class ClassIndex extends Component
 
     public function delete($id)
     {
-        AcademicClass::findOrFail($id)->delete();
+        if (config('app.env') === 'production') {
+            $this->firestore->delete('academic_classes', (string)$id);
+        } else {
+            AcademicClass::findOrFail($id)->delete();
+        }
         session()->flash('message', 'Class deleted successfully.');
     }
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            $classes = $this->firestore->list('academic_classes');
+            $collection = collect($classes);
+            if ($this->search) {
+                $collection = $collection->filter(fn($c) => 
+                    str_contains(strtolower($c['name'] ?? ''), strtolower($this->search)) ||
+                    str_contains(strtolower($c['code'] ?? ''), strtolower($this->search))
+                );
+            }
+            
+            $items = $collection->forPage($this->getPage(), 10);
+            
+            $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+
+            return view('livewire.classes.class-index', [
+                'classes' => $paginated,
+                'majors' => collect($this->firestore->list('majors')),
+            ])->layout('layouts.app');
+        }
+
         return view('livewire.classes.class-index', [
             'classes' => AcademicClass::with('major.faculty')
                 ->where('name', 'like', '%' . $this->search . '%')
