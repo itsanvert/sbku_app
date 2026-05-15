@@ -9,6 +9,11 @@ if [ "$DB_CONNECTION" = "sqlite" ]; then
     touch database/database.sqlite
 fi
 
+# Ensure storage directories exist and are writable
+mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+
 # Fix Firebase permissions on Render
 if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     echo "Found Firebase credentials in /etc/secrets, preparing for use..."
