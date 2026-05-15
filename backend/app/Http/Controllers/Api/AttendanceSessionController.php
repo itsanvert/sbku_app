@@ -85,9 +85,9 @@ class AttendanceSessionController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
-        $studentData = $request->user()->student;
+        $student = $request->user()->student;
         
-        if (!$studentData) {
+        if (!$student) {
             return response()->json(['message' => 'You are not registered as a student. Cannot check in.'], 403);
         }
 
@@ -200,7 +200,7 @@ class AttendanceSessionController extends Controller
     /**
      * List all check-ins for a session, grouped by verify_status.
      */
-    public function approvalList($id)
+    public function approvalList(Request $request, $id)
     {
         if (config('app.env') === 'production' || $request->has('firestore')) {
             $session = $this->firestore->getDocument('attendance_sessions', (string)$id);

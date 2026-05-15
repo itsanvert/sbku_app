@@ -108,6 +108,49 @@ class FirestoreHydrator
         return $syllabus;
     }
 
+    public static function syllabusObject(array $data): object
+    {
+        $syllabus = (object) $data;
+
+        $syllabus->subject = isset($data['subject_id']) || isset($data['subject_name'])
+            ? (object) [
+                'id' => $data['subject_id'] ?? null,
+                'name' => $data['subject_name'] ?? '—',
+                'code' => $data['subject_code'] ?? null,
+            ]
+            : null;
+
+        $syllabus->faculty = isset($data['faculty_id']) || isset($data['faculty_name'])
+            ? (object) [
+                'id' => $data['faculty_id'] ?? null,
+                'name' => $data['faculty_name'] ?? '—',
+            ]
+            : null;
+
+        $syllabus->major = isset($data['major_id']) || isset($data['major_name'])
+            ? (object) [
+                'id' => $data['major_id'] ?? null,
+                'name' => $data['major_name'] ?? '—',
+            ]
+            : null;
+
+        $syllabus->shift = isset($data['shift_id']) || isset($data['shift_name'])
+            ? (object) [
+                'id' => $data['shift_id'] ?? null,
+                'name' => $data['shift_name'] ?? '—',
+            ]
+            : null;
+
+        $syllabus->teacher = (object) [
+            'id' => $data['teacher_id'] ?? null,
+            'user' => (object) [
+                'name' => $data['teacher_name'] ?? $data['teacher_user_name'] ?? '—',
+            ],
+        ];
+
+        return $syllabus;
+    }
+
     public static function attendanceSession(array $data): AttendanceSession
     {
         $session = new AttendanceSession();

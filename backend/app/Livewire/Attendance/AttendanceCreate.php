@@ -46,8 +46,8 @@ class AttendanceCreate extends Component
     public string $longitude = '104.9282';
 
     // Derived preview
-    public ?Syllabus $selectedSyllabus   = null;
-    public int       $enrolledStudents   = 0;
+    public ?object $selectedSyllabus   = null;
+    public int     $enrolledStudents   = 0;
 
     protected function rules(): array
     {
@@ -100,8 +100,8 @@ class AttendanceCreate extends Component
             $syllabusData = $this->firestore->getDocument('syllabuses', (string)$value);
             if (!$syllabusData) return;
 
-            $this->selectedSyllabus = FirestoreHydrator::syllabus($syllabusData);
-            
+            $this->selectedSyllabus = FirestoreHydrator::syllabusObject($syllabusData);
+
             $this->faculty_id       = $syllabusData['faculty_id']       ?? '';
             $this->major_id         = $syllabusData['major_id']         ?? '';
             $this->year_id          = $syllabusData['year_id']          ?? '';
@@ -212,15 +212,15 @@ class AttendanceCreate extends Component
                 ->whereNotNull('day_of_week')
                 ->whereNotNull('start_time')
                 ->with(['subject', 'major', 'shift'])
-                ->orderByRaw("CASE 
-                    WHEN day_of_week = 'monday' THEN 1 
-                    WHEN day_of_week = 'tuesday' THEN 2 
-                    WHEN day_of_week = 'wednesday' THEN 3 
-                    WHEN day_of_week = 'thursday' THEN 4 
-                    WHEN day_of_week = 'friday' THEN 5 
-                    WHEN day_of_week = 'saturday' THEN 6 
-                    WHEN day_of_week = 'sunday' THEN 7 
-                    ELSE 8 
+                ->orderByRaw("CASE
+                    WHEN day_of_week = 'monday' THEN 1
+                    WHEN day_of_week = 'tuesday' THEN 2
+                    WHEN day_of_week = 'wednesday' THEN 3
+                    WHEN day_of_week = 'thursday' THEN 4
+                    WHEN day_of_week = 'friday' THEN 5
+                    WHEN day_of_week = 'saturday' THEN 6
+                    WHEN day_of_week = 'sunday' THEN 7
+                    ELSE 8
                 END")
                 ->orderBy('start_time')
                 ->get()
