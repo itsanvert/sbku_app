@@ -13,8 +13,8 @@ use Livewire\Attributes\Computed;
 class StudentIndex extends Component
 {
     use WithPagination;
-    
-    public function __construct()
+
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -40,8 +40,14 @@ class StudentIndex extends Component
         'closeModal' => 'closeModals',
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingRole() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingRole()
+    {
+        $this->resetPage();
+    }
 
     public function updatedSelectAll($value)
     {
@@ -72,7 +78,8 @@ class StudentIndex extends Component
             $collection = collect($students);
 
             if ($this->search) {
-                $collection = $collection->filter(fn($s) => 
+                $collection = $collection->filter(
+                    fn($s) =>
                     str_contains(strtolower($s['user_name'] ?? ''), strtolower($this->search)) ||
                     str_contains(strtolower($s['user_email'] ?? ''), strtolower($this->search)) ||
                     str_contains(strtolower($s['phone'] ?? ''), strtolower($this->search))
@@ -88,8 +95,8 @@ class StudentIndex extends Component
                 // 1. Mock User relationship
                 $u = new \App\Models\User();
                 $u->forceFill([
-                    'id'    => $data['user_id'] ?? null,
-                    'name'  => $data['user_name'] ?? '—',
+                    'id' => $data['user_id'] ?? null,
+                    'name' => $data['user_name'] ?? '—',
                     'email' => $data['user_email'] ?? '—',
                 ]);
                 $s->setRelation('user', $u);
@@ -97,7 +104,7 @@ class StudentIndex extends Component
                 // 2. Mock Major relationship
                 $maj = new \App\Models\Major();
                 $maj->forceFill([
-                    'id'   => $data['major_id'] ?? null,
+                    'id' => $data['major_id'] ?? null,
                     'name' => $data['major_name'] ?? '—',
                 ]);
                 $s->setRelation('major', $maj);
@@ -105,7 +112,7 @@ class StudentIndex extends Component
                 // 3. Mock Faculty relationship
                 $fac = new \App\Models\Faculty();
                 $fac->forceFill([
-                    'id'   => $data['faculty_id'] ?? null,
+                    'id' => $data['faculty_id'] ?? null,
                     'name' => $data['faculty_name'] ?? '—',
                 ]);
                 $s->setRelation('faculty', $fac);
@@ -113,7 +120,7 @@ class StudentIndex extends Component
                 // 4. Mock Shift relationship
                 $shift = new \App\Models\Shift();
                 $shift->forceFill([
-                    'id'   => $data['shift_id'] ?? null,
+                    'id' => $data['shift_id'] ?? null,
                     'name' => $data['shift_name'] ?? '—',
                 ]);
                 $s->setRelation('shift', $shift);
@@ -139,10 +146,10 @@ class StudentIndex extends Component
 
         // Search
         if ($this->search) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('users.name', 'like', '%' . $this->search . '%')
-                  ->orWhere('users.email', 'like', '%' . $this->search . '%')
-                  ->orWhere('students.phone', 'like', '%' . $this->search . '%');
+                    ->orWhere('users.email', 'like', '%' . $this->search . '%')
+                    ->orWhere('students.phone', 'like', '%' . $this->search . '%');
             });
         }
 
@@ -152,7 +159,7 @@ class StudentIndex extends Component
         }
 
         // Sorting
-        $sortField = match($this->sortBy) {
+        $sortField = match ($this->sortBy) {
             'name' => 'users.name',
             'email' => 'users.email',
             'faculty_id' => 'faculties.name',
@@ -187,7 +194,7 @@ class StudentIndex extends Component
     {
         if ($this->deleteStudentId) {
             if (config('app.env') === 'production') {
-                $this->firestore->delete('students', (string)$this->deleteStudentId);
+                $this->firestore->delete('students', (string) $this->deleteStudentId);
             } else {
                 Student::findOrFail($this->deleteStudentId)->delete();
             }
@@ -211,7 +218,7 @@ class StudentIndex extends Component
         if (!empty($this->selected)) {
             if (config('app.env') === 'production') {
                 foreach ($this->selected as $id) {
-                    $this->firestore->delete('students', (string)$id);
+                    $this->firestore->delete('students', (string) $id);
                 }
             } else {
                 Student::whereIn('id', $this->selected)->delete();
@@ -246,8 +253,8 @@ class StudentIndex extends Component
     public function render()
     {
         if (config('app.env') === 'production') {
-            $hydrate = function($collection, $modelClass) {
-                return collect($this->firestore->list($collection))->map(function($data) use ($modelClass) {
+            $hydrate = function ($collection, $modelClass) {
+                return collect($this->firestore->list($collection))->map(function ($data) use ($modelClass) {
                     $m = new $modelClass();
                     $m->forceFill($data);
                     $m->exists = true;

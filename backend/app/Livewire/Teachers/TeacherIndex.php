@@ -11,7 +11,7 @@ class TeacherIndex extends Component
 {
     use WithPagination;
 
-    public function __construct()
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
