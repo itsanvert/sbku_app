@@ -86,6 +86,27 @@ class MigrateToFirestore extends Command
                         }
                     }
 
+                    // Handle Student model - include user relationship data
+                    if ($record instanceof \App\Models\Student && $record->user) {
+                        $data['user_name'] = $record->user->name;
+                        $data['user_email'] = $record->user->email;
+                    }
+
+                    // Handle Faculty relationship for Student
+                    if ($record instanceof \App\Models\Student && $record->faculty) {
+                        $data['faculty_name'] = $record->faculty->name;
+                    }
+
+                    // Handle Major relationship for Student
+                    if ($record instanceof \App\Models\Student && $record->major) {
+                        $data['major_name'] = $record->major->name;
+                    }
+
+                    // Handle Shift relationship for Student
+                    if ($record instanceof \App\Models\Student && $record->shift) {
+                        $data['shift_name'] = $record->shift->name;
+                    }
+
                     // Add SyncsToFirestore specific formatting if it exists
                     if (method_exists($record, 'toFirestoreArray')) {
                         $data = $record->toFirestoreArray();

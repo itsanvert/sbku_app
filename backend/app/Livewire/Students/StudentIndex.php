@@ -126,6 +126,18 @@ class StudentIndex extends Component
                 ]);
                 $s->setRelation('shift', $shift);
 
+                // 5. Mock Schedule relationship
+                if (isset($data['schedule_id'])) {
+                    $scheduleData = $this->firestore->getDocument('schedules', (string) $data['schedule_id']);
+                    if ($scheduleData) {
+                        $schedule = new \App\Models\Schedule();
+                        $schedule->forceFill($scheduleData);
+                        $schedule->id = $scheduleData['id'];
+                        $schedule->exists = true;
+                        $s->setRelation('schedule', $schedule);
+                    }
+                }
+
                 return $s;
             });
 

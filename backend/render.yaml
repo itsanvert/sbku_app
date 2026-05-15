@@ -5,6 +5,10 @@ services:
     rootDir: backend
     plan: free
     region: singapore
+    disk:
+      name: app-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: APP_ENV
         value: production
@@ -16,10 +20,16 @@ services:
         value: base64:eOvGzttB2Sme3+YwJb7hse7ds1qCpwJ7HJ/KIdwHXKA=
       - key: DB_CONNECTION
         value: sqlite
+      - key: DB_DATABASE
+        value: /var/data/database.sqlite
       - key: SESSION_DRIVER
         value: file
+      - key: SESSION_FILES
+        value: /var/data/sessions
       - key: CACHE_STORE
         value: file
+      - key: CACHE_FILE_PATH
+        value: /var/data/cache
       - key: QUEUE_CONNECTION
         value: sync
       - key: AUTH_PROVIDER_DRIVER
@@ -32,4 +42,5 @@ services:
         value: /etc/secrets/firebase-credentials.json
       - key: GOOGLE_CLOUD_USE_REST
         value: "true"
-
+      - key: USE_FIRESTORE
+        value: "true"

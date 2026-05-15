@@ -31,13 +31,12 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
 fi
 
-# Run migrations (Disabled for Firestore migration)
-# php artisan migrate --force
-
-# Force DB connection to sqlite for all artisan commands to bypass PostgreSQL checks
-export DB_CONNECTION=sqlite
-export DB_DATABASE=:memory:
-export DB_HOST=127.0.0.1
+# Run migrations
+if [ "$DB_CONNECTION" = "sqlite" ]; then
+    php artisan migrate --force --database=sqlite
+else
+    php artisan migrate --force
+fi
 
 # Public storage symlink for profile images (idempotent)
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
