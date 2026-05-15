@@ -79,25 +79,7 @@ class StudentIndex extends Component
                 );
             }
 
-            // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
-                $s = new Student();
-                $s->forceFill($data);
-                $s->exists = true;
-                
-                // Mock user relationship if data is present
-                if (isset($data['user_name']) || isset($data['user_email'])) {
-                    $u = new \App\Models\User();
-                    $u->forceFill([
-                        'id' => $data['user_id'] ?? null,
-                        'name' => $data['user_name'] ?? '—',
-                        'email' => $data['user_email'] ?? '—',
-                    ]);
-                    $s->setRelation('user', $u);
-                }
-                
-                return $s;
-            });
+            $items = $collection->forPage($this->getPage(), 10);
             
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

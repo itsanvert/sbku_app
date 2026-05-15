@@ -10,7 +10,7 @@ use Livewire\Attributes\Computed;
 class TeacherIndex extends Component
 {
     use WithPagination;
-    
+
     public function __construct()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
@@ -18,32 +18,38 @@ class TeacherIndex extends Component
 
     private $firestore;
 
-    public $search       = '';
-    public $role         = '';
-    public $sortBy        = 'id';
+    public $search = '';
+    public $role = '';
+    public $sortBy = 'id';
     public $sortDirection = 'asc';
 
-    public $selected      = [];
-    public $selectAll     = false;
+    public $selected = [];
+    public $selectAll = false;
 
     public $showCreateModal = false;
-    public $showEditModal   = false;
-    public $editTeacherId      = null;
-    public $deleteTeacherId    = null;
+    public $showEditModal = false;
+    public $editTeacherId = null;
+    public $deleteTeacherId = null;
 
     protected $listeners = [
         'teacherCreated' => 'handleTeacherCreated',
         'teacherUpdated' => 'handleTeacherUpdated',
-        'closeModal'  => 'closeModals',
+        'closeModal' => 'closeModals',
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingRole() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingRole()
+    {
+        $this->resetPage();
+    }
 
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = $this->teachers->pluck('id')->map(fn($id) => (string)$id)->toArray();
+            $this->selected = $this->teachers->pluck('id')->map(fn($id) => (string) $id)->toArray();
         } else {
             $this->selected = [];
         }
@@ -54,7 +60,7 @@ class TeacherIndex extends Component
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
-            $this->sortBy        = $column;
+            $this->sortBy = $column;
             $this->sortDirection = 'asc';
         }
         $this->resetPage();
@@ -68,54 +74,33 @@ class TeacherIndex extends Component
             $collection = collect($teachers);
 
             if ($this->search) {
-                $collection = $collection->filter(fn($t) => 
+                $collection = $collection->filter(
+                    fn($t) =>
                     str_contains(strtolower($t['user_name'] ?? ''), strtolower($this->search)) ||
                     str_contains(strtolower($t['user_email'] ?? ''), strtolower($this->search))
                 );
             }
 
             // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $t = new Teacher();
                 $t->forceFill($data);
                 $t->exists = true;
-                
-                // Mock user relationship
-                $u = new \App\Models\User();
-                $u->forceFill([
-                    'id'    => $data['user_id'] ?? null,
-                    'name'  => $data['user_name'] ?? $data['name'] ?? '—',
-                    'email' => $data['user_email'] ?? $data['email'] ?? '—',
-                ]);
-                $t->setRelation('user', $u);
 
-                // Mock major relationship
-                $maj = new \App\Models\Major();
-                $maj->forceFill(['id' => $data['major_id'] ?? null, 'name' => $data['major_name'] ?? '—']);
-                $t->setRelation('major', $maj);
+                // Mock user relationship if data is present
+                if (isset($data['user_name']) || isset($data['user_email'])) {
+                    $u = new \App\Models\User();
+                    $u->forceFill([
+                        'id' => $data['user_id'] ?? null,
+                        'name' => $data['user_name'] ?? '—',
+                        'email' => $data['user_email'] ?? '—',
+                    ]);
+                    $t->setRelation('user', $u);
+                }
 
-                // Mock faculty relationship
-                $fac = new \App\Models\Faculty();
-                $fac->forceFill(['id' => $data['faculty_id'] ?? null, 'name' => $data['faculty_name'] ?? '—']);
-                $t->setRelation('faculty', $fac);
-
-                // Mock shift relationship
-                $shift = new \App\Models\Shift();
-                $shift->forceFill(['id' => $data['shift_id'] ?? null, 'name' => $data['shift_name'] ?? '—']);
-                $t->setRelation('shift', $shift);
-
-                // Mock schedule relationship
-                $schedule = new \App\Models\Schedule();
-                $schedule->forceFill([
-                    'id'           => $data['schedule_id'] ?? null,
-                    'name'         => $data['schedule_name'] ?? '—',
-                    'full_display' => $data['schedule_display'] ?? $data['schedule_name'] ?? '—',
-                ]);
-                $t->setRelation('schedule', $schedule);
-                
                 return $t;
             });
-            
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
@@ -128,13 +113,13 @@ class TeacherIndex extends Component
         return Teacher::query()
             ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
             ->when($this->search, function ($q) {
-                $q->whereHas('user', function($query) {
+                $q->whereHas('user', function ($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
-                          ->orWhere('email', 'like', '%' . $this->search . '%');
+                        ->orWhere('email', 'like', '%' . $this->search . '%');
                 });
             })
             ->when($this->role, function ($q) {
-                $q->whereHas('user', function($query) {
+                $q->whereHas('user', function ($query) {
                     $query->where('role', $this->role);
                 });
             })
@@ -144,15 +129,15 @@ class TeacherIndex extends Component
 
     public function openCreateModal()
     {
-        $this->showEditModal   = false;
+        $this->showEditModal = false;
         $this->showCreateModal = true;
     }
 
     public function openEditModal($id)
     {
-        $this->editTeacherId      = $id;
+        $this->editTeacherId = $id;
         $this->showCreateModal = false;
-        $this->showEditModal   = true;
+        $this->showEditModal = true;
     }
 
     public function confirmDelete($id)
@@ -165,7 +150,7 @@ class TeacherIndex extends Component
     {
         if ($this->deleteTeacherId) {
             if (config('app.env') === 'production') {
-                $this->firestore->delete('teachers', (string)$this->deleteTeacherId);
+                $this->firestore->delete('teachers', (string) $this->deleteTeacherId);
             } else {
                 Teacher::findOrFail($this->deleteTeacherId)->delete();
             }
@@ -188,7 +173,7 @@ class TeacherIndex extends Component
         if (!empty($this->selected)) {
             if (config('app.env') === 'production') {
                 foreach ($this->selected as $id) {
-                    $this->firestore->delete('teachers', (string)$id);
+                    $this->firestore->delete('teachers', (string) $id);
                 }
             } else {
                 Teacher::whereIn('id', $this->selected)->delete();
@@ -204,8 +189,8 @@ class TeacherIndex extends Component
     public function closeModals()
     {
         $this->showCreateModal = false;
-        $this->showEditModal   = false;
-        $this->editTeacherId      = null;
+        $this->showEditModal = false;
+        $this->editTeacherId = null;
     }
 
     public function handleTeacherCreated()
@@ -222,7 +207,7 @@ class TeacherIndex extends Component
 
     public function render()
     {
-    return view('livewire.teachers.teacher-index')->layout('layouts.app');
+        return view('livewire.teachers.teacher-index')->layout('layouts.app');
     }
 
 }
