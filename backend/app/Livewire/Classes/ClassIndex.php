@@ -3,7 +3,9 @@
 namespace App\Livewire\Classes;
 
 use App\Models\AcademicClass;
+use App\Models\Faculty;
 use App\Models\Major;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -162,8 +164,22 @@ class ClassIndex extends Component
                 );
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
-            
+            $items = $collection
+                ->forPage($this->getPage(), 10)
+                ->map(function (array $data) {
+                    $class = FirestoreHydrator::academicClass($data);
+                    $major = (new Major())->forceFill([
+                        'id'   => $data['major_id'] ?? null,
+                        'name' => $data['major_name'] ?? '—',
+                    ]);
+                    $major->setRelation('faculty', (new Faculty())->forceFill([
+                        'name' => $data['faculty_name'] ?? '',
+                    ]));
+                    $class->setRelation('major', $major);
+
+                    return $class;
+                });
+
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
@@ -174,7 +190,7 @@ class ClassIndex extends Component
 
             return view('livewire.classes.class-index', [
                 'classes' => $paginated,
-                'majors' => collect($this->firestore->list('majors')),
+                'majors' => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
             ])->layout('layouts.app');
         }
 

@@ -3,6 +3,7 @@
 namespace App\Livewire\Schedules;
 
 use App\Models\Schedule;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -169,23 +170,25 @@ class ScheduleIndex extends Component
                     str_contains(strtolower($s['day_of_the_week'] ?? ''), strtolower($this->search))
                 );
             }
-            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
-                $s = new Schedule();
-                $s->forceFill($cleanData);
-                $s->exists = true;
-                return $s;
-            });
+            $items = $collection
+                ->forPage($this->getPage(), 10)
+                ->map(fn (array $data) => FirestoreHydrator::schedule($data));
+
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
-                $items, $collection->count(), 10, $this->getPage(), ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
             );
 
             return view('livewire.schedules.schedule-index', [
                 'schedules' => $paginated,
-                'teachers' => collect($this->firestore->list('teachers')),
-                'subjects' => collect($this->firestore->list('subjects')),
-                'academicClasses' => collect($this->firestore->list('academic_classes')),
-                'rooms' => collect($this->firestore->list('rooms')),
-                'syllabuses' => collect($this->firestore->list('syllabuses')),
+                'teachers' => FirestoreHydrator::teacherCollection($this->firestore->list('teachers')),
+                'subjects' => FirestoreHydrator::selectOptions($this->firestore->list('subjects')),
+                'academicClasses' => FirestoreHydrator::academicClassCollection($this->firestore->list('academic_classes')),
+                'rooms' => FirestoreHydrator::selectOptions($this->firestore->list('rooms')),
+                'syllabuses' => FirestoreHydrator::syllabusCollection($this->firestore->list('syllabuses')),
             ])->layout('layouts.app');
         }
 

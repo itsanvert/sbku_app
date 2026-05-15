@@ -10,6 +10,7 @@ use App\Models\Major;
 use App\Models\Shift;
 use App\Services\FirestoreService;
 use App\Services\ScheduleConflictDetector;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 
 class SyllabusEdit extends Component
@@ -204,11 +205,11 @@ class SyllabusEdit extends Component
             $firestore = app(FirestoreService::class);
 
             return view('livewire.syllabuses.syllabus-edit', [
-                'faculties' => SyllabusCreate::firestoreSelectOptions($firestore->list('faculties')),
-                'majors'    => SyllabusCreate::firestoreSelectOptions($firestore->list('majors')),
-                'shifts'    => SyllabusCreate::firestoreSelectOptions($firestore->list('shifts')),
-                'subjects'  => SyllabusCreate::firestoreSelectOptions($firestore->list('subjects')),
-                'teachers'  => SyllabusCreate::firestoreTeacherOptions($firestore->list('teachers')),
+                'faculties' => FirestoreHydrator::selectOptions($firestore->list('faculties')),
+                'majors'    => FirestoreHydrator::selectOptions($firestore->list('majors')),
+                'shifts'    => FirestoreHydrator::selectOptions($firestore->list('shifts')),
+                'subjects'  => FirestoreHydrator::selectOptions($firestore->list('subjects')),
+                'teachers'  => FirestoreHydrator::teacherSelectOptions($firestore->list('teachers')),
                 'years'     => $years,
                 'days'      => $days,
             ]);

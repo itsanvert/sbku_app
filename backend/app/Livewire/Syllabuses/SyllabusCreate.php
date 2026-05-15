@@ -10,6 +10,7 @@ use App\Models\Major;
 use App\Models\Shift;
 use App\Services\FirestoreService;
 use App\Services\ScheduleConflictDetector;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 
 class SyllabusCreate extends Component
@@ -150,25 +151,6 @@ class SyllabusCreate extends Component
         $this->dispatch('syllabusCreated');
     }
 
-    public static function firestoreSelectOptions(array $rows): \Illuminate\Support\Collection
-    {
-        return collect($rows)
-            ->sortBy('name')
-            ->map(fn (array $row) => (object) $row);
-    }
-
-    public static function firestoreTeacherOptions(array $rows): \Illuminate\Support\Collection
-    {
-        return collect($rows)->map(function (array $row) {
-            $teacher = (object) $row;
-            $teacher->user = (object) [
-                'name' => $row['user_name'] ?? $row['name'] ?? '—',
-            ];
-
-            return $teacher;
-        });
-    }
-
     public static function denormalizedSyllabusLabels(FirestoreService $firestore, string $subjectId, string $teacherId, string $facultyId, string $majorId, string $shiftId): array
     {
         $subject = $firestore->getDocument('subjects', $subjectId);
@@ -198,11 +180,11 @@ class SyllabusCreate extends Component
             $firestore = app(FirestoreService::class);
 
             return view('livewire.syllabuses.syllabus-create', [
-                'faculties' => self::firestoreSelectOptions($firestore->list('faculties')),
-                'majors'    => self::firestoreSelectOptions($firestore->list('majors')),
-                'shifts'    => self::firestoreSelectOptions($firestore->list('shifts')),
-                'subjects'  => self::firestoreSelectOptions($firestore->list('subjects')),
-                'teachers'  => self::firestoreTeacherOptions($firestore->list('teachers')),
+                'faculties' => FirestoreHydrator::selectOptions($firestore->list('faculties')),
+                'majors'    => FirestoreHydrator::selectOptions($firestore->list('majors')),
+                'shifts'    => FirestoreHydrator::selectOptions($firestore->list('shifts')),
+                'subjects'  => FirestoreHydrator::selectOptions($firestore->list('subjects')),
+                'teachers'  => FirestoreHydrator::teacherSelectOptions($firestore->list('teachers')),
                 'years'     => [
                     'Y1' => 'Year 1',
                     'Y2' => 'Year 2',

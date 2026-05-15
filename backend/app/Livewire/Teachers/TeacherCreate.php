@@ -12,6 +12,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Support\FirestoreHydrator;
 
 class TeacherCreate extends Component
 {
@@ -137,12 +138,12 @@ class TeacherCreate extends Component
         if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             return view('livewire.teachers.teacher-create', [
-                'faculties' => collect($firestore->list('faculties'))->sortBy('name'),
-                'majors' => $this->faculty_id 
-                    ? collect($firestore->list('majors', ['faculty_id' => (string)$this->faculty_id]))->sortBy('name')
+                'faculties' => FirestoreHydrator::selectOptions($firestore->list('faculties')),
+                'majors' => $this->faculty_id
+                    ? FirestoreHydrator::selectOptions($firestore->list('majors', ['faculty_id' => (string) $this->faculty_id]))
                     : collect(),
-                'schedules' => collect($firestore->list('schedules')),
-                'shifts' => collect($firestore->list('shifts'))->sortBy('name'),
+                'schedules' => FirestoreHydrator::scheduleCollection($firestore->list('schedules')),
+                'shifts' => FirestoreHydrator::selectOptions($firestore->list('shifts')),
             ]);
         }
 

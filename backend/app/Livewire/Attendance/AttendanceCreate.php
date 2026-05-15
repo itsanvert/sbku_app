@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\Syllabus;
 use App\Models\Teacher;
 use Illuminate\Support\Str;
+use App\Support\FirestoreHydrator;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -99,8 +100,7 @@ class AttendanceCreate extends Component
             $syllabusData = $this->firestore->getDocument('syllabuses', (string)$value);
             if (!$syllabusData) return;
 
-            // Mock Syllabus object for the preview if needed, or just use the array
-            $this->selectedSyllabus = (object) $syllabusData; 
+            $this->selectedSyllabus = FirestoreHydrator::syllabus($syllabusData);
             
             $this->faculty_id       = $syllabusData['faculty_id']       ?? '';
             $this->major_id         = $syllabusData['major_id']         ?? '';
@@ -190,19 +190,19 @@ class AttendanceCreate extends Component
     public function render()
     {
         if (\App\Services\FirestoreService::isActive()) {
-            $teachers = collect($this->firestore->list('teachers'));
-            
-            $syllabuses = $this->teacher_id
-                ? collect($this->firestore->list('syllabuses', ['teacher_id' => (string)$this->teacher_id]))
-                    ->filter(fn($s) => isset($s['day_of_week']) && isset($s['start_time']))
-                : collect();
+            $syllabusRows = $this->teacher_id
+                ? array_values(array_filter(
+                    $this->firestore->list('syllabuses', ['teacher_id' => (string) $this->teacher_id]),
+                    fn ($s) => isset($s['day_of_week'], $s['start_time'])
+                ))
+                : [];
 
             return view('livewire.attendance.attendance-create', [
-                'teachers'   => $teachers,
-                'syllabuses' => $syllabuses,
-                'faculties'  => collect($this->firestore->list('faculties')),
-                'majors'     => collect($this->firestore->list('majors')),
-                'rooms'      => collect($this->firestore->list('rooms')),
+                'teachers'   => FirestoreHydrator::teacherCollection($this->firestore->list('teachers')),
+                'syllabuses' => FirestoreHydrator::syllabusCollection($syllabusRows),
+                'faculties'  => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
+                'majors'     => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
+                'rooms'      => FirestoreHydrator::selectOptions($this->firestore->list('rooms')),
             ]);
         }
 

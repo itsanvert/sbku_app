@@ -6,6 +6,7 @@ use App\Models\Student;
 use App\Models\Faculty;
 use App\Models\Major;
 use App\Models\Shift;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -252,11 +253,11 @@ class StudentIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             return view('livewire.students.student-index', [
-                'faculties' => collect($this->firestore->list('faculties'))->sortBy('name'),
-                'majors' => collect($this->firestore->list('majors'))->sortBy('name'),
-                'shifts' => collect($this->firestore->list('shifts'))->sortBy('name'),
+                'faculties' => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
+                'majors'    => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
+                'shifts'    => FirestoreHydrator::selectOptions($this->firestore->list('shifts')),
             ])->layout('layouts.app');
         }
 
