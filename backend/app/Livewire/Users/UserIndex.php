@@ -10,6 +10,13 @@ use Livewire\Attributes\Computed;
 class UserIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public function mount()
     {
@@ -63,6 +70,38 @@ class UserIndex extends Component
     #[Computed]
     public function users()
     {
+        if (config('app.env') === 'production') {
+            $users = $this->firestore->list('users');
+            $collection = collect($users);
+
+            if ($this->search) {
+                $collection = $collection->filter(fn($u) => 
+                    str_contains(strtolower($u['name'] ?? ''), strtolower($this->search)) ||
+                    str_contains(strtolower($u['email'] ?? ''), strtolower($this->search))
+                );
+            }
+
+            if ($this->role) {
+                $collection = $collection->filter(fn($u) => ($u['role'] ?? '') === $this->role);
+            }
+
+            // Map to Model objects to satisfy Blade views expecting objects
+            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+                $u = new User();
+                $u->forceFill($data);
+                $u->exists = true;
+                return $u;
+            });
+            
+            return new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+        }
+
         return User::query()
             ->when($this->search, function ($q) {
                 $q->where(function($query) {

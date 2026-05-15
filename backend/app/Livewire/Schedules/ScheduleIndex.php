@@ -9,6 +9,13 @@ use Livewire\WithPagination;
 class ScheduleIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public $search = '';
     public $showCreateModal = false;
@@ -28,19 +35,23 @@ class ScheduleIndex extends Component
     public $room_id;
     public $syllabus_id;
 
-    protected $rules = [
-        'name' => 'required|min:2',
-        'day_of_the_week' => 'nullable|string',
-        'start_time' => 'nullable',
-        'end_time' => 'nullable',
-        'start_date' => 'nullable|date',
-        'end_date' => 'nullable|date',
-        'class_id' => 'nullable|exists:academic_classes,id',
-        'teacher_id' => 'nullable|exists:teachers,id',
-        'subject_id' => 'nullable|exists:subjects,id',
-        'room_id' => 'nullable|exists:rooms,id',
-        'syllabus_id' => 'nullable|exists:syllabuses,id',
-    ];
+    protected function rules()
+    {
+        $isProd = config('app.env') === 'production';
+        return [
+            'name' => 'required|min:2',
+            'day_of_the_week' => 'nullable|string',
+            'start_time' => 'nullable',
+            'end_time' => 'nullable',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'class_id' => 'nullable' . ($isProd ? '' : '|exists:academic_classes,id'),
+            'teacher_id' => 'nullable' . ($isProd ? '' : '|exists:teachers,id'),
+            'subject_id' => 'nullable' . ($isProd ? '' : '|exists:subjects,id'),
+            'room_id' => 'nullable' . ($isProd ? '' : '|exists:rooms,id'),
+            'syllabus_id' => 'nullable' . ($isProd ? '' : '|exists:syllabuses,id'),
+        ];
+    }
 
     public function updatingSearch() { $this->resetPage(); }
 
@@ -53,7 +64,7 @@ class ScheduleIndex extends Component
     public function store()
     {
         $this->validate();
-        Schedule::create([
+        $data = [
             'name' => $this->name,
             'day_of_the_week' => $this->day_of_the_week,
             'start_time' => $this->start_time,
@@ -65,7 +76,13 @@ class ScheduleIndex extends Component
             'subject_id' => $this->subject_id ?: null,
             'room_id' => $this->room_id ?: null,
             'syllabus_id' => $this->syllabus_id ?: null,
-        ]);
+        ];
+
+        if (config('app.env') === 'production') {
+            $this->firestore->create('schedules', $data);
+        } else {
+            Schedule::create($data);
+        }
         $this->showCreateModal = false;
         session()->flash('message', 'Schedule created successfully.');
     }
@@ -73,27 +90,40 @@ class ScheduleIndex extends Component
     public function edit($id)
     {
         $this->editScheduleId = $id;
-        $schedule = Schedule::findOrFail($id);
-        $this->name = $schedule->name;
-        $this->day_of_the_week = $schedule->day_of_the_week;
-        $this->start_time = $schedule->start_time ? $schedule->start_time->format('H:i') : null;
-        $this->end_time = $schedule->end_time ? $schedule->end_time->format('H:i') : null;
-        $this->start_date = $schedule->start_date ? $schedule->start_date->format('Y-m-d') : null;
-        $this->end_date = $schedule->end_date ? $schedule->end_date->format('Y-m-d') : null;
-        $this->class_id = $schedule->class_id;
-        $this->teacher_id = $schedule->teacher_id;
-        $this->subject_id = $schedule->subject_id;
-        $this->room_id = $schedule->room_id;
-        $this->syllabus_id = $schedule->syllabus_id;
+        if (config('app.env') === 'production') {
+            $schedule = $this->firestore->getDocument('schedules', (string)$id);
+            $this->name = $schedule['name'] ?? '';
+            $this->day_of_the_week = $schedule['day_of_the_week'] ?? '';
+            $this->start_time = $schedule['start_time'] ?? null;
+            $this->end_time = $schedule['end_time'] ?? null;
+            $this->start_date = $schedule['start_date'] ?? null;
+            $this->end_date = $schedule['end_date'] ?? null;
+            $this->class_id = $schedule['class_id'] ?? null;
+            $this->teacher_id = $schedule['teacher_id'] ?? null;
+            $this->subject_id = $schedule['subject_id'] ?? null;
+            $this->room_id = $schedule['room_id'] ?? null;
+            $this->syllabus_id = $schedule['syllabus_id'] ?? null;
+        } else {
+            $schedule = Schedule::findOrFail($id);
+            $this->name = $schedule->name;
+            $this->day_of_the_week = $schedule->day_of_the_week;
+            $this->start_time = $schedule->start_time ? $schedule->start_time->format('H:i') : null;
+            $this->end_time = $schedule->end_time ? $schedule->end_time->format('H:i') : null;
+            $this->start_date = $schedule->start_date ? $schedule->start_date->format('Y-m-d') : null;
+            $this->end_date = $schedule->end_date ? $schedule->end_date->format('Y-m-d') : null;
+            $this->class_id = $schedule->class_id;
+            $this->teacher_id = $schedule->teacher_id;
+            $this->subject_id = $schedule->subject_id;
+            $this->room_id = $schedule->room_id;
+            $this->syllabus_id = $schedule->syllabus_id;
+        }
         $this->showEditModal = true;
     }
 
     public function update()
     {
         $this->validate();
-
-        $schedule = Schedule::findOrFail($this->editScheduleId);
-        $schedule->update([
+        $data = [
             'name' => $this->name,
             'day_of_the_week' => $this->day_of_the_week,
             'start_time' => $this->start_time,
@@ -105,7 +135,14 @@ class ScheduleIndex extends Component
             'subject_id' => $this->subject_id ?: null,
             'room_id' => $this->room_id ?: null,
             'syllabus_id' => $this->syllabus_id ?: null,
-        ]);
+        ];
+
+        if (config('app.env') === 'production') {
+            $this->firestore->update('schedules', (string)$this->editScheduleId, $data);
+        } else {
+            $schedule = Schedule::findOrFail($this->editScheduleId);
+            $schedule->update($data);
+        }
 
         $this->showEditModal = false;
         session()->flash('message', 'Schedule updated successfully.');
@@ -113,12 +150,45 @@ class ScheduleIndex extends Component
 
     public function delete($id)
     {
-        Schedule::findOrFail($id)->delete();
+        if (config('app.env') === 'production') {
+            $this->firestore->delete('schedules', (string)$id);
+        } else {
+            Schedule::findOrFail($id)->delete();
+        }
         session()->flash('message', 'Schedule deleted successfully.');
     }
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            $schedules = $this->firestore->list('schedules');
+            $collection = collect($schedules);
+            if ($this->search) {
+                $collection = $collection->filter(fn($s) => 
+                    str_contains(strtolower($s['name'] ?? ''), strtolower($this->search)) ||
+                    str_contains(strtolower($s['day_of_the_week'] ?? ''), strtolower($this->search))
+                );
+            }
+            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+                $s = new Schedule();
+                $s->forceFill($data);
+                $s->exists = true;
+                return $s;
+            });
+            $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items, $collection->count(), 10, $this->getPage(), ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+
+            return view('livewire.schedules.schedule-index', [
+                'schedules' => $paginated,
+                'teachers' => collect($this->firestore->list('teachers')),
+                'subjects' => collect($this->firestore->list('subjects')),
+                'academicClasses' => collect($this->firestore->list('academic_classes')),
+                'rooms' => collect($this->firestore->list('rooms')),
+                'syllabuses' => collect($this->firestore->list('syllabuses')),
+            ])->layout('layouts.app');
+        }
+
         return view('livewire.schedules.schedule-index', [
             'schedules' => Schedule::with(['teacher.user', 'subject', 'academicClass', 'room'])
                 ->where('name', 'like', '%' . $this->search . '%')

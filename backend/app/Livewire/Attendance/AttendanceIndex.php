@@ -124,8 +124,27 @@ class AttendanceIndex extends Component
 
     public function exportPdf()
     {
-        // Get ALL filtered records (not just current page)
-        $records = $this->getBaseQuery()->get();
+        if (config('app.env') === 'production') {
+            $user = auth()->user();
+            $filters = [];
+            if ($user->role === 'student') $filters['student_id'] = is_array($user->student) ? $user->student['id'] : $user->student?->id;
+            elseif ($user->role === 'teacher') $filters['teacher_id'] = is_array($user->teacher) ? $user->teacher['id'] : $user->teacher?->id;
+            if ($this->filterDate) $filters['attendance_date'] = $this->filterDate;
+
+            $records = collect($this->firestore->list('attendances', $filters));
+            if ($this->filterMonth) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->month == $this->filterMonth);
+            if ($this->filterYear) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
+            
+            // Map to Models for the PDF view
+            $records = $records->map(function($data) {
+                $a = new Attendance();
+                $a->forceFill($data);
+                $a->exists = true;
+                return $a;
+            });
+        } else {
+            $records = $this->getBaseQuery()->get();
+        }
         
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
             'records'    => $records,
@@ -146,8 +165,21 @@ class AttendanceIndex extends Component
 
     public function exportExcel()
     {
-        // Get ALL filtered IDs
-        $ids = $this->getBaseQuery()->pluck('id')->toArray();
+        if (config('app.env') === 'production') {
+            $user = auth()->user();
+            $filters = [];
+            if ($user->role === 'student') $filters['student_id'] = is_array($user->student) ? $user->student['id'] : $user->student?->id;
+            elseif ($user->role === 'teacher') $filters['teacher_id'] = is_array($user->teacher) ? $user->teacher['id'] : $user->teacher?->id;
+            if ($this->filterDate) $filters['attendance_date'] = $this->filterDate;
+
+            $records = collect($this->firestore->list('attendances', $filters));
+            if ($this->filterMonth) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->month == $this->filterMonth);
+            if ($this->filterYear) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
+            
+            $ids = $records->pluck('id')->toArray();
+        } else {
+            $ids = $this->getBaseQuery()->pluck('id')->toArray();
+        }
         
         session([
             'attendance_export_ids' => $ids,
