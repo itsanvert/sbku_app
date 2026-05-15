@@ -80,16 +80,38 @@ class TeacherIndex extends Component
                 $t->forceFill($data);
                 $t->exists = true;
                 
-                // Mock user relationship if data is present
-                if (isset($data['user_name']) || isset($data['user_email'])) {
-                    $u = new \App\Models\User();
-                    $u->forceFill([
-                        'id' => $data['user_id'] ?? null,
-                        'name' => $data['user_name'] ?? '—',
-                        'email' => $data['user_email'] ?? '—',
-                    ]);
-                    $t->setRelation('user', $u);
-                }
+                // Mock user relationship
+                $u = new \App\Models\User();
+                $u->forceFill([
+                    'id'    => $data['user_id'] ?? null,
+                    'name'  => $data['user_name'] ?? $data['name'] ?? '—',
+                    'email' => $data['user_email'] ?? $data['email'] ?? '—',
+                ]);
+                $t->setRelation('user', $u);
+
+                // Mock major relationship
+                $maj = new \App\Models\Major();
+                $maj->forceFill(['id' => $data['major_id'] ?? null, 'name' => $data['major_name'] ?? '—']);
+                $t->setRelation('major', $maj);
+
+                // Mock faculty relationship
+                $fac = new \App\Models\Faculty();
+                $fac->forceFill(['id' => $data['faculty_id'] ?? null, 'name' => $data['faculty_name'] ?? '—']);
+                $t->setRelation('faculty', $fac);
+
+                // Mock shift relationship
+                $shift = new \App\Models\Shift();
+                $shift->forceFill(['id' => $data['shift_id'] ?? null, 'name' => $data['shift_name'] ?? '—']);
+                $t->setRelation('shift', $shift);
+
+                // Mock schedule relationship
+                $schedule = new \App\Models\Schedule();
+                $schedule->forceFill([
+                    'id'           => $data['schedule_id'] ?? null,
+                    'name'         => $data['schedule_name'] ?? '—',
+                    'full_display' => $data['schedule_display'] ?? $data['schedule_name'] ?? '—',
+                ]);
+                $t->setRelation('schedule', $schedule);
                 
                 return $t;
             });
@@ -142,7 +164,11 @@ class TeacherIndex extends Component
     public function deleteTeacher()
     {
         if ($this->deleteTeacherId) {
-            Teacher::findOrFail($this->deleteTeacherId)->delete();
+            if (config('app.env') === 'production') {
+                $this->firestore->delete('teachers', (string)$this->deleteTeacherId);
+            } else {
+                Teacher::findOrFail($this->deleteTeacherId)->delete();
+            }
             $this->deleteTeacherId = null;
             session()->flash('message', 'Teacher deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete');
@@ -160,7 +186,13 @@ class TeacherIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            Teacher::whereIn('id', $this->selected)->delete();
+            if (config('app.env') === 'production') {
+                foreach ($this->selected as $id) {
+                    $this->firestore->delete('teachers', (string)$id);
+                }
+            } else {
+                Teacher::whereIn('id', $this->selected)->delete();
+            }
             $count = count($this->selected);
             $this->selected = [];
             $this->selectAll = false;

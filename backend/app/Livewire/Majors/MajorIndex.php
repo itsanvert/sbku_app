@@ -140,7 +140,12 @@ class MajorIndex extends Component
 
             return view('livewire.majors.major-index', [
                 'majors' => $paginated,
-                'faculties' => collect($this->firestore->list('faculties')),
+                'faculties' => collect($this->firestore->list('faculties'))->map(function($data) {
+                    $f = new Faculty();
+                    $f->forceFill($data);
+                    $f->exists = true;
+                    return $f;
+                })->sortBy('name'),
             ])->layout('layouts.app');
         }
 

@@ -44,8 +44,8 @@
                                 <td class="px-4 py-3 text-sm text-zinc-400">{{ $major->created_at?->format('M j, Y') ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
-                                        <flux:button wire:click="edit({{ $major->id }})" size="xs" variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="delete({{ $major->id }})" size="xs" variant="danger">Delete</flux:button>
+                                        <flux:button wire:click="edit('{{ $major->id }}')" size="xs" variant="ghost">Edit</flux:button>
+                                        <flux:button wire:click="delete('{{ $major->id }}')" size="xs" variant="danger">Delete</flux:button>
                                     </div>
                                 </td>
                             </tr>
@@ -74,7 +74,7 @@
                     <flux:select label="Faculty" wire:model="faculty_id" placeholder="Select a faculty">
                         <flux:select.option value="">Select Faculty</flux:select.option>
                         @foreach($faculties as $faculty)
-                            <flux:select.option value="{{ $faculty->id }}">{{ $faculty->name }}</flux:select.option>
+                            <flux:select.option value="{{ (string)$faculty->id }}">{{ $faculty->name }}</flux:select.option>
                         @endforeach
                     </flux:select>
 
@@ -100,7 +100,7 @@
                     
                     <flux:select label="Faculty" wire:model="faculty_id">
                         @foreach($faculties as $faculty)
-                            <flux:select.option value="{{ $faculty->id }}">{{ $faculty->name }}</flux:select.option>
+                            <flux:select.option value="{{ (string)$faculty->id }}">{{ $faculty->name }}</flux:select.option>
                         @endforeach
                     </flux:select>
 

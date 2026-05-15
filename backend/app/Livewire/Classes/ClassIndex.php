@@ -180,7 +180,12 @@ class ClassIndex extends Component
 
             return view('livewire.classes.class-index', [
                 'classes' => $paginated,
-                'majors' => collect($this->firestore->list('majors')),
+                'majors' => collect($this->firestore->list('majors'))->map(function($data) {
+                    $m = new Major();
+                    $m->forceFill($data);
+                    $m->exists = true;
+                    return $m;
+                })->sortBy('name'),
             ])->layout('layouts.app');
         }
 

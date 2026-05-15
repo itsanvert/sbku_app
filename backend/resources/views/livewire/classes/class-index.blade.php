@@ -52,8 +52,8 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
-                                        <flux:button wire:click="edit({{ $class->id }})" size="xs" variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="delete({{ $class->id }})" size="xs" variant="danger">Delete</flux:button>
+                                        <flux:button wire:click="edit('{{ $class->id }}')" size="xs" variant="ghost">Edit</flux:button>
+                                        <flux:button wire:click="delete('{{ $class->id }}')" size="xs" variant="danger">Delete</flux:button>
                                     </div>
                                 </td>
                             </tr>
@@ -83,7 +83,7 @@
                     <flux:select label="Major" wire:model="major_id" placeholder="Select a major">
                         <flux:select.option value="">Select Major</flux:select.option>
                         @foreach($majors as $major)
-                            <flux:select.option value="{{ $major->id }}">{{ $major->name }} ({{ $major->faculty->name ?? '' }})</flux:select.option>
+                            <flux:select.option value="{{ (string)$major->id }}">{{ $major->name }} ({{ $major->faculty->name ?? '' }})</flux:select.option>
                         @endforeach
                     </flux:select>
 
@@ -118,7 +118,7 @@
                     
                     <flux:select label="Major" wire:model="major_id">
                         @foreach($majors as $major)
-                            <flux:select.option value="{{ $major->id }}">{{ $major->name }} ({{ $major->faculty->name ?? '' }})</flux:select.option>
+                            <flux:select.option value="{{ (string)$major->id }}">{{ $major->name }} ({{ $major->faculty->name ?? '' }})</flux:select.option>
                         @endforeach
                     </flux:select>
 

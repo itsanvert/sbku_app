@@ -80,8 +80,31 @@ class SyllabusIndex extends Component
                 
                 // Mock subject relationship
                 $subj = new \App\Models\Subject();
-                $subj->forceFill(['name' => $data['subject_name'] ?? '—', 'code' => $data['subject_code'] ?? '—']);
+                $subj->forceFill(['id' => $data['subject_id'] ?? null, 'name' => $data['subject_name'] ?? '—', 'code' => $data['subject_code'] ?? '—']);
                 $s->setRelation('subject', $subj);
+
+                // Mock faculty relationship
+                $fac = new Faculty();
+                $fac->forceFill(['id' => $data['faculty_id'] ?? null, 'name' => $data['faculty_name'] ?? '—']);
+                $s->setRelation('faculty', $fac);
+
+                // Mock major relationship
+                $maj = new Major();
+                $maj->forceFill(['id' => $data['major_id'] ?? null, 'name' => $data['major_name'] ?? '—']);
+                $s->setRelation('major', $maj);
+
+                // Mock shift relationship
+                $shift = new Shift();
+                $shift->forceFill(['id' => $data['shift_id'] ?? null, 'name' => $data['shift_name'] ?? '—']);
+                $s->setRelation('shift', $shift);
+
+                // Mock teacher->user relationship
+                $teacher = new \App\Models\Teacher();
+                $teacher->forceFill(['id' => $data['teacher_id'] ?? null]);
+                $uObj = new \App\Models\User();
+                $uObj->forceFill(['name' => $data['teacher_name'] ?? '—']);
+                $teacher->setRelation('user', $uObj);
+                $s->setRelation('teacher', $teacher);
                 
                 return $s;
             });
@@ -146,7 +169,11 @@ class SyllabusIndex extends Component
     public function deleteSyllabus()
     {
         if ($this->deleteSyllabusId) {
-            Syllabus::findOrFail($this->deleteSyllabusId)->delete();
+            if (config('app.env') === 'production') {
+                $this->firestore->delete('syllabuses', (string)$this->deleteSyllabusId);
+            } else {
+                Syllabus::findOrFail($this->deleteSyllabusId)->delete();
+            }
             $this->deleteSyllabusId = null;
             session()->flash('message', 'Syllabus entry deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete-syllabus');
@@ -175,10 +202,19 @@ class SyllabusIndex extends Component
     public function render()
     {
         if (config('app.env') === 'production') {
+            $hydrate = function($collection, $modelClass) {
+                return collect($this->firestore->list($collection))->map(function($data) use ($modelClass) {
+                    $m = new $modelClass();
+                    $m->forceFill($data);
+                    $m->exists = true;
+                    return $m;
+                })->sortBy('name');
+            };
+
             return view('livewire.syllabuses.syllabus-index', [
-                'faculties' => collect($this->firestore->list('faculties'))->sortBy('name'),
-                'majors' => collect($this->firestore->list('majors'))->sortBy('name'),
-                'shifts' => collect($this->firestore->list('shifts'))->sortBy('name'),
+                'faculties' => $hydrate('faculties', Faculty::class),
+                'majors' => $hydrate('majors', Major::class),
+                'shifts' => $hydrate('shifts', Shift::class),
             ])->layout('layouts.app');
         }
 

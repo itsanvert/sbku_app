@@ -66,8 +66,8 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
-                                        <flux:button wire:click="edit({{ $schedule->id }})" size="xs" variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="delete({{ $schedule->id }})" size="xs" variant="danger">Delete</flux:button>
+                                        <flux:button wire:click="edit('{{ $schedule->id }}')" size="xs" variant="ghost">Edit</flux:button>
+                                        <flux:button wire:click="delete('{{ $schedule->id }}')" size="xs" variant="danger">Delete</flux:button>
                                     </div>
                                 </td>
                             </tr>
@@ -97,14 +97,14 @@
                         <flux:select label="Teacher" wire:model="teacher_id">
                             <flux:select.option value="">Select Teacher</flux:select.option>
                             @foreach($teachers as $teacher)
-                                <flux:select.option value="{{ $teacher->id }}">{{ $teacher->user->name }}</flux:select.option>
+                                <flux:select.option value="{{ (string)$teacher->id }}">{{ $teacher->user?->name ?? $teacher->user_name ?? chr(8212) }}</flux:select.option>
                             @endforeach
                         </flux:select>
 
                         <flux:select label="Subject" wire:model="subject_id">
                             <flux:select.option value="">Select Subject</flux:select.option>
                             @foreach($subjects as $subject)
-                                <flux:select.option value="{{ $subject->id }}">{{ $subject->name }}</flux:select.option>
+                                <flux:select.option value="{{ (string)$subject->id }}">{{ $subject->name }}</flux:select.option>
                             @endforeach
                         </flux:select>
                     </div>
@@ -113,14 +113,14 @@
                         <flux:select label="Class" wire:model="class_id">
                             <flux:select.option value="">Select Class</flux:select.option>
                             @foreach($academicClasses as $class)
-                                <flux:select.option value="{{ $class->id }}">{{ $class->name }}</flux:select.option>
+                                <flux:select.option value="{{ (string)$class->id }}">{{ $class->name }}</flux:select.option>
                             @endforeach
                         </flux:select>
 
                         <flux:select label="Room" wire:model="room_id">
                             <flux:select.option value="">Select Room</flux:select.option>
                             @foreach($rooms as $room)
-                                <flux:select.option value="{{ $room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
+                                <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
                             @endforeach
                         </flux:select>
                     </div>
@@ -128,8 +128,7 @@
                     <flux:select label="Link to Syllabus" wire:model="syllabus_id">
                         <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
                         @foreach($syllabuses as $syllabus)
-                            <flux:select.option value="{{ $syllabus->id }}">
-                                {{ $syllabus->subject->name }} - {{ $syllabus->teacher->user->name }} ({{ $syllabus->day_of_week }})
+                            <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
                             </flux:select.option>
                         @endforeach
                     </flux:select>
@@ -179,14 +178,14 @@
                         <flux:select label="Teacher" wire:model="teacher_id">
                             <flux:select.option value="">Select Teacher</flux:select.option>
                             @foreach($teachers as $teacher)
-                                <flux:select.option value="{{ $teacher->id }}">{{ $teacher->user->name }}</flux:select.option>
+                                <flux:select.option value="{{ (string)$teacher->id }}">{{ $teacher->user?->name ?? $teacher->user_name ?? chr(8212) }}</flux:select.option>
                             @endforeach
                         </flux:select>
 
                         <flux:select label="Subject" wire:model="subject_id">
                             <flux:select.option value="">Select Subject</flux:select.option>
                             @foreach($subjects as $subject)
-                                <flux:select.option value="{{ $subject->id }}">{{ $subject->name }}</flux:select.option>
+                                <flux:select.option value="{{ (string)$subject->id }}">{{ $subject->name }}</flux:select.option>
                             @endforeach
                         </flux:select>
                     </div>
@@ -195,14 +194,14 @@
                         <flux:select label="Class" wire:model="class_id">
                             <flux:select.option value="">Select Class</flux:select.option>
                             @foreach($academicClasses as $class)
-                                <flux:select.option value="{{ $class->id }}">{{ $class->name }}</flux:select.option>
+                                <flux:select.option value="{{ (string)$class->id }}">{{ $class->name }}</flux:select.option>
                             @endforeach
                         </flux:select>
 
                         <flux:select label="Room" wire:model="room_id">
                             <flux:select.option value="">Select Room</flux:select.option>
                             @foreach($rooms as $room)
-                                <flux:select.option value="{{ $room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
+                                <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
                             @endforeach
                         </flux:select>
                     </div>
@@ -210,8 +209,7 @@
                     <flux:select label="Link to Syllabus" wire:model="syllabus_id">
                         <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
                         @foreach($syllabuses as $syllabus)
-                            <flux:select.option value="{{ $syllabus->id }}">
-                                {{ $syllabus->subject->name }} - {{ $syllabus->teacher->user->name }} ({{ $syllabus->day_of_week }})
+                            <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
                             </flux:select.option>
                         @endforeach
                     </flux:select>
@@ -245,3 +243,4 @@
         </div>
     @endif
 </div>
+
