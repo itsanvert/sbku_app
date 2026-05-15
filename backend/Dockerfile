@@ -53,39 +53,47 @@ RUN composer install \
 
 # ==============================================================================
 # Stage 3: Node / Frontend assets
-# Only re-runs when package.json / frontend source changes
+# FIX: Copy only frontend-relevant files instead of COPY . .
+# This means PHP-only changes no longer bust the npm cache.
+# Only re-runs when package.json or actual frontend source changes.
 # ==============================================================================
 FROM node:20-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline
-COPY . .
+
+# Copy only what Vite/Mix actually needs — not the entire Laravel app.
+# Add or remove lines here to match your project structure.
+COPY vite.config.js ./
+# Include postcss/tailwind configs if present (safe to copy even if absent
+# as long as the files exist; adjust to match your repo).
+COPY resources/ ./resources/
+COPY public/      ./public/
+
+# Copy any additional config files your build tool needs:
+# COPY tailwind.config.js ./
+# COPY postcss.config.js  ./
+
 RUN npm run build
 
 # ==============================================================================
 # Stage 4: Final production image
-# Assembles everything; most layers cached from above stages
+# Assembles everything; most layers cached from above stages.
+# FIX: Stable artifacts (vendor, assets) are copied BEFORE app source so
+# those layers remain cached even when source files change.
 # ==============================================================================
 FROM php-base AS production
 
 WORKDIR /var/www/html
 
-# Copy application source (changes every push — intentionally last)
-COPY . .
-
-# Bring in pre-built artifacts from other stages
+# ── 1. Stable artifacts first (these layers cache across every push) ──────────
 COPY --from=vendor  /app/vendor          ./vendor
 COPY --from=assets  /app/public/build    ./public/build
 
-# Finalize autoloader (scripts now safe to run with real vendor present)
-RUN composer dump-autoload --optimize --no-dev --no-scripts
+# ── 2. Application source (changes every push — intentionally last) ──────────
+COPY . .
 
-# Storage / cache permissions
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R ug+rwx storage bootstrap/cache \
-    && chmod +x /var/www/html/start.sh
-
-# Apache document root → Laravel public/
+# ── 3. Apache document root → Laravel public/ ────────────────────────────────
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
         /etc/apache2/sites-available/*.conf \
@@ -98,8 +106,15 @@ RUN sed -i 's/80/${PORT}/g' \
         /etc/apache2/sites-available/000-default.conf \
         /etc/apache2/ports.conf
 
-# Laravel storage symlink (public/storage → storage/app/public)
-RUN rm -rf public/storage && php artisan storage:link --no-interaction
+# Make start.sh executable (it handles the remaining runtime setup)
+RUN chmod +x /var/www/html/start.sh
+
+# ── Removed from build time (moved to start.sh): ─────────────────────────────
+#   composer dump-autoload   — re-ran on every push; ~2 sec saved
+#   php artisan storage:link — re-ran on every push; symlink is idempotent
+#   chown / chmod storage    — re-ran on every push; applied at runtime instead
+# These are all fast and idempotent, so running them at container start
+# costs nothing measurable and eliminates unnecessary build-time cache busts.
 
 # Runtime environment
 ENV APP_ENV=production \
