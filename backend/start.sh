@@ -52,6 +52,7 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
+    export USE_FIRESTORE="true"
 elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     echo "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
     mkdir -p storage/app
@@ -59,6 +60,7 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
+    export USE_FIRESTORE="true"
 fi
 
 # Run migrations (skip if using Firestore)
