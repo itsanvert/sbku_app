@@ -24,13 +24,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
 
-# Install gRPC + Protobuf from pre-compiled PECL binaries.
-# GOOGLE_CLOUD_USE_REST=true means grpc is optional at runtime;
-# install it but do NOT block the build if it fails.
-# Pin versions so Docker layer cache stays valid between builds.
-RUN pecl install grpc-1.65.0 protobuf-4.28.3 \
-    && docker-php-ext-enable grpc protobuf \
-    && rm -rf /tmp/pear
+# gRPC and Protobuf are removed to speed up build time.
+# With GOOGLE_CLOUD_USE_REST=true, they are not required for Firestore.
 
 # Enable Apache mod_rewrite once here; never changes
 RUN a2enmod rewrite
@@ -85,6 +80,9 @@ RUN npm run build
 FROM php-base AS production
 
 WORKDIR /var/www/html
+
+# Copy composer binary for runtime autoloader optimization
+COPY --from=vendor /usr/bin/composer /usr/bin/composer
 
 # ── 1. Stable artifacts first (these layers cache across every push) ──────────
 COPY --from=vendor  /app/vendor          ./vendor
