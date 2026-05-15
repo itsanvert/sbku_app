@@ -171,7 +171,7 @@ class ScheduleIndex extends Component
             }
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $s = new Schedule();
-                $s->forceFill($data);
+                $s->forceFill($cleanData);
                 $s->exists = true;
 
                 // 1. Mock Teacher relationship

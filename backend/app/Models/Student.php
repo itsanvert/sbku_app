@@ -32,7 +32,8 @@ class Student extends Model
      */
     public function getNameAttribute(): ?string
     {
-        return $this->user?->name;
+        $user = $this->getRelationValue('user');
+        return $user instanceof Model ? $user->name : ($this->user_name ?? null);
     }
 
     /**
@@ -40,7 +41,8 @@ class Student extends Model
      */
     public function getEmailAttribute(): ?string
     {
-        return $this->user?->email;
+        $user = $this->getRelationValue('user');
+        return $user instanceof Model ? $user->email : ($this->user_email ?? null);
     }
 
     /**
