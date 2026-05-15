@@ -42,7 +42,7 @@ class MajorIndex extends Component
 
     public function store()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:3',
                 'faculty_id' => 'required',
@@ -66,7 +66,7 @@ class MajorIndex extends Component
     {
         $this->editMajorId = $id;
         
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $major = $this->firestore->getDocument('majors', (string)$id);
             $this->name = $major['name'] ?? '';
             $this->faculty_id = $major['faculty_id'] ?? '';
@@ -81,7 +81,7 @@ class MajorIndex extends Component
 
     public function update()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:3',
                 'faculty_id' => 'required',
@@ -105,7 +105,7 @@ class MajorIndex extends Component
 
     public function delete($id)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->delete('majors', (string)$id);
         } else {
             Major::findOrFail($id)->delete();
@@ -115,7 +115,7 @@ class MajorIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $majors = $this->firestore->list('majors');
             $collection = collect($majors);
             if ($this->search) {
@@ -123,7 +123,9 @@ class MajorIndex extends Component
             }
             
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                // Separate relations from attributes
+                $m = new Major();
+                
+                // Extract relations
                 $facultyData = [
                     'id'   => $data['faculty_id'] ?? null,
                     'name' => $data['faculty_name'] ?? '—',
@@ -132,11 +134,10 @@ class MajorIndex extends Component
                 // Remove potentially conflicting keys
                 $cleanData = array_diff_key($data, array_flip(['faculty']));
 
-                $m = new Major();
                 $m->forceFill($cleanData);
                 $m->exists = true;
 
-                // Mock Faculty relationship
+                // Hydrate Faculty relationship
                 $m->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
 
                 return $m;

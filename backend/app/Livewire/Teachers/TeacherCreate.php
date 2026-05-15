@@ -42,7 +42,7 @@ class TeacherCreate extends Component
     --------------------------------- */
     protected function rules()
     {
-        $isProd = config('app.env') === 'production';
+        $isProd = \App\Services\FirestoreService::isActive();
         return [
             'name'       => 'required|string|max:255',
             'email'      => 'required|email|max:255' . ($isProd ? '' : '|unique:users,email'),
@@ -69,7 +69,7 @@ class TeacherCreate extends Component
         $validated = $this->validate();
         $firestore = app(\App\Services\FirestoreService::class);
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $userData = [
                 'name'     => $validated['name'],
                 'email'    => $validated['email'],
@@ -134,7 +134,7 @@ class TeacherCreate extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             return view('livewire.teachers.teacher-create', [
                 'faculties' => collect($firestore->list('faculties'))->sortBy('name'),

@@ -14,10 +14,9 @@ class TeacherController extends Controller
 
     public function index(Request $request)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
-            $firestore = app(\App\Services\FirestoreService::class);
-            $teachers = $firestore->list('teachers');
-
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
+            $teachers = $this->firestore->list('teachers');
+            
             return response()->json([
                 'data'         => $teachers,
                 'current_page' => 1,
@@ -88,7 +87,7 @@ class TeacherController extends Controller
 
     public function show(Request $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $teacher = $this->firestore->getDocument('teachers', (string)$id);
             if (!$teacher) {
                 return response()->json(['message' => 'Teacher not found'], 404);
@@ -104,7 +103,7 @@ class TeacherController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $data = $request->all();
             unset($data['id']); // Don't update the ID field itself
             $teacher = $this->firestore->set('teachers', (string)$id, $data);
@@ -147,7 +146,7 @@ class TeacherController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $this->firestore->delete('teachers', (string)$id);
             return response()->json(['message' => 'Teacher deleted']);
         }

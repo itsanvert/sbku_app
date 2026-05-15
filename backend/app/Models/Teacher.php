@@ -32,28 +32,31 @@ class Teacher extends Model
     /**
      * Get the teacher's name from the associated user.
      */
-    public function getNameAttribute()
+    public function getNameAttribute(): ?string
     {
-        return $this->user?->name;
+        $user = $this->getRelationValue('user');
+        return $user instanceof Model ? $user->name : ($this->user_name ?? null);
     }
 
     /**
      * Get the teacher's email from the associated user.
      */
-    public function getEmailAttribute()
+    public function getEmailAttribute(): ?string
     {
-        return $this->user?->email;
+        $user = $this->getRelationValue('user');
+        return $user instanceof Model ? $user->email : ($this->user_email ?? null);
     }
 
     /**
      * Get the full URL for the teacher's profile photo.
      */
-    public function getAvatarUrlAttribute()
+    public function getAvatarUrlAttribute(): string
     {
         $baseUrl = request()->getSchemeAndHttpHost() . '/api/storage/';
+        $name = $this->name ?? 'T';
         return $this->profile_image_path
             ? $baseUrl . $this->profile_image_path
-            : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=6366f1&color=ffffff';
+            : 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=6366f1&color=ffffff';
     }
     public function user()
     {

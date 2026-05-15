@@ -84,7 +84,7 @@ class AttendanceIndex extends Component
 
     public function getRecordsProperty()
     {
-        if (config('app.env') === 'production') {
+        if ($this->firestore && \App\Services\FirestoreService::isActive()) {
             $user = auth()->user();
             $filters = [];
             
@@ -98,7 +98,6 @@ class AttendanceIndex extends Component
             
             $records = $this->firestore->list('attendances', $filters, 'attendance_date', 'desc');
             
-            // In-memory filtering for month/year if needed (Firestore doesn't support partial date filters easily without dedicated fields)
             $collection = collect($records);
             
             if ($this->filterMonth) {
@@ -109,7 +108,9 @@ class AttendanceIndex extends Component
             }
 
             $items = $collection->forPage($this->getPage(), 20)->map(function ($data) {
-                // Separate relations from attributes
+                $a = new Attendance();
+                
+                // Extract relations from denormalized data
                 $studentUserData = [
                     'id'   => $data['user_id'] ?? null,
                     'name' => $data['student_name'] ?? '—',
@@ -133,17 +134,15 @@ class AttendanceIndex extends Component
                 // Remove potentially conflicting keys
                 $cleanData = array_diff_key($data, array_flip(['student', 'session']));
 
-                $a = new Attendance();
                 $a->forceFill($cleanData);
                 $a->exists = true;
 
-                // 1. Mock Student relationship
+                // Populate relationships from Firestore data
                 $s = (new \App\Models\Student())->forceFill($studentData);
                 $u = (new \App\Models\User())->forceFill($studentUserData);
                 $s->setRelation('user', $u);
                 $a->setRelation('student', $s);
 
-                // 2. Mock Session relationship
                 $sess = (new \App\Models\AttendanceSession())->forceFill($sessionData);
                 $sess->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
                 $sess->setRelation('major', (new \App\Models\Major())->forceFill($majorData));

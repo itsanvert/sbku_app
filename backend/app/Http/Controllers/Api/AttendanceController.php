@@ -122,13 +122,37 @@ class AttendanceController extends Controller
      */
     public function monthlyReport(Request $request)
     {
-        $request->validate([
-            'month' => 'required|integer|between:1,12',
-            'year' => 'required|integer|min:2020',
-        ]);
+        $month = (int)$request->month;
+        $year = (int)$request->year;
 
-        $month = $request->month;
-        $year = $request->year;
+        if (\App\Services\FirestoreService::isActive()) {
+            $allAttendances = $this->firestore->list('attendances');
+            $filtered = collect($allAttendances)->filter(function($a) use ($month, $year) {
+                $d = \Carbon\Carbon::parse($a['attendance_date']);
+                return $d->month == $month && $d->year == $year;
+            });
+
+            $report = $filtered->groupBy('student_id')->map(function($group, $studentId) {
+                $first = $group->first();
+                $total = $group->count();
+                $present = $group->where('status', 'Y')->count();
+                return [
+                    'student_id' => $studentId,
+                    'student_name' => $first['student_name'] ?? '—',
+                    'profile_image_path' => $first['profile_image_path'] ?? null,
+                    'total_days' => $total,
+                    'present_days' => $present,
+                    'absent_days' => $total - $present,
+                    'attendance_rate' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
+                ];
+            })->values();
+
+            return response()->json([
+                'month' => $month,
+                'year' => $year,
+                'students' => $report,
+            ]);
+        }
 
         $students = DB::table('attendances')
             ->join('students', 'attendances.student_id', '=', 'students.id')
@@ -144,7 +168,7 @@ class AttendanceController extends Controller
                 DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent_days"),
                 DB::raw("ROUND(SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) / COUNT(*) * 100, 1) as attendance_rate")
             )
-            ->groupBy('students.id', 'users.name')
+            ->groupBy('students.id', 'users.name', 'students.profile_image_path')
             ->orderBy('users.name')
             ->get();
 
@@ -158,13 +182,41 @@ class AttendanceController extends Controller
     /**
      * Yearly report: attendance summary per student for a year.
      */
-    public function yearlyReport(Request $request)
-    {
-        $request->validate([
-            'year' => 'required|integer|min:2020',
-        ]);
+        $year = (int)$request->year;
 
-        $year = $request->year;
+        if (\App\Services\FirestoreService::isActive()) {
+            $allAttendances = collect($this->firestore->list('attendances'));
+            $filtered = $allAttendances->filter(fn($a) => \Carbon\Carbon::parse($a['attendance_date'])->year == $year);
+
+            $studentsReport = $filtered->groupBy('student_id')->map(function($group, $studentId) {
+                $first = $group->first();
+                $total = $group->count();
+                $present = $group->where('status', 'Y')->count();
+                return [
+                    'student_id' => $studentId,
+                    'student_name' => $first['student_name'] ?? '—',
+                    'profile_image_path' => $first['profile_image_path'] ?? null,
+                    'total_days' => $total,
+                    'present_days' => $present,
+                    'absent_days' => $total - $present,
+                    'attendance_rate' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
+                ];
+            })->values();
+
+            $monthlyBreakdown = $filtered->groupBy(fn($a) => \Carbon\Carbon::parse($a['attendance_date'])->month)
+                ->map(fn($group, $month) => [
+                    'month' => $month,
+                    'total' => $group->count(),
+                    'present' => $group->where('status', 'Y')->count(),
+                    'absent' => $group->where('status', 'N')->count(),
+                ])->sortBy('month')->values();
+
+            return response()->json([
+                'year' => $year,
+                'students' => $studentsReport,
+                'monthly_breakdown' => $monthlyBreakdown,
+            ]);
+        }
 
         $students = DB::table('attendances')
             ->join('students', 'attendances.student_id', '=', 'students.id')
@@ -179,7 +231,7 @@ class AttendanceController extends Controller
                 DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent_days"),
                 DB::raw("ROUND(SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) / COUNT(*) * 100, 1) as attendance_rate")
             )
-            ->groupBy('students.id', 'users.name')
+            ->groupBy('students.id', 'users.name', 'students.profile_image_path')
             ->orderBy('users.name')
             ->get();
 
@@ -187,12 +239,12 @@ class AttendanceController extends Controller
         $monthlyBreakdown = DB::table('attendances')
             ->whereYear('attendance_date', $year)
             ->select(
-                DB::raw("MONTH(attendance_date) as month"),
+                DB::raw("strftime('%m', attendance_date) as month"), // Adjusted for SQLite if needed, but usually MySQL/Postgres in prod
                 DB::raw("COUNT(*) as total"),
                 DB::raw("SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) as present"),
                 DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent")
             )
-            ->groupBy(DB::raw("MONTH(attendance_date)"))
+            ->groupBy('month')
             ->orderBy('month')
             ->get();
 
@@ -208,26 +260,29 @@ class AttendanceController extends Controller
      */
     public function studentHistory(Request $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
             $filters = ['student_id' => $id]; // Firestore ID is a string
             
+            $attendances = $this->firestore->list('attendances', $filters, 'attendance_date', 'desc');
+            $collection = collect($attendances);
+
             if ($request->month && $request->year) {
-                 // Filtering by month/year in Firestore would require a specific field or range query
-                 // For now, let's just fetch and return, or assume the frontend handles it if it's a small list.
+                $collection = $collection->filter(function($a) use ($request) {
+                    $d = \Carbon\Carbon::parse($a['attendance_date']);
+                    return $d->month == $request->month && $d->year == $request->year;
+                });
             }
 
-            $attendances = $this->firestore->list('attendances', $filters, 'attendance_date', 'desc');
-            
             return response()->json([
                 'summary' => [
-                    'total' => count($attendances),
-                    'present' => count(array_filter($attendances, fn($a) => $a['status'] === 'Y')),
-                    'absent' => count(array_filter($attendances, fn($a) => $a['status'] === 'N')),
-                    'attendance_rate' => count($attendances) > 0 ? round((count(array_filter($attendances, fn($a) => $a['status'] === 'Y')) / count($attendances)) * 100, 1) : 0,
+                    'total' => $collection->count(),
+                    'present' => $collection->where('status', 'Y')->count(),
+                    'absent' => $collection->where('status', 'N')->count(),
+                    'attendance_rate' => $collection->count() > 0 ? round(($collection->where('status', 'Y')->count() / $collection->count()) * 100, 1) : 0,
                 ],
                 'attendances' => [
-                    'data' => $attendances,
-                    'total' => count($attendances),
+                    'data' => $collection->values()->all(),
+                    'total' => $collection->count(),
                 ],
             ]);
         }
