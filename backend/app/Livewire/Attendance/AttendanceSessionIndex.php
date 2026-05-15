@@ -80,10 +80,18 @@ class AttendanceSessionIndex extends Component
 
     public function deleteSelected()
     {
-        AttendanceSession::whereIn('id', $this->selected)->delete();
-        $this->selected = [];
-        $this->selectAll = false;
-        session()->flash('message', 'Sessions deleted successfully.');
+        if (!empty($this->selected)) {
+            if (config('app.env') === 'production') {
+                foreach ($this->selected as $id) {
+                    $this->firestore->delete('attendance_sessions', (string)$id);
+                }
+            } else {
+                AttendanceSession::whereIn('id', $this->selected)->delete();
+            }
+            $this->selected = [];
+            $this->selectAll = false;
+            session()->flash('message', 'Sessions deleted successfully.');
+        }
     }
 
     public function render()

@@ -22,7 +22,7 @@
                     <flux:select wire:model.live="faculty_id" size="sm" class="w-44" placeholder="All Faculties">
                         <flux:select.option value="">All Faculties</flux:select.option>
                         @foreach($faculties as $f)
-                            <flux:select.option value="{{ $f->id }}">{{ $f->name }}</flux:select.option>
+                            <flux:select.option value="{{ (string)$f->id }}">{{ $f->name }}</flux:select.option>
                         @endforeach
                     </flux:select>
 
@@ -75,8 +75,8 @@
                                 <td class="px-4 py-3 text-sm text-zinc-500 italic">{{ $syllabus->schedule_description }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
-                                        <flux:button wire:click="openEditModal({{ $syllabus->id }})" size="xs" variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="confirmDelete({{ $syllabus->id }})" size="xs" variant="danger">Delete</flux:button>
+                                        <flux:button wire:click="openEditModal('{{ $syllabus->id }}')" size="xs" variant="ghost">Edit</flux:button>
+                                        <flux:button wire:click="confirmDelete('{{ $syllabus->id }}')" size="xs" variant="danger">Delete</flux:button>
                                     </div>
                                 </td>
                             </tr>
