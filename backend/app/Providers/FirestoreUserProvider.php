@@ -18,13 +18,32 @@ class FirestoreUserProvider implements UserProvider
         $this->firestore = $firestore;
     }
 
+    /**
+     * Create a User model instance from Firestore data.
+     */
+    public function createModel(array $data)
+    {
+        $user = new User();
+        $user->forceFill($data);
+        $user->exists = true;
+        return $user;
+    }
+
+    public function __call($name, $arguments)
+    {
+        if ($name === 'hydrateUser') {
+            return $this->createModel(...$arguments);
+        }
+        throw new \BadMethodCallException("Method [$name] does not exist on " . get_class($this));
+    }
+
     public function retrieveById($identifier)
     {
         $userData = Cache::remember("user_auth_id_{$identifier}", 300, function () use ($identifier) {
             return $this->firestore->getDocument('users', (string)$identifier);
         });
 
-        return $userData ? $this->hydrateUser($userData) : null;
+        return $userData ? $this->createModel($userData) : null;
     }
 
     public function retrieveByToken($identifier, $token)
@@ -71,7 +90,7 @@ class FirestoreUserProvider implements UserProvider
             }
         }
 
-        return $userData ? $this->hydrateUser($userData) : null;
+        return $userData ? $this->createModel($userData) : null;
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
@@ -84,14 +103,4 @@ class FirestoreUserProvider implements UserProvider
         return false;
     }
 
-    /**
-     * Create a User model instance from Firestore data.
-     */
-    protected function hydrateUser(array $data)
-    {
-        $user = new User();
-        $user->forceFill($data);
-        $user->exists = true;
-        return $user;
-    }
 }
