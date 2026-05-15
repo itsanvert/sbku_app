@@ -22,7 +22,7 @@ class AttendanceController extends Controller
         $filters = [];
 
         if ($request->student_id) {
-            $filters['student_id'] = (int) $request->student_id;
+            $filters['student_id'] = (string) $request->student_id;
         }
 
         if ($request->date) {
@@ -75,6 +75,24 @@ class AttendanceController extends Controller
         ]);
 
         $date = $request->date;
+
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $attendances = $this->firestore->list('attendances', ['attendance_date' => $date]);
+            $totalStudents = count($attendances);
+            $presentCount = count(array_filter($attendances, fn($a) => $a['status'] === 'Y'));
+            $absentCount = count(array_filter($attendances, fn($a) => $a['status'] === 'N'));
+
+            return response()->json([
+                'date' => $date,
+                'summary' => [
+                    'total' => $totalStudents,
+                    'present' => $presentCount,
+                    'absent' => $absentCount,
+                    'present_percentage' => $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100, 1) : 0,
+                ],
+                'records' => $attendances,
+            ]);
+        }
 
         $attendances = Attendance::with(['student.user', 'schedule'])
             ->forDate($date)
