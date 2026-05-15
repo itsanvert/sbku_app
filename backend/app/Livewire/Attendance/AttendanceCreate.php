@@ -15,6 +15,12 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class AttendanceCreate extends Component
 {
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
     // Step 1: teacher selection
     public string|int $teacher_id = '';
 
@@ -84,6 +90,35 @@ class AttendanceCreate extends Component
             return;
         }
 
+        if (config('app.env') === 'production') {
+            $syllabusData = $this->firestore->getDocument('syllabuses', (string)$value);
+            if (!$syllabusData) return;
+
+            // Mock Syllabus object for the preview if needed, or just use the array
+            $this->selectedSyllabus = (object) $syllabusData; 
+            
+            $this->faculty_id       = $syllabusData['faculty_id']       ?? '';
+            $this->major_id         = $syllabusData['major_id']         ?? '';
+            $this->year_id          = $syllabusData['year_id']          ?? '';
+            $this->semester_id      = $syllabusData['semester_id']      ?? '';
+            $this->academic_class_id = $syllabusData['academic_class_id'] ?? '';
+            $this->shift_id         = $syllabusData['shift_id']         ?? '';
+            $this->subject_id       = $syllabusData['subject_id']       ?? '';
+            $this->day_of_week      = $syllabusData['day_of_week']      ?? '';
+            $this->start_time       = isset($syllabusData['start_time']) ? \Carbon\Carbon::parse($syllabusData['start_time'])->format('H:i') : '';
+            $this->end_time         = isset($syllabusData['end_time'])   ? \Carbon\Carbon::parse($syllabusData['end_time'])->format('H:i')   : '';
+
+            $filters = [];
+            if ($this->academic_class_id) {
+                $filters['academic_class_id'] = $this->academic_class_id;
+            } else {
+                $filters['major_id'] = $this->major_id;
+                $filters['year'] = $this->year_id;
+            }
+            $this->enrolledStudents = $this->firestore->count('students', $filters);
+            return;
+        }
+
         $syllabus = Syllabus::with(['faculty', 'major', 'subject', 'teacher.user', 'shift'])
             ->find($value);
 
@@ -149,6 +184,23 @@ class AttendanceCreate extends Component
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            $teachers = collect($this->firestore->list('teachers'));
+            
+            $syllabuses = $this->teacher_id
+                ? collect($this->firestore->list('syllabuses', ['teacher_id' => (string)$this->teacher_id]))
+                    ->filter(fn($s) => isset($s['day_of_week']) && isset($s['start_time']))
+                : collect();
+
+            return view('livewire.attendance.attendance-create', [
+                'teachers'   => $teachers,
+                'syllabuses' => $syllabuses,
+                'faculties'  => collect($this->firestore->list('faculties')),
+                'majors'     => collect($this->firestore->list('majors')),
+                'rooms'      => collect($this->firestore->list('rooms')),
+            ]);
+        }
+
         // Syllabuses for selected teacher — show only ones with structured time
         $syllabuses = $this->teacher_id
             ? Syllabus::where('teacher_id', $this->teacher_id)

@@ -13,6 +13,13 @@ use Livewire\Attributes\Computed;
 class SyllabusIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public $search = '';
     public $faculty_id = '';
@@ -54,6 +61,40 @@ class SyllabusIndex extends Component
     #[Computed]
     public function syllabuses()
     {
+        if (config('app.env') === 'production') {
+            $syllabuses = $this->firestore->list('syllabuses');
+            $collection = collect($syllabuses);
+
+            if ($this->search) {
+                $collection = $collection->filter(fn($s) => str_contains(strtolower($s['subject_name'] ?? ''), strtolower($this->search)));
+            }
+            if ($this->faculty_id) $collection = $collection->filter(fn($s) => ($s['faculty_id'] ?? '') == $this->faculty_id);
+            if ($this->major_id) $collection = $collection->filter(fn($s) => ($s['major_id'] ?? '') == $this->major_id);
+            if ($this->shift_id) $collection = $collection->filter(fn($s) => ($s['shift_id'] ?? '') == $this->shift_id);
+
+            // Map to Model objects
+            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+                $s = new Syllabus();
+                $s->forceFill($data);
+                $s->exists = true;
+                
+                // Mock subject relationship
+                $subj = new \App\Models\Subject();
+                $subj->forceFill(['name' => $data['subject_name'] ?? '—', 'code' => $data['subject_code'] ?? '—']);
+                $s->setRelation('subject', $subj);
+                
+                return $s;
+            });
+            
+            return new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+        }
+
         $query = Syllabus::query()
             ->with(['faculty', 'major', 'subject', 'teacher.user', 'shift'])
             ->join('subjects', 'syllabuses.subject_id', '=', 'subjects.id')
@@ -133,6 +174,14 @@ class SyllabusIndex extends Component
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            return view('livewire.syllabuses.syllabus-index', [
+                'faculties' => collect($this->firestore->list('faculties'))->sortBy('name'),
+                'majors' => collect($this->firestore->list('majors'))->sortBy('name'),
+                'shifts' => collect($this->firestore->list('shifts'))->sortBy('name'),
+            ])->layout('layouts.app');
+        }
+
         return view('livewire.syllabuses.syllabus-index', [
             'faculties' => Faculty::orderBy('name')->get(),
             'majors' => Major::orderBy('name')->get(),

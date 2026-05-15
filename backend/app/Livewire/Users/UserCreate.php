@@ -22,14 +22,27 @@ class UserCreate extends Component
 
     public function save()
     {
-        $this->validate();
+        $this->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email' . (config('app.env') === 'production' ? '' : '|unique:users,email'),
+            'password' => 'required|min:8',
+            'role'     => 'required|in:super_admin,admin,student,teacher',
+        ]);
 
-        User::create([
+        $data = [
             'name'     => $this->name,
             'email'    => $this->email,
             'password' => Hash::make($this->password),
             'role'     => $this->role,
-        ]);
+            'created_at' => now()->format('Y-m-d H:i:s'),
+            'updated_at' => now()->format('Y-m-d H:i:s'),
+        ];
+
+        if (config('app.env') === 'production') {
+            app(\App\Services\FirestoreService::class)->create('users', $data);
+        } else {
+            User::create($data);
+        }
 
         $this->reset();
         $this->dispatch('userCreated');
