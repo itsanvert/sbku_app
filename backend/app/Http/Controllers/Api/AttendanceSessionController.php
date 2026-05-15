@@ -52,7 +52,7 @@ class AttendanceSessionController extends Controller
         $filters = ['is_active' => true];
         
         if ($request->teacher_id) {
-            $filters['teacher_id'] = (int) $request->teacher_id;
+            $filters['teacher_id'] = (string) $request->teacher_id;
         }
 
         $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
@@ -81,12 +81,23 @@ class AttendanceSessionController extends Controller
     {
         $request->validate([
             'qr_token' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
-        $student = Student::where('user_id', $request->user()->id)->first();
-
-        if (!$student) {
+        $studentData = $request->user()->student;
+        
+        if (!$studentData) {
             return response()->json(['message' => 'You are not registered as a student. Cannot check in.'], 403);
+        }
+
+        // Convert student data to a Model instance if it's an array (from Firestore)
+        if (is_array($studentData)) {
+            $student = new Student();
+            $student->forceFill($studentData);
+            $student->exists = true;
+        } else {
+            $student = $studentData;
         }
 
         if (config('app.env') === 'production' || $request->has('firestore')) {
@@ -97,6 +108,7 @@ class AttendanceSessionController extends Controller
             $session = new AttendanceSession();
             $session->forceFill($sessionData);
             $session->exists = true;
+            $session->id = $id; // Ensure ID is set
         } else {
             $session = AttendanceSession::findOrFail($id);
         }
@@ -106,6 +118,8 @@ class AttendanceSessionController extends Controller
                 $session,
                 $student,
                 $request->qr_token,
+                (string)($request->latitude ?? '0'),
+                (string)($request->longitude ?? '0')
             );
 
             return response()->json([

@@ -67,5 +67,10 @@ class AppServiceProvider extends ServiceProvider
                 }
             }, $app['request']);
         });
+
+        // Global Gate bypass for super_admin
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            return $user->role === 'super_admin' ? true : null;
+        });
     }
 }
