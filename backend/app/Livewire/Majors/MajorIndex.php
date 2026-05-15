@@ -123,17 +123,21 @@ class MajorIndex extends Component
             }
             
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                // Separate relations from attributes
+                $facultyData = [
+                    'id'   => $data['faculty_id'] ?? null,
+                    'name' => $data['faculty_name'] ?? '—',
+                ];
+
+                // Remove potentially conflicting keys
+                $cleanData = array_diff_key($data, array_flip(['faculty']));
+
                 $m = new Major();
-                $m->forceFill($data);
+                $m->forceFill($cleanData);
                 $m->exists = true;
 
                 // Mock Faculty relationship
-                $f = new \App\Models\Faculty();
-                $f->forceFill([
-                    'id'   => $data['faculty_id'] ?? null,
-                    'name' => $data['faculty_name'] ?? '—',
-                ]);
-                $m->setRelation('faculty', $f);
+                $m->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
 
                 return $m;
             });

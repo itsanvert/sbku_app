@@ -170,47 +170,49 @@ class ScheduleIndex extends Component
                 );
             }
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                // Separate relations from attributes
+                $teacherUserData = [
+                    'id'   => $data['user_id'] ?? null,
+                    'name' => $data['teacher_name'] ?? '—',
+                ];
+                $teacherData = [
+                    'id'   => $data['teacher_id'] ?? null,
+                    'name' => $data['teacher_name'] ?? '—',
+                ];
+                $subjectData = [
+                    'id'   => $data['subject_id'] ?? null,
+                    'name' => $data['subject_name'] ?? '—',
+                ];
+                $acData = [
+                    'id'   => $data['class_id'] ?? null,
+                    'name' => $data['class_name'] ?? '—',
+                ];
+                $roomData = [
+                    'id'   => $data['room_id'] ?? null,
+                    'name' => $data['room_name'] ?? '—',
+                ];
+
+                // Remove potentially conflicting keys
+                $cleanData = array_diff_key($data, array_flip(['teacher', 'subject', 'academicClass', 'room']));
+
                 $s = new Schedule();
-                $s->forceFill($data);
+                $s->forceFill($cleanData);
                 $s->exists = true;
 
                 // 1. Mock Teacher relationship
-                $teacher = new \App\Models\Teacher();
-                $teacher->forceFill([
-                    'id'   => $data['teacher_id'] ?? null,
-                    'name' => $data['teacher_name'] ?? '—',
-                ]);
-                $u = new \App\Models\User();
-                $u->forceFill([
-                    'id'   => $data['user_id'] ?? null,
-                    'name' => $data['teacher_name'] ?? '—',
-                ]);
+                $teacher = (new \App\Models\Teacher())->forceFill($teacherData);
+                $u = (new \App\Models\User())->forceFill($teacherUserData);
                 $teacher->setRelation('user', $u);
                 $s->setRelation('teacher', $teacher);
 
                 // 2. Mock Subject relationship
-                $subject = new \App\Models\Subject();
-                $subject->forceFill([
-                    'id'   => $data['subject_id'] ?? null,
-                    'name' => $data['subject_name'] ?? '—',
-                ]);
-                $s->setRelation('subject', $subject);
+                $s->setRelation('subject', (new \App\Models\Subject())->forceFill($subjectData));
 
                 // 3. Mock AcademicClass relationship
-                $ac = new \App\Models\AcademicClass();
-                $ac->forceFill([
-                    'id'   => $data['class_id'] ?? null,
-                    'name' => $data['class_name'] ?? '—',
-                ]);
-                $s->setRelation('academicClass', $ac);
+                $s->setRelation('academicClass', (new \App\Models\AcademicClass())->forceFill($acData));
 
                 // 4. Mock Room relationship
-                $room = new \App\Models\Room();
-                $room->forceFill([
-                    'id'   => $data['room_id'] ?? null,
-                    'name' => $data['room_name'] ?? '—',
-                ]);
-                $s->setRelation('room', $room);
+                $s->setRelation('room', (new \App\Models\Room())->forceFill($roomData));
 
                 return $s;
             });

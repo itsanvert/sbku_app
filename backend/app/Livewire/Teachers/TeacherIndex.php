@@ -84,19 +84,42 @@ class TeacherIndex extends Component
             // Map to Model objects for Blade compatibility
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $t = new Teacher();
-                $t->forceFill($data);
+                
+                // Separate relations from attributes
+                $userData = [
+                    'id'    => $data['user_id'] ?? null,
+                    'name'  => $data['user_name'] ?? '—',
+                    'email' => $data['user_email'] ?? '—',
+                ];
+                $majorData = [
+                    'id'   => $data['major_id'] ?? null,
+                    'name' => $data['major_name'] ?? '—',
+                ];
+                $facultyData = [
+                    'id'   => $data['faculty_id'] ?? null,
+                    'name' => $data['faculty_name'] ?? '—',
+                ];
+                $shiftData = [
+                    'id'   => $data['shift_id'] ?? null,
+                    'name' => $data['shift_name'] ?? '—',
+                ];
+                $scheduleData = [
+                    'id'           => $data['schedule_id'] ?? null,
+                    'full_display' => $data['schedule_display'] ?? '—',
+                ];
+
+                // Remove potentially conflicting keys from the main data array
+                $cleanData = array_diff_key($data, array_flip(['user', 'major', 'faculty', 'shift', 'schedule']));
+
+                $t->forceFill($cleanData);
                 $t->exists = true;
 
-                // Mock user relationship if data is present
-                if (isset($data['user_name']) || isset($data['user_email'])) {
-                    $u = new \App\Models\User();
-                    $u->forceFill([
-                        'id' => $data['user_id'] ?? null,
-                        'name' => $data['user_name'] ?? '—',
-                        'email' => $data['user_email'] ?? '—',
-                    ]);
-                    $t->setRelation('user', $u);
-                }
+                // Set mocked relationships
+                $t->setRelation('user', (new \App\Models\User())->forceFill($userData));
+                $t->setRelation('major', (new \App\Models\Major())->forceFill($majorData));
+                $t->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
+                $t->setRelation('shift', (new \App\Models\Shift())->forceFill($shiftData));
+                $t->setRelation('schedule', (new \App\Models\Schedule())->forceFill($scheduleData));
 
                 return $t;
             });
