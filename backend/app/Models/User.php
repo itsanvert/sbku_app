@@ -137,22 +137,12 @@ class User extends Authenticatable
      */
     public function getTeacherAttribute()
     {
-        if (isset($this->relations['teacher'])) {
-            return $this->relations['teacher'];
-        }
-
-        $uid = is_numeric($this->id) ? (int)$this->id : (string)$this->id;
-        $data = app(\App\Services\FirestoreService::class)->list('teachers', ['user_id' => $uid])[0] ?? null;
+        // Check if user_id is numeric to decide on cast
+        $uid = is_numeric($this->id) ? (int)$this->id : $this->id;
         
-        if ($data) {
-            $teacher = new Teacher();
-            $teacher->forceFill($data);
-            $teacher->exists = true;
-            $this->setRelation('teacher', $teacher);
-            return $teacher;
-        }
-
-        return null;
+        // Cache the result for the duration of the request
+        return $this->attributes['teacher_profile'] ??= app(\App\Services\FirestoreService::class)
+            ->list('teachers', ['user_id' => $uid])[0] ?? null;
     }
 
     /**
@@ -160,22 +150,12 @@ class User extends Authenticatable
      */
     public function getStudentAttribute()
     {
-        if (isset($this->relations['student'])) {
-            return $this->relations['student'];
-        }
+        // Check if user_id is numeric to decide on cast
+        $uid = is_numeric($this->id) ? (int)$this->id : $this->id;
 
-        $uid = is_numeric($this->id) ? (int)$this->id : (string)$this->id;
-        $data = app(\App\Services\FirestoreService::class)->list('students', ['user_id' => $uid])[0] ?? null;
-
-        if ($data) {
-            $student = new Student();
-            $student->forceFill($data);
-            $student->exists = true;
-            $this->setRelation('student', $student);
-            return $student;
-        }
-
-        return null;
+        // Cache the result for the duration of the request
+        return $this->attributes['student_profile'] ??= app(\App\Services\FirestoreService::class)
+            ->list('students', ['user_id' => $uid])[0] ?? null;
     }
 
     // Traditional relationships commented out to prevent SQL queries
