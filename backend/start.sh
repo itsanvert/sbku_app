@@ -13,6 +13,26 @@ if [ -n "$DB_DATABASE" ] && printf '%s' "$DB_DATABASE" | grep -qi "sqlite"; then
     DB_CONNECTION=sqlite
 fi
 
+# Sanitize DATABASE_URL and DB_HOST to remove stray CR/LF or quotes
+if [ -n "$DATABASE_URL" ]; then
+    DATABASE_URL="$(printf '%s' "$DATABASE_URL" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'" )"
+    export DATABASE_URL
+fi
+if [ -n "$DB_HOST" ]; then
+    DB_HOST="$(printf '%s' "$DB_HOST" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'" )"
+    export DB_HOST
+fi
+
+# If we're using sqlite, ensure no DATABASE_URL or remote DB vars override connection
+if [ "$DB_CONNECTION" = "sqlite" ]; then
+    unset DATABASE_URL || true
+    export DB_HOST=""
+    export DB_PORT=""
+    export DB_USERNAME=""
+    export DB_PASSWORD=""
+    # leave DB_DATABASE pointing to the sqlite file
+fi
+
 # Create sqlite database if it doesn't exist (if still using it)
 if [ "$DB_CONNECTION" = "sqlite" ]; then
     mkdir -p database
