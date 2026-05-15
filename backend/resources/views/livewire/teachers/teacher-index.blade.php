@@ -147,12 +147,11 @@
                                     {{ $teacher->created_at?->format('M j, Y') ?? '—' }}
                                 </td>
 
-                                {{-- Actions --}}
                                 <td class="px-3 py-3">
                                     <div class="flex items-center gap-1.5">
-                                        <flux:button wire:click="openEditModal({{ $teacher->id }})" size="sm"
+                                        <flux:button wire:click="openEditModal('{{ $teacher->id }}')" size="sm"
                                             variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="confirmDelete({{ $teacher->id }})" size="sm"
+                                        <flux:button wire:click="confirmDelete('{{ $teacher->id }}')" size="sm"
                                             variant="danger">Delete</flux:button>
                                     </div>
                                 </td>

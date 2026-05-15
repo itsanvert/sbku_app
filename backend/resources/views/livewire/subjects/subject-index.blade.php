@@ -46,8 +46,8 @@
                                 <td class="px-4 py-3 text-sm text-zinc-400">{{ $subject->created_at?->format('M j, Y') ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
-                                        <flux:button wire:click="edit({{ $subject->id }})" size="xs" variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="delete({{ $subject->id }})" size="xs" variant="danger">Delete</flux:button>
+                                        <flux:button wire:click="edit('{{ $subject->id }}')" size="xs" variant="ghost">Edit</flux:button>
+                                        <flux:button wire:click="delete('{{ $subject->id }}')" size="xs" variant="danger">Delete</flux:button>
                                     </div>
                                 </td>
                             </tr>
