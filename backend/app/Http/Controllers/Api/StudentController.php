@@ -74,15 +74,31 @@ class StudentController extends Controller
         return response()->json($student, 201);
     }
 
-    public function show(Student $student)
+    public function show(Request $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $student = $this->firestore->getDocument('students', (string)$id);
+            if (!$student) {
+                return response()->json(['message' => 'Student not found'], 404);
+            }
+            return response()->json($student);
+        }
+
+        $student = Student::findOrFail($id);
         return response()->json(
             $student->load(['user', 'major', 'faculty', 'academicClass'])
         );
     }
 
-    public function update(UpdateStudentRequest $request, Student $student)
+    public function update(UpdateStudentRequest $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $data = $request->validated();
+            $student = $this->firestore->set('students', (string)$id, $data);
+            return response()->json($student);
+        }
+
+        $student = Student::findOrFail($id);
         $student = $this->studentService->update(
             $student,
             $request->validated(),
@@ -92,8 +108,14 @@ class StudentController extends Controller
         return response()->json($student);
     }
 
-    public function destroy(Student $student)
+    public function destroy(Request $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $this->firestore->delete('students', (string)$id);
+            return response()->json(['message' => 'Student deleted']);
+        }
+
+        $student = Student::findOrFail($id);
         $this->studentService->delete($student);
 
         return response()->json(['message' => 'Student deleted']);

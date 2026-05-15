@@ -86,15 +86,32 @@ class TeacherController extends Controller
         return response()->json($teacher, 201);
     }
 
-    public function show(Teacher $teacher)
+    public function show(Request $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $teacher = $this->firestore->getDocument('teachers', (string)$id);
+            if (!$teacher) {
+                return response()->json(['message' => 'Teacher not found'], 404);
+            }
+            return response()->json($teacher);
+        }
+
+        $teacher = Teacher::findOrFail($id);
         return response()->json(
             $teacher->load(['user', 'major', 'faculty', 'schedule', 'shift'])
         );
     }
 
-    public function update(Request $request, Teacher $teacher)
+    public function update(Request $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $data = $request->all();
+            unset($data['id']); // Don't update the ID field itself
+            $teacher = $this->firestore->set('teachers', (string)$id, $data);
+            return response()->json($teacher);
+        }
+
+        $teacher = Teacher::findOrFail($id);
         $validated = $request->validate([
             'name'       => 'sometimes|required|string|max:255',
             'email'      => 'sometimes|required|email|unique:users,email,'.$teacher->user_id,
@@ -128,8 +145,14 @@ class TeacherController extends Controller
         return response()->json($teacher->load(['user', 'major', 'faculty', 'schedule', 'shift']));
     }
 
-    public function destroy(Teacher $teacher)
+    public function destroy(Request $request, $id)
     {
+        if (config('app.env') === 'production' || $request->has('firestore')) {
+            $this->firestore->delete('teachers', (string)$id);
+            return response()->json(['message' => 'Teacher deleted']);
+        }
+
+        $teacher = Teacher::findOrFail($id);
         $teacher->user->delete();
         return response()->json(['message' => 'Teacher deleted']);
     }
