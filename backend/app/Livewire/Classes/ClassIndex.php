@@ -162,7 +162,21 @@ class ClassIndex extends Component
                 );
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                $c = new AcademicClass();
+                $c->forceFill($data);
+                $c->exists = true;
+
+                // Mock Major relationship
+                $m = new \App\Models\Major();
+                $m->forceFill([
+                    'id'   => $data['major_id'] ?? null,
+                    'name' => $data['major_name'] ?? '—',
+                ]);
+                $c->setRelation('major', $m);
+
+                return $c;
+            });
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

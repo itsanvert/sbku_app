@@ -169,10 +169,49 @@ class ScheduleIndex extends Component
                     str_contains(strtolower($s['day_of_the_week'] ?? ''), strtolower($this->search))
                 );
             }
-            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $s = new Schedule();
                 $s->forceFill($data);
                 $s->exists = true;
+
+                // 1. Mock Teacher relationship
+                $teacher = new \App\Models\Teacher();
+                $teacher->forceFill([
+                    'id'   => $data['teacher_id'] ?? null,
+                    'name' => $data['teacher_name'] ?? '—',
+                ]);
+                $u = new \App\Models\User();
+                $u->forceFill([
+                    'id'   => $data['user_id'] ?? null,
+                    'name' => $data['teacher_name'] ?? '—',
+                ]);
+                $teacher->setRelation('user', $u);
+                $s->setRelation('teacher', $teacher);
+
+                // 2. Mock Subject relationship
+                $subject = new \App\Models\Subject();
+                $subject->forceFill([
+                    'id'   => $data['subject_id'] ?? null,
+                    'name' => $data['subject_name'] ?? '—',
+                ]);
+                $s->setRelation('subject', $subject);
+
+                // 3. Mock AcademicClass relationship
+                $ac = new \App\Models\AcademicClass();
+                $ac->forceFill([
+                    'id'   => $data['class_id'] ?? null,
+                    'name' => $data['class_name'] ?? '—',
+                ]);
+                $s->setRelation('academicClass', $ac);
+
+                // 4. Mock Room relationship
+                $room = new \App\Models\Room();
+                $room->forceFill([
+                    'id'   => $data['room_id'] ?? null,
+                    'name' => $data['room_name'] ?? '—',
+                ]);
+                $s->setRelation('room', $room);
+
                 return $s;
             });
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(

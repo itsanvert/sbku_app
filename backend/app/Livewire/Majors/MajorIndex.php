@@ -122,7 +122,21 @@ class MajorIndex extends Component
                 $collection = $collection->filter(fn($m) => str_contains(strtolower($m['name'] ?? ''), strtolower($this->search)));
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                $m = new Major();
+                $m->forceFill($data);
+                $m->exists = true;
+
+                // Mock Faculty relationship
+                $f = new \App\Models\Faculty();
+                $f->forceFill([
+                    'id'   => $data['faculty_id'] ?? null,
+                    'name' => $data['faculty_name'] ?? '—',
+                ]);
+                $m->setRelation('faculty', $f);
+
+                return $m;
+            });
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

@@ -108,7 +108,44 @@ class AttendanceIndex extends Component
                 $collection = $collection->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
             }
 
-            $items = $collection->forPage($this->getPage(), 20);
+            $items = $collection->forPage($this->getPage(), 20)->map(function ($data) {
+                $a = new Attendance();
+                $a->forceFill($data);
+                $a->exists = true;
+
+                // 1. Mock Student relationship
+                $s = new \App\Models\Student();
+                $s->forceFill([
+                    'id'   => $data['student_id'] ?? null,
+                    'name' => $data['student_name'] ?? '—',
+                ]);
+                
+                $u = new \App\Models\User();
+                $u->forceFill([
+                    'id'   => $data['user_id'] ?? null,
+                    'name' => $data['student_name'] ?? '—',
+                ]);
+                $s->setRelation('user', $u);
+                $a->setRelation('student', $s);
+
+                // 2. Mock Session relationship
+                $sess = new \App\Models\AttendanceSession();
+                $sess->forceFill([
+                    'id' => $data['session_id'] ?? null,
+                ]);
+                
+                $fac = new \App\Models\Faculty();
+                $fac->forceFill(['id' => $data['faculty_id'] ?? null, 'name' => $data['faculty_name'] ?? '—']);
+                $sess->setRelation('faculty', $fac);
+
+                $maj = new \App\Models\Major();
+                $maj->forceFill(['id' => $data['major_id'] ?? null, 'name' => $data['major_name'] ?? '—']);
+                $sess->setRelation('major', $maj);
+
+                $a->setRelation('session', $sess);
+
+                return $a;
+            });
             
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
