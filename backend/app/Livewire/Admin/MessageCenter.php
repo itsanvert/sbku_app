@@ -20,24 +20,51 @@ class MessageCenter extends Component
     public $receiver_id = '';
     public $send_push = true;
 
+    private $firestore;
+
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
     protected $rules = [
         'title' => 'required|string|max:255',
         'body' => 'required|string',
         'type' => 'required|in:announcement,private,alert',
-        'receiver_id' => 'nullable|exists:users,id',
+        'receiver_id' => 'nullable',
     ];
 
     public function sendMessage(PushNotificationService $pushService)
     {
-        $this->validate();
+        if (config('app.env') === 'production') {
+            $this->validate([
+                'title' => 'required|string|max:255',
+                'body' => 'required|string',
+                'type' => 'required|in:announcement,private,alert',
+                'receiver_id' => 'nullable',
+            ]);
 
-        $message = Message::create([
-            'sender_id' => auth()->id(),
-            'receiver_id' => $this->receiver_id ?: null,
-            'title' => $this->title,
-            'body' => $this->body,
-            'type' => $this->type,
-        ]);
+            $data = [
+                'sender_id' => auth()->id(),
+                'receiver_id' => $this->receiver_id ?: null,
+                'title' => $this->title,
+                'body' => $this->body,
+                'type' => $this->type,
+                'created_at' => now()->toIso8601String(),
+            ];
+
+            $messageId = $this->firestore->create('messages', $data);
+        } else {
+            $this->validate();
+            $message = Message::create([
+                'sender_id' => auth()->id(),
+                'receiver_id' => $this->receiver_id ?: null,
+                'title' => $this->title,
+                'body' => $this->body,
+                'type' => $this->type,
+            ]);
+            $messageId = $message->id;
+        }
 
         $pushStatus = '';
         if ($this->send_push) {
@@ -46,14 +73,13 @@ class MessageCenter extends Component
                 $user = User::find($this->receiver_id);
                 if ($user) {
                     $success = $pushService->sendToUser($user, $this->title, $this->body, [
-                        'message_id' => (string)$message->id,
+                        'message_id' => (string)$messageId,
                         'type' => $this->type,
                     ]);
                 }
             } else {
-                // Broadcast to a topic (e.g. 'all')
                 $success = $pushService->sendToTopic('all', $this->title, $this->body, [
-                    'message_id' => (string)$message->id,
+                    'message_id' => (string)$messageId,
                     'type' => $this->type,
                 ]);
             }
@@ -66,6 +92,46 @@ class MessageCenter extends Component
 
     public function render()
     {
+        if (config('app.env') === 'production') {
+            $messagesData = $this->firestore->list('messages', [], 'created_at', 'desc');
+            $collection = collect($messagesData);
+            
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                $m = new Message();
+                $m->forceFill($data);
+                $m->exists = true;
+
+                // Mock relationships
+                if (isset($data['sender_id'])) {
+                    $sender = new User();
+                    $sender->forceFill(['id' => $data['sender_id'], 'name' => 'Admin']);
+                    $m->setRelation('sender', $sender);
+                }
+
+                return $m;
+            });
+
+            $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $collection->count(),
+                10,
+                $this->getPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+
+            $users = collect($this->firestore->list('users'))->map(function($data) {
+                $u = new User();
+                $u->forceFill($data);
+                $u->exists = true;
+                return $u;
+            })->sortBy('name');
+
+            return view('livewire.admin.message-center', [
+                'messages' => $paginated,
+                'users' => $users,
+            ]);
+        }
+
         return view('livewire.admin.message-center', [
             'messages' => Message::with(['sender', 'receiver'])->latest()->paginate(10),
             'users' => User::orderBy('name')->get(),

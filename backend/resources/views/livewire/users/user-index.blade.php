@@ -117,10 +117,10 @@
                                     </td>
 
                                     <td class="px-4 py-3">
-                                        <div class="flex items-center gap-1.5">
-                                            <flux:button wire:click="openEditModal({{ $user->id }})" size="sm" variant="ghost" >Edit</flux:button>
-                                            <flux:button wire:click="confirmDelete({{ $user->id }})" size="sm" variant="danger" >Delete</flux:button>
-                                        </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <flux:button wire:click="openEditModal('{{ $user->id }}')" size="sm" variant="ghost" >Edit</flux:button>
+                                        <flux:button wire:click="confirmDelete('{{ $user->id }}')" size="sm" variant="danger" >Delete</flux:button>
+                                    </div>
                                     </td>
 
                                 </tr>

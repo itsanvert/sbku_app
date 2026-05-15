@@ -146,7 +146,11 @@ class StudentIndex extends Component
     public function deleteStudent()
     {
         if ($this->deleteStudentId) {
-            Student::findOrFail($this->deleteStudentId)->delete();
+            if (config('app.env') === 'production') {
+                $this->firestore->delete('students', (string)$this->deleteStudentId);
+            } else {
+                Student::findOrFail($this->deleteStudentId)->delete();
+            }
             $this->deleteStudentId = null;
             session()->flash('message', 'Student deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete');
@@ -165,7 +169,13 @@ class StudentIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            Student::whereIn('id', $this->selected)->delete();
+            if (config('app.env') === 'production') {
+                foreach ($this->selected as $id) {
+                    $this->firestore->delete('students', (string)$id);
+                }
+            } else {
+                Student::whereIn('id', $this->selected)->delete();
+            }
             $count = count($this->selected);
             $this->selected = [];
             $this->selectAll = false;

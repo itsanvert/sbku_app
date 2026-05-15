@@ -72,9 +72,9 @@ class FirestoreService
     }
 
     /**
-     * List documents with filtering and sorting.
+     * List documents with filtering, sorting, and pagination.
      */
-    public function list(string $collection, array $filters = [], string $sortBy = null, string $sortDir = 'asc'): array
+    public function list(string $collection, array $filters = [], string $sortBy = null, string $sortDir = 'asc', int $limit = null, int $offset = null): array
     {
         if (!$this->db) return [];
         try {
@@ -92,6 +92,14 @@ class FirestoreService
 
             if ($sortBy) {
                 $query = $query->orderBy($sortBy, $sortDir);
+            }
+
+            if ($limit !== null) {
+                $query = $query->limit($limit);
+            }
+
+            if ($offset !== null) {
+                $query = $query->offset($offset);
             }
 
             $documents = $query->documents();
@@ -113,11 +121,40 @@ class FirestoreService
     }
 
     /**
-     * Create or update a document.
+     * Create a new document.
+     * Returns the ID of the created document.
+     */
+    public function create(string $collection, array $data, string $id = null): string
+    {
+        if (!$this->db) return '';
+        
+        $colRef = $this->db->collection($collection);
+        if ($id) {
+            $docRef = $colRef->document($id);
+            $docRef->set($data);
+        } else {
+            $docRef = $colRef->add($data);
+            $id = $docRef->id();
+        }
+        
+        return $id;
+    }
+
+    /**
+     * Update an existing document.
+     */
+    public function update(string $collection, string $id, array $data): void
+    {
+        if (!$this->db) return;
+        $this->db->collection($collection)->document($id)->set($data, ['merge' => true]);
+    }
+
+    /**
+     * Create or update a document (alias for set).
      */
     public function set(string $collection, string $id, array $data)
     {
-        $this->db->collection($collection)->document($id)->set($data, ['merge' => true]);
+        $this->update($collection, $id, $data);
         return $this->getDocument($collection, $id);
     }
 
@@ -126,6 +163,7 @@ class FirestoreService
      */
     public function delete(string $collection, string $id)
     {
+        if (!$this->db) return;
         $this->db->collection($collection)->document($id)->delete();
     }
 }
