@@ -162,13 +162,7 @@ class ClassIndex extends Component
                 );
             }
             
-            // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
-                $c = new AcademicClass();
-                $c->forceFill($data);
-                $c->exists = true;
-                return $c;
-            });
+            $items = $collection->forPage($this->getPage(), 10);
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

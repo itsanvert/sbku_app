@@ -108,28 +108,7 @@ class AttendanceIndex extends Component
                 $collection = $collection->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
             }
 
-            // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 20)->map(function($data) {
-                $a = new Attendance();
-                $a->forceFill($data);
-                $a->exists = true;
-                
-                // Mock session and student relationships if data is present
-                // This helps Blade views that call $r->student->user->name
-                $s = new \App\Models\Student();
-                $s->forceFill(['id' => $data['student_id'] ?? null]);
-                
-                $u = new \App\Models\User();
-                $u->forceFill(['name' => $data['student_name'] ?? '—']);
-                $s->setRelation('user', $u);
-                $a->setRelation('student', $s);
-
-                $sess = new \App\Models\AttendanceSession();
-                $sess->forceFill(['id' => $data['session_id'] ?? null]);
-                $a->setRelation('session', $sess);
-                
-                return $a;
-            });
+            $items = $collection->forPage($this->getPage(), 20);
             
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

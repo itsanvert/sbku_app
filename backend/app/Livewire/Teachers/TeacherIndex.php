@@ -74,25 +74,7 @@ class TeacherIndex extends Component
                 );
             }
 
-            // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
-                $t = new Teacher();
-                $t->forceFill($data);
-                $t->exists = true;
-                
-                // Mock user relationship if data is present
-                if (isset($data['user_name']) || isset($data['user_email'])) {
-                    $u = new \App\Models\User();
-                    $u->forceFill([
-                        'id' => $data['user_id'] ?? null,
-                        'name' => $data['user_name'] ?? '—',
-                        'email' => $data['user_email'] ?? '—',
-                    ]);
-                    $t->setRelation('user', $u);
-                }
-                
-                return $t;
-            });
+            $items = $collection->forPage($this->getPage(), 10);
             
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
