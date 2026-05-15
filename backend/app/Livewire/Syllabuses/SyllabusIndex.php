@@ -146,7 +146,11 @@ class SyllabusIndex extends Component
     public function deleteSyllabus()
     {
         if ($this->deleteSyllabusId) {
-            Syllabus::findOrFail($this->deleteSyllabusId)->delete();
+            if (config('app.env') === 'production') {
+                $this->firestore->delete('syllabuses', (string)$this->deleteSyllabusId);
+            } else {
+                Syllabus::findOrFail($this->deleteSyllabusId)->delete();
+            }
             $this->deleteSyllabusId = null;
             session()->flash('message', 'Syllabus entry deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete-syllabus');

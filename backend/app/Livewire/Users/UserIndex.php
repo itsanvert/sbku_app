@@ -138,7 +138,11 @@ class UserIndex extends Component
     public function deleteUser()
     {
         if ($this->deleteUserId) {
-            User::findOrFail($this->deleteUserId)->delete();
+            if (config('app.env') === 'production') {
+                $this->firestore->delete('users', (string)$this->deleteUserId);
+            } else {
+                User::findOrFail($this->deleteUserId)->delete();
+            }
             $this->deleteUserId = null;
             session()->flash('message', 'User deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete');
@@ -156,7 +160,13 @@ class UserIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            User::whereIn('id', $this->selected)->delete();
+            if (config('app.env') === 'production') {
+                foreach ($this->selected as $id) {
+                    $this->firestore->delete('users', (string)$id);
+                }
+            } else {
+                User::whereIn('id', $this->selected)->delete();
+            }
             $count = count($this->selected);
             $this->selected = [];
             $this->selectAll = false;

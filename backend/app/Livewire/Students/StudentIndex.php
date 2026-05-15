@@ -146,7 +146,11 @@ class StudentIndex extends Component
     public function deleteStudent()
     {
         if ($this->deleteStudentId) {
-            Student::findOrFail($this->deleteStudentId)->delete();
+            if (config('app.env') === 'production') {
+                $this->firestore->delete('students', (string)$this->deleteStudentId);
+            } else {
+                Student::findOrFail($this->deleteStudentId)->delete();
+            }
             $this->deleteStudentId = null;
             session()->flash('message', 'Student deleted successfully.');
             $this->dispatch('modal-close', name: 'confirm-delete');
@@ -165,7 +169,13 @@ class StudentIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            Student::whereIn('id', $this->selected)->delete();
+            if (config('app.env') === 'production') {
+                foreach ($this->selected as $id) {
+                    $this->firestore->delete('students', (string)$id);
+                }
+            } else {
+                Student::whereIn('id', $this->selected)->delete();
+            }
             $count = count($this->selected);
             $this->selected = [];
             $this->selectAll = false;
@@ -196,10 +206,19 @@ class StudentIndex extends Component
     public function render()
     {
         if (config('app.env') === 'production') {
+            $hydrate = function($collection, $modelClass) {
+                return collect($this->firestore->list($collection))->map(function($data) use ($modelClass) {
+                    $m = new $modelClass();
+                    $m->forceFill($data);
+                    $m->exists = true;
+                    return $m;
+                })->sortBy('name');
+            };
+
             return view('livewire.students.student-index', [
-                'faculties' => collect($this->firestore->list('faculties')),
-                'majors' => collect($this->firestore->list('majors')),
-                'shifts' => collect($this->firestore->list('shifts')),
+                'faculties' => $hydrate('faculties', Faculty::class),
+                'majors' => $hydrate('majors', Major::class),
+                'shifts' => $hydrate('shifts', Shift::class),
             ])->layout('layouts.app');
         }
 
