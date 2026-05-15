@@ -52,7 +52,7 @@ class AttendanceSessionController extends Controller
         $filters = ['is_active' => true];
         
         if ($request->teacher_id) {
-            $filters['teacher_id'] = (int) $request->teacher_id;
+            $filters['teacher_id'] = (string) $request->teacher_id;
         }
 
         $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
@@ -81,11 +81,13 @@ class AttendanceSessionController extends Controller
     {
         $request->validate([
             'qr_token' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
-        $student = Student::where('user_id', $request->user()->id)->first();
-
-        if (!$student) {
+        $studentData = $request->user()->student;
+        
+        if (!$studentData) {
             return response()->json(['message' => 'You are not registered as a student. Cannot check in.'], 403);
         }
 
@@ -106,6 +108,8 @@ class AttendanceSessionController extends Controller
                 $session,
                 $student,
                 $request->qr_token,
+                (string)($request->latitude ?? '0'),
+                (string)($request->longitude ?? '0')
             );
 
             return response()->json([

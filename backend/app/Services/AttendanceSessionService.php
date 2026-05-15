@@ -22,6 +22,7 @@ class AttendanceSessionService
 {
     public function __construct(
         private readonly PushNotificationService $pushService,
+        private readonly FirestoreService $firestore,
     ) {}
 
     public function startSession(array $validated): AttendanceSession
@@ -54,30 +55,50 @@ class AttendanceSessionService
         // immediately so they can see the QR code and monitor check-ins.
         $isActive = true; 
 
-        $session = AttendanceSession::create([
-            'teacher_id'         => $validated['teacher_id'],
-            'faculty_id'         => $validated['faculty_id']   ?? null,
-            'major_id'           => $validated['major_id']     ?? null,
-            'schedule_id'        => $validated['schedule_id']  ?? null,
-            'syllabus_id'        => $validated['syllabus_id']  ?? null,
-            'subject_id'         => $validated['subject_id']   ?? null,
+        $data = [
+            'teacher_id'         => (string) $validated['teacher_id'],
+            'faculty_id'         => isset($validated['faculty_id']) ? (string) $validated['faculty_id'] : null,
+            'major_id'           => isset($validated['major_id']) ? (string) $validated['major_id'] : null,
+            'syllabus_id'        => isset($validated['syllabus_id']) ? (string) $validated['syllabus_id'] : null,
+            'subject_id'         => isset($validated['subject_id']) ? (string) $validated['subject_id'] : null,
             'year_id'            => $validated['year_id']      ?? null,
             'semester_id'        => $validated['semester_id']  ?? null,
-            'academic_class_id'  => $validated['academic_class_id'] ?? null,
-            'shift_id'           => $validated['shift_id']     ?? null,
+            'academic_class_id'  => isset($validated['academic_class_id']) ? (string) $validated['academic_class_id'] : null,
+            'shift_id'           => isset($validated['shift_id']) ? (string) $validated['shift_id'] : null,
             'day_of_week'        => $validated['day_of_week']  ?? null,
             'session_start_time' => $startTimeString,
             'session_end_time'   => $endTimeString,
             'latitude'           => $validated['latitude']     ?? null,
             'longitude'          => $validated['longitude']    ?? null,
-            'room_id'            => $validated['room_id']      ?? null,
-            'started_at'         => $scheduledStart,
-            'expires_at'         => $scheduledEnd,
+            'room_id'            => isset($validated['room_id']) ? (string) $validated['room_id'] : null,
+            'started_at'         => $scheduledStart->format('Y-m-d H:i:s'),
+            'expires_at'         => $scheduledEnd ? $scheduledEnd->format('Y-m-d H:i:s') : null,
             'qr_token'           => $freshToken,
             'is_active'          => $isActive,
-        ]);
+            'created_at'         => now()->format('Y-m-d H:i:s'),
+            'updated_at'         => now()->format('Y-m-d H:i:s'),
+        ];
 
-        $session->load(['teacher.user', 'faculty', 'major', 'subject', 'syllabus', 'shift', 'academicClass']);
+        if (config('app.env') === 'production') {
+            $id = $this->firestore->create('attendance_sessions', $data);
+            $session = new AttendanceSession();
+            $session->forceFill(array_merge(['id' => $id], $data));
+            $session->exists = true;
+        } else {
+            $session = AttendanceSession::create($data);
+        }
+
+        // Try to load some basic names for the notification
+        if (config('app.env') === 'production') {
+            $teacher = $this->firestore->getDocument('teachers', $data['teacher_id']);
+            $subject = $data['subject_id'] ? $this->firestore->getDocument('subjects', $data['subject_id']) : null;
+            
+            // Mock relationships for the notification logic
+            $session->setRelation('teacher', (new \App\Models\Teacher())->forceFill($teacher ?: []));
+            if ($subject) $session->setRelation('subject', (new \App\Models\Subject())->forceFill($subject));
+        } else {
+            $session->load(['teacher.user', 'subject']);
+        }
 
         // Send push notifications to eligible students
         $this->notifyStudentsOfNewSession($session);
@@ -173,31 +194,62 @@ class AttendanceSessionService
         }
     }
 
-    public function checkIn(AttendanceSession $session, Student $student, string $qrToken): Attendance
-    {
+    public function checkIn(
+        AttendanceSession $session,
+        Student $student,
+        string $qrToken,
+        string $latitude,
+        string $longitude,
+    ): Attendance {
+        // 1. Validate session status and time window
         $this->validateSessionAccess($session);
 
+        // 2. Validate QR Token
         if ($session->qr_token !== $qrToken) {
-            throw new \Exception('QR កូដមិនត្រឹមត្រូវ ឬផុតកំណត់។ សូមស្កេន QR ថ្មី។', 422);
+            throw new \Exception('Invalid or expired QR code. Please scan the latest one.', 403);
         }
 
-        $existing = Attendance::where('session_id', $session->id)
-            ->where('student_id', $student->id)
-            ->first();
-
-        if ($existing) {
-            throw new \Exception('អ្នកបានចុះវត្តមានរួចហើយ។', 409);
+        // 3. Prevent duplicate check-ins
+        if (config('app.env') === 'production') {
+            $exists = $this->firestore->list('attendances', [
+                'session_id' => (string)$session->id,
+                'student_id' => (string)$student->id
+            ]);
+            if (!empty($exists)) {
+                throw new \Exception('You have already checked in for this session.', 409);
+            }
+        } else {
+            $exists = Attendance::where('session_id', $session->id)
+                ->where('student_id', $student->id)
+                ->exists();
+            if ($exists) {
+                throw new \Exception('You have already checked in for this session.', 409);
+            }
         }
 
-        return Attendance::create([
+        $data = [
             'attendance_date' => now()->toDateString(),
-            'check_in_time'   => now(),
             'status'          => 'Y',
-            'student_id'      => $student->id,
-            'schedule_id'     => $session->schedule_id,
-            'session_id'      => $session->id,
             'verify_status'   => 'pending',
-        ]);
+            'student_id'      => (string)$student->id,
+            'session_id'      => (string)$session->id,
+            'schedule_id'     => isset($session->schedule_id) ? (string)$session->schedule_id : null,
+            'latitude'        => $latitude,
+            'longitude'       => $longitude,
+            'created_at'      => now()->format('Y-m-d H:i:s'),
+            'updated_at'      => now()->format('Y-m-d H:i:s'),
+        ];
+
+        if (config('app.env') === 'production') {
+            $id = $this->firestore->create('attendances', $data);
+            $attendance = new Attendance();
+            $attendance->forceFill(array_merge(['id' => $id], $data));
+            $attendance->exists = true;
+        } else {
+            $attendance = Attendance::create($data);
+        }
+
+        return $attendance;
     }
 
     public function validateSessionAccess(AttendanceSession $session): void
@@ -244,6 +296,15 @@ class AttendanceSessionService
 
         $newToken = Str::uuid()->toString();
 
+        if (config('app.env') === 'production') {
+            $this->firestore->update('attendance_sessions', (string)$session->id, [
+                'qr_token' => $newToken,
+                'updated_at' => now()->format('Y-m-d H:i:s'),
+            ]);
+            $session->qr_token = $newToken;
+            return $session;
+        }
+
         $session->update([
             'qr_token' => $newToken,
         ]);
@@ -255,11 +316,71 @@ class AttendanceSessionService
     public function endSession(AttendanceSession $session): array
     {
         if (!$session->is_active) {
+            // Fetch attendances from Firestore if in production
+            if (config('app.env') === 'production') {
+                $attendances = $this->firestore->list('attendances', ['session_id' => (string)$session->id]);
+                return [
+                    'session'       => $session,
+                    'attendances'   => $attendances,
+                    'total_present' => collect($attendances)->where('status', 'Y')->count(),
+                    'total_absent'  => collect($attendances)->where('status', 'N')->count(),
+                    'message'       => 'Session was already closed.',
+                ];
+            }
             return [
                 'session'       => $session->load(['attendances.student.user']),
                 'total_present' => $session->attendances()->where('status', 'Y')->count(),
                 'total_absent'  => $session->attendances()->where('status', 'N')->count(),
                 'message'       => 'Session was already closed.',
+            ];
+        }
+
+        if (config('app.env') === 'production') {
+            $this->firestore->update('attendance_sessions', (string)$session->id, [
+                'is_active' => false,
+                'ended_at'  => now()->format('Y-m-d H:i:s'),
+                'updated_at' => now()->format('Y-m-d H:i:s'),
+            ]);
+            $session->is_active = false;
+            $session->ended_at = now();
+
+            // Absent logic
+            $filters = [];
+            if ($session->academic_class_id) $filters['academic_class_id'] = (string)$session->academic_class_id;
+            else {
+                if ($session->faculty_id) $filters['faculty_id'] = (string)$session->faculty_id;
+                if ($session->major_id) $filters['major_id'] = (string)$session->major_id;
+                if ($session->year_id) $filters['year'] = (string)$session->year_id;
+            }
+            
+            $allStudents = $this->firestore->list('students', $filters);
+            $allStudentIds = collect($allStudents)->pluck('id');
+            
+            $checkedIn = $this->firestore->list('attendances', ['session_id' => (string)$session->id]);
+            $checkedInIds = collect($checkedIn)->pluck('student_id');
+            
+            $absentIds = $allStudentIds->diff($checkedInIds);
+            
+            foreach ($absentIds as $studentId) {
+                $this->firestore->create('attendances', [
+                    'attendance_date' => $session->started_at->toDateString(),
+                    'status'          => 'N',
+                    'verify_status'   => 'approved',
+                    'student_id'      => (string)$studentId,
+                    'session_id'      => (string)$session->id,
+                    'schedule_id'     => isset($session->schedule_id) ? (string)$session->schedule_id : null,
+                    'created_at'      => now()->format('Y-m-d H:i:s'),
+                    'updated_at'      => now()->format('Y-m-d H:i:s'),
+                ]);
+            }
+            
+            $finalAttendances = $this->firestore->list('attendances', ['session_id' => (string)$session->id]);
+
+            return [
+                'session'       => $session,
+                'attendances'   => $finalAttendances,
+                'total_present' => collect($finalAttendances)->where('status', 'Y')->count(),
+                'total_absent'  => collect($finalAttendances)->where('status', 'N')->count(),
             ];
         }
 
@@ -280,15 +401,6 @@ class AttendanceSessionService
 
             $allStudents = $query->pluck('id');
             $checkedInStudents = $session->attendances()->pluck('student_id');
-
-            $session->attendances()
-                ->where('verify_status', 'pending')
-                ->update([
-                    'verify_status' => 'rejected',
-                    'reject_reason' => 'Session ended without teacher verification',
-                    'verified_at'   => now(),
-                    'status'        => 'N',
-                ]);
 
             $absentStudents = $allStudents->diff($checkedInStudents);
             foreach ($absentStudents as $studentId) {
@@ -319,15 +431,23 @@ class AttendanceSessionService
             throw new \Exception('This attendance has already been verified', 409);
         }
 
-        $attendance->update([
+        $data = [
             'verify_status' => $action,
             'reject_reason' => $reason,
-            'verified_at'   => now(),
+            'verified_at'   => now()->format('Y-m-d H:i:s'),
             'status'        => $action === 'approved'
                 ? ($attendance->status === 'P' ? 'P' : 'Y')
                 : 'N',
-        ]);
+            'updated_at'    => now()->format('Y-m-d H:i:s'),
+        ];
 
-        return $attendance->load('student.user');
+        if (config('app.env') === 'production') {
+            $this->firestore->update('attendances', (string)$attendance->id, $data);
+            $attendance->forceFill($data);
+        } else {
+            $attendance->update($data);
+        }
+
+        return $attendance;
     }
 }
