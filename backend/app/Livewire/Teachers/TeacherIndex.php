@@ -10,6 +10,13 @@ use Livewire\Attributes\Computed;
 class TeacherIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public function boot()
     {
@@ -75,8 +82,7 @@ class TeacherIndex extends Component
             $collection = collect($teachers);
 
             if ($this->search) {
-                $collection = $collection->filter(
-                    fn($t) =>
+                $collection = $collection->filter(fn($t) => 
                     str_contains(strtolower($t['user_name'] ?? ''), strtolower($this->search)) ||
                     str_contains(strtolower($t['user_email'] ?? ''), strtolower($this->search))
                 );

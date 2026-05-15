@@ -253,6 +253,7 @@ class StudentIndex extends Component
     public function render()
     {
         if (config('app.env') === 'production') {
+<<<<<<< HEAD
             $hydrate = function ($collection, $modelClass) {
                 return collect($this->firestore->list($collection))->map(function ($data) use ($modelClass) {
                     $m = new $modelClass();
@@ -262,10 +263,12 @@ class StudentIndex extends Component
                 })->sortBy('name');
             };
 
+=======
+>>>>>>> 9a6e16f67e5889d7829dad40a03fa267945299b6
             return view('livewire.students.student-index', [
-                'faculties' => $hydrate('faculties', Faculty::class),
-                'majors' => $hydrate('majors', Major::class),
-                'shifts' => $hydrate('shifts', Shift::class),
+                'faculties' => collect($this->firestore->list('faculties')),
+                'majors' => collect($this->firestore->list('majors')),
+                'shifts' => collect($this->firestore->list('shifts')),
             ])->layout('layouts.app');
         }
 

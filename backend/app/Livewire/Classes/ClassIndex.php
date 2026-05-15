@@ -162,21 +162,7 @@ class ClassIndex extends Component
                 );
             }
             
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                $c = new AcademicClass();
-                $c->forceFill($data);
-                $c->exists = true;
-
-                // Mock Major relationship
-                $m = new \App\Models\Major();
-                $m->forceFill([
-                    'id'   => $data['major_id'] ?? null,
-                    'name' => $data['major_name'] ?? '—',
-                ]);
-                $c->setRelation('major', $m);
-
-                return $c;
-            });
+            $items = $collection->forPage($this->getPage(), 10);
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
@@ -188,12 +174,7 @@ class ClassIndex extends Component
 
             return view('livewire.classes.class-index', [
                 'classes' => $paginated,
-                'majors' => collect($this->firestore->list('majors'))->map(function($data) {
-                    $m = new Major();
-                    $m->forceFill($data);
-                    $m->exists = true;
-                    return $m;
-                })->sortBy('name'),
+                'majors' => collect($this->firestore->list('majors')),
             ])->layout('layouts.app');
         }
 
