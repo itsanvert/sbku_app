@@ -79,8 +79,48 @@ class StudentIndex extends Component
                 );
             }
 
-            $items = $collection->forPage($this->getPage(), 10);
-            
+            // Map to Model objects for Blade compatibility
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                $s = new Student();
+                $s->forceFill($data);
+                $s->exists = true;
+
+                // 1. Mock User relationship
+                $u = new \App\Models\User();
+                $u->forceFill([
+                    'id'    => $data['user_id'] ?? null,
+                    'name'  => $data['user_name'] ?? '—',
+                    'email' => $data['user_email'] ?? '—',
+                ]);
+                $s->setRelation('user', $u);
+
+                // 2. Mock Major relationship
+                $maj = new \App\Models\Major();
+                $maj->forceFill([
+                    'id'   => $data['major_id'] ?? null,
+                    'name' => $data['major_name'] ?? '—',
+                ]);
+                $s->setRelation('major', $maj);
+
+                // 3. Mock Faculty relationship
+                $fac = new \App\Models\Faculty();
+                $fac->forceFill([
+                    'id'   => $data['faculty_id'] ?? null,
+                    'name' => $data['faculty_name'] ?? '—',
+                ]);
+                $s->setRelation('faculty', $fac);
+
+                // 4. Mock Shift relationship
+                $shift = new \App\Models\Shift();
+                $shift->forceFill([
+                    'id'   => $data['shift_id'] ?? null,
+                    'name' => $data['shift_name'] ?? '—',
+                ]);
+                $s->setRelation('shift', $shift);
+
+                return $s;
+            });
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),

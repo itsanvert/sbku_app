@@ -139,7 +139,12 @@ class SubjectIndex extends Component
                 );
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                $s = new Subject();
+                $s->forceFill($data);
+                $s->exists = true;
+                return $s;
+            });
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
