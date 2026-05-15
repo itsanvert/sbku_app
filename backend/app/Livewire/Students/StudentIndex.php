@@ -81,37 +81,42 @@ class StudentIndex extends Component
 
             // Map to Model objects for Blade compatibility
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                // Separate relations from attributes to avoid collisions
-                $userData = [
+                $s = new Student();
+                $s->forceFill($data);
+                $s->exists = true;
+
+                // 1. Mock User relationship
+                $u = new \App\Models\User();
+                $u->forceFill([
                     'id'    => $data['user_id'] ?? null,
                     'name'  => $data['user_name'] ?? '—',
                     'email' => $data['user_email'] ?? '—',
-                ];
-                $majorData = [
+                ]);
+                $s->setRelation('user', $u);
+
+                // 2. Mock Major relationship
+                $maj = new \App\Models\Major();
+                $maj->forceFill([
                     'id'   => $data['major_id'] ?? null,
                     'name' => $data['major_name'] ?? '—',
-                ];
-                $facultyData = [
+                ]);
+                $s->setRelation('major', $maj);
+
+                // 3. Mock Faculty relationship
+                $fac = new \App\Models\Faculty();
+                $fac->forceFill([
                     'id'   => $data['faculty_id'] ?? null,
                     'name' => $data['faculty_name'] ?? '—',
-                ];
-                $shiftData = [
+                ]);
+                $s->setRelation('faculty', $fac);
+
+                // 4. Mock Shift relationship
+                $shift = new \App\Models\Shift();
+                $shift->forceFill([
                     'id'   => $data['shift_id'] ?? null,
                     'name' => $data['shift_name'] ?? '—',
-                ];
-
-                // Remove potentially conflicting keys from the main data array
-                $cleanData = array_diff_key($data, array_flip(['user', 'major', 'faculty', 'shift']));
-
-                $s = new Student();
-                $s->forceFill($cleanData);
-                $s->exists = true;
-
-                // Set mocked relationships
-                $s->setRelation('user', (new \App\Models\User())->forceFill($userData));
-                $s->setRelation('major', (new \App\Models\Major())->forceFill($majorData));
-                $s->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
-                $s->setRelation('shift', (new \App\Models\Shift())->forceFill($shiftData));
+                ]);
+                $s->setRelation('shift', $shift);
 
                 return $s;
             });

@@ -163,21 +163,17 @@ class ClassIndex extends Component
             }
             
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                // Separate relations from attributes
-                $majorData = [
-                    'id'   => $data['major_id'] ?? null,
-                    'name' => $data['major_name'] ?? '—',
-                ];
-
-                // Remove potentially conflicting keys
-                $cleanData = array_diff_key($data, array_flip(['major']));
-
                 $c = new AcademicClass();
-                $c->forceFill($cleanData);
+                $c->forceFill($data);
                 $c->exists = true;
 
                 // Mock Major relationship
-                $c->setRelation('major', (new \App\Models\Major())->forceFill($majorData));
+                $m = new \App\Models\Major();
+                $m->forceFill([
+                    'id'   => $data['major_id'] ?? null,
+                    'name' => $data['major_name'] ?? '—',
+                ]);
+                $c->setRelation('major', $m);
 
                 return $c;
             });

@@ -10,7 +10,7 @@ use Livewire\WithPagination;
 class MajorIndex extends Component
 {
     use WithPagination;
-    
+
     public function __construct()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
@@ -22,7 +22,7 @@ class MajorIndex extends Component
     public $showCreateModal = false;
     public $showEditModal = false;
     public $editMajorId = null;
-    
+
     // Form fields
     public $name;
     public $faculty_id;
@@ -65,7 +65,7 @@ class MajorIndex extends Component
     public function edit($id)
     {
         $this->editMajorId = $id;
-        
+
         if (\App\Services\FirestoreService::isActive()) {
             $major = $this->firestore->getDocument('majors', (string)$id);
             $this->name = $major['name'] ?? '';
@@ -75,7 +75,7 @@ class MajorIndex extends Component
             $this->name = $major->name;
             $this->faculty_id = $major->faculty_id;
         }
-        
+
         $this->showEditModal = true;
     }
 
@@ -121,28 +121,23 @@ class MajorIndex extends Component
             if ($this->search) {
                 $collection = $collection->filter(fn($m) => str_contains(strtolower($m['name'] ?? ''), strtolower($this->search)));
             }
-            
+
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $m = new Major();
-                
-                // Extract relations
-                $facultyData = [
-                    'id'   => $data['faculty_id'] ?? null,
-                    'name' => $data['faculty_name'] ?? '—',
-                ];
-
-                // Remove potentially conflicting keys
-                $cleanData = array_diff_key($data, array_flip(['faculty']));
-
-                $m->forceFill($cleanData);
+                $m->forceFill($data);
                 $m->exists = true;
 
-                // Hydrate Faculty relationship
-                $m->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
+                // Mock Faculty relationship
+                $f = new \App\Models\Faculty();
+                $f->forceFill([
+                    'id'   => $data['faculty_id'] ?? null,
+                    'name' => $data['faculty_name'] ?? '—',
+                ]);
+                $m->setRelation('faculty', $f);
 
                 return $m;
             });
-            
+
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
