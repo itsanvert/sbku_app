@@ -132,7 +132,7 @@ class Schedule extends Model
      */
     public function getFullDisplayAttribute(): string
     {
-        $display = $this->name;
+        $display = (string)($this->name ?? '—');
 
         if ($this->day_of_the_week) {
             $display .= " ({$this->day_of_the_week}";

@@ -155,83 +155,76 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
             ],
           ),
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(_error!),
-                            ElevatedButton(
-                              onPressed: _loadStudents,
-                              child: const Text('Retry'),
-                            ),
-                          ],
+            child: StreamBuilder<List<Student>>(
+              stream: _service.streamStudents(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 60, color: Colors.grey[400]),
+                        const SizedBox(height: 12),
+                        Text('Error: ${snapshot.error}'),
+                        ElevatedButton(
+                          onPressed: () => setState(() {}),
+                          child: const Text('Retry'),
                         ),
-                      )
-                    : filteredStudents.isEmpty
-                        ? const Center(child: Text('រកមិនឃើញសិស្ស'))
-                        : RefreshIndicator(
-                            onRefresh: () => _loadStudents(reset: true),
-                            child: ListView.builder(
-                              itemCount: filteredStudents.length,
-                              padding: const EdgeInsets.only(bottom: 16),
-                              itemBuilder: (context, index) {
-                                final student = filteredStudents[index];
-                                return ListItemWidget<Student>(
-                                  item: student,
-                                  title: student.name,
-                                  subtitle: student.major ?? '—',
-                                  avatarImageUrl: student.avatarUrl,
-                                  avatarBackgroundColor: Colors.deepOrange,
-                                  avatarTextColor: Colors.white,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ShowStudentScreen(
-                                            studentId: student.id.toString()),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
+                      ],
+                    ),
+                  );
+                }
+
+                final students = snapshot.data ?? [];
+                
+                // Apply client-side filters
+                var filtered = students;
+                if (_selectedFaculty != null) {
+                  filtered = filtered.where((s) => s.faculty == _selectedFaculty).toList();
+                }
+                if (_selectedShift != null) {
+                  filtered = filtered.where((s) => s.shift == _selectedShift).toList();
+                }
+                if (_selectedGeneration != null) {
+                  filtered = filtered.where((s) => s.generation == _selectedGeneration).toList();
+                }
+
+                if (filtered.isEmpty) {
+                  return const Center(child: Text('រកមិនឃើញសិស្ស'));
+                }
+
+                return ListView.builder(
+                  itemCount: filtered.length,
+                  padding: const EdgeInsets.only(bottom: 16),
+                  itemBuilder: (context, index) {
+                    final student = filtered[index];
+                    return ListItemWidget<Student>(
+                      item: student,
+                      title: student.name,
+                      subtitle: student.major ?? '—',
+                      avatarImageUrl: student.avatarUrl,
+                      avatarBackgroundColor: Colors.deepOrange,
+                      avatarTextColor: Colors.white,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ShowStudentScreen(
+                                studentId: student.id.toString()),
                           ),
-          ),
-          if (!_loading && _lastPage > 1)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Colors.grey.shade200)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: _page > 1
-                        ? () {
-                            _page--;
-                            _loadStudents();
-                          }
-                        : null,
-                  ),
-                  Text('ទំព័រ $_page នៃ $_lastPage'),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: _page < _lastPage
-                        ? () {
-                            _page++;
-                            _loadStudents();
-                          }
-                        : null,
-                  ),
-                ],
-              ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
+          ),
+          // Real-time synchronization enabled.
         ],
       ),
     );

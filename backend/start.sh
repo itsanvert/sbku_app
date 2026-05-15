@@ -15,7 +15,13 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     mkdir -p storage/app
     cp /etc/secrets/firebase-credentials.json storage/app/firebase-credentials.json
     chmod 644 storage/app/firebase-credentials.json
-    # We update the environment variables so Laravel and Google SDK use the readable copy
+    export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
+    export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
+elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
+    echo "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
+    mkdir -p storage/app
+    echo "$FIREBASE_CREDENTIALS_JSON" > storage/app/firebase-credentials.json
+    chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
 fi

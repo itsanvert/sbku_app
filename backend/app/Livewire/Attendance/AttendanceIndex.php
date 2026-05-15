@@ -11,8 +11,8 @@ use Livewire\Attributes\Layout;
 class AttendanceIndex extends Component
 {
     use WithPagination;
-    
-    public function __construct()
+
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -84,10 +84,10 @@ class AttendanceIndex extends Component
 
     public function getRecordsProperty()
     {
-        if (config('app.env') === 'production') {
+        if ($this->firestore && \App\Services\FirestoreService::isActive()) {
             $user = auth()->user();
             $filters = [];
-            
+
             if ($user->role === 'student') {
                 $filters['student_id'] = is_array($user->student) ? $user->student['id'] : $user->student?->id;
             } elseif ($user->role === 'teacher') {
@@ -95,12 +95,11 @@ class AttendanceIndex extends Component
             }
 
             if ($this->filterDate) $filters['attendance_date'] = $this->filterDate;
-            
+
             $records = $this->firestore->list('attendances', $filters, 'attendance_date', 'desc');
-            
-            // In-memory filtering for month/year if needed (Firestore doesn't support partial date filters easily without dedicated fields)
+
             $collection = collect($records);
-            
+
             if ($this->filterMonth) {
                 $collection = $collection->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->month == $this->filterMonth);
             }
@@ -108,8 +107,45 @@ class AttendanceIndex extends Component
                 $collection = $collection->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
             }
 
-            $items = $collection->forPage($this->getPage(), 20);
-            
+            $items = $collection->forPage($this->getPage(), 20)->map(function ($data) {
+                $a = new Attendance();
+                $a->forceFill($data);
+                $a->exists = true;
+
+                // 1. Mock Student relationship
+                $s = new \App\Models\Student();
+                $s->forceFill([
+                    'id'   => $data['student_id'] ?? null,
+                    'name' => $data['student_name'] ?? '—',
+                ]);
+
+                $u = new \App\Models\User();
+                $u->forceFill([
+                    'id'   => $data['user_id'] ?? null,
+                    'name' => $data['student_name'] ?? '—',
+                ]);
+                $s->setRelation('user', $u);
+                $a->setRelation('student', $s);
+
+                // 2. Mock Session relationship
+                $sess = new \App\Models\AttendanceSession();
+                $sess->forceFill([
+                    'id' => $data['session_id'] ?? null,
+                ]);
+
+                $fac = new \App\Models\Faculty();
+                $fac->forceFill(['id' => $data['faculty_id'] ?? null, 'name' => $data['faculty_name'] ?? '—']);
+                $sess->setRelation('faculty', $fac);
+
+                $maj = new \App\Models\Major();
+                $maj->forceFill(['id' => $data['major_id'] ?? null, 'name' => $data['major_name'] ?? '—']);
+                $sess->setRelation('major', $maj);
+
+                $a->setRelation('session', $sess);
+
+                return $a;
+            });
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
@@ -134,7 +170,7 @@ class AttendanceIndex extends Component
             $records = collect($this->firestore->list('attendances', $filters));
             if ($this->filterMonth) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->month == $this->filterMonth);
             if ($this->filterYear) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
-            
+
             // Map to Models for the PDF view
             $records = $records->map(function($data) {
                 $a = new Attendance();
@@ -145,7 +181,7 @@ class AttendanceIndex extends Component
         } else {
             $records = $this->getBaseQuery()->get();
         }
-        
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
             'records'    => $records,
             'reportedBy' => auth()->user()?->name ?? 'System',
@@ -156,7 +192,7 @@ class AttendanceIndex extends Component
                 $this->search      ? 'Search: ' . $this->search      : null,
             ])->filter()->implode(' | ') ?: 'All records',
         ]);
-        
+
         return response()->streamDownload(
             fn () => print($pdf->output()),
             'attendance-records.pdf'
@@ -175,12 +211,12 @@ class AttendanceIndex extends Component
             $records = collect($this->firestore->list('attendances', $filters));
             if ($this->filterMonth) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->month == $this->filterMonth);
             if ($this->filterYear) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
-            
+
             $ids = $records->pluck('id')->toArray();
         } else {
             $ids = $this->getBaseQuery()->pluck('id')->toArray();
         }
-        
+
         session([
             'attendance_export_ids' => $ids,
             'attendance_export_filter' => collect([
@@ -190,7 +226,7 @@ class AttendanceIndex extends Component
                 $this->search ? 'Search: ' . $this->search : null,
             ])->filter()->implode(' | ') ?: 'All records'
         ]);
-        
+
         return $this->redirect(route('attendance.export.excel'), navigate: false);
     }
 

@@ -1,10 +1,23 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sbku_app/model/teacher_model.dart';
 import 'package:sbku_app/service/api_service.dart';
 
 
 class TeacherService {
   final ApiService _api = ApiService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  /// Get teachers as a real-time stream for "sync" functionality.
+  Stream<List<Teacher>> streamTeachers() {
+    return _firestore.collection('teachers').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return Teacher.fromJson(data);
+      }).toList();
+    });
+  }
 
   Future<TeacherPaginated> getTeachers({
     int page = 1,

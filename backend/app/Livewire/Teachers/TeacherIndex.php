@@ -18,7 +18,7 @@ class TeacherIndex extends Component
 
     private $firestore;
 
-    public function __construct()
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -76,7 +76,8 @@ class TeacherIndex extends Component
     #[Computed]
     public function teachers()
     {
-        if (config('app.env') === 'production') {
+        // Use Firestore if the service is active
+        if ($this->firestore && \App\Services\FirestoreService::isActive()) {
             $teachers = $this->firestore->list('teachers');
             $collection = collect($teachers);
 
@@ -87,8 +88,49 @@ class TeacherIndex extends Component
                 );
             }
 
-            $items = $collection->forPage($this->getPage(), 10);
-            
+            // Map to Model objects for Blade compatibility
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                $t = new Teacher();
+                
+                // Separate relations from attributes
+                $userData = [
+                    'id'    => $data['user_id'] ?? null,
+                    'name'  => $data['user_name'] ?? ($data['name'] ?? '—'),
+                    'email' => $data['user_email'] ?? ($data['email'] ?? '—'),
+                ];
+                $majorData = [
+                    'id'   => $data['major_id'] ?? null,
+                    'name' => $data['major_name'] ?? '—',
+                ];
+                $facultyData = [
+                    'id'   => $data['faculty_id'] ?? null,
+                    'name' => $data['faculty_name'] ?? '—',
+                ];
+                $shiftData = [
+                    'id'   => $data['shift_id'] ?? null,
+                    'name' => $data['shift_name'] ?? '—',
+                ];
+                $scheduleData = [
+                    'id'   => $data['schedule_id'] ?? null,
+                    'name' => $data['schedule_display'] ?? '—',
+                ];
+
+                // Remove potentially conflicting keys from the main data array
+                $cleanData = array_diff_key($data, array_flip(['user', 'major', 'faculty', 'shift', 'schedule']));
+
+                $t->forceFill($cleanData);
+                $t->exists = true;
+
+                // Set properly hydrated relationships (no longer "mocked" logic, but real data hydration)
+                $t->setRelation('user', (new \App\Models\User())->forceFill($userData));
+                $t->setRelation('major', (new \App\Models\Major())->forceFill($majorData));
+                $t->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
+                $t->setRelation('shift', (new \App\Models\Shift())->forceFill($shiftData));
+                $t->setRelation('schedule', (new \App\Models\Schedule())->forceFill($scheduleData));
+
+                return $t;
+            });
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
@@ -98,6 +140,7 @@ class TeacherIndex extends Component
             );
         }
 
+        // Fallback to Eloquent (Local SQL)
         return Teacher::query()
             ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
             ->when($this->search, function ($q) {

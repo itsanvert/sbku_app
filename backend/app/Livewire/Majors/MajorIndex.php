@@ -10,8 +10,8 @@ use Livewire\WithPagination;
 class MajorIndex extends Component
 {
     use WithPagination;
-    
-    public function __construct()
+
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -22,7 +22,7 @@ class MajorIndex extends Component
     public $showCreateModal = false;
     public $showEditModal = false;
     public $editMajorId = null;
-    
+
     // Form fields
     public $name;
     public $faculty_id;
@@ -42,7 +42,7 @@ class MajorIndex extends Component
 
     public function store()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:3',
                 'faculty_id' => 'required',
@@ -65,8 +65,8 @@ class MajorIndex extends Component
     public function edit($id)
     {
         $this->editMajorId = $id;
-        
-        if (config('app.env') === 'production') {
+
+        if (\App\Services\FirestoreService::isActive()) {
             $major = $this->firestore->getDocument('majors', (string)$id);
             $this->name = $major['name'] ?? '';
             $this->faculty_id = $major['faculty_id'] ?? '';
@@ -75,13 +75,13 @@ class MajorIndex extends Component
             $this->name = $major->name;
             $this->faculty_id = $major->faculty_id;
         }
-        
+
         $this->showEditModal = true;
     }
 
     public function update()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:3',
                 'faculty_id' => 'required',
@@ -105,7 +105,7 @@ class MajorIndex extends Component
 
     public function delete($id)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->delete('majors', (string)$id);
         } else {
             Major::findOrFail($id)->delete();
@@ -115,15 +115,29 @@ class MajorIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $majors = $this->firestore->list('majors');
             $collection = collect($majors);
             if ($this->search) {
                 $collection = $collection->filter(fn($m) => str_contains(strtolower($m['name'] ?? ''), strtolower($this->search)));
             }
-            
-            $items = $collection->forPage($this->getPage(), 10);
-            
+
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+                $m = new Major();
+                $m->forceFill($data);
+                $m->exists = true;
+
+                // Mock Faculty relationship
+                $f = new \App\Models\Faculty();
+                $f->forceFill([
+                    'id'   => $data['faculty_id'] ?? null,
+                    'name' => $data['faculty_name'] ?? '—',
+                ]);
+                $m->setRelation('faculty', $f);
+
+                return $m;
+            });
+
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
