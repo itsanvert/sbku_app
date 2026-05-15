@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Services\FirestoreService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -28,21 +29,30 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-        ]);
+        if (FirestoreService::isActive()) {
+            $validated = $request->validate([
+                'name'  => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+            ]);
 
-        $user->forceFill([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-        ])->save();
+            app(FirestoreService::class)->update('users', (string) $user->id, array_merge($validated, [
+                'updated_at' => now()->format('Y-m-d H:i:s'),
+            ]));
 
-        // Flat format for Flutter AuthService compatibility
+            $user->forceFill($validated);
+        } else {
+            $validated = $request->validate([
+                'name'  => 'required|string|max:255',
+                'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            ]);
+
+            $user->forceFill($validated)->save();
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'user'    => (new UserResource($user->fresh()))->resolve(),
+            'user'    => (new UserResource($user))->resolve(),
         ]);
     }
 
@@ -65,9 +75,16 @@ class ProfileController extends Controller
             ], 422);
         }
 
-        $user->forceFill([
-            'password' => Hash::make($request->password),
-        ])->save();
+        if (FirestoreService::isActive()) {
+            app(FirestoreService::class)->update('users', (string) $user->id, [
+                'password'   => Hash::make($request->password),
+                'updated_at' => now()->format('Y-m-d H:i:s'),
+            ]);
+        } else {
+            $user->forceFill([
+                'password' => Hash::make($request->password),
+            ])->save();
+        }
 
         return response()->json([
             'success' => true,
@@ -90,7 +107,7 @@ class ProfileController extends Controller
 
         $photoPath = $user->profile_photo_path;
 
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             
             if ($teacher = $user->teacher) {
@@ -112,7 +129,7 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Profile photo updated successfully',
-            'user'    => (new UserResource($user->fresh()))->resolve(),
+            'user'    => (new UserResource($user))->resolve(),
         ]);
     }
 
@@ -142,9 +159,15 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-        $user->forceFill([
-            'fcm_token' => $request->token,
-        ])->save();
+
+        if (FirestoreService::isActive()) {
+            app(FirestoreService::class)->update('users', (string) $user->id, [
+                'fcm_token'  => $request->token,
+                'updated_at' => now()->format('Y-m-d H:i:s'),
+            ]);
+        } else {
+            $user->forceFill(['fcm_token' => $request->token])->save();
+        }
 
         return response()->json([
             'success' => true,

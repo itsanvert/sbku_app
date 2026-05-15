@@ -1,4 +1,4 @@
-import 'package:sbku_app/service/api_service.dart';
+import 'package:sbku_app/core/constants/app_config.dart';
 
 class User {
   final String id;
@@ -38,7 +38,7 @@ class User {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       emailVerifiedAt: json['email_verified_at'],
-      profilePhotoUrl: _fixPhotoUrl(rawPhotoUrl),
+      profilePhotoUrl: AppConfig.resolveMediaUrl(rawPhotoUrl),
       twoFactorEnabled: json['two_factor_enabled'] ?? false,
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
@@ -46,40 +46,6 @@ class User {
       studentId: json['student_id']?.toString(),
       teacherId: json['teacher_id']?.toString(),
     );
-  }
-
-  /// Rewrites localhost / 127.0.0.1 URLs to the real backend host so that
-  /// profile photos load correctly on physical devices.
-  static String? _fixPhotoUrl(String? url) {
-    if (url == null || url.isEmpty) return null;
-
-    // If it's already a full URL from a CDN (like ui-avatars or google), leave it be
-    if (url.contains('ui-avatars.com') || url.contains('googleusercontent.com')) {
-      return url;
-    }
-
-    // Extract the origin (scheme + host + port) from the configured API base URL
-    final apiBase = ApiService.baseUrl; 
-    final uri = Uri.tryParse(apiBase);
-    if (uri == null) return url;
-    
-    final backendOrigin = '${uri.scheme}://${uri.host}${uri.hasPort ? ":${uri.port}" : ""}';
-
-    // Replace any loopback variant with the real backend origin
-    final loopbackRegex = RegExp(r'https?://(localhost|127\.0\.0\.1)(:\d+)?');
-    if (url.contains(loopbackRegex)) {
-      return url.replaceFirst(loopbackRegex, backendOrigin);
-    }
-    
-    // If it's a relative path, prepend the base origin
-    if (!url.startsWith('http')) {
-      // Ensure we don't have double slashes
-      final cleanPath = url.startsWith('/') ? url.substring(1) : url;
-      // If it doesn't contain 'storage', it might be a direct path
-      return '$backendOrigin/$cleanPath';
-    }
-
-    return url;
   }
 
   Map<String, dynamic> toJson() {

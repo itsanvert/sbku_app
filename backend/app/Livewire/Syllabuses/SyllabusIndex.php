@@ -76,7 +76,7 @@ class SyllabusIndex extends Component
     #[Computed]
     public function syllabuses()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $syllabuses = $this->firestore->list('syllabuses');
             $collection = collect($syllabuses);
 
@@ -164,7 +164,7 @@ class SyllabusIndex extends Component
     public function deleteSyllabus()
     {
         if ($this->deleteSyllabusId) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $this->firestore->delete('syllabuses', (string) $this->deleteSyllabusId);
             } else {
                 Syllabus::findOrFail($this->deleteSyllabusId)->delete();
@@ -196,7 +196,7 @@ class SyllabusIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             return view('livewire.syllabuses.syllabus-index', [
                 'faculties' => collect($this->firestore->list('faculties'))->sortBy('name'),
                 'majors' => collect($this->firestore->list('majors'))->sortBy('name'),

@@ -48,14 +48,19 @@ class AttendanceCreate extends Component
     public ?Syllabus $selectedSyllabus   = null;
     public int       $enrolledStudents   = 0;
 
-    protected $rules = [
-        'teacher_id'  => 'required|exists:teachers,id',
-        'syllabus_id' => 'required|exists:syllabuses,id',
-        'faculty_id'  => 'required',
-        'major_id'    => 'required',
-        'latitude'    => 'required|numeric',
-        'longitude'   => 'required|numeric',
-    ];
+    protected function rules(): array
+    {
+        $isFirestore = \App\Services\FirestoreService::isActive();
+
+        return [
+            'teacher_id'  => 'required' . ($isFirestore ? '' : '|exists:teachers,id'),
+            'syllabus_id' => 'required' . ($isFirestore ? '' : '|exists:syllabuses,id'),
+            'faculty_id'  => 'required',
+            'major_id'    => 'required',
+            'latitude'    => 'required|numeric',
+            'longitude'   => 'required|numeric',
+        ];
+    }
 
     protected $messages = [
         'syllabus_id.required' => 'Please select a syllabus / class schedule.',
@@ -90,7 +95,7 @@ class AttendanceCreate extends Component
             return;
         }
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $syllabusData = $this->firestore->getDocument('syllabuses', (string)$value);
             if (!$syllabusData) return;
 
@@ -184,7 +189,7 @@ class AttendanceCreate extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $teachers = collect($this->firestore->list('teachers'));
             
             $syllabuses = $this->teacher_id

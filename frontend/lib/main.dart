@@ -70,7 +70,15 @@ Future<void> main() async {
     statusBarBrightness: Brightness.light, // iOS
   ));
 
-  await dotenv.load();
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    try {
+      await dotenv.load(fileName: '.env.example');
+    } catch (_) {
+      // AppConfig falls back to production host.
+    }
+  }
   setupServiceLocator();
 
   runApp(

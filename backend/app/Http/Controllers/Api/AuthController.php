@@ -19,14 +19,12 @@ use Illuminate\Validation\ValidationException;
  *
  * Uses ApiResponse trait for consistent JSON envelope.
  * Uses UserResource for consistent user serialization.
- *re
+ *
  * NOTE: Auth responses use a FLAT format (token/user at top level)
  * for backward compatibility with the existing Flutter AuthService.
  */
 class AuthController extends Controller
 {
-    use ApiResponse;
-
     use ApiResponse;
 
     /**
@@ -46,15 +44,10 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Mock token for now to avoid Sanctum DB dependency
         $token = base64_encode('user_' . $user->id . '_' . time());
 
-        // Flat format for Flutter AuthService compatibility
-        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
-            'user'    => (new UserResource($user))->resolve(),
-            'token'   => $token,
             'user'    => (new UserResource($user))->resolve(),
             'token'   => $token,
         ], 201);
@@ -74,30 +67,20 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        
-        // Mock token for now to avoid Sanctum DB dependency
-        // In a full migration, we would use a Firestore-backed token store
         $token = base64_encode('user_' . $user->id . '_' . time());
 
-        // Flat format for Flutter AuthService compatibility
-        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
-            'user'    => (new UserResource($user))->resolve(),
-            'token'   => $token,
             'user'    => (new UserResource($user))->resolve(),
             'token'   => $token,
         ]);
     }
 
     /**
-     * Logout user
+     * Logout user (stateless token — client discards the token).
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-
-        return $this->success(null, 'Logged out successfully');
         return $this->success(null, 'Logged out successfully');
     }
 
@@ -106,11 +89,8 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        // Flat format for Flutter AuthService compatibility
-        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
-            'user'    => (new UserResource($request->user()))->resolve(),
             'user'    => (new UserResource($request->user()))->resolve(),
         ]);
     }

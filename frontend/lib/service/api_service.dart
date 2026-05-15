@@ -1,15 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:sbku_app/core/constants/app_config.dart';
 
 class ApiService {
-  // ⚠️ API URL is loaded from .env file
-  // Update .env with your Laravel backend URL (WITHOUT /api)
-  // For Android Emulator: API_URL=http://10.0.2.2:8000
-  // For iOS Simulator: API_URL=http://localhost:8000
-  // For Physical Device: API_URL=http://YOUR_COMPUTER_IP:8000 (e.g., http://192.168.1.14:8000)
-  static String get baseUrl => '${dotenv.env['API_URL']}/api';
+  /// Laravel API base (includes `/api`). Override with `API_URL` in `.env` (host only, no `/api`).
+  static String get baseUrl => AppConfig.apiBaseUrl;
 
   final storage = const FlutterSecureStorage();
 

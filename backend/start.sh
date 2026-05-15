@@ -39,6 +39,9 @@ export DB_CONNECTION=sqlite
 export DB_DATABASE=:memory:
 export DB_HOST=127.0.0.1
 
+# Public storage symlink for profile images (idempotent)
+php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
+
 # Clear caches to ensure fresh production assets
 php artisan config:clear
 php artisan view:clear

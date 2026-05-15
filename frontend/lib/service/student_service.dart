@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sbku_app/core/network/api_response_parser.dart';
 import 'package:sbku_app/model/student_model.dart';
 import 'package:sbku_app/service/api_service.dart';
 
@@ -34,20 +35,25 @@ class StudentService {
     final response = await _api.get('students?$query');
 
     if (response.statusCode == 200) {
-      return StudentPaginated.fromJson(jsonDecode(response.body));
+      final body = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
+      return StudentPaginated.fromJson(body);
     }
 
-    throw Exception('Failed to load students: ${response.statusCode}');
+    throw Exception(ApiResponseParser.errorMessage(response));
   }
 
   Future<Student> getStudent(String id) async {
     final response = await _api.get('students/$id');
 
     if (response.statusCode == 200) {
-      return Student.fromJson(jsonDecode(response.body));
+      final body = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
+      final data = ApiResponseParser.unwrapData(body);
+      return Student.fromJson(
+        data is Map<String, dynamic> ? data : body,
+      );
     }
 
-    throw Exception('Student not found');
+    throw Exception(ApiResponseParser.errorMessage(response));
   }
 
   Future<void> deleteStudent(String id) async {

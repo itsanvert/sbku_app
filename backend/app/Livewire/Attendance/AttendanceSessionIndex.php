@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Attendance;
 
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\AttendanceSession;
@@ -51,12 +52,22 @@ class AttendanceSessionIndex extends Component
             }
             
             $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
-            
-            // Convert to a collection for pagination
+
             $collection = collect($sessions);
-            
-            $items = $collection->forPage($this->getPage(), 10);
-            
+
+            if ($this->search) {
+                $needle = strtolower($this->search);
+                $collection = $collection->filter(function ($session) use ($needle) {
+                    $teacher = strtolower($session['teacher_name'] ?? $session['teacher_user_name'] ?? '');
+
+                    return str_contains($teacher, $needle);
+                });
+            }
+
+            $items = $collection
+                ->forPage($this->getPage(), 10)
+                ->map(fn (array $data) => FirestoreHydrator::attendanceSession($data));
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
