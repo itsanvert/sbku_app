@@ -41,8 +41,10 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
 fi
 
-# Run migrations
-if [ "$DB_CONNECTION" = "sqlite" ]; then
+# Run migrations (skip if using Firestore)
+if [ "$USE_FIRESTORE" = "true" ]; then
+    echo "USE_FIRESTORE is true - skipping database migrations"
+elif [ "$DB_CONNECTION" = "sqlite" ]; then
     php artisan migrate --force --database=sqlite
 else
     php artisan migrate --force
