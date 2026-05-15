@@ -59,15 +59,10 @@ RUN npm ci --prefer-offline
 
 # Copy only what Vite/Mix actually needs — not the entire Laravel app.
 # Add or remove lines here to match your project structure.
-COPY vite.config.js ./
-# Include postcss/tailwind configs if present (safe to copy even if absent
-# as long as the files exist; adjust to match your repo).
+# Copy only what Vite actually needs
+COPY vite.config.js tailwind.config.js postcss.config.js ./
 COPY resources/ ./resources/
-COPY public/      ./public/
-
-# Copy any additional config files your build tool needs:
-# COPY tailwind.config.js ./
-# COPY postcss.config.js  ./
+COPY public/ ./public/
 
 RUN npm run build
 
