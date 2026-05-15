@@ -79,48 +79,8 @@ class StudentIndex extends Component
                 );
             }
 
-            // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                $s = new Student();
-                $s->forceFill($data);
-                $s->exists = true;
-
-                // 1. Mock User relationship
-                $u = new \App\Models\User();
-                $u->forceFill([
-                    'id'    => $data['user_id'] ?? null,
-                    'name'  => $data['user_name'] ?? '—',
-                    'email' => $data['user_email'] ?? '—',
-                ]);
-                $s->setRelation('user', $u);
-
-                // 2. Mock Major relationship
-                $maj = new \App\Models\Major();
-                $maj->forceFill([
-                    'id'   => $data['major_id'] ?? null,
-                    'name' => $data['major_name'] ?? '—',
-                ]);
-                $s->setRelation('major', $maj);
-
-                // 3. Mock Faculty relationship
-                $fac = new \App\Models\Faculty();
-                $fac->forceFill([
-                    'id'   => $data['faculty_id'] ?? null,
-                    'name' => $data['faculty_name'] ?? '—',
-                ]);
-                $s->setRelation('faculty', $fac);
-
-                // 4. Mock Shift relationship
-                $shift = new \App\Models\Shift();
-                $shift->forceFill([
-                    'id'   => $data['shift_id'] ?? null,
-                    'name' => $data['shift_name'] ?? '—',
-                ]);
-                $s->setRelation('shift', $shift);
-
-                return $s;
-            });
-
+            $items = $collection->forPage($this->getPage(), 10);
+            
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
@@ -246,19 +206,10 @@ class StudentIndex extends Component
     public function render()
     {
         if (config('app.env') === 'production') {
-            $hydrate = function($collection, $modelClass) {
-                return collect($this->firestore->list($collection))->map(function($data) use ($modelClass) {
-                    $m = new $modelClass();
-                    $m->forceFill($data);
-                    $m->exists = true;
-                    return $m;
-                })->sortBy('name');
-            };
-
             return view('livewire.students.student-index', [
-                'faculties' => $hydrate('faculties', Faculty::class),
-                'majors' => $hydrate('majors', Major::class),
-                'shifts' => $hydrate('shifts', Shift::class),
+                'faculties' => collect($this->firestore->list('faculties')),
+                'majors' => collect($this->firestore->list('majors')),
+                'shifts' => collect($this->firestore->list('shifts')),
             ])->layout('layouts.app');
         }
 

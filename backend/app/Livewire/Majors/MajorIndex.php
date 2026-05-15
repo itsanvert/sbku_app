@@ -122,21 +122,7 @@ class MajorIndex extends Component
                 $collection = $collection->filter(fn($m) => str_contains(strtolower($m['name'] ?? ''), strtolower($this->search)));
             }
             
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                $m = new Major();
-                $m->forceFill($data);
-                $m->exists = true;
-
-                // Mock Faculty relationship
-                $f = new \App\Models\Faculty();
-                $f->forceFill([
-                    'id'   => $data['faculty_id'] ?? null,
-                    'name' => $data['faculty_name'] ?? '—',
-                ]);
-                $m->setRelation('faculty', $f);
-
-                return $m;
-            });
+            $items = $collection->forPage($this->getPage(), 10);
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
@@ -148,12 +134,7 @@ class MajorIndex extends Component
 
             return view('livewire.majors.major-index', [
                 'majors' => $paginated,
-                'faculties' => collect($this->firestore->list('faculties'))->map(function($data) {
-                    $f = new Faculty();
-                    $f->forceFill($data);
-                    $f->exists = true;
-                    return $f;
-                })->sortBy('name'),
+                'faculties' => collect($this->firestore->list('faculties')),
             ])->layout('layouts.app');
         }
 

@@ -55,41 +55,7 @@ class AttendanceSessionIndex extends Component
             // Convert to a collection for pagination
             $collection = collect($sessions);
             
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                $sess = new AttendanceSession();
-                $sess->forceFill($data);
-                $sess->exists = true;
-
-                // 1. Mock Teacher relationship
-                $t = new \App\Models\Teacher();
-                $t->forceFill([
-                    'id'   => $data['teacher_id'] ?? null,
-                    'name' => $data['teacher_name'] ?? '—',
-                ]);
-                
-                $u = new \App\Models\User();
-                $u->forceFill([
-                    'id'   => $data['user_id'] ?? null,
-                    'name' => $data['teacher_name'] ?? '—',
-                ]);
-                $t->setRelation('user', $u);
-                $sess->setRelation('teacher', $t);
-
-                // 2. Mock Other relationships
-                $fac = new \App\Models\Faculty();
-                $fac->forceFill(['id' => $data['faculty_id'] ?? null, 'name' => $data['faculty_name'] ?? '—']);
-                $sess->setRelation('faculty', $fac);
-
-                $maj = new \App\Models\Major();
-                $maj->forceFill(['id' => $data['major_id'] ?? null, 'name' => $data['major_name'] ?? '—']);
-                $sess->setRelation('major', $maj);
-
-                $ac = new \App\Models\AcademicClass();
-                $ac->forceFill(['id' => $data['academic_class_id'] ?? null, 'name' => $data['academic_class_name'] ?? '—']);
-                $sess->setRelation('academicClass', $ac);
-
-                return $sess;
-            });
+            $items = $collection->forPage($this->getPage(), 10);
             
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

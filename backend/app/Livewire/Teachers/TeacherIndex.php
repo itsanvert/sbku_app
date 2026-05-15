@@ -10,6 +10,13 @@ use Livewire\Attributes\Computed;
 class TeacherIndex extends Component
 {
     use WithPagination;
+    
+    public function __construct()
+    {
+        $this->firestore = app(\App\Services\FirestoreService::class);
+    }
+
+    private $firestore;
 
     public function __construct()
     {
@@ -74,56 +81,14 @@ class TeacherIndex extends Component
             $collection = collect($teachers);
 
             if ($this->search) {
-                $collection = $collection->filter(
-                    fn($t) =>
+                $collection = $collection->filter(fn($t) => 
                     str_contains(strtolower($t['user_name'] ?? ''), strtolower($this->search)) ||
                     str_contains(strtolower($t['user_email'] ?? ''), strtolower($this->search))
                 );
             }
 
-            // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                $t = new Teacher();
-                
-                // Separate relations from attributes
-                $userData = [
-                    'id'    => $data['user_id'] ?? null,
-                    'name'  => $data['user_name'] ?? '—',
-                    'email' => $data['user_email'] ?? '—',
-                ];
-                $majorData = [
-                    'id'   => $data['major_id'] ?? null,
-                    'name' => $data['major_name'] ?? '—',
-                ];
-                $facultyData = [
-                    'id'   => $data['faculty_id'] ?? null,
-                    'name' => $data['faculty_name'] ?? '—',
-                ];
-                $shiftData = [
-                    'id'   => $data['shift_id'] ?? null,
-                    'name' => $data['shift_name'] ?? '—',
-                ];
-                $scheduleData = [
-                    'id'           => $data['schedule_id'] ?? null,
-                    'full_display' => $data['schedule_display'] ?? '—',
-                ];
-
-                // Remove potentially conflicting keys from the main data array
-                $cleanData = array_diff_key($data, array_flip(['user', 'major', 'faculty', 'shift', 'schedule']));
-
-                $t->forceFill($cleanData);
-                $t->exists = true;
-
-                // Set mocked relationships
-                $t->setRelation('user', (new \App\Models\User())->forceFill($userData));
-                $t->setRelation('major', (new \App\Models\Major())->forceFill($majorData));
-                $t->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
-                $t->setRelation('shift', (new \App\Models\Shift())->forceFill($shiftData));
-                $t->setRelation('schedule', (new \App\Models\Schedule())->forceFill($scheduleData));
-
-                return $t;
-            });
-
+            $items = $collection->forPage($this->getPage(), 10);
+            
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
