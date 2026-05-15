@@ -53,6 +53,7 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
     export USE_FIRESTORE="true"
+    export DB_CONNECTION="sqlite"
 elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     echo "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
     mkdir -p storage/app
@@ -61,11 +62,15 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
     export USE_FIRESTORE="true"
+    export DB_CONNECTION="sqlite"
 fi
 
 # Run migrations (skip if using Firestore)
 if [ "$USE_FIRESTORE" = "true" ]; then
     echo "USE_FIRESTORE is true - skipping database migrations"
+    # Create empty SQLite database to prevent connection errors
+    mkdir -p database
+    touch database/database.sqlite
 elif [ "$DB_CONNECTION" = "sqlite" ]; then
     php artisan migrate --force --database=sqlite
 else

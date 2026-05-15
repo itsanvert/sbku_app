@@ -44,5 +44,3 @@ services:
         value: /etc/secrets/firebase-credentials.json
       - key: GOOGLE_CLOUD_USE_REST
         value: "true"
-      - key: USE_FIRESTORE
-        value: "true"

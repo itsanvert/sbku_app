@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('USE_FIRESTORE', false) === 'true' ? 'sqlite' : env('DB_CONNECTION', 'sqlite'),
 
     /*
     |--------------------------------------------------------------------------
@@ -85,12 +85,12 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
+            'url' => env('USE_FIRESTORE', false) === 'true' ? null : env('DB_URL'),
+            'host' => env('USE_FIRESTORE', false) === 'true' ? '127.0.0.1' : env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'database' => env('USE_FIRESTORE', false) === 'true' ? 'postgres' : env('DB_DATABASE', 'laravel'),
+            'username' => env('USE_FIRESTORE', false) === 'true' ? 'postgres' : env('DB_USERNAME', 'root'),
+            'password' => env('USE_FIRESTORE', false) === 'true' ? '' : env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
