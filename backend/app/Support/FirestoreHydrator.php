@@ -179,6 +179,37 @@ class FirestoreHydrator
         $schedule->forceFill($data);
         $schedule->exists = true;
 
+        // Set relationships to prevent database queries
+        if (!empty($data['teacher_id']) || !empty($data['teacher_name'])) {
+            $teacher = new Teacher();
+            $teacher->forceFill(['id' => $data['teacher_id'] ?? null]);
+            $teacher->setRelation('user', (new User())->forceFill([
+                'name' => $data['teacher_name'] ?? $data['teacher_user_name'] ?? '—',
+            ]));
+            $schedule->setRelation('teacher', $teacher);
+        }
+
+        if (!empty($data['subject_id']) || !empty($data['subject_name'])) {
+            $schedule->setRelation('subject', (new Subject())->forceFill([
+                'id' => $data['subject_id'] ?? null,
+                'name' => $data['subject_name'] ?? '—',
+            ]));
+        }
+
+        if (!empty($data['class_id']) || !empty($data['academic_class_name'])) {
+            $schedule->setRelation('academicClass', (new AcademicClass())->forceFill([
+                'id' => $data['class_id'] ?? $data['academic_class_id'] ?? null,
+                'name' => $data['academic_class_name'] ?? $data['class_name'] ?? '—',
+            ]));
+        }
+
+        if (!empty($data['room_id']) || !empty($data['room_name'])) {
+            $schedule->setRelation('room', (new Room())->forceFill([
+                'id' => $data['room_id'] ?? null,
+                'name' => $data['room_name'] ?? '—',
+            ]));
+        }
+
         return $schedule;
     }
 
