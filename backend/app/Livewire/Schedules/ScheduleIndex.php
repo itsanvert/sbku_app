@@ -218,22 +218,13 @@ class ScheduleIndex extends Component
                 $items, $collection->count(), 10, $this->getPage(), ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
             );
 
-            $hydrate = function($collection, $modelClass) {
-                return collect($this->firestore->list($collection))->map(function($data) use ($modelClass) {
-                    $m = new $modelClass();
-                    $m->forceFill($data);
-                    $m->exists = true;
-                    return $m;
-                })->sortBy('name');
-            };
-
             return view('livewire.schedules.schedule-index', [
                 'schedules' => $paginated,
-                'teachers' => $hydrate('teachers', \App\Models\Teacher::class),
-                'subjects' => $hydrate('subjects', \App\Models\Subject::class),
-                'academicClasses' => $hydrate('academic_classes', \App\Models\AcademicClass::class),
-                'rooms' => $hydrate('rooms', \App\Models\Room::class),
-                'syllabuses' => $hydrate('syllabuses', \App\Models\Syllabus::class),
+                'teachers' => collect($this->firestore->list('teachers')),
+                'subjects' => collect($this->firestore->list('subjects')),
+                'academicClasses' => collect($this->firestore->list('academic_classes')),
+                'rooms' => collect($this->firestore->list('rooms')),
+                'syllabuses' => collect($this->firestore->list('syllabuses')),
             ])->layout('layouts.app');
         }
 
