@@ -59,10 +59,14 @@ RUN npm ci --prefer-offline
 
 # Copy only what Vite/Mix actually needs — not the entire Laravel app.
 # Add or remove lines here to match your project structure.
-# Copy only what Vite actually needs
-COPY vite.config.js tailwind.config.js postcss.config.js ./
+# Tailwind needs the vendor folder to find classes in packages like Flux
+COPY --from=vendor /app/vendor ./vendor
+
+# Copy source files needed for Tailwind class detection
 COPY resources/ ./resources/
+COPY app/ ./app/
 COPY public/ ./public/
+COPY vite.config.js tailwind.config.js postcss.config.js ./
 
 RUN npm run build
 
