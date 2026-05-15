@@ -15,7 +15,8 @@ class TeacherController extends Controller
     public function index(Request $request)
     {
         if (config('app.env') === 'production' || $request->has('firestore')) {
-            $teachers = $this->firestore->list('teachers');
+            $firestore = app(\App\Services\FirestoreService::class);
+            $teachers = $firestore->list('teachers');
 
             return response()->json([
                 'data'         => $teachers,

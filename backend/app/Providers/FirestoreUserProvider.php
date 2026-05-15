@@ -20,21 +20,15 @@ class FirestoreUserProvider implements UserProvider
 
     /**
      * Create a User model instance from Firestore data.
+     * This method MUST be public as it is called by the provider itself 
+     * and potentially by other internal Laravel auth components.
      */
-    public function createModel(array $data)
+    public function hydrateUser(array $data)
     {
         $user = new User();
         $user->forceFill($data);
         $user->exists = true;
         return $user;
-    }
-
-    public function __call($name, $arguments)
-    {
-        if ($name === 'hydrateUser') {
-            return $this->createModel(...$arguments);
-        }
-        throw new \BadMethodCallException("Method [$name] does not exist on " . get_class($this));
     }
 
     public function retrieveById($identifier)
@@ -43,7 +37,7 @@ class FirestoreUserProvider implements UserProvider
             return $this->firestore->getDocument('users', (string)$identifier);
         });
 
-        return $userData ? $this->createModel($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function retrieveByToken($identifier, $token)
@@ -68,29 +62,30 @@ class FirestoreUserProvider implements UserProvider
         $userData = $cacheKey ? Cache::get($cacheKey) : null;
 
         if (!$userData) {
-            $query = $this->firestore->collection('users');
-            if (!$query) return null;
-
-            foreach ($credentials as $key => $value) {
-                if (!str_contains($key, 'password')) {
-                    $query = $query->where($key, '==', $value);
+            try {
+                $filters = [];
+                foreach ($credentials as $key => $value) {
+                    if (!str_contains($key, 'password')) {
+                        $filters[$key] = $value; // Use simple key-value for equality
+                    }
                 }
-            }
 
-            $snapshot = $query->documents();
-            foreach ($snapshot as $doc) {
-                $userData = $doc->data();
-                $userData['id'] = $doc->id();
-                
-                if ($cacheKey) {
-                    Cache::put($cacheKey, $userData, 300);
-                    Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
+                $results = $this->firestore->list('users', $filters);
+
+                if (!empty($results)) {
+                    $userData = $results[0]; // list() already includes the 'id'
+                    
+                    if ($cacheKey) {
+                        Cache::put($cacheKey, $userData, 300);
+                        Cache::put("user_auth_id_{$userData['id']}", $userData, 300);
+                    }
                 }
-                break;
+            } catch (\Exception $e) {
+                \Log::error("Firestore auth error: " . $e->getMessage());
             }
         }
 
-        return $userData ? $this->createModel($userData) : null;
+        return $userData ? $this->hydrateUser($userData) : null;
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials)
@@ -102,5 +97,4 @@ class FirestoreUserProvider implements UserProvider
     {
         return false;
     }
-
 }
