@@ -55,7 +55,23 @@ class AttendanceSessionIndex extends Component
             // Convert to a collection for pagination
             $collection = collect($sessions);
             
-            $items = $collection->forPage($this->getPage(), 10);
+            // Map to Model objects for Blade compatibility
+            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+                $sess = new AttendanceSession();
+                $sess->forceFill($data);
+                $sess->exists = true;
+                
+                // Mock teacher relationship if data is present
+                if (isset($data['teacher_name'])) {
+                    $t = new \App\Models\Teacher();
+                    $u = new \App\Models\User();
+                    $u->forceFill(['name' => $data['teacher_name']]);
+                    $t->setRelation('user', $u);
+                    $sess->setRelation('teacher', $t);
+                }
+                
+                return $sess;
+            });
             
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

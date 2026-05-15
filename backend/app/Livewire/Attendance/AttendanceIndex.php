@@ -108,7 +108,28 @@ class AttendanceIndex extends Component
                 $collection = $collection->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
             }
 
-            $items = $collection->forPage($this->getPage(), 20);
+            // Map to Model objects for Blade compatibility
+            $items = $collection->forPage($this->getPage(), 20)->map(function($data) {
+                $a = new Attendance();
+                $a->forceFill($data);
+                $a->exists = true;
+                
+                // Mock session and student relationships if data is present
+                // This helps Blade views that call $r->student->user->name
+                $s = new \App\Models\Student();
+                $s->forceFill(['id' => $data['student_id'] ?? null]);
+                
+                $u = new \App\Models\User();
+                $u->forceFill(['name' => $data['student_name'] ?? '—']);
+                $s->setRelation('user', $u);
+                $a->setRelation('student', $s);
+
+                $sess = new \App\Models\AttendanceSession();
+                $sess->forceFill(['id' => $data['session_id'] ?? null]);
+                $a->setRelation('session', $sess);
+                
+                return $a;
+            });
             
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
@@ -124,8 +145,27 @@ class AttendanceIndex extends Component
 
     public function exportPdf()
     {
-        // Get ALL filtered records (not just current page)
-        $records = $this->getBaseQuery()->get();
+        if (config('app.env') === 'production') {
+            $user = auth()->user();
+            $filters = [];
+            if ($user->role === 'student') $filters['student_id'] = is_array($user->student) ? $user->student['id'] : $user->student?->id;
+            elseif ($user->role === 'teacher') $filters['teacher_id'] = is_array($user->teacher) ? $user->teacher['id'] : $user->teacher?->id;
+            if ($this->filterDate) $filters['attendance_date'] = $this->filterDate;
+
+            $records = collect($this->firestore->list('attendances', $filters));
+            if ($this->filterMonth) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->month == $this->filterMonth);
+            if ($this->filterYear) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
+            
+            // Map to Models for the PDF view
+            $records = $records->map(function($data) {
+                $a = new Attendance();
+                $a->forceFill($data);
+                $a->exists = true;
+                return $a;
+            });
+        } else {
+            $records = $this->getBaseQuery()->get();
+        }
         
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
             'records'    => $records,
@@ -146,8 +186,21 @@ class AttendanceIndex extends Component
 
     public function exportExcel()
     {
-        // Get ALL filtered IDs
-        $ids = $this->getBaseQuery()->pluck('id')->toArray();
+        if (config('app.env') === 'production') {
+            $user = auth()->user();
+            $filters = [];
+            if ($user->role === 'student') $filters['student_id'] = is_array($user->student) ? $user->student['id'] : $user->student?->id;
+            elseif ($user->role === 'teacher') $filters['teacher_id'] = is_array($user->teacher) ? $user->teacher['id'] : $user->teacher?->id;
+            if ($this->filterDate) $filters['attendance_date'] = $this->filterDate;
+
+            $records = collect($this->firestore->list('attendances', $filters));
+            if ($this->filterMonth) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->month == $this->filterMonth);
+            if ($this->filterYear) $records = $records->filter(fn($r) => \Carbon\Carbon::parse($r['attendance_date'])->year == $this->filterYear);
+            
+            $ids = $records->pluck('id')->toArray();
+        } else {
+            $ids = $this->getBaseQuery()->pluck('id')->toArray();
+        }
         
         session([
             'attendance_export_ids' => $ids,

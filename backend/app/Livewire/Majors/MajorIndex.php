@@ -122,7 +122,13 @@ class MajorIndex extends Component
                 $collection = $collection->filter(fn($m) => str_contains(strtolower($m['name'] ?? ''), strtolower($this->search)));
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
+            // Map to Model objects for Blade compatibility
+            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+                $m = new Major();
+                $m->forceFill($data);
+                $m->exists = true;
+                return $m;
+            });
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

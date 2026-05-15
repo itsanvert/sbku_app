@@ -112,7 +112,13 @@ class FacultyIndex extends Component
                 $collection = $collection->filter(fn($f) => str_contains(strtolower($f['name'] ?? ''), strtolower($this->search)));
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
+            // Map to Model objects for Blade compatibility
+            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+                $f = new Faculty();
+                $f->forceFill($data);
+                $f->exists = true;
+                return $f;
+            });
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,

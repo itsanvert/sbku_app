@@ -139,7 +139,13 @@ class SubjectIndex extends Component
                 );
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
+            // Map to Model objects for Blade compatibility
+            $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
+                $s = new Subject();
+                $s->forceFill($data);
+                $s->exists = true;
+                return $s;
+            });
             
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
