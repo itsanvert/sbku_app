@@ -12,7 +12,7 @@ use Livewire\Attributes\Layout;
 class AttendanceSessionIndex extends Component
 {
     use WithPagination;
-    
+
     public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
@@ -50,7 +50,7 @@ class AttendanceSessionIndex extends Component
                 // Firestore search is limited, but we can try to filter by teacher name if we stored it
                 // For now, let's just fetch all and filter in memory if small, or just fetch all.
             }
-            
+
             $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
 
             $collection = collect($sessions);

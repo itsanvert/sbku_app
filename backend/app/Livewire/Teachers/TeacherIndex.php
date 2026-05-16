@@ -10,7 +10,7 @@ use Livewire\Attributes\Computed;
 class TeacherIndex extends Component
 {
     use WithPagination;
-    
+
     private $firestore;
 
     public function boot()
@@ -75,7 +75,7 @@ class TeacherIndex extends Component
             $collection = collect($teachers);
 
             if ($this->search) {
-                $collection = $collection->filter(fn($t) => 
+                $collection = $collection->filter(fn($t) =>
                     str_contains(strtolower($t['user_name'] ?? ''), strtolower($this->search)) ||
                     str_contains(strtolower($t['user_email'] ?? ''), strtolower($this->search))
                 );
@@ -84,7 +84,7 @@ class TeacherIndex extends Component
             // Map to Model objects for Blade compatibility
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $t = new Teacher();
-                
+
                 // Separate relations from attributes
                 $userData = [
                     'id'    => $data['user_id'] ?? null,

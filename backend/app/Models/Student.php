@@ -86,18 +86,18 @@ class Student extends Model
     public function save(array $options = [])
     {
         $result = parent::save($options);
-        
+
         if (static::useFirestore() && $result) {
             $data = $this->toArray();
             $data['id'] = $this->id;
-            
+
             if ($this->wasRecentlyCreated) {
                 static::getFirestoreRepository()->create($data);
             } else {
                 static::getFirestoreRepository()->update($this->id, $data);
             }
         }
-        
+
         return $result;
     }
 
@@ -105,11 +105,11 @@ class Student extends Model
     public function delete()
     {
         $result = parent::delete();
-        
+
         if (static::useFirestore() && $result) {
             static::getFirestoreRepository()->delete($this->id);
         }
-        
+
         return $result;
     }
 
@@ -128,7 +128,7 @@ class Student extends Model
             }
             return $this->attributes['name'] ?? null;
         }
-        
+
         $user = $this->getRelationValue('user');
         return $user instanceof Model ? $user->name : ($this->user_name ?? null);
     }
@@ -146,7 +146,7 @@ class Student extends Model
             }
             return $this->attributes['email'] ?? null;
         }
-        
+
         $user = $this->getRelationValue('user');
         return $user instanceof Model ? $user->email : ($this->user_email ?? null);
     }
