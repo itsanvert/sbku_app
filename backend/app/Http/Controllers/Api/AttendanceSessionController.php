@@ -8,7 +8,6 @@ use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Student;
 use App\Services\AttendanceSessionService;
-use App\Services\FirestoreService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 

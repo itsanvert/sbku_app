@@ -23,6 +23,12 @@ use App\Http\Controllers\Api\AcademicClassController;
 // Public routes
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+
+// Health check
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'timestamp' => now()]);
+});
 
 // Public storage route for CORS support on Flutter Web
 Route::get('/storage/{path}', function ($path) {

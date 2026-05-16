@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Student;
-use App\Services\FirestoreService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -124,6 +123,8 @@ class AttendanceController extends Controller
     /**
      * Yearly report: attendance summary per student for a year.
      */
+    public function yearlyReport(Request $request)
+    {
         $year = (int)$request->year;
 
 
@@ -149,12 +150,12 @@ class AttendanceController extends Controller
         $monthlyBreakdown = DB::table('attendances')
             ->whereYear('attendance_date', $year)
             ->select(
-                DB::raw("strftime('%m', attendance_date) as month"), // Adjusted for SQLite if needed, but usually MySQL/Postgres in prod
+                DB::raw("DATE_FORMAT(attendance_date, '%m') as month"),
                 DB::raw("COUNT(*) as total"),
                 DB::raw("SUM(CASE WHEN status = 'Y' THEN 1 ELSE 0 END) as present"),
                 DB::raw("SUM(CASE WHEN status = 'N' THEN 1 ELSE 0 END) as absent")
             )
-            ->groupBy('month')
+            ->groupBy(DB::raw("DATE_FORMAT(attendance_date, '%m')"))
             ->orderBy('month')
             ->get();
 

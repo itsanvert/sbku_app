@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
-use App\Services\FirestoreService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -88,7 +88,6 @@ class ProfileController extends Controller
         $path = $request->file('photo')->store('profile-photos', 'public');
         $user->update(['profile_photo_path' => $path]);
 
-        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
             'message' => 'Profile photo updated successfully',
@@ -109,7 +108,6 @@ class ProfileController extends Controller
 
         $user->update(['profile_photo_path' => null]);
 
-        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
             'message' => 'Profile photo deleted successfully',
