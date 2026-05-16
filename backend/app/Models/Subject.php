@@ -7,7 +7,6 @@ use App\Traits\SyncsToFirestore;
 
 class Subject extends Model
 {
-    use SyncsToFirestore;
     protected $fillable = [
         'name',
         'code',

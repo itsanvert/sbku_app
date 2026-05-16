@@ -86,12 +86,6 @@ class _MessageListScreenState extends State<MessageListScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'សូមទាក់ទងអ្នកគ្រប់គ្រង ដើម្បីរៀបចំការអនុញ្ញាត Firestore Rules សម្រាប់ collection "messages"។',
-              style: TextStyle(color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () => setState(() {}),

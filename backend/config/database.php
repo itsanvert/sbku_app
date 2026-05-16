@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('USE_FIRESTORE', false) === 'true' ? 'sqlite' : env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sbku_app/core/constants/app_config.dart';
@@ -8,6 +9,10 @@ class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
 
   final storage = const FlutterSecureStorage();
+  
+  // Retry configuration
+  static const int maxRetries = 3;
+  static const Duration requestTimeout = Duration(seconds: 30);
 
   // Token management
   Future<String?> getToken() async {
@@ -22,11 +27,12 @@ class ApiService {
     await storage.delete(key: 'auth_token');
   }
 
-  // Headers
+  // Headers with user-agent and device identification
   Future<Map<String, String>> getHeaders({bool requiresAuth = false}) async {
     Map<String, String> headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'User-Agent': 'SBKU-Mobile/1.0.0',
     };
 
     if (requiresAuth) {
@@ -39,76 +45,92 @@ class ApiService {
     return headers;
   }
 
-  // GET request
-  Future<http.Response> get(String endpoint, {bool requiresAuth = true}) async {
-    try {
-      final headers = await getHeaders(requiresAuth: requiresAuth);
-      final response = await http.get(
-        Uri.parse('$baseUrl/$endpoint'),
-        headers: headers,
-      );
-      return response;
-    } catch (e) {
-      rethrow;
+  /// Retry wrapper with exponential backoff
+  Future<http.Response> _retryableRequest<T>(
+    Future<http.Response> Function() request,
+  ) async {
+    int attempt = 0;
+    
+    while (attempt < maxRetries) {
+      try {
+        final response = await request().timeout(requestTimeout);
+        
+        // Only retry on server errors (5xx) and connection issues
+        if (response.statusCode >= 500 && attempt < maxRetries - 1) {
+          attempt++;
+          await Future.delayed(Duration(milliseconds: 100 * (attempt * 2)));
+          continue;
+        }
+        
+        return response;
+      } on TimeoutException {
+        attempt++;
+        if (attempt >= maxRetries) rethrow;
+        await Future.delayed(Duration(milliseconds: 100 * (attempt * 2)));
+      } catch (e) {
+        // For network errors, retry
+        if (attempt < maxRetries - 1) {
+          attempt++;
+          await Future.delayed(Duration(milliseconds: 100 * (attempt * 2)));
+          continue;
+        }
+        rethrow;
+      }
     }
+    
+    throw TimeoutException('Max retries exceeded');
   }
 
-  // POST request
+  // GET request with retry
+  Future<http.Response> get(String endpoint, {bool requiresAuth = true}) async {
+    final headers = await getHeaders(requiresAuth: requiresAuth);
+    return await _retryableRequest(() => http.get(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: headers,
+    ));
+  }
+
+  // POST request with retry
   Future<http.Response> post(
     String endpoint,
     Map<String, dynamic> body, {
     bool requiresAuth = false,
   }) async {
-    try {
-      final headers = await getHeaders(requiresAuth: requiresAuth);
-      final response = await http.post(
-        Uri.parse('$baseUrl/$endpoint'),
-        headers: headers,
-        body: jsonEncode(body),
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
+    final headers = await getHeaders(requiresAuth: requiresAuth);
+    return await _retryableRequest(() => http.post(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: headers,
+      body: jsonEncode(body),
+    ));
   }
 
-  // PUT request
+  // PUT request with retry
   Future<http.Response> put(
     String endpoint,
     Map<String, dynamic> body, {
     bool requiresAuth = true,
   }) async {
-    try {
-      final headers = await getHeaders(requiresAuth: requiresAuth);
-      final response = await http.put(
-        Uri.parse('$baseUrl/$endpoint'),
-        headers: headers,
-        body: jsonEncode(body),
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
+    final headers = await getHeaders(requiresAuth: requiresAuth);
+    return await _retryableRequest(() => http.put(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: headers,
+      body: jsonEncode(body),
+    ));
   }
 
-  // DELETE request
+  // DELETE request with retry
   Future<http.Response> delete(
     String endpoint, {
     bool requiresAuth = true,
   }) async {
-    try {
-      final headers = await getHeaders(requiresAuth: requiresAuth);
-      final response = await http.delete(
-        Uri.parse('$baseUrl/$endpoint'),
-        headers: headers,
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
+    final headers = await getHeaders(requiresAuth: requiresAuth);
+    return await _retryableRequest(() => http.delete(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: headers,
+    ));
   }
 
-  // Multipart request (for file uploads)
+  // Multipart request (for file uploads) - no retry as file position can't be reset
   Future<http.StreamedResponse> postMultipart(
     String endpoint,
     Map<String, String> fields,
@@ -126,6 +148,7 @@ class ApiService {
 
       // Add headers
       request.headers['Accept'] = 'application/json';
+      request.headers['User-Agent'] = 'SBKU-Mobile/1.0.0';
       if (requiresAuth && token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
@@ -136,9 +159,34 @@ class ApiService {
       // Add file
       request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
 
-      return await request.send();
+      return await request.send().timeout(requestTimeout);
     } catch (e) {
       rethrow;
+    }
+  }
+
+  /// PATCH request with retry
+  Future<http.Response> patch(
+    String endpoint,
+    Map<String, dynamic> body, {
+    bool requiresAuth = true,
+  }) async {
+    final headers = await getHeaders(requiresAuth: requiresAuth);
+    return await _retryableRequest(() => http.patch(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: headers,
+      body: jsonEncode(body),
+    ));
+  }
+
+  /// Health check - useful for testing connectivity
+  Future<bool> healthCheck() async {
+    try {
+      final response = await get('health', requiresAuth: false);
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Health check failed: $e');
+      return false;
     }
   }
 }

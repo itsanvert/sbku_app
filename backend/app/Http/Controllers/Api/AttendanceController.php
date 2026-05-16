@@ -11,39 +11,30 @@ use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
-    public function __construct(
-        private readonly FirestoreService $firestore,
-    ) {}
+    public function __construct() {}
     /**
      * List attendances with filters.
      */
     public function index(Request $request)
     {
-        $filters = [];
+        $query = Attendance::with(['student.user', 'schedule', 'session']);
 
         if ($request->student_id) {
-            $filters['student_id'] = (string) $request->student_id;
+            $query->forStudent($request->student_id);
         }
 
         if ($request->date) {
-            $filters['attendance_date'] = $request->date;
+            $query->forDate($request->date);
         }
 
         if ($request->status) {
-            $filters['status'] = $request->status;
+            $query->where('status', $request->status);
         }
 
-        $attendances = $this->firestore->list(
-            'attendances', 
-            $filters, 
-            $request->sort_by ?? 'attendance_date', 
-            $request->sort_dir ?? 'desc'
-        );
+        $attendances = $query->orderBy($request->sort_by ?? 'attendance_date', $request->sort_dir ?? 'desc')
+            ->paginate($request->get('per_page', 15));
 
-        return response()->json([
-            'data' => $attendances,
-            'total' => count($attendances),
-        ]);
+        return response()->json($attendances);
     }
 
     /**
@@ -51,13 +42,7 @@ class AttendanceController extends Controller
      */
     public function show(Request $request, $id)
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
-            $attendance = $this->firestore->getDocument('attendances', (string)$id);
-            if (!$attendance) {
-                return response()->json(['message' => 'Attendance record not found'], 404);
-            }
-            return response()->json($attendance);
-        }
+
 
         $attendance = Attendance::findOrFail($id);
         return response()->json(
@@ -76,23 +61,7 @@ class AttendanceController extends Controller
 
         $date = $request->date;
 
-        if (config('app.env') === 'production' || $request->has('firestore')) {
-            $attendances = $this->firestore->list('attendances', ['attendance_date' => $date]);
-            $totalStudents = count($attendances);
-            $presentCount = count(array_filter($attendances, fn($a) => $a['status'] === 'Y'));
-            $absentCount = count(array_filter($attendances, fn($a) => $a['status'] === 'N'));
 
-            return response()->json([
-                'date' => $date,
-                'summary' => [
-                    'total' => $totalStudents,
-                    'present' => $presentCount,
-                    'absent' => $absentCount,
-                    'present_percentage' => $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100, 1) : 0,
-                ],
-                'records' => $attendances,
-            ]);
-        }
 
         $attendances = Attendance::with(['student.user', 'schedule'])
             ->forDate($date)
@@ -125,34 +94,7 @@ class AttendanceController extends Controller
         $month = (int)$request->month;
         $year = (int)$request->year;
 
-        if (\App\Services\FirestoreService::isActive()) {
-            $allAttendances = $this->firestore->list('attendances');
-            $filtered = collect($allAttendances)->filter(function($a) use ($month, $year) {
-                $d = \Carbon\Carbon::parse($a['attendance_date']);
-                return $d->month == $month && $d->year == $year;
-            });
 
-            $report = $filtered->groupBy('student_id')->map(function($group, $studentId) {
-                $first = $group->first();
-                $total = $group->count();
-                $present = $group->where('status', 'Y')->count();
-                return [
-                    'student_id' => $studentId,
-                    'student_name' => $first['student_name'] ?? '—',
-                    'profile_image_path' => $first['profile_image_path'] ?? null,
-                    'total_days' => $total,
-                    'present_days' => $present,
-                    'absent_days' => $total - $present,
-                    'attendance_rate' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
-                ];
-            })->values();
-
-            return response()->json([
-                'month' => $month,
-                'year' => $year,
-                'students' => $report,
-            ]);
-        }
 
         $students = DB::table('attendances')
             ->join('students', 'attendances.student_id', '=', 'students.id')
@@ -184,39 +126,7 @@ class AttendanceController extends Controller
      */
         $year = (int)$request->year;
 
-        if (\App\Services\FirestoreService::isActive()) {
-            $allAttendances = collect($this->firestore->list('attendances'));
-            $filtered = $allAttendances->filter(fn($a) => \Carbon\Carbon::parse($a['attendance_date'])->year == $year);
 
-            $studentsReport = $filtered->groupBy('student_id')->map(function($group, $studentId) {
-                $first = $group->first();
-                $total = $group->count();
-                $present = $group->where('status', 'Y')->count();
-                return [
-                    'student_id' => $studentId,
-                    'student_name' => $first['student_name'] ?? '—',
-                    'profile_image_path' => $first['profile_image_path'] ?? null,
-                    'total_days' => $total,
-                    'present_days' => $present,
-                    'absent_days' => $total - $present,
-                    'attendance_rate' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
-                ];
-            })->values();
-
-            $monthlyBreakdown = $filtered->groupBy(fn($a) => \Carbon\Carbon::parse($a['attendance_date'])->month)
-                ->map(fn($group, $month) => [
-                    'month' => $month,
-                    'total' => $group->count(),
-                    'present' => $group->where('status', 'Y')->count(),
-                    'absent' => $group->where('status', 'N')->count(),
-                ])->sortBy('month')->values();
-
-            return response()->json([
-                'year' => $year,
-                'students' => $studentsReport,
-                'monthly_breakdown' => $monthlyBreakdown,
-            ]);
-        }
 
         $students = DB::table('attendances')
             ->join('students', 'attendances.student_id', '=', 'students.id')
@@ -260,32 +170,7 @@ class AttendanceController extends Controller
      */
     public function studentHistory(Request $request, $id)
     {
-        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
-            $filters = ['student_id' => $id]; // Firestore ID is a string
-            
-            $attendances = $this->firestore->list('attendances', $filters, 'attendance_date', 'desc');
-            $collection = collect($attendances);
 
-            if ($request->month && $request->year) {
-                $collection = $collection->filter(function($a) use ($request) {
-                    $d = \Carbon\Carbon::parse($a['attendance_date']);
-                    return $d->month == $request->month && $d->year == $request->year;
-                });
-            }
-
-            return response()->json([
-                'summary' => [
-                    'total' => $collection->count(),
-                    'present' => $collection->where('status', 'Y')->count(),
-                    'absent' => $collection->where('status', 'N')->count(),
-                    'attendance_rate' => $collection->count() > 0 ? round(($collection->where('status', 'Y')->count() / $collection->count()) * 100, 1) : 0,
-                ],
-                'attendances' => [
-                    'data' => $collection->values()->all(),
-                    'total' => $collection->count(),
-                ],
-            ]);
-        }
 
         // Resolve student model. Check if $id is student.id or student.user_id
         $student = Student::where('id', $id)

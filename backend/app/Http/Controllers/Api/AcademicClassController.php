@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 class AcademicClassController extends Controller
 {
     public function __construct(
-        private readonly FirestoreService $firestore
     ) {}
 
     public function index(Request $request): JsonResponse

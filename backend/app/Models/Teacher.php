@@ -7,7 +7,6 @@ use App\Traits\SyncsToFirestore;
 
 class Teacher extends Model
 {
-    use SyncsToFirestore;
     /**
      * Default attribute values.
      */

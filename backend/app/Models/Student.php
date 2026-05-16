@@ -16,7 +16,6 @@ use App\Repositories\FirestoreUserRepository;
 
 class Student extends Model
 {
-    use SyncsToFirestore;
     protected $appends = ['name', 'email', 'avatar_url'];
 
     protected $fillable = [

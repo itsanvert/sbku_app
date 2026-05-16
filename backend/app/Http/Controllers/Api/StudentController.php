@@ -25,24 +25,10 @@ class StudentController extends Controller
 
     public function __construct(
         private readonly StudentService $studentService,
-        private readonly \App\Services\FirestoreService $firestore,
     ) {}
 
     public function index(Request $request)
     {
-        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
-            $filters = [];
-            $students = $this->firestore->list('students', $filters);
-
-            return response()->json([
-                'data'         => $students,
-                'current_page' => 1,
-                'last_page'    => 1,
-                'total'        => count($students),
-                'per_page'     => count($students),
-            ]);
-        }
-
         $students = Student::query()
             ->with(['user', 'major', 'faculty', 'academicClass'])
             ->whereHas('user', function($q) use ($request) {
@@ -70,14 +56,6 @@ class StudentController extends Controller
 
     public function show(Request $request, $id)
     {
-        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
-            $student = $this->firestore->getDocument('students', (string)$id);
-            if (!$student) {
-                return response()->json(['message' => 'Student not found'], 404);
-            }
-            return response()->json($student);
-        }
-
         $student = Student::findOrFail($id);
         return response()->json(
             $student->load(['user', 'major', 'faculty', 'academicClass'])
@@ -86,12 +64,6 @@ class StudentController extends Controller
 
     public function update(UpdateStudentRequest $request, $id)
     {
-        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
-            $data = $request->validated();
-            $student = $this->firestore->set('students', (string)$id, $data);
-            return response()->json($student);
-        }
-
         $student = Student::findOrFail($id);
         $student = $this->studentService->update(
             $student,
@@ -104,11 +76,6 @@ class StudentController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        if (\App\Services\FirestoreService::isActive() || $request->has('firestore')) {
-            $this->firestore->delete('students', (string)$id);
-            return response()->json(['message' => 'Student deleted']);
-        }
-
         $student = Student::findOrFail($id);
         $this->studentService->delete($student);
 

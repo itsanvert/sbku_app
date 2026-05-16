@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/model/user_model.dart';
 import 'package:sbku_app/service/auth_service.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -37,7 +36,6 @@ class AuthProvider with ChangeNotifier {
 
     if (result['success']) {
       _user = result['user'];
-      await _updateFcmToken();
       notifyListeners();
       return true;
     } else {
@@ -65,7 +63,7 @@ class AuthProvider with ChangeNotifier {
 
     if (result['success']) {
       _user = result['user'];
-      await _updateFcmToken();
+      notifyListeners();
       notifyListeners();
       return true;
     } else {
@@ -86,22 +84,7 @@ class AuthProvider with ChangeNotifier {
   // Check authentication status
   Future<void> checkAuth() async {
     _user = await _authService.getCurrentUser();
-    if (_user != null) {
-      await _updateFcmToken();
-    }
     notifyListeners();
-  }
-
-  // Helper method to sync FCM token
-  Future<void> _updateFcmToken() async {
-    try {
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        await _authService.updateFcmToken(token);
-      }
-    } catch (e) {
-      print("Failed to get/update FCM token: $e");
-    }
   }
 
   // Update profile

@@ -42,7 +42,7 @@ return [
         ],
 
         'api' => [
-            'driver' => 'firestore-token',
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
     ],
@@ -66,7 +66,7 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => env('AUTH_PROVIDER_DRIVER', env('APP_ENV') === 'production' ? 'firestore' : 'eloquent'),
+            'driver' => env('AUTH_PROVIDER_DRIVER', 'eloquent'),
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 

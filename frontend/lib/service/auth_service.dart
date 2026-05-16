@@ -240,11 +240,4 @@ class AuthService {
     }
   }
 
-  Future<void> updateFcmToken(String token) async {
-    try {
-      await _apiService.post('user/fcm-token', {'token': token}, requiresAuth: true);
-    } catch (_) {
-      // Non-fatal.
-    }
-  }
 }

@@ -11,7 +11,6 @@ use App\Repositories\FirestoreScheduleRepository;
 
 class Schedule extends Model
 {
-    use SyncsToFirestore;
 
     protected $fillable = [
         'name',

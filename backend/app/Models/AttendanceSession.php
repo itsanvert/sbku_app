@@ -8,7 +8,6 @@ use App\Traits\SyncsToFirestore;
 
 class AttendanceSession extends Model
 {
-    use SyncsToFirestore;
     protected $fillable = [
         'teacher_id',
         'faculty_id',

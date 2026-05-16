@@ -4,13 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Syllabus;
-use App\Services\FirestoreService;
+
 use Illuminate\Http\JsonResponse;
 
 class SyllabusController extends Controller
 {
     public function __construct(
-        private readonly FirestoreService $firestore,
     ) {}
 
     /**
@@ -18,16 +17,6 @@ class SyllabusController extends Controller
      */
     public function index(): JsonResponse
     {
-        if (FirestoreService::isActive()) {
-            $syllabuses = $this->firestore->list('syllabuses');
-            $data = collect($syllabuses)->map(fn (array $s) => $this->formatSyllabusRow($s))->values();
-
-            return response()->json([
-                'success' => true,
-                'data'    => $data,
-            ]);
-        }
-
         $syllabuses = Syllabus::with(['faculty', 'major', 'subject', 'teacher.user', 'shift'])->get();
         $data = $syllabuses->map(fn (Syllabus $s) => $this->formatSyllabusRow($s->toArray(), $s));
 

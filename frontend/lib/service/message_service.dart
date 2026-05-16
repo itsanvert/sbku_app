@@ -1,42 +1,27 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:sbku_app/service/api_service.dart';
 
 class MessageService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ApiService _api = ApiService();
 
-  /// Get messages from Firestore.
-  /// If [receiverId] is null, it fetches broadcast messages (receiver_id is null).
-  /// If [receiverId] is provided, it fetches messages for that specific user.
+  /// Poll messages from the API.
   Stream<List<Map<String, dynamic>>> listenToMessages({String? userId}) {
-    // We want broadcast messages (receiver_id == null) OR messages for this user
-    // Since Firestore doesn't support OR on null values easily across collections without multiple queries,
-    // we fetch recently updated messages from the 'messages' collection.
-    
-    return _firestore.collection('messages')
-        .orderBy('created_at', descending: true)
-        .limit(50)
-        .snapshots()
-        .map((snapshot) {
-      print('Firestore Snapshot: Found ${snapshot.docs.length} documents in "messages"');
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).where((data) {
-        final receiverId = data['receiver_id'];
-        
-        // Debug each message
-        print('Checking message: title="${data['title']}", receiverId=$receiverId, currentUserId=$userId');
-
-        if (receiverId == null) return true; // Broadcast
-        
-        // Use string comparison to avoid int-vs-string type issues
-        if (userId != null && receiverId.toString() == userId.toString()) return true; 
-        
-        return false;
-      }).toList();
+    return Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+      try {
+        final response = await _api.get('messages', requiresAuth: true);
+        if (response.statusCode == 200) {
+          final dynamic decoded = jsonDecode(response.body);
+          if (decoded is List) {
+            return List<Map<String, dynamic>>.from(decoded);
+          } else if (decoded is Map && decoded.containsKey('data')) {
+            return List<Map<String, dynamic>>.from(decoded['data']);
+          }
+        }
+        return <Map<String, dynamic>>[];
+      } catch (e) {
+        print('Polling messages failed: $e');
+        return <Map<String, dynamic>>[];
+      }
     });
   }
-
-  /// Mark a message as read (if needed, locally or in metadata)
-  /// For now, we'll just handle display.
 }

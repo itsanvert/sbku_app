@@ -44,7 +44,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $token = base64_encode('user_' . $user->id . '_' . time());
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
@@ -67,7 +67,7 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        $token = base64_encode('user_' . $user->id . '_' . time());
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,

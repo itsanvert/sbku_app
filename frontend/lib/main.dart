@@ -8,29 +8,19 @@ import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
-import 'package:sbku_app/service/notification_service.dart';
+import 'package:sbku_app/service/notification_service_v2.dart';
+import 'package:sbku_app/service/app_lifecycle_manager.dart';
+import 'package:sbku_app/service/platform_channel_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import 'package:firebase_messaging/firebase_messaging.dart';
-
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print("Handling a background message: ${message.messageId}");
-}
+// Global app lifecycle manager
+final appLifecycleManager = AppLifecycleManager();
+final notificationService = NotificationService();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    await Firebase.initializeApp();
-    
-    // Sign in anonymously to satisfy Firestore rules (request.auth != null)
-    await FirebaseAuth.instance.signInAnonymously();
-    
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    
     // Create Android Notification Channel
     final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -44,17 +34,9 @@ Future<void> main() async {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
-    // Request notification permissions (required on iOS and Android 13+)
-    await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    // Subscribe to the 'all' topic for broadcast notifications
-    await FirebaseMessaging.instance.subscribeToTopic('all');
+    print('Notifications initialized successfully');
   } catch (e) {
-    print('Firebase initialization failed: $e');
+    print('Notification initialization error: $e');
   }
 
   // Lock to portrait for a consistent login experience
@@ -63,7 +45,7 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Make status bar transparent so background bleeds through
+  // Make status bar transparent
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
@@ -76,10 +58,14 @@ Future<void> main() async {
     try {
       await dotenv.load(fileName: '.env.example');
     } catch (_) {
-      // AppConfig falls back to production host.
+      print('Could not load .env file, using defaults');
     }
   }
+  
   setupServiceLocator();
+  
+  // Get device info
+  _logDeviceInfo();
 
   runApp(
     MultiProvider(
@@ -92,22 +78,64 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+/// Log device information for debugging
+Future<void> _logDeviceInfo() async {
+  try {
+    final deviceInfo = await PlatformChannelService.getDeviceInfo();
+    print('=== Device Info ===');
+    print('Device: ${deviceInfo['device']}');
+    print('Manufacturer: ${deviceInfo['manufacturer']}');
+    print('Model: ${deviceInfo['model']}');
+    print('Android Version: ${deviceInfo['androidVersion']}');
+    print('===================');
+  } catch (e) {
+    print('Error getting device info: $e');
+  }
+}
+
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize app lifecycle manager
+    appLifecycleManager.initialize();
+    appLifecycleManager.onLifecycleChange = _handleLifecycleChange;
+  }
+
+  @override
+  void dispose() {
+    appLifecycleManager.dispose();
+    notificationService.dispose();
+    super.dispose();
+  }
+
+  void _handleLifecycleChange(AppLifecycleEvent event) {
+    print('Lifecycle event: $event');
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-
+    
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SBKU App',
       theme: ThemeProvider.lightTheme,
       darkTheme: ThemeProvider.darkTheme,
       themeMode: themeProvider.themeMode,
-      // Smoother scroll physics across the whole app
       scrollBehavior: const _AppScrollBehavior(),
       home: const AuthCheck(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomePageScreen(),
+      },
     );
   }
 }
@@ -149,7 +177,7 @@ class _AuthCheckState extends State<AuthCheck> {
     // Initialize notifications once we have a valid context
     if (!_notificationsInitialized) {
       _notificationsInitialized = true;
-      NotificationService().initialize(context);
+      notificationService.initialize(context);
     }
   }
 

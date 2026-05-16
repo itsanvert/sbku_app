@@ -104,4 +104,24 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('majors', MajorController::class)->names('api.majors');
     Route::apiResource('subjects', SubjectController::class)->names('api.subjects');
     Route::apiResource('classes', AcademicClassController::class)->names('api.classes');
+
+    // Messages
+    Route::get('messages', function () {
+        return \App\Models\Message::with('sender')
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'id' => $msg->id,
+                    'title' => $msg->title,
+                    'body' => $msg->body,
+                    'type' => $msg->type,
+                    'metadata' => $msg->metadata,
+                    'sender_name' => $msg->sender?->name ?? 'System',
+                    'receiver_id' => $msg->receiver_id,
+                    'created_at' => $msg->created_at,
+                ];
+            });
+    });
 });

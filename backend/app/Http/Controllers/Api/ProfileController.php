@@ -29,25 +29,12 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (FirestoreService::isActive()) {
-            $validated = $request->validate([
-                'name'  => 'required|string|max:255',
-                'email' => 'required|email|max:255',
-            ]);
+        $validated = $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+        ]);
 
-            app(FirestoreService::class)->update('users', (string) $user->id, array_merge($validated, [
-                'updated_at' => now()->format('Y-m-d H:i:s'),
-            ]));
-
-            $user->forceFill($validated);
-        } else {
-            $validated = $request->validate([
-                'name'  => 'required|string|max:255',
-                'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            ]);
-
-            $user->forceFill($validated)->save();
-        }
+        $user->forceFill($validated)->save();
 
         return response()->json([
             'success' => true,
@@ -75,16 +62,7 @@ class ProfileController extends Controller
             ], 422);
         }
 
-        if (FirestoreService::isActive()) {
-            app(FirestoreService::class)->update('users', (string) $user->id, [
-                'password'   => Hash::make($request->password),
-                'updated_at' => now()->format('Y-m-d H:i:s'),
-            ]);
-        } else {
-            $user->forceFill([
-                'password' => Hash::make($request->password),
-            ])->save();
-        }
+        $user->update(['password' => Hash::make($request->password)]);
 
         return response()->json([
             'success' => true,
@@ -103,27 +81,12 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        $user->updateProfilePhoto($request->file('photo'));
-
-        $photoPath = $user->profile_photo_path;
-
-        if (FirestoreService::isActive()) {
-            $firestore = app(\App\Services\FirestoreService::class);
-            
-            if ($teacher = $user->teacher) {
-                $firestore->set('teachers', (string)$teacher['id'], ['profile_image_path' => $photoPath]);
-            }
-            if ($student = $user->student) {
-                $firestore->set('students', (string)$student['id'], ['profile_image_path' => $photoPath]);
-            }
-        } else {
-            if ($user->teacher) {
-                $user->teacher->update(['profile_image_path' => $photoPath]);
-            }
-            if ($user->student) {
-                $user->student->update(['profile_image_path' => $photoPath]);
-            }
+        if ($user->profile_photo_path) {
+            Storage::disk('public')->delete($user->profile_photo_path);
         }
+
+        $path = $request->file('photo')->store('profile-photos', 'public');
+        $user->update(['profile_photo_path' => $path]);
 
         // Flat format for Flutter AuthService compatibility
         return response()->json([
@@ -139,7 +102,12 @@ class ProfileController extends Controller
     public function deleteProfilePhoto(Request $request)
     {
         $user = $request->user();
-        $user->deleteProfilePhoto();
+
+        if ($user->profile_photo_path) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        $user->update(['profile_photo_path' => null]);
 
         // Flat format for Flutter AuthService compatibility
         return response()->json([
@@ -160,14 +128,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (FirestoreService::isActive()) {
-            app(FirestoreService::class)->update('users', (string) $user->id, [
-                'fcm_token'  => $request->token,
-                'updated_at' => now()->format('Y-m-d H:i:s'),
-            ]);
-        } else {
-            $user->forceFill(['fcm_token' => $request->token])->save();
-        }
+        $user->forceFill(['fcm_token' => $request->token])->save();
 
         return response()->json([
             'success' => true,
