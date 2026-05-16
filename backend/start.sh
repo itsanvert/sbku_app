@@ -44,6 +44,13 @@ mkdir -p storage/framework/sessions storage/framework/views storage/framework/ca
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
+# Render persistent disk — create session / cache dirs and set www-data ownership
+SESSION_DIR="${SESSION_FILES:-/var/data/sessions}"
+CACHE_DIR="${CACHE_FILE_PATH:-/var/data/cache}"
+mkdir -p "$SESSION_DIR" "$CACHE_DIR"
+chown www-data:www-data "$SESSION_DIR" "$CACHE_DIR"
+chmod 775 "$SESSION_DIR" "$CACHE_DIR"
+
 # Fix Firebase permissions on Render
 if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     echo "Found Firebase credentials in /etc/secrets, preparing for use..."
@@ -91,6 +98,10 @@ php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/
 php artisan config:clear
 php artisan view:clear
 php artisan route:clear
+
+# Discover package service providers (Firebase, Livewire, Flux, etc.)
+php artisan package:discover --ansi 2>/dev/null || true
+
 php artisan optimize
 
 # Configure Apache to listen on Render's dynamic PORT

@@ -103,6 +103,11 @@ RUN sed -i 's/80/${PORT}/g' \
         /etc/apache2/sites-available/000-default.conf \
         /etc/apache2/ports.conf
 
+# Discover package service providers (Firebase, Livewire, Flux, etc.)
+# so they are cached even if --no-scripts skipped post-autoload-dump.
+# This is best-effort at build time; start.sh re-runs it at runtime.
+RUN php artisan package:discover --ansi 2>/dev/null || true
+
 # Make start.sh executable (it handles the remaining runtime setup)
 RUN chmod +x /var/www/html/start.sh
 
