@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\FacultyController;
 use App\Http\Controllers\Api\MajorController;
 use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\AcademicClassController;
+use App\Http\Controllers\Api\RoomController;
 
 
 /*
@@ -110,6 +111,7 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('majors', MajorController::class)->names('api.majors');
     Route::apiResource('subjects', SubjectController::class)->names('api.subjects');
     Route::apiResource('classes', AcademicClassController::class)->names('api.classes');
+    Route::apiResource('rooms', RoomController::class)->names('api.rooms');
 
     // Messages
     Route::get('messages', function () {
