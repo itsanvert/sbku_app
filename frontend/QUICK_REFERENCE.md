@@ -4,21 +4,22 @@
 
 Your Flutter + Android app now has:
 
-| Feature | Before | After |
-|---------|--------|-------|
-| API Errors | No retry | Auto-retry 3x with exponential backoff |
-| Timeouts | No timeout | 30-second timeout with graceful failure |
-| Notifications | Basic handling | Structured model with history & callbacks |
-| Android Communication | None | Platform channels for native interaction |
-| App State | Manual tracking | Automatic lifecycle management |
-| Device Info | Not available | Full device information access |
-| Error Recovery | Limited | Comprehensive with logging |
+| Feature               | Before          | After                                     |
+| --------------------- | --------------- | ----------------------------------------- |
+| API Errors            | No retry        | Auto-retry 3x with exponential backoff    |
+| Timeouts              | No timeout      | 30-second timeout with graceful failure   |
+| Notifications         | Basic handling  | Structured model with history & callbacks |
+| Android Communication | None            | Platform channels for native interaction  |
+| App State             | Manual tracking | Automatic lifecycle management            |
+| Device Info           | Not available   | Full device information access            |
+| Error Recovery        | Limited         | Comprehensive with logging                |
 
 ---
 
 ## 🚀 Quick Start
 
 ### 1. **Use the Enhanced API Service**
+
 ```dart
 // Already integrated - just use it normally
 final response = await sl<ApiService>().get('endpoint');
@@ -26,6 +27,7 @@ final response = await sl<ApiService>().get('endpoint');
 ```
 
 ### 2. **Handle Notifications**
+
 ```dart
 // Already initialized in main.dart
 notificationService.onNotificationReceived = (notification) {
@@ -34,6 +36,7 @@ notificationService.onNotificationReceived = (notification) {
 ```
 
 ### 3. **Get Device Info**
+
 ```dart
 import 'package:sbku_app/service/platform_channel_service.dart';
 
@@ -42,6 +45,7 @@ print('Device: ${info['model']}');
 ```
 
 ### 4. **Track App Lifecycle**
+
 ```dart
 // Already tracking, but you can listen:
 appLifecycleManager.onLifecycleChange = (event) {
@@ -55,25 +59,27 @@ appLifecycleManager.onLifecycleChange = (event) {
 
 ## 📂 New Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                        | Purpose                      |
+| ------------------------------------------- | ---------------------------- |
 | `lib/service/platform_channel_service.dart` | Native Android communication |
-| `lib/service/notification_service_v2.dart` | Enhanced notifications |
-| `lib/service/app_lifecycle_manager.dart` | App state management |
-| `android/.../MainActivity.kt` | Enhanced Android native code |
-| `frontend/FLUTTER_ANDROID_INTEGRATION.md` | Full documentation |
+| `lib/service/notification_service_v2.dart`  | Enhanced notifications       |
+| `lib/service/app_lifecycle_manager.dart`    | App state management         |
+| `android/.../MainActivity.kt`               | Enhanced Android native code |
+| `frontend/FLUTTER_ANDROID_INTEGRATION.md`   | Full documentation           |
 
 ---
 
 ## ✅ Key Features You Now Have
 
 ### Network Resilience
+
 ```dart
 // Automatically retries 3 times on network failure
 await apiService.get('users');
 ```
 
 ### Better Notifications
+
 ```dart
 // All notifications tracked with metadata
 final history = notificationService.getHistory();
@@ -85,6 +91,7 @@ if (notification.type == 'attendance_session_started') {
 ```
 
 ### Device Integration
+
 ```dart
 // Talk to Android native code
 final version = await PlatformChannelService.getAndroidVersion();
@@ -92,6 +99,7 @@ final model = await PlatformChannelService.getDeviceModel();
 ```
 
 ### State Management
+
 ```dart
 // App knows when it's in foreground/background
 if (appLifecycleManager.isAppInBackground) {
@@ -104,12 +112,14 @@ if (appLifecycleManager.isAppInBackground) {
 ## 🐛 Testing
 
 ### Test API Retry
+
 ```bash
 # Disable WiFi, make API call, verify retry in logs
 flutter logs | grep "retry"
 ```
 
 ### Test Notifications
+
 ```dart
 // In your app anywhere
 await notificationService.showLocalNotification(
@@ -119,6 +129,7 @@ await notificationService.showLocalNotification(
 ```
 
 ### Test Device Communication
+
 ```dart
 final info = await PlatformChannelService.getDeviceInfo();
 print(info); // Should print device details
@@ -129,16 +140,19 @@ print(info); // Should print device details
 ## 🔧 Configuration
 
 ### API Timeout (lib/service/api_service.dart)
+
 ```dart
 static const Duration requestTimeout = Duration(seconds: 30);
 ```
 
 ### Max Retries (lib/service/api_service.dart)
+
 ```dart
 static const int maxRetries = 3;
 ```
 
 ### Notification History Size (lib/service/notification_service_v2.dart)
+
 ```dart
 static const int maxHistorySize = 50;
 ```
@@ -166,16 +180,19 @@ After 3 attempts: Return error to your code
 ## 🎯 Usage Scenarios
 
 ### Scenario 1: User on Slow Network
+
 ✅ App automatically retries API calls  
 ✅ Shows timeout error only after 3 attempts  
 ✅ User experience is smooth
 
 ### Scenario 2: App Backgrounded
+
 ✅ Lifecycle manager detects app paused  
 ✅ You can save state or pause data fetching  
 ✅ When app resumes, lifecycle notifies you
 
 ### Scenario 3: Notification Arrives
+
 ✅ Notification Service catches it  
 ✅ Routes it to appropriate handler  
 ✅ Shows attendance dialog or snackbar  
@@ -186,6 +203,7 @@ After 3 attempts: Return error to your code
 ## 🔍 Debugging Tips
 
 ### Enable Logs
+
 ```bash
 # Watch all Flutter logs
 flutter logs
@@ -198,12 +216,14 @@ flutter logs | grep -i "notification"
 ```
 
 ### Check Device Info
+
 ```dart
 // Log device info on startup (already done)
 // Check console output in Flutter logs
 ```
 
 ### Test Health Check
+
 ```dart
 final isHealthy = await apiService.healthCheck();
 print('API Health: $isHealthy');
@@ -226,13 +246,13 @@ print('API Health: $isHealthy');
 
 ## ⚠️ Common Issues & Fixes
 
-| Issue | Fix |
-|-------|-----|
-| Platform channel not working | Check package name in MainActivity.kt |
-| Notifications not showing | Verify permissions in AndroidManifest.xml |
-| API always fails | Check network connectivity, increase timeout |
-| App crashes on startup | Check Firebase credentials, review logs |
-| Device info empty | Ensure SDK version is 21+ |
+| Issue                        | Fix                                          |
+| ---------------------------- | -------------------------------------------- |
+| Platform channel not working | Check package name in MainActivity.kt        |
+| Notifications not showing    | Verify permissions in AndroidManifest.xml    |
+| API always fails             | Check network connectivity, increase timeout |
+| App crashes on startup       | Check Firebase credentials, review logs      |
+| Device info empty            | Ensure SDK version is 21+                    |
 
 ---
 

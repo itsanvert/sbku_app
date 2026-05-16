@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
 /// Service for communicating with native Android code via Platform Channels.
-/// 
+///
 /// This allows Flutter to call native Android methods and retrieve device information.
 class PlatformChannelService {
   static const platform = MethodChannel('com.sbkuapp.sbku/native');
@@ -9,7 +9,7 @@ class PlatformChannelService {
   /// Get comprehensive device information
   static Future<Map<String, dynamic>> getDeviceInfo() async {
     try {
-      final Map<dynamic, dynamic> result = 
+      final Map<dynamic, dynamic> result =
           await platform.invokeMethod('getDeviceInfo');
       return Map<String, dynamic>.from(result);
     } catch (e) {
@@ -21,8 +21,7 @@ class PlatformChannelService {
   /// Get Android OS version
   static Future<String?> getAndroidVersion() async {
     try {
-      final String version = 
-          await platform.invokeMethod('getAndroidVersion');
+      final String version = await platform.invokeMethod('getAndroidVersion');
       return version;
     } catch (e) {
       print('Error getting Android version: $e');
@@ -33,8 +32,7 @@ class PlatformChannelService {
   /// Get device model name
   static Future<String?> getDeviceModel() async {
     try {
-      final String model = 
-          await platform.invokeMethod('getDeviceModel');
+      final String model = await platform.invokeMethod('getDeviceModel');
       return model;
     } catch (e) {
       print('Error getting device model: $e');

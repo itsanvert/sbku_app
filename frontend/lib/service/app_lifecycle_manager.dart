@@ -12,7 +12,7 @@ enum AppLifecycleEvent {
 /// Manages application lifecycle events and state
 class AppLifecycleManager with WidgetsBindingObserver {
   static final AppLifecycleManager _instance = AppLifecycleManager._internal();
-  
+
   factory AppLifecycleManager() => _instance;
   AppLifecycleManager._internal();
 
@@ -27,7 +27,7 @@ class AppLifecycleManager with WidgetsBindingObserver {
   /// Initialize the lifecycle manager
   void initialize() {
     if (_isInitialized) return;
-    
+
     WidgetsBinding.instance.addObserver(this);
     _isInitialized = true;
     print('AppLifecycleManager initialized');
@@ -44,7 +44,7 @@ class AppLifecycleManager with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     AppLifecycleEvent? event;
-    
+
     switch (state) {
       case AppLifecycleState.resumed:
         _isAppInBackground = false;
@@ -82,4 +82,3 @@ class AppLifecycleManager with WidgetsBindingObserver {
     print('Memory pressure detected');
   }
 }
-

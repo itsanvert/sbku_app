@@ -11,11 +11,13 @@ This document describes the comprehensive enhancements made to ensure smooth int
 **Location**: `android/app/src/main/kotlin/com/example/sbku_app/MainActivity.kt`
 
 **Features**:
+
 - Platform Channel communication with Flutter (Method Channel)
 - Device information retrieval
 - Native device properties access
 
 **Available Methods**:
+
 ```kotlin
 - getDeviceInfo()      // Get comprehensive device information
 - getAndroidVersion()  // Get Android OS version
@@ -23,6 +25,7 @@ This document describes the comprehensive enhancements made to ensure smooth int
 ```
 
 **Usage from Flutter**:
+
 ```dart
 import 'package:sbku_app/service/platform_channel_service.dart';
 
@@ -35,6 +38,7 @@ final version = await PlatformChannelService.getAndroidVersion();
 ### 2. **Enhanced API Service** (`lib/service/api_service.dart`)
 
 **Improvements**:
+
 - ✅ Automatic retry logic with exponential backoff (max 3 attempts)
 - ✅ Request timeout handling (30 seconds)
 - ✅ Better error recovery for network failures
@@ -43,12 +47,14 @@ final version = await PlatformChannelService.getAndroidVersion();
 - ✅ Health check endpoint
 
 **Configuration**:
+
 ```dart
 static const int maxRetries = 3;
 static const Duration requestTimeout = Duration(seconds: 30);
 ```
 
 **New Methods**:
+
 ```dart
 // Patch request
 Future<http.Response> patch(String endpoint, Map<String, dynamic> body)
@@ -58,6 +64,7 @@ Future<bool> healthCheck()
 ```
 
 **Usage**:
+
 ```dart
 final apiService = sl<ApiService>();
 
@@ -75,6 +82,7 @@ bool isHealthy = await apiService.healthCheck();
 **Purpose**: Enables communication between Flutter and native Android code
 
 **Methods**:
+
 ```dart
 // Get comprehensive device info
 Map<String, dynamic> getDeviceInfo()
@@ -90,6 +98,7 @@ Future<void> logDebugInfo(String tag, String message)
 ```
 
 **Usage Example**:
+
 ```dart
 import 'package:sbku_app/service/platform_channel_service.dart';
 
@@ -109,6 +118,7 @@ await PlatformChannelService.logDebugInfo('MyTag', 'Debug message');
 ### 4. **Enhanced Notification Service** (`lib/service/notification_service_v2.dart`)
 
 **Major Improvements**:
+
 - ✅ Structured notification model
 - ✅ Notification history tracking (last 50 notifications)
 - ✅ Better error handling with fallbacks
@@ -118,6 +128,7 @@ await PlatformChannelService.logDebugInfo('MyTag', 'Debug message');
 - ✅ Type-specific alert dialogs
 
 **NotificationModel**:
+
 ```dart
 class NotificationModel {
   final String id;
@@ -130,11 +141,13 @@ class NotificationModel {
 ```
 
 **Supported Notification Types**:
+
 - `attendance_session_started` - Shows attendance alert dialog
 - `message` - Shows generic notification
 - `default` - Generic snackbar notification
 
 **Usage**:
+
 ```dart
 // Initialize in main.dart (already done)
 await notificationService.initialize(context);
@@ -169,6 +182,7 @@ notificationService.clearAll();
 **Purpose**: Tracks app state changes and enables appropriate cleanup/resumption
 
 **Lifecycle Events**:
+
 ```dart
 enum AppLifecycleEvent {
   resumed,      // App came to foreground
@@ -180,6 +194,7 @@ enum AppLifecycleEvent {
 ```
 
 **Usage**:
+
 ```dart
 final appLifecycleManager = AppLifecycleManager();
 
@@ -215,6 +230,7 @@ appLifecycleManager.dispose();
 ### 6. **Enhanced main.dart**
 
 **Improvements**:
+
 - ✅ Better Firebase error handling
 - ✅ App lifecycle management integrated
 - ✅ Device info logging on startup
@@ -224,6 +240,7 @@ appLifecycleManager.dispose();
 - ✅ Graceful error recovery
 
 **New Global Instances**:
+
 ```dart
 final appLifecycleManager = AppLifecycleManager();
 final notificationService = NotificationService();
@@ -261,7 +278,7 @@ final apiService = sl<ApiService>();
 try {
   // This will automatically retry up to 3 times
   final response = await apiService.get('users');
-  
+
   if (response.statusCode == 200) {
     print('Success: ${response.body}');
   } else {
@@ -280,7 +297,7 @@ import 'package:sbku_app/service/notification_service_v2.dart';
 // Setup callbacks when app starts
 notificationService.onNotificationReceived = (notification) {
   print('New notification: ${notification.title}');
-  
+
   // Handle based on type
   if (notification.type == 'attendance_session_started') {
     // Navigate to attendance screen
@@ -334,12 +351,14 @@ appLifecycleManager.onLifecycleChange = (event) {
 ## Testing the Integration
 
 ### 1. Test API Retry Logic
+
 ```bash
 # Simulate network issues and verify retries work
 # Watch logs for retry messages
 ```
 
 ### 2. Test Notifications
+
 ```dart
 // In your app, trigger a test notification
 await notificationService.showLocalNotification(
@@ -349,6 +368,7 @@ await notificationService.showLocalNotification(
 ```
 
 ### 3. Test Platform Channels
+
 ```dart
 // Get device info and print to verify communication
 final info = await PlatformChannelService.getDeviceInfo();
@@ -356,6 +376,7 @@ print(info);
 ```
 
 ### 4. Test App Lifecycle
+
 ```dart
 // Put app in background and foreground, check logs
 // Should see lifecycle events logged
@@ -366,27 +387,35 @@ print(info);
 ## Troubleshooting
 
 ### Issue: Platform Channel Not Working
-**Solution**: 
+
+**Solution**:
+
 - Verify MainActivity.kt has correct package name
 - Ensure channel name matches: `com.sbkuapp.sbku/native`
 - Check that FlutterEngine is properly configured
 
 ### Issue: Notifications Not Showing
+
 **Solution**:
+
 - Verify Firebase is initialized
 - Check notification permissions are granted
 - Ensure Android notification channel is created
 - Check FCM token is being updated
 
 ### Issue: API Retries Not Working
+
 **Solution**:
+
 - Check network connectivity
 - Verify backend is responding with proper status codes
 - Review logs for timeout messages
 - Ensure timeout is reasonable for your network
 
 ### Issue: App Crashes on Startup
+
 **Solution**:
+
 - Check Firebase initialization errors
 - Verify .env file is properly formatted
 - Check for null pointer exceptions in lifecycle manager
@@ -427,8 +456,8 @@ print(info);
 ## Support
 
 For issues or questions about these enhancements:
+
 1. Check the logs: `flutter logs`
 2. Review the troubleshooting section above
 3. Test individual components in isolation
 4. Check Firebase Console for messaging issues
-

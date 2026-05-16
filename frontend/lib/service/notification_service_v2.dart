@@ -31,7 +31,7 @@ class NotificationService {
 
   final List<NotificationModel> _notificationHistory = [];
   static const int maxHistorySize = 50;
-  
+
   // Callbacks
   Function(NotificationModel)? onNotificationReceived;
   Function(NotificationModel)? onNotificationTapped;
@@ -121,15 +121,14 @@ class NotificationService {
           android: AndroidNotificationDetails(
             'high_importance_channel',
             'High Importance Notifications',
-            channelDescription: 'This channel is used for important notifications.',
+            channelDescription:
+                'This channel is used for important notifications.',
             importance: Importance.max,
             priority: Priority.high,
           ),
         ),
         payload: payload,
       );
-
-
     } catch (e) {
       print('Error showing local notification: $e');
     }

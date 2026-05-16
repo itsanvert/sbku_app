@@ -19,19 +19,20 @@ final notificationService = NotificationService();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     // Create Android Notification Channel
     final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel', 
+      'high_importance_channel',
       'High Importance Notifications',
       description: 'This channel is used for important notifications.',
       importance: Importance.max,
     );
 
     await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
     print('Notifications initialized successfully');
@@ -61,9 +62,9 @@ Future<void> main() async {
       print('Could not load .env file, using defaults');
     }
   }
-  
+
   setupServiceLocator();
-  
+
   // Get device info
   _logDeviceInfo();
 
@@ -123,7 +124,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SBKU App',

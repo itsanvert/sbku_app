@@ -9,7 +9,7 @@ class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
 
   final storage = const FlutterSecureStorage();
-  
+
   // Retry configuration
   static const int maxRetries = 3;
   static const Duration requestTimeout = Duration(seconds: 30);
@@ -50,18 +50,18 @@ class ApiService {
     Future<http.Response> Function() request,
   ) async {
     int attempt = 0;
-    
+
     while (attempt < maxRetries) {
       try {
         final response = await request().timeout(requestTimeout);
-        
+
         // Only retry on server errors (5xx) and connection issues
         if (response.statusCode >= 500 && attempt < maxRetries - 1) {
           attempt++;
           await Future.delayed(Duration(milliseconds: 100 * (attempt * 2)));
           continue;
         }
-        
+
         return response;
       } on TimeoutException {
         attempt++;
@@ -77,7 +77,7 @@ class ApiService {
         rethrow;
       }
     }
-    
+
     throw TimeoutException('Max retries exceeded');
   }
 
@@ -85,9 +85,9 @@ class ApiService {
   Future<http.Response> get(String endpoint, {bool requiresAuth = true}) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
     return await _retryableRequest(() => http.get(
-      Uri.parse('$baseUrl/$endpoint'),
-      headers: headers,
-    ));
+          Uri.parse('$baseUrl/$endpoint'),
+          headers: headers,
+        ));
   }
 
   // POST request with retry
@@ -98,10 +98,10 @@ class ApiService {
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
     return await _retryableRequest(() => http.post(
-      Uri.parse('$baseUrl/$endpoint'),
-      headers: headers,
-      body: jsonEncode(body),
-    ));
+          Uri.parse('$baseUrl/$endpoint'),
+          headers: headers,
+          body: jsonEncode(body),
+        ));
   }
 
   // PUT request with retry
@@ -112,10 +112,10 @@ class ApiService {
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
     return await _retryableRequest(() => http.put(
-      Uri.parse('$baseUrl/$endpoint'),
-      headers: headers,
-      body: jsonEncode(body),
-    ));
+          Uri.parse('$baseUrl/$endpoint'),
+          headers: headers,
+          body: jsonEncode(body),
+        ));
   }
 
   // DELETE request with retry
@@ -125,9 +125,9 @@ class ApiService {
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
     return await _retryableRequest(() => http.delete(
-      Uri.parse('$baseUrl/$endpoint'),
-      headers: headers,
-    ));
+          Uri.parse('$baseUrl/$endpoint'),
+          headers: headers,
+        ));
   }
 
   // Multipart request (for file uploads) - no retry as file position can't be reset
@@ -173,10 +173,10 @@ class ApiService {
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
     return await _retryableRequest(() => http.patch(
-      Uri.parse('$baseUrl/$endpoint'),
-      headers: headers,
-      body: jsonEncode(body),
-    ));
+          Uri.parse('$baseUrl/$endpoint'),
+          headers: headers,
+          body: jsonEncode(body),
+        ));
   }
 
   /// Health check - useful for testing connectivity
