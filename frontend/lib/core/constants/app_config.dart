@@ -4,15 +4,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class AppConfig {
   AppConfig._();
 
-  /// Production Render backend (no trailing slash, no /api suffix).
-  static const String productionApiHost = 'https://sbkuapp.onrender.com';
+  /// Local Laragon fallback (used if .env is missing).
+  static const String localApiHost = 'http://192.168.1.60:8000';
 
   static String get apiHost {
     final fromEnv = dotenv.env['API_URL']?.trim();
     if (fromEnv != null && fromEnv.isNotEmpty) {
       return fromEnv.replaceAll(RegExp(r'/+$'), '');
     }
-    return productionApiHost;
+    return localApiHost;
   }
 
   static String get apiBaseUrl => '$apiHost/api';
