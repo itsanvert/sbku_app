@@ -22,9 +22,11 @@ class UserCreate extends Component
 
     public function save()
     {
+        $isFirestore = \App\Services\FirestoreService::isActive();
+
         $this->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email' . (config('app.env') === 'production' ? '' : '|unique:users,email'),
+            'email'    => 'required|email' . ($isFirestore ? '' : '|unique:users,email'),
             'password' => 'required|min:8',
             'role'     => 'required|in:super_admin,admin,student,teacher',
         ]);
@@ -38,7 +40,7 @@ class UserCreate extends Component
             'updated_at' => now()->format('Y-m-d H:i:s'),
         ];
 
-        if (config('app.env') === 'production') {
+        if ($isFirestore) {
             app(\App\Services\FirestoreService::class)->create('users', $data);
         } else {
             User::create($data);

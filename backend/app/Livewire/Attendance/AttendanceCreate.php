@@ -15,7 +15,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class AttendanceCreate extends Component
 {
-    public function __construct()
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }

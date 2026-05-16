@@ -135,8 +135,13 @@ class AttendanceSession extends Model
     public function getScheduledTimeRangeAttribute()
     {
         if ($this->schedule) {
-            $start = $this->schedule->start_time ? $this->schedule->start_time->format('H:i') : '—';
-            $end = $this->schedule->end_time ? $this->schedule->end_time->format('H:i') : '—';
+            $start = $this->schedule->start_time;
+            $end = $this->schedule->end_time;
+            
+            // If they are strings (H:i:s), trim to H:i
+            if (is_string($start)) $start = substr($start, 0, 5);
+            if (is_string($end)) $end = substr($end, 0, 5);
+            
             return "{$start} - {$end}";
         }
 

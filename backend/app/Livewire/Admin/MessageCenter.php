@@ -95,7 +95,7 @@ class MessageCenter extends Component
         if (config('app.env') === 'production') {
             $messagesData = $this->firestore->list('messages', [], 'created_at', 'desc');
             $collection = collect($messagesData);
-            
+
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $m = new Message();
                 $m->forceFill($data);

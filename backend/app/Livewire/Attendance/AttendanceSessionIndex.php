@@ -11,8 +11,8 @@ use Livewire\Attributes\Layout;
 class AttendanceSessionIndex extends Component
 {
     use WithPagination;
-    
-    public function __construct()
+
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -43,20 +43,20 @@ class AttendanceSessionIndex extends Component
 
     public function getSessionsProperty()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $filters = [];
             if ($this->search) {
                 // Firestore search is limited, but we can try to filter by teacher name if we stored it
                 // For now, let's just fetch all and filter in memory if small, or just fetch all.
             }
-            
+
             $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
-            
+
             // Convert to a collection for pagination
             $collection = collect($sessions);
-            
+
             $items = $collection->forPage($this->getPage(), 10);
-            
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
