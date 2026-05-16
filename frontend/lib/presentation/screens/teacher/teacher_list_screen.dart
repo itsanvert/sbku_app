@@ -134,120 +134,98 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
 
           // ── Content ────────────────────────────────────────────────
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error_outline,
-                                size: 60, color: Colors.grey[400]),
-                            const SizedBox(height: 12),
-                            Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: _loadTeachers,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('ព្យាយាមម្តងទៀត'),
-                            ),
-                          ],
+            child: StreamBuilder<List<Teacher>>(
+              stream: _service.streamTeachers(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 60, color: Colors.grey[400]),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Error: ${snapshot.error}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
                         ),
-                      )
-                    : filteredTeachers.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.people_outline,
-                                    size: 80, color: Colors.grey[300]),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'រកមិនឃើញគ្រូ',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'សូមកែប្រែការតម្រង',
-                                  style: TextStyle(
-                                      fontSize: 14, color: Colors.grey[500]),
-                                ),
-                              ],
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: () => _loadTeachers(reset: true),
-                            child: ListView.builder(
-                              itemCount: filteredTeachers.length,
-                              padding: const EdgeInsets.only(bottom: 16),
-                              itemBuilder: (context, index) {
-                                final teacher = filteredTeachers[index];
-                                return ListItemWidget<Teacher>(
-                                  item: teacher,
-                                  title: teacher.name,
-                                  subtitle: teacher.faculty ?? '—',
-                                  avatarImageUrl: teacher.avatarUrl,
-                                  avatarBackgroundColor: Colors.deepOrange,
-                                  avatarTextColor:
-                                      const Color.fromARGB(255, 255, 255, 255),
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ShowTeacherScreen(
-                                        teacherId: teacher.id,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => setState(() {}),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final teachers = snapshot.data ?? [];
+                
+                // Apply client-side filters
+                var filtered = teachers;
+                if (_selectedFaculty != null) {
+                  filtered = filtered.where((t) => t.faculty == _selectedFaculty).toList();
+                }
+                if (_selectedShift != null) {
+                  filtered = filtered.where((t) => t.year?.toString() == _selectedShift).toList();
+                }
+                if (_selectedGeneration != null) {
+                  filtered = filtered.where((t) => t.schedule == _selectedGeneration).toList();
+                }
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.people_outline, size: 80, color: Colors.grey[300]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'រកមិនឃើញគ្រូ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
                           ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: filtered.length,
+                  padding: const EdgeInsets.only(bottom: 16),
+                  itemBuilder: (context, index) {
+                    final teacher = filtered[index];
+                    return ListItemWidget<Teacher>(
+                      item: teacher,
+                      title: teacher.name,
+                      subtitle: teacher.faculty ?? '—',
+                      avatarImageUrl: teacher.avatarUrl,
+                      avatarBackgroundColor: Colors.deepOrange,
+                      avatarTextColor: const Color.fromARGB(255, 255, 255, 255),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ShowTeacherScreen(
+                            teacherId: teacher.id,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
 
-          // ── Pagination ─────────────────────────────────────────────
-          if (!_loading && _lastPage > 1)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Colors.grey.shade200)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: _page > 1
-                        ? () {
-                            _page--;
-                            _loadTeachers();
-                          }
-                        : null,
-                  ),
-                  Text(
-                    'ទំព័រ $_page នៃ $_lastPage',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: _page < _lastPage
-                        ? () {
-                            _page++;
-                            _loadTeachers();
-                          }
-                        : null,
-                  ),
-                ],
-              ),
-            ),
+          // Real-time synchronization enabled.
         ],
       ),
     );

@@ -10,7 +10,7 @@ class ScheduleIndex extends Component
 {
     use WithPagination;
     
-    public function __construct()
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -171,7 +171,7 @@ class ScheduleIndex extends Component
             }
             $items = $collection->forPage($this->getPage(), 10)->map(function($data) {
                 $s = new Schedule();
-                $s->forceFill($data);
+                $s->forceFill($cleanData);
                 $s->exists = true;
                 return $s;
             });

@@ -10,7 +10,7 @@ class SubjectIndex extends Component
 {
     use WithPagination;
     
-    public function __construct()
+    public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -43,7 +43,7 @@ class SubjectIndex extends Component
 
     public function store()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:3',
                 'code' => 'required',
@@ -70,7 +70,7 @@ class SubjectIndex extends Component
     {
         $this->editSubjectId = $id;
         
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $subject = $this->firestore->getDocument('subjects', (string)$id);
             $this->name = $subject['name'] ?? '';
             $this->code = $subject['code'] ?? '';
@@ -87,7 +87,7 @@ class SubjectIndex extends Component
 
     public function update()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:3',
                 'code' => 'required',
@@ -119,7 +119,7 @@ class SubjectIndex extends Component
 
     public function delete($id)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->delete('subjects', (string)$id);
         } else {
             Subject::findOrFail($id)->delete();
@@ -129,7 +129,7 @@ class SubjectIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $subjects = $this->firestore->list('subjects');
             $collection = collect($subjects);
             if ($this->search) {
