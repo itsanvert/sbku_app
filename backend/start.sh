@@ -59,7 +59,9 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
-    export USE_FIRESTORE="true"
+    if [ -z "$USE_FIRESTORE" ]; then
+        export USE_FIRESTORE="true"
+    fi
     # Fall back to SQLite only if no external DB host is configured
     if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
         export DB_CONNECTION="sqlite"
@@ -73,7 +75,9 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
-    export USE_FIRESTORE="true"
+    if [ -z "$USE_FIRESTORE" ]; then
+        export USE_FIRESTORE="true"
+    fi
     # Fall back to SQLite only if no external DB host is configured
     if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
         export DB_CONNECTION="sqlite"
