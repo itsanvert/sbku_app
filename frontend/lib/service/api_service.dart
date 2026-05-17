@@ -9,6 +9,7 @@ class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
 
   final storage = const FlutterSecureStorage();
+  final http.Client _client = http.Client();
 
   // Retry configuration
   static const int maxRetries = 3;
@@ -84,7 +85,7 @@ class ApiService {
   // GET request with retry
   Future<http.Response> get(String endpoint, {bool requiresAuth = true}) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => http.get(
+    return await _retryableRequest(() => _client.get(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
         ));
@@ -97,7 +98,7 @@ class ApiService {
     bool requiresAuth = false,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => http.post(
+    return await _retryableRequest(() => _client.post(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
           body: jsonEncode(body),
@@ -111,7 +112,7 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => http.put(
+    return await _retryableRequest(() => _client.put(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
           body: jsonEncode(body),
@@ -124,7 +125,7 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => http.delete(
+    return await _retryableRequest(() => _client.delete(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
         ));
@@ -172,7 +173,7 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => http.patch(
+    return await _retryableRequest(() => _client.patch(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
           body: jsonEncode(body),
