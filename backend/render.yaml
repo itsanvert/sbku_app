@@ -23,7 +23,7 @@ services:
       - key: DB_SSLMODE
         value: require
       - key: USE_FIRESTORE
-        value: "true"
+        value: "false"
       - key: SESSION_DRIVER
         value: file
       - key: SESSION_FILES
@@ -35,7 +35,7 @@ services:
       - key: QUEUE_CONNECTION
         value: sync
       - key: AUTH_PROVIDER_DRIVER
-        value: firestore
+        value: eloquent
       - key: FIREBASE_PROJECT_ID
         value: sbkuapp-vert25
       - key: FIREBASE_CREDENTIALS

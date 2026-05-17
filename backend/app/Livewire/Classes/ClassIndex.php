@@ -50,7 +50,7 @@ class ClassIndex extends Component
 
     public function store()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:2',
                 'code' => 'required',
@@ -83,7 +83,7 @@ class ClassIndex extends Component
     {
         $this->editClassId = $id;
         
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $class = $this->firestore->getDocument('academic_classes', (string)$id);
             $this->name = $class['name'] ?? '';
             $this->code = $class['code'] ?? '';
@@ -104,7 +104,7 @@ class ClassIndex extends Component
 
     public function update()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:2',
                 'code' => 'required',
@@ -144,7 +144,7 @@ class ClassIndex extends Component
 
     public function delete($id)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->delete('academic_classes', (string)$id);
         } else {
             AcademicClass::findOrFail($id)->delete();
@@ -154,7 +154,7 @@ class ClassIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $classes = $this->firestore->list('academic_classes');
             $collection = collect($classes);
             if ($this->search) {

@@ -29,49 +29,73 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', function (\App\Services\FirestoreService $firestore) {
-        $teacherCount = $firestore->count('teachers');
-        $studentCount = $firestore->count('students');
-        $userCount = $firestore->count('users');
-        $attendanceCount = $firestore->count('attendances');
-        $activeSessions = $firestore->count('attendance_sessions', ['is_active' => true]);
+        $isFirestore = \App\Services\FirestoreService::isActive();
 
-        // 1. Daily Attendance Data (Last 7 days)
-        // Note: For a high-performance production dashboard, you'd typically 
-        // pre-calculate these or use a summary document in Firestore.
-        $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
-        $recentAttendances = $firestore->list('attendances', [
-            ['attendance_date', '>=', $sevenDaysAgo]
-        ]);
-        
-        $dates = [];
-        $counts = [];
-        
-        // Group by date in PHP since Firestore doesn't have native SQL group-by
-        $dailyData = [];
-        foreach ($recentAttendances as $attendance) {
-            $date = $attendance['attendance_date'] ?? null;
-            if ($date) {
-                $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+        if ($isFirestore) {
+            $teacherCount = $firestore->count('teachers');
+            $studentCount = $firestore->count('students');
+            $userCount = $firestore->count('users');
+            $attendanceCount = $firestore->count('attendances');
+            $activeSessions = $firestore->count('attendance_sessions', ['is_active' => true]);
+
+            $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
+            $recentAttendances = $firestore->list('attendances', [
+                ['attendance_date', '>=', $sevenDaysAgo]
+            ]);
+            
+            $dailyData = [];
+            foreach ($recentAttendances as $attendance) {
+                $date = $attendance['attendance_date'] ?? null;
+                if ($date) {
+                    $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+                }
+            }
+
+            $presentCount = 0;
+            $absentCount = 0;
+            $permissionCount = 0;
+            foreach ($recentAttendances as $attendance) {
+                $status = $attendance['status'] ?? '';
+                if ($status === 'Y') $presentCount++;
+                elseif ($status === 'N') $absentCount++;
+                elseif ($status === 'P') $permissionCount++;
+            }
+        } else {
+            $teacherCount = \App\Models\Teacher::count();
+            $studentCount = \App\Models\Student::count();
+            $userCount = \App\Models\User::count();
+            $attendanceCount = \App\Models\Attendance::count();
+            $activeSessions = \App\Models\AttendanceSession::where('is_active', true)->count();
+
+            $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
+            $recentAttendances = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)->get();
+            
+            $dailyData = [];
+            foreach ($recentAttendances as $attendance) {
+                $date = $attendance->attendance_date;
+                if ($date) {
+                    $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+                }
+            }
+
+            $presentCount = 0;
+            $absentCount = 0;
+            $permissionCount = 0;
+            foreach ($recentAttendances as $attendance) {
+                $status = $attendance->status;
+                if ($status === 'Y') $presentCount++;
+                elseif ($status === 'N') $absentCount++;
+                elseif ($status === 'P') $permissionCount++;
             }
         }
 
+        $dates = [];
+        $counts = [];
         for ($i = 6; $i >= 0; $i--) {
             $dateObj = now()->subDays($i);
             $dateKey = $dateObj->format('Y-m-d');
             $dates[] = $dateObj->format('M d (D)'); 
             $counts[] = $dailyData[$dateKey] ?? 0;
-        }
-
-        // 2. Attendance Status Distribution
-        $presentCount = 0;
-        $absentCount = 0;
-        $permissionCount = 0;
-
-        foreach ($recentAttendances as $attendance) {
-            $status = $attendance['status'] ?? '';
-            if ($status === 'Y') $presentCount++;
-            elseif ($status === 'N') $absentCount++;
-            elseif ($status === 'P') $permissionCount++;
         }
 
         return view('dashboard', compact(
@@ -133,7 +157,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 return redirect()->back()->with('error', 'No records selected for export.');
             }
 
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $records = [];
                 foreach ($ids as $id) {
                     $data = $firestore->getDocument('attendances', (string)$id);

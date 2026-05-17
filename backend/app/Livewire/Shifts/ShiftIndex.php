@@ -40,7 +40,7 @@ class ShiftIndex extends Component
     public function store()
     {
         $this->validate();
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->create('shifts', ['name' => $this->name]);
         } else {
             Shift::create([
@@ -54,7 +54,7 @@ class ShiftIndex extends Component
     public function edit($id)
     {
         $this->editShiftId = $id;
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $shift = $this->firestore->getDocument('shifts', (string)$id);
             $this->name = $shift['name'] ?? '';
         } else {
@@ -68,7 +68,7 @@ class ShiftIndex extends Component
     {
         $this->validate();
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->update('shifts', (string)$this->editShiftId, ['name' => $this->name]);
         } else {
             $shift = Shift::findOrFail($this->editShiftId);
@@ -83,7 +83,7 @@ class ShiftIndex extends Component
 
     public function delete($id)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->delete('shifts', (string)$id);
         } else {
             Shift::findOrFail($id)->delete();
@@ -93,7 +93,7 @@ class ShiftIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $shifts = $this->firestore->list('shifts');
             $collection = collect($shifts);
             if ($this->search) {

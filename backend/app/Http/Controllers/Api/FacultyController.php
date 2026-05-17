@@ -10,12 +10,16 @@ use Illuminate\Http\Request;
 
 class FacultyController extends Controller
 {
-    public function __construct(
-    ) {}
+    protected $firestore;
+
+    public function __construct(FirestoreService $firestore)
+    {
+        $this->firestore = $firestore;
+    }
 
     public function index(Request $request): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $faculties = $this->firestore->list('faculties');
             return response()->json([
                 'success' => true,
@@ -41,7 +45,7 @@ class FacultyController extends Controller
             'code' => 'required|string|max:50',
         ]);
 
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $id = $validated['code'];
             $faculty = $this->firestore->set('faculties', $id, $validated);
             return response()->json([
@@ -66,7 +70,7 @@ class FacultyController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $faculty = $this->firestore->getDocument('faculties', (string)$id);
             if (!$faculty) {
                 return response()->json(['success' => false, 'message' => 'Faculty not found'], 404);
@@ -87,7 +91,7 @@ class FacultyController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $faculty = $this->firestore->set('faculties', (string)$id, $request->all());
             return response()->json([
                 'success' => true,
@@ -117,7 +121,7 @@ class FacultyController extends Controller
 
     public function destroy(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $this->firestore->delete('faculties', (string)$id);
             return response()->json([
                 'success' => true,

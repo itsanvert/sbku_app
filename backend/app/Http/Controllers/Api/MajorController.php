@@ -10,12 +10,16 @@ use Illuminate\Http\Request;
 
 class MajorController extends Controller
 {
-    public function __construct(
-    ) {}
+    protected $firestore;
+
+    public function __construct(FirestoreService $firestore)
+    {
+        $this->firestore = $firestore;
+    }
 
     public function index(Request $request): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $majors = $this->firestore->list('majors');
             return response()->json([
                 'success' => true,
@@ -44,7 +48,7 @@ class MajorController extends Controller
             'faculty_id' => 'required',
         ]);
 
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $id = $validated['code'];
             $major = $this->firestore->set('majors', $id, $validated);
             return response()->json([
@@ -70,7 +74,7 @@ class MajorController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $major = $this->firestore->getDocument('majors', (string)$id);
             if (!$major) {
                 return response()->json(['success' => false, 'message' => 'Major not found'], 404);
@@ -93,7 +97,7 @@ class MajorController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $major = $this->firestore->set('majors', (string)$id, $request->all());
             return response()->json([
                 'success' => true,
@@ -125,7 +129,7 @@ class MajorController extends Controller
 
     public function destroy(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $this->firestore->delete('majors', (string)$id);
             return response()->json([
                 'success' => true,
