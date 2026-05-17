@@ -16,7 +16,7 @@ class UserEdit extends Component
 
     public function mount($userId)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $user = app(\App\Services\FirestoreService::class)->getDocument('users', (string)$userId);
             if (!$user) abort(404);
             $this->userId = $user['id'];
@@ -36,7 +36,7 @@ class UserEdit extends Component
     {
         $this->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email' . (config('app.env') === 'production' ? '' : '|unique:users,email,' . $this->userId),
+            'email'    => 'required|email' . (\App\Services\FirestoreService::isActive() ? '' : '|unique:users,email,' . $this->userId),
             'password' => 'nullable|min:8',
             'role'     => 'required|in:super_admin,admin,student,teacher',
         ]);
@@ -52,7 +52,7 @@ class UserEdit extends Component
             $data['password'] = Hash::make($this->password);
         }
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             app(\App\Services\FirestoreService::class)->update('users', (string)$this->userId, $data);
         } else {
             User::findOrFail($this->userId)->update($data);

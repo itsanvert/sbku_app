@@ -39,7 +39,7 @@ class TeacherEdit extends Component
 
     public function mount($teacherId)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             $teacher = $firestore->getDocument('teachers', (string)$teacherId);
             if (!$teacher) abort(404);
@@ -83,7 +83,7 @@ class TeacherEdit extends Component
 
     public function save()
     {
-        $isProd = config('app.env') === 'production';
+        $isProd = \App\Services\FirestoreService::isActive();
         $this->validate([
             'name' => 'required',
             'email' => 'required|email' . ($isProd ? '' : '|unique:users,email,'.$this->userId),
@@ -150,7 +150,7 @@ class TeacherEdit extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             return view('livewire.teachers.teacher-edit', [
                 'faculties' => FirestoreHydrator::selectOptions($firestore->list('faculties')),

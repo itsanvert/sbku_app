@@ -74,7 +74,7 @@ class StudentIndex extends Component
     #[Computed]
     public function students()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $students = $this->firestore->list('students');
             $collection = collect($students);
 
@@ -206,7 +206,7 @@ class StudentIndex extends Component
     public function deleteStudent()
     {
         if ($this->deleteStudentId) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $this->firestore->delete('students', (string) $this->deleteStudentId);
             } else {
                 Student::findOrFail($this->deleteStudentId)->delete();
@@ -229,7 +229,7 @@ class StudentIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 foreach ($this->selected as $id) {
                     $this->firestore->delete('students', (string) $id);
                 }

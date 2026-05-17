@@ -41,7 +41,7 @@ class FacultyIndex extends Component
     {
         $this->validate();
         
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->create('faculties', [
                 'name' => $this->name,
             ]);
@@ -59,7 +59,7 @@ class FacultyIndex extends Component
     {
         $this->editFacultyId = $id;
         
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $faculty = $this->firestore->getDocument('faculties', (string)$id);
             $this->name = $faculty['name'] ?? '';
         } else {
@@ -72,7 +72,7 @@ class FacultyIndex extends Component
 
     public function update()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'name' => 'required|min:3',
             ]);
@@ -95,7 +95,7 @@ class FacultyIndex extends Component
 
     public function delete($id)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->delete('faculties', (string)$id);
         } else {
             Faculty::findOrFail($id)->delete();
@@ -105,7 +105,7 @@ class FacultyIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $faculties = $this->firestore->list('faculties');
             $collection = collect($faculties);
             if ($this->search) {

@@ -96,7 +96,7 @@ class StudentEdit extends Component
 
     public function save()
     {
-        $isProd = config('app.env') === 'production';
+        $isProd = \App\Services\FirestoreService::isActive();
         $this->validate([
             'name' => 'required',
             'email' => 'required|email' . ($isProd ? '' : '|unique:users,email,'.$this->userId),

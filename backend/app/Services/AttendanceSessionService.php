@@ -317,7 +317,7 @@ class AttendanceSessionService
     {
         if (!$session->is_active) {
             // Fetch attendances from Firestore if in production
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $attendances = $this->firestore->list('attendances', ['session_id' => (string)$session->id]);
                 return [
                     'session'       => $session,

@@ -10,12 +10,16 @@ use Illuminate\Http\Request;
 
 class AcademicClassController extends Controller
 {
-    public function __construct(
-    ) {}
+    protected $firestore;
+
+    public function __construct(FirestoreService $firestore)
+    {
+        $this->firestore = $firestore;
+    }
 
     public function index(Request $request): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $classes = $this->firestore->list('academic_classes');
             return response()->json([
                 'success' => true,
@@ -49,7 +53,7 @@ class AcademicClassController extends Controller
             'semester' => 'required|integer|min:1|max:2',
         ]);
 
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $id = $validated['code']; // Or generate a UUID
             $class = $this->firestore->set('academic_classes', $id, $validated);
             return response()->json([
@@ -77,7 +81,7 @@ class AcademicClassController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $class = $this->firestore->getDocument('academic_classes', (string)$id);
             if (!$class) {
                 return response()->json(['success' => false, 'message' => 'Class not found'], 404);
@@ -103,7 +107,7 @@ class AcademicClassController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $class = $this->firestore->set('academic_classes', (string)$id, $request->all());
             return response()->json([
                 'success' => true,
@@ -139,7 +143,7 @@ class AcademicClassController extends Controller
 
     public function destroy(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $this->firestore->delete('academic_classes', (string)$id);
             return response()->json([
                 'success' => true,

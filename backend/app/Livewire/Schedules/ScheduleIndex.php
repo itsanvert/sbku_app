@@ -38,7 +38,7 @@ class ScheduleIndex extends Component
 
     protected function rules()
     {
-        $isProd = config('app.env') === 'production';
+        $isProd = \App\Services\FirestoreService::isActive();
         return [
             'name' => 'required|min:2',
             'day_of_the_week' => 'nullable|string',
@@ -79,7 +79,7 @@ class ScheduleIndex extends Component
             'syllabus_id' => $this->syllabus_id ?: null,
         ];
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->create('schedules', $data);
         } else {
             Schedule::create($data);
@@ -91,7 +91,7 @@ class ScheduleIndex extends Component
     public function edit($id)
     {
         $this->editScheduleId = $id;
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $schedule = $this->firestore->getDocument('schedules', (string)$id);
             $this->name = $schedule['name'] ?? '';
             $this->day_of_the_week = $schedule['day_of_the_week'] ?? '';
@@ -138,7 +138,7 @@ class ScheduleIndex extends Component
             'syllabus_id' => $this->syllabus_id ?: null,
         ];
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->update('schedules', (string)$this->editScheduleId, $data);
         } else {
             $schedule = Schedule::findOrFail($this->editScheduleId);
@@ -151,7 +151,7 @@ class ScheduleIndex extends Component
 
     public function delete($id)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->firestore->delete('schedules', (string)$id);
         } else {
             Schedule::findOrFail($id)->delete();
@@ -161,7 +161,7 @@ class ScheduleIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $schedules = $this->firestore->list('schedules');
             $collection = collect($schedules);
             if ($this->search) {

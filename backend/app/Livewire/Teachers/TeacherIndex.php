@@ -173,7 +173,7 @@ class TeacherIndex extends Component
     public function deleteTeacher()
     {
         if ($this->deleteTeacherId) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $this->firestore->delete('teachers', (string) $this->deleteTeacherId);
             } else {
                 Teacher::findOrFail($this->deleteTeacherId)->delete();
@@ -195,7 +195,7 @@ class TeacherIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 foreach ($this->selected as $id) {
                     $this->firestore->delete('teachers', (string) $id);
                 }
