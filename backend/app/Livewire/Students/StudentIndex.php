@@ -77,6 +77,9 @@ class StudentIndex extends Component
         if (\App\Services\FirestoreService::isActive()) {
             $students = $this->firestore->list('students');
             $collection = collect($students);
+            
+            // Batch fetch schedules to avoid N+1 Firestore fetch overhead
+            $schedules = collect($this->firestore->list('schedules'))->keyBy('id');
 
             if ($this->search) {
                 $collection = $collection->filter(
@@ -88,7 +91,7 @@ class StudentIndex extends Component
             }
 
             // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) use ($schedules) {
                 $s = new Student();
                 $s->forceFill($data);
                 $s->exists = true;
@@ -126,16 +129,17 @@ class StudentIndex extends Component
                 ]);
                 $s->setRelation('shift', $shift);
 
-                // 5. Mock Schedule relationship
-                if (isset($data['schedule_id'])) {
-                    $scheduleData = $this->firestore->getDocument('schedules', (string) $data['schedule_id']);
-                    if ($scheduleData) {
-                        $schedule = new \App\Models\Schedule();
-                        $schedule->forceFill($scheduleData);
-                        $schedule->id = $scheduleData['id'];
-                        $schedule->exists = true;
-                        $s->setRelation('schedule', $schedule);
-                    }
+                // 5. Hydrate Schedule relationship dynamically and fast
+                if (isset($data['schedule_id']) && $schedules->has((string) $data['schedule_id'])) {
+                    $schedule = \App\Support\FirestoreHydrator::schedule($schedules->get((string) $data['schedule_id']));
+                    $s->setRelation('schedule', $schedule);
+                } else {
+                    $schedule = new \App\Models\Schedule();
+                    $schedule->forceFill([
+                        'id' => $data['schedule_id'] ?? null,
+                        'name' => $data['schedule_display'] ?? '—',
+                    ]);
+                    $s->setRelation('schedule', $schedule);
                 }
 
                 return $s;

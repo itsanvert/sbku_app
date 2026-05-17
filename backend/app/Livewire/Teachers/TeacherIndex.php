@@ -73,6 +73,9 @@ class TeacherIndex extends Component
         if ($this->firestore && \App\Services\FirestoreService::isActive()) {
             $teachers = $this->firestore->list('teachers');
             $collection = collect($teachers);
+            
+            // Batch fetch schedules to avoid N+1 Firestore fetch overhead
+            $schedules = collect($this->firestore->list('schedules'))->keyBy('id');
 
             if ($this->search) {
                 $collection = $collection->filter(fn($t) =>
@@ -82,7 +85,7 @@ class TeacherIndex extends Component
             }
 
             // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) use ($schedules) {
                 $t = new Teacher();
 
                 // Separate relations from attributes
@@ -103,10 +106,17 @@ class TeacherIndex extends Component
                     'id'   => $data['shift_id'] ?? null,
                     'name' => $data['shift_name'] ?? '—',
                 ];
-                $scheduleData = [
-                    'id'   => $data['schedule_id'] ?? null,
-                    'name' => $data['schedule_display'] ?? '—',
-                ];
+
+                // Hydrate Schedule relationship dynamically and fast
+                if (isset($data['schedule_id']) && $schedules->has((string) $data['schedule_id'])) {
+                    $schedule = \App\Support\FirestoreHydrator::schedule($schedules->get((string) $data['schedule_id']));
+                } else {
+                    $schedule = new \App\Models\Schedule();
+                    $schedule->forceFill([
+                        'id' => $data['schedule_id'] ?? null,
+                        'name' => $data['schedule_display'] ?? '—',
+                    ]);
+                }
 
                 // Remove potentially conflicting keys from the main data array
                 $cleanData = array_diff_key($data, array_flip(['user', 'major', 'faculty', 'shift', 'schedule']));
@@ -119,7 +129,7 @@ class TeacherIndex extends Component
                 $t->setRelation('major', (new \App\Models\Major())->forceFill($majorData));
                 $t->setRelation('faculty', (new \App\Models\Faculty())->forceFill($facultyData));
                 $t->setRelation('shift', (new \App\Models\Shift())->forceFill($shiftData));
-                $t->setRelation('schedule', (new \App\Models\Schedule())->forceFill($scheduleData));
+                $t->setRelation('schedule', $schedule);
 
                 return $t;
             });
