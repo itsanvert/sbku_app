@@ -19,11 +19,9 @@ services:
       - key: APP_KEY
         value: base64:eOvGzttB2Sme3+YwJb7hse7ds1qCpwJ7HJ/KIdwHXKA=
       - key: DB_CONNECTION
-        value: sqlite
-      - key: DB_DATABASE
-        value: /var/data/database.sqlite
-      - key: DATABASE_URL
-        value: ""
+        value: pgsql
+      - key: DB_SSLMODE
+        value: require
       - key: USE_FIRESTORE
         value: "true"
       - key: SESSION_DRIVER

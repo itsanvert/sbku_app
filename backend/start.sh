@@ -60,9 +60,12 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
     export USE_FIRESTORE="true"
-    export DB_CONNECTION="sqlite"
-    export DB_DATABASE="/var/data/database.sqlite"
-    unset DATABASE_URL
+    # Fall back to SQLite only if no external DB host is configured
+    if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
+        export DB_CONNECTION="sqlite"
+        export DB_DATABASE="/var/data/database.sqlite"
+        unset DATABASE_URL
+    fi
 elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     echo "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
     mkdir -p storage/app
@@ -71,15 +74,17 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
     export USE_FIRESTORE="true"
-    export DB_CONNECTION="sqlite"
-    export DB_DATABASE="/var/data/database.sqlite"
-    unset DATABASE_URL
+    # Fall back to SQLite only if no external DB host is configured
+    if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
+        export DB_CONNECTION="sqlite"
+        export DB_DATABASE="/var/data/database.sqlite"
+        unset DATABASE_URL
+    fi
 fi
 
-# Run migrations (skip if using Firestore)
-if [ "$USE_FIRESTORE" = "true" ]; then
-    echo "USE_FIRESTORE is true - skipping database migrations"
-    # Create empty SQLite database at the correct path to prevent connection errors
+# Run migrations (skip only when using SQLite with Firestore)
+if [ "$USE_FIRESTORE" = "true" ] && [ "$DB_CONNECTION" = "sqlite" ]; then
+    echo "USE_FIRESTORE is true with SQLite - skipping database migrations"
     DB_PATH="${DB_DATABASE:-/var/data/database.sqlite}"
     DB_DIR=$(dirname "$DB_PATH")
     mkdir -p "$DB_DIR"

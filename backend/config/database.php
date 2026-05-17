@@ -85,12 +85,12 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('USE_FIRESTORE', false) === 'true' ? null : env('DB_URL'),
-            'host' => env('USE_FIRESTORE', false) === 'true' ? null : env('DB_HOST', '127.0.0.1'),
-            'port' => env('USE_FIRESTORE', false) === 'true' ? null : env('DB_PORT', '5432'),
-            'database' => env('USE_FIRESTORE', false) === 'true' ? null : env('DB_DATABASE', 'laravel'),
-            'username' => env('USE_FIRESTORE', false) === 'true' ? null : env('DB_USERNAME', 'root'),
-            'password' => env('USE_FIRESTORE', false) === 'true' ? null : env('DB_PASSWORD', ''),
+            'url' => env('DATABASE_URL', env('DB_URL')),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
