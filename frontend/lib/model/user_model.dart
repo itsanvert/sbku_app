@@ -6,6 +6,7 @@ class User {
   final String email;
   final String? emailVerifiedAt;
   final String? profilePhotoUrl;
+  final String? profilePhotoPath;
   final bool twoFactorEnabled;
   final String? createdAt;
   final String? updatedAt;
@@ -19,6 +20,7 @@ class User {
     required this.email,
     this.emailVerifiedAt,
     this.profilePhotoUrl,
+    this.profilePhotoPath,
     this.twoFactorEnabled = false,
     this.createdAt,
     this.updatedAt,
@@ -32,6 +34,7 @@ class User {
     final String? rawPhotoUrl = json['profile_photo_url']?.toString() ?? 
                                json['avatar_url']?.toString() ?? 
                                json['profile_image_url']?.toString();
+    final String? rawPhotoPath = json['profile_photo_path']?.toString();
 
     return User(
       id: json['id']?.toString() ?? '',
@@ -39,6 +42,7 @@ class User {
       email: json['email'] ?? '',
       emailVerifiedAt: json['email_verified_at'],
       profilePhotoUrl: AppConfig.resolveMediaUrl(rawPhotoUrl),
+      profilePhotoPath: rawPhotoPath,
       twoFactorEnabled: json['two_factor_enabled'] ?? false,
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
@@ -54,6 +58,7 @@ class User {
       'name': name,
       'email': email,
       'email_verified_at': emailVerifiedAt,
+      'profile_photo_path': profilePhotoPath,
       'profile_photo_url': profilePhotoUrl,
       'two_factor_enabled': twoFactorEnabled,
       'created_at': createdAt,
@@ -70,6 +75,7 @@ class User {
     String? email,
     String? emailVerifiedAt,
     String? profilePhotoUrl,
+    String? profilePhotoPath,
     bool? twoFactorEnabled,
     String? createdAt,
     String? updatedAt,
@@ -83,6 +89,7 @@ class User {
       email: email ?? this.email,
       emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
       profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
+      profilePhotoPath: profilePhotoPath ?? this.profilePhotoPath,
       twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

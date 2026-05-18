@@ -100,8 +100,8 @@ class _ShowStudentScreenState extends State<ShowStudentScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
                     decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                   gradient: LinearGradient(
+                        colors: [Color(0xFFFF5722), Color(0xFFFF8A65)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
