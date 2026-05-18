@@ -74,7 +74,8 @@ Route::middleware([
             foreach ($recentAttendances as $attendance) {
                 $date = $attendance->attendance_date;
                 if ($date) {
-                    $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+                    $dateKey = $date->format('Y-m-d');
+                    $dailyData[$dateKey] = ($dailyData[$dateKey] ?? 0) + 1;
                 }
             }
 
