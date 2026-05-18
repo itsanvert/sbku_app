@@ -13,6 +13,7 @@ class UserEdit extends Component
     public $email    = '';
     public $password = '';
     public $role     = '';
+    public $oldRole  = '';
 
     public function mount($userId)
     {
@@ -23,12 +24,14 @@ class UserEdit extends Component
             $this->name   = $user['name'];
             $this->email  = $user['email'];
             $this->role   = $user['role'] ?? 'user';
+            $this->oldRole = $this->role;
         } else {
             $user = User::findOrFail($userId);
             $this->userId = $user->id;
             $this->name   = $user->name;
             $this->email  = $user->email;
             $this->role   = $user->role ?? 'user';
+            $this->oldRole = $this->role;
         }
     }
 
@@ -57,6 +60,33 @@ class UserEdit extends Component
         } else {
             User::findOrFail($this->userId)->update($data);
         }
+
+        if ($this->role !== $this->oldRole) {
+            if (\App\Services\FirestoreService::isActive()) {
+                $firestore = app(\App\Services\FirestoreService::class);
+                if (in_array($this->oldRole, ['teacher', 'student'])) {
+                    $firestore->delete($this->oldRole . 's', (string)$this->userId);
+                }
+                if (in_array($this->role, ['teacher', 'student'])) {
+                    $firestore->create($this->role . 's', ['user_id' => (string)$this->userId, 'role' => $this->role]);
+                }
+            } else {
+                $user = User::findOrFail($this->userId);
+                if ($this->oldRole === 'teacher' && $this->role !== 'teacher') {
+                    $user->teacher()->delete();
+                }
+                if ($this->oldRole === 'student' && $this->role !== 'student') {
+                    $user->student()->delete();
+                }
+                if ($this->role === 'teacher' && $this->oldRole !== 'teacher') {
+                    $user->teacher()->create();
+                }
+                if ($this->role === 'student' && $this->oldRole !== 'student') {
+                    $user->student()->create();
+                }
+            }
+        }
+
         $this->dispatch('userUpdated');
     }
 

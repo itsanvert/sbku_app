@@ -23,7 +23,7 @@ class UserResource extends JsonResource
             'email'              => $this->email,
             'email_verified_at'  => $this->email_verified_at,
             'profile_photo_path' => $this->profile_photo_path,
-            'profile_photo_url'  => $this->profile_photo_url,
+            'profile_image_path' => $this->profile_image_path,
             'two_factor_enabled' => $this->two_factor_secret !== null,
             'role'               => $this->role,
             'student_id'         => $this->student_id ?? data_get($this->student, 'id'),

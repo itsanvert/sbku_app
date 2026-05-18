@@ -81,17 +81,26 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if ($user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+        $oldPath = $user->profile_photo_path;
+        $path = $request->file('photo')->store('profile-photos', 'public');
+
+        $user->update(['profile_photo_path' => $path]);
+
+        // Sync to teacher/student profile_image_path
+        if ($user->role === 'teacher' && $user->teacher) {
+            $user->teacher->update(['profile_image_path' => $path]);
+        } elseif ($user->role === 'student' && $user->student) {
+            $user->student->update(['profile_image_path' => $path]);
         }
 
-        $path = $request->file('photo')->store('profile-photos', 'public');
-        $user->update(['profile_photo_path' => $path]);
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Profile photo updated successfully',
-            'user'    => (new UserResource($user))->resolve(),
+            'user'    => (new UserResource($user->fresh()))->resolve(),
         ]);
     }
 
@@ -104,6 +113,13 @@ class ProfileController extends Controller
 
         if ($user->profile_photo_path) {
             Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        // Clear teacher/student profile_image_path as well
+        if ($user->role === 'teacher' && $user->teacher) {
+            $user->teacher->update(['profile_image_path' => null]);
+        } elseif ($user->role === 'student' && $user->student) {
+            $user->student->update(['profile_image_path' => null]);
         }
 
         $user->update(['profile_photo_path' => null]);

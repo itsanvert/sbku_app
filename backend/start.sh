@@ -13,6 +13,37 @@ if [ -n "$DB_DATABASE" ] && printf '%s' "$DB_DATABASE" | grep -qi "sqlite"; then
     DB_CONNECTION=sqlite
 fi
 
+# ── Neon (serverless Postgres) ────────────────────────────────
+if [ -n "$NEON_DATABASE_URL" ]; then
+    echo "Detected NEON_DATABASE_URL — switching to PostgreSQL (Neon)..."
+    NEON_URL="$(printf '%s' "$NEON_DATABASE_URL" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'")"
+    # Strip postgresql:// prefix
+    WITHOUT_PROTO="${NEON_URL#*://}"
+    # Extract credentials and host/db
+    CREDS_AND_HOST="${WITHOUT_PROTO%%\?*}"
+    # user:pass@host:port/db
+    USER_PASS="${CREDS_AND_HOST%%@*}"
+    HOST_DB="${CREDS_AND_HOST#*@}"
+    DB_USER="${USER_PASS%%:*}"
+    DB_PASS="${USER_PASS#*:}"
+    DB_HOST_PORT="${HOST_DB%%/*}"
+    DB_NAME="${HOST_DB#*/}"
+    # Split host:port
+    DB_HOST_VAL="${DB_HOST_PORT%%:*}"
+    DB_PORT_VAL="${DB_HOST_PORT#*:}"
+    [ "$DB_HOST_VAL" = "$DB_PORT_VAL" ] && DB_PORT_VAL="5432"
+
+    export DB_CONNECTION="pgsql"
+    export DATABASE_URL="$NEON_URL"
+    export DB_HOST="$DB_HOST_VAL"
+    export DB_PORT="$DB_PORT_VAL"
+    export DB_DATABASE="$DB_NAME"
+    export DB_USERNAME="$DB_USER"
+    export DB_PASSWORD="$DB_PASS"
+    export DB_SSLMODE="require"
+    echo "Neon PostgreSQL configured: host=$DB_HOST_VAL port=$DB_PORT_VAL db=$DB_NAME user=$DB_USER"
+fi
+
 # Sanitize DATABASE_URL and DB_HOST to remove stray CR/LF or quotes
 if [ -n "$DATABASE_URL" ]; then
     DATABASE_URL="$(printf '%s' "$DATABASE_URL" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'" )"

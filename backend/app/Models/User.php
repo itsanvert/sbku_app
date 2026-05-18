@@ -53,6 +53,7 @@ class User extends Authenticatable
      */
     protected $appends = [
         'profile_photo_url',
+        'profile_image_path',
     ];
 
     /**
@@ -100,6 +101,30 @@ class User extends Authenticatable
         // 4. Default ui-avatars
         return $this->defaultProfilePhotoUrl();
     }
+    /**
+     * Get the profile image path from teacher/student, falling back to
+     * the user's own profile_photo_path.
+     */
+    public function getProfileImagePathAttribute(): ?string
+    {
+        // 1. Check Teacher profile_image_path
+        $teacher = $this->teacher;
+        $teacherPath = data_get($teacher, 'profile_image_path');
+        if ($teacherPath) {
+            return $teacherPath;
+        }
+
+        // 2. Check Student profile_image_path
+        $student = $this->student;
+        $studentPath = data_get($student, 'profile_image_path');
+        if ($studentPath) {
+            return $studentPath;
+        }
+
+        // 3. Fall back to the user's own profile_photo_path
+        return $this->profile_photo_path;
+    }
+
     /**
      * Check if user is Super Admin.
      */

@@ -5,7 +5,7 @@ class User {
   final String name;
   final String email;
   final String? emailVerifiedAt;
-  final String? profilePhotoUrl;
+  final String? profileImagePath;
   final String? profilePhotoPath;
   final bool twoFactorEnabled;
   final String? createdAt;
@@ -14,12 +14,15 @@ class User {
   final String? studentId;
   final String? teacherId;
 
+  /// Resolved full URL for display (kept for backward compatibility).
+  String? get profilePhotoUrl => AppConfig.resolveMediaUrl(profileImagePath);
+
   User({
     required this.id,
     required this.name,
     required this.email,
     this.emailVerifiedAt,
-    this.profilePhotoUrl,
+    this.profileImagePath,
     this.profilePhotoPath,
     this.twoFactorEnabled = false,
     this.createdAt,
@@ -30,10 +33,9 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    // Try multiple possible keys for the profile image URL
-    final String? rawPhotoUrl = json['profile_photo_url']?.toString() ?? 
-                               json['avatar_url']?.toString() ?? 
-                               json['profile_image_url']?.toString();
+    final String? rawImagePath = json['profile_image_path']?.toString() ??
+                                 json['avatar_url']?.toString() ??
+                                 json['profile_image_url']?.toString();
     final String? rawPhotoPath = json['profile_photo_path']?.toString();
 
     return User(
@@ -41,7 +43,7 @@ class User {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       emailVerifiedAt: json['email_verified_at'],
-      profilePhotoUrl: AppConfig.resolveMediaUrl(rawPhotoUrl),
+      profileImagePath: rawImagePath,
       profilePhotoPath: rawPhotoPath,
       twoFactorEnabled: json['two_factor_enabled'] ?? false,
       createdAt: json['created_at'],
@@ -58,8 +60,8 @@ class User {
       'name': name,
       'email': email,
       'email_verified_at': emailVerifiedAt,
+      'profile_image_path': profileImagePath,
       'profile_photo_path': profilePhotoPath,
-      'profile_photo_url': profilePhotoUrl,
       'two_factor_enabled': twoFactorEnabled,
       'created_at': createdAt,
       'updated_at': updatedAt,
@@ -74,7 +76,7 @@ class User {
     String? name,
     String? email,
     String? emailVerifiedAt,
-    String? profilePhotoUrl,
+    String? profileImagePath,
     String? profilePhotoPath,
     bool? twoFactorEnabled,
     String? createdAt,
@@ -88,7 +90,7 @@ class User {
       name: name ?? this.name,
       email: email ?? this.email,
       emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
-      profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
+      profileImagePath: profileImagePath ?? this.profileImagePath,
       profilePhotoPath: profilePhotoPath ?? this.profilePhotoPath,
       twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
       createdAt: createdAt ?? this.createdAt,
