@@ -7,8 +7,18 @@ class StudentService {
   final ApiService _api = ApiService();
 
   /// Get students as a real-time stream via API polling.
-  Stream<List<Student>> streamStudents() {
-    return Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+  Stream<List<Student>> streamStudents() async* {
+    // 1. Fetch and emit the first event immediately (0-second mark)
+    try {
+      final paginated = await getStudents(page: 1);
+      yield paginated.data;
+    } catch (e) {
+      print('Initial students fetch failed: $e');
+      yield <Student>[];
+    }
+
+    // 2. Poll periodically every 10 seconds in the background
+    yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
       try {
         final paginated = await getStudents(page: 1);
         return paginated.data;

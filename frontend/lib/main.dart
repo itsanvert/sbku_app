@@ -8,6 +8,7 @@ import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
+import 'package:sbku_app/service/api_service.dart';
 import 'package:sbku_app/service/notification_service_v2.dart';
 import 'package:sbku_app/service/app_lifecycle_manager.dart';
 import 'package:sbku_app/service/platform_channel_service.dart';
@@ -183,9 +184,34 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 
   Future<void> _checkAuth() async {
+    // Start server warm-up silently in the background (no await)
+    _warmUpServer();
+
+    final startTime = DateTime.now();
+
+    // Check auth status (makes /api/user API call if token is saved)
     await Provider.of<AuthProvider>(context, listen: false).checkAuth();
+
+    // Enforce a minimum splash duration of 1.5s so transition is smooth
+    // and the background warm-up gets a head start if no token is saved
+    final elapsed = DateTime.now().difference(startTime);
+    const minSplashDuration = Duration(milliseconds: 1500);
+    if (elapsed < minSplashDuration) {
+      await Future.delayed(minSplashDuration - elapsed);
+    }
+
     if (mounted) {
       setState(() => _isChecking = false);
+    }
+  }
+
+  Future<void> _warmUpServer() async {
+    try {
+      final apiService = sl<ApiService>();
+      await apiService.healthCheck();
+      print('Render API Warm-up: Server is warm and ready!');
+    } catch (e) {
+      print('Render API Warm-up failed: $e');
     }
   }
 

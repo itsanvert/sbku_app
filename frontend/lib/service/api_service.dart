@@ -9,7 +9,11 @@ class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
 
   final storage = const FlutterSecureStorage();
-  final http.Client _client = http.Client();
+  // Single shared HTTP client for the entire app to maintain Keep-Alive, DNS, and SSL session caching.
+  static final http.Client _sharedClient = http.Client();
+  final http.Client _client;
+
+  ApiService() : _client = _sharedClient;
 
   // Retry configuration
   static const int maxRetries = 3;

@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:sbku_app/model/teacher_model.dart';
 import 'package:sbku_app/service/teacher_service.dart';
 
-class ShowTeacherScreen extends StatelessWidget {
+class ShowTeacherScreen extends StatefulWidget {
   final String teacherId;
 
   const ShowTeacherScreen({super.key, required this.teacherId});
+
+  @override
+  State<ShowTeacherScreen> createState() => _ShowTeacherScreenState();
+}
+
+class _ShowTeacherScreenState extends State<ShowTeacherScreen> {
+  final TeacherService _service = TeacherService();
+  late final Future<Teacher> _teacherFuture;
 
   static const _primary = Color(0xFFFF5722);
 
@@ -14,15 +22,18 @@ class ShowTeacherScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final TeacherService service = TeacherService();
+  void initState() {
+    super.initState();
+    _teacherFuture = _service.getTeacher(widget.teacherId);
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor:
           _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
       body: FutureBuilder<Teacher>(
-        future:
-            service.getTeacher(teacherId), // ← fetch single teacher directly
+        future: _teacherFuture,
         builder: (context, snapshot) {
           // ── Loading ──────────────────────────────────────────────
           if (snapshot.connectionState == ConnectionState.waiting) {

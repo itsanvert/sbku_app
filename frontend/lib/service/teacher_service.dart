@@ -7,8 +7,18 @@ class TeacherService {
   final ApiService _api = ApiService();
 
   /// Get teachers as a real-time stream via API polling.
-  Stream<List<Teacher>> streamTeachers() {
-    return Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+  Stream<List<Teacher>> streamTeachers() async* {
+    // 1. Fetch and emit the first event immediately (0-second mark)
+    try {
+      final paginated = await getTeachers(page: 1);
+      yield paginated.data;
+    } catch (e) {
+      print('Initial teachers fetch failed: $e');
+      yield <Teacher>[];
+    }
+
+    // 2. Poll periodically every 10 seconds in the background
+    yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
       try {
         final paginated = await getTeachers(page: 1);
         return paginated.data;
