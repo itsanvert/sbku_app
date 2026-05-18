@@ -103,15 +103,38 @@ fi
 # Public storage symlink for profile images (idempotent)
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
 
+# Enable and optimize PHP OPcache for fast production API performance
+if [ "$PHP_OPCACHE_ENABLE" = "1" ] || [ "$APP_ENV" = "production" ]; then
+    echo "Configuring and enabling PHP OPcache for maximum API response speed..."
+    OPCACHE_INI="/usr/local/etc/php/conf.d/docker-php-ext-opcache.ini"
+    docker-php-ext-enable opcache 2>/dev/null || true
+    cat <<EOF > "$OPCACHE_INI"
+[opcache]
+opcache.enable=1
+opcache.enable_cli=1
+opcache.memory_consumption=256
+opcache.interned_strings_buffer=16
+opcache.max_accelerated_files=20000
+opcache.revalidate_freq=0
+opcache.validate_timestamps=0
+opcache.fast_shutdown=1
+EOF
+    echo "OPcache successfully configured and active."
+fi
+
 # Clear caches to ensure fresh production assets
 php artisan config:clear
 php artisan view:clear
 php artisan route:clear
+php artisan event:clear
 
 # Discover package service providers (Firebase, Livewire, Flux, etc.)
 php artisan package:discover --ansi 2>/dev/null || true
 
+# Cache Laravel configurations, routes, views, and events for maximum production speed
 php artisan optimize
+php artisan view:cache
+php artisan event:cache
 
 # Configure Apache to listen on Render's dynamic PORT
 if [ -n "$PORT" ]; then

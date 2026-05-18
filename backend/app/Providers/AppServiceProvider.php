@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-
+        // Register custom Firestore User Provider for state management and auth
+        \Illuminate\Support\Facades\Auth::provider('firestore', function ($app, array $config) {
+            return new \App\Providers\FirestoreUserProvider($app->make(\App\Services\FirestoreService::class));
+        });
     }
 }

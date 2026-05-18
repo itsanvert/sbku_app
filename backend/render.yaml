@@ -19,11 +19,11 @@ services:
       - key: APP_KEY
         value: base64:eOvGzttB2Sme3+YwJb7hse7ds1qCpwJ7HJ/KIdwHXKA=
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_SSLMODE
-        value: require
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/data/database.sqlite
       - key: USE_FIRESTORE
-        value: "false"
+        value: "true"
       - key: SESSION_DRIVER
         value: file
       - key: SESSION_FILES
@@ -35,7 +35,7 @@ services:
       - key: QUEUE_CONNECTION
         value: sync
       - key: AUTH_PROVIDER_DRIVER
-        value: eloquent
+        value: firestore
       - key: FIREBASE_PROJECT_ID
         value: sbkuapp-vert25
       - key: FIREBASE_CREDENTIALS
@@ -44,3 +44,7 @@ services:
         value: /etc/secrets/firebase-credentials.json
       - key: GOOGLE_CLOUD_USE_REST
         value: "true"
+      - key: PHP_OPCACHE_ENABLE
+        value: "1"
+      - key: PHP_OPCACHE_CLI_ENABLE
+        value: "1"
