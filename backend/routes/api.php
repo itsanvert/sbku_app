@@ -33,10 +33,18 @@ Route::get('/health', function () {
 
 // Public storage route for CORS support on Flutter Web
 Route::get('/storage/{path}', function ($path) {
-    $path = storage_path('app/public/' . $path);
-    if (!file_exists($path)) abort(404);
+    $fullPath = storage_path('app/public/' . $path);
+    
+    if (!file_exists($fullPath)) {
+        // Render ephemeral storage loses files on restart. 
+        // Fallback to a generated avatar instead of 404ing and breaking the app.
+        $fallbackName = pathinfo($path, PATHINFO_FILENAME);
+        // Clean up the hash name to get a generic letter
+        $fallbackLetter = substr($fallbackName, 0, 2); 
+        return redirect('https://ui-avatars.com/api/?name=' . urlencode($fallbackLetter) . '&background=random&color=fff&size=128');
+    }
 
-    return response()->file($path, [
+    return response()->file($fullPath, [
         'Access-Control-Allow-Origin' => '*',
         'Access-Control-Allow-Methods' => 'GET',
         'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
