@@ -143,5 +143,8 @@ if [ -n "$PORT" ]; then
     sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
 fi
 
+# Set ServerName globally to suppress Apache qualified domain name warning
+echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
+
 # Start Apache
 apache2-foreground
