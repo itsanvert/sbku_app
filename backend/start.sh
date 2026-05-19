@@ -167,12 +167,10 @@ php artisan optimize
 php artisan view:cache
 php artisan event:cache
 
-# Configure Apache to listen on Render's dynamic PORT
-if [ -n "$PORT" ]; then
-    # Replace literal ${PORT} (from Dockerfile) or default 80 with the actual runtime port
-    sed -i "s/\${PORT}/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
-    sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
-fi
+# Configure Apache to listen on the runtime port (Render $PORT or ECS default 80)
+LISTEN_PORT="${PORT:-80}"
+sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
+sed -i "s/80/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
 
 # Set ServerName globally to suppress Apache qualified domain name warning
 echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
