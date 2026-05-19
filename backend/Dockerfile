@@ -87,6 +87,10 @@ COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --from=vendor  /app/vendor          ./vendor
 COPY --from=assets  /app/public/build    ./public/build
 
+# ── 1b. Apache MPM prefork config (limit workers for 512MB RAM) ─────────────
+COPY docker/mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
+COPY docker/php-memory.ini    /usr/local/etc/php/conf.d/php-memory.ini
+
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
 

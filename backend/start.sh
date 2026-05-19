@@ -143,9 +143,9 @@ if [ "$PHP_OPCACHE_ENABLE" = "1" ] || [ "$APP_ENV" = "production" ]; then
 [opcache]
 opcache.enable=1
 opcache.enable_cli=1
-opcache.memory_consumption=256
-opcache.interned_strings_buffer=16
-opcache.max_accelerated_files=20000
+opcache.memory_consumption=64
+opcache.interned_strings_buffer=8
+opcache.max_accelerated_files=10000
 opcache.revalidate_freq=0
 opcache.validate_timestamps=0
 opcache.fast_shutdown=1
