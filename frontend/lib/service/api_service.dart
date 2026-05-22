@@ -4,6 +4,15 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sbku_app/core/constants/app_config.dart';
 
+class _CacheEntry {
+  final http.Response response;
+  final DateTime _createdAt = DateTime.now();
+
+  _CacheEntry(this.response);
+
+  bool get isExpired => DateTime.now().difference(_createdAt) > ApiService._cacheTtl;
+}
+
 class ApiService {
   /// Laravel API base (includes `/api`). Override with `API_URL` in `.env` (host only, no `/api`).
   static String get baseUrl => AppConfig.apiBaseUrl;
@@ -13,11 +22,38 @@ class ApiService {
   static final http.Client _sharedClient = http.Client();
   final http.Client _client;
 
+  // In-memory response cache: keyed by endpoint, expires after TTL
+  static final _cache = <String, _CacheEntry>{};
+  static const Duration _cacheTtl = Duration(seconds: 30);
+
   ApiService() : _client = _sharedClient;
 
   // Retry configuration
   static const int maxRetries = 3;
   static const Duration requestTimeout = Duration(seconds: 30);
+
+  /// Clear the entire in-memory cache (call after mutations like POST/PUT/DELETE)
+  void clearCache() {
+    _cache.clear();
+  }
+
+  /// Invalidate a specific cached endpoint
+  void invalidateCache(String pattern) {
+    _cache.removeWhere((key, _) => key.contains(pattern));
+  }
+
+  http.Response? _getCached(String key) {
+    final entry = _cache[key];
+    if (entry != null && !entry.isExpired) {
+      return entry.response;
+    }
+    _cache.remove(key);
+    return null;
+  }
+
+  void _setCache(String key, http.Response response) {
+    _cache[key] = _CacheEntry(response);
+  }
 
   // Token management
   Future<String?> getToken() async {
@@ -86,13 +122,26 @@ class ApiService {
     throw TimeoutException('Max retries exceeded');
   }
 
-  // GET request with retry
-  Future<http.Response> get(String endpoint, {bool requiresAuth = true}) async {
+  // GET request with retry and in-memory caching
+  Future<http.Response> get(String endpoint, {bool requiresAuth = true, bool forceRefresh = false}) async {
+    final cacheKey = '$requiresAuth:$endpoint';
+
+    if (!forceRefresh) {
+      final cached = _getCached(cacheKey);
+      if (cached != null) return cached;
+    }
+
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => _client.get(
+    final response = await _retryableRequest(() => _client.get(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
         ));
+
+    if (response.statusCode == 200) {
+      _setCache(cacheKey, response);
+    }
+
+    return response;
   }
 
   // POST request with retry
@@ -102,11 +151,13 @@ class ApiService {
     bool requiresAuth = false,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => _client.post(
+    final response = await _retryableRequest(() => _client.post(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
           body: jsonEncode(body),
         ));
+    if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    return response;
   }
 
   // PUT request with retry
@@ -116,11 +167,13 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => _client.put(
+    final response = await _retryableRequest(() => _client.put(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
           body: jsonEncode(body),
         ));
+    if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    return response;
   }
 
   // DELETE request with retry
@@ -129,10 +182,12 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
-    return await _retryableRequest(() => _client.delete(
+    final response = await _retryableRequest(() => _client.delete(
           Uri.parse('$baseUrl/$endpoint'),
           headers: headers,
         ));
+    if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    return response;
   }
 
   // Multipart request (for file uploads) - no retry as file position can't be reset

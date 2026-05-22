@@ -73,9 +73,23 @@ class AttendanceService {
 
 
 
-  /// Listen to active attendance sessions by polling the API.
+  /// Debounce helper: ensures only one in-flight request per key at a time.
+  final Map<String, DateTime> _lastPoll = {};
+
+  bool _shouldPoll(String key, {int minIntervalSec = 5}) {
+    final now = DateTime.now();
+    final last = _lastPoll[key];
+    if (last == null || now.difference(last).inSeconds >= minIntervalSec) {
+      _lastPoll[key] = now;
+      return true;
+    }
+    return false;
+  }
+
+  /// Listen to active attendance sessions by polling the API (debounced 5s).
   Stream<List<Map<String, dynamic>>> listenToActiveSessions({String? teacherId}) {
     return Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
+      if (!_shouldPoll('active_sessions')) return <Map<String, dynamic>>[];
       try {
         return await getActiveSessions(teacherId: teacherId);
       } catch (e) {
@@ -85,9 +99,10 @@ class AttendanceService {
     });
   }
 
-  /// Listen to attendances for a specific session by polling the API.
+  /// Listen to attendances for a specific session by polling the API (debounced 3s).
   Stream<List<Map<String, dynamic>>> listenToSessionAttendances(String sessionId) {
     return Stream.periodic(const Duration(seconds: 3)).asyncMap((_) async {
+      if (!_shouldPoll('session_attendances_$sessionId', minIntervalSec: 3)) return <Map<String, dynamic>>[];
       try {
         final data = await getApprovalList(sessionId);
         // Combine all groups into a single list for compatibility

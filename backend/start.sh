@@ -173,5 +173,9 @@ sed -i "s/80/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/
 # Set ServerName globally to suppress Apache qualified domain name warning
 echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
 
+# Start queue worker in the background for queued push notifications
+php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
+echo "Queue worker started."
+
 # Start Apache
 apache2-foreground

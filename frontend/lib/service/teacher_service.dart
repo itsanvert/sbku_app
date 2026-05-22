@@ -5,8 +5,19 @@ import 'package:sbku_app/service/api_service.dart';
 
 class TeacherService {
   final ApiService _api = ApiService();
+  final Map<String, DateTime> _lastPoll = {};
 
-  /// Get teachers as a real-time stream via API polling.
+  bool _shouldPoll(String key, {int minIntervalSec = 10}) {
+    final now = DateTime.now();
+    final last = _lastPoll[key];
+    if (last == null || now.difference(last).inSeconds >= minIntervalSec) {
+      _lastPoll[key] = now;
+      return true;
+    }
+    return false;
+  }
+
+  /// Get teachers as a real-time stream via API polling (debounced 10s).
   Stream<List<Teacher>> streamTeachers() async* {
     // 1. Fetch and emit the first event immediately (0-second mark)
     try {
@@ -19,6 +30,7 @@ class TeacherService {
 
     // 2. Poll periodically every 10 seconds in the background
     yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+      if (!_shouldPoll('teachers')) return <Teacher>[];
       try {
         final paginated = await getTeachers(page: 1);
         return paginated.data;

@@ -290,9 +290,6 @@ class AttendanceController extends Controller
         if ($request->status)
             $query->where('status', $request->status);
 
-        $records = $query->orderBy('attendance_date', 'desc')->get();
-
-        // Build a human-readable filter summary for the report header
         $filterParts = [];
         if ($request->date)
             $filterParts[] = 'Date: ' . $request->date;
@@ -303,6 +300,9 @@ class AttendanceController extends Controller
         if ($request->status)
             $filterParts[] = 'Status: ' . $request->status;
         $filterInfo = $filterParts ? implode(' | ', $filterParts) : 'All records';
+
+        $records = $query->orderBy('attendance_date', 'desc')
+            ->lazy(500);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
             'records' => $records,
@@ -342,9 +342,6 @@ class AttendanceController extends Controller
         if ($request->status)
             $query->where('status', $request->status);
 
-        $records = $query->orderBy('attendance_date', 'desc')->get();
-
-        // Build a human-readable filter summary
         $filterParts = [];
         if ($request->date)
             $filterParts[] = 'Date: ' . $request->date;
@@ -355,6 +352,9 @@ class AttendanceController extends Controller
         if ($request->status)
             $filterParts[] = 'Status: ' . $request->status;
         $filterInfo = $filterParts ? implode(' | ', $filterParts) : 'All records';
+
+        $records = $query->orderBy('attendance_date', 'desc')
+            ->lazy(500);
 
         return (new \App\Exports\AttendanceExport(
             $records,

@@ -44,17 +44,14 @@ Route::middleware([
             ]);
             
             $dailyData = [];
+            $presentCount = 0;
+            $absentCount = 0;
+            $permissionCount = 0;
             foreach ($recentAttendances as $attendance) {
                 $date = $attendance['attendance_date'] ?? null;
                 if ($date) {
                     $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
                 }
-            }
-
-            $presentCount = 0;
-            $absentCount = 0;
-            $permissionCount = 0;
-            foreach ($recentAttendances as $attendance) {
                 $status = $attendance['status'] ?? '';
                 if ($status === 'Y') $presentCount++;
                 elseif ($status === 'N') $absentCount++;
@@ -67,27 +64,19 @@ Route::middleware([
             $attendanceCount = \App\Models\Attendance::count();
             $activeSessions = \App\Models\AttendanceSession::where('is_active', true)->count();
 
-            $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
-            $recentAttendances = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)->get();
-            
-            $dailyData = [];
-            foreach ($recentAttendances as $attendance) {
-                $date = $attendance->attendance_date;
-                if ($date) {
-                    $dateKey = $date->format('Y-m-d');
-                    $dailyData[$dateKey] = ($dailyData[$dateKey] ?? 0) + 1;
-                }
-            }
+            $sevenDaysAgo = now()->subDays(7);
+            $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->selectRaw("DATE_FORMAT(attendance_date, '%Y-%m-%d') as date_key, COUNT(*) as count")
+                ->groupBy('date_key')
+                ->pluck('count', 'date_key')
+                ->toArray();
 
-            $presentCount = 0;
-            $absentCount = 0;
-            $permissionCount = 0;
-            foreach ($recentAttendances as $attendance) {
-                $status = $attendance->status;
-                if ($status === 'Y') $presentCount++;
-                elseif ($status === 'N') $absentCount++;
-                elseif ($status === 'P') $permissionCount++;
-            }
+            $presentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->where('status', 'Y')->count();
+            $absentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->where('status', 'N')->count();
+            $permissionCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->where('status', 'P')->count();
         }
 
         $dates = [];

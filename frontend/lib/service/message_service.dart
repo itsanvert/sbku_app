@@ -3,10 +3,14 @@ import 'package:sbku_app/service/api_service.dart';
 
 class MessageService {
   final ApiService _api = ApiService();
+  DateTime _lastPoll = DateTime(2000);
 
-  /// Poll messages from the API.
+  /// Poll messages from the API (debounced 10s).
   Stream<List<Map<String, dynamic>>> listenToMessages({String? userId}) {
     return Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+      final now = DateTime.now();
+      if (now.difference(_lastPoll).inSeconds < 10) return <Map<String, dynamic>>[];
+      _lastPoll = now;
       try {
         final response = await _api.get('messages', requiresAuth: true);
         if (response.statusCode == 200) {
