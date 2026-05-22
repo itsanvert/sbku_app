@@ -65,18 +65,26 @@ Route::middleware([
             $activeSessions = \Illuminate\Support\Facades\Cache::remember('dashboard.active_sessions', 300, fn() => \App\Models\AttendanceSession::where('is_active', true)->count());
 
             $sevenDaysAgo = now()->subDays(7);
-            $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->selectRaw('attendance_date as date_key, COUNT(*) as count')
-                ->groupBy('attendance_date')
-                ->pluck('count', 'date_key')
-                ->toArray();
+            $attendanceStats = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_stats', 300, function () use ($sevenDaysAgo) {
+                $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->selectRaw('attendance_date as date_key, COUNT(*) as count')
+                    ->groupBy('attendance_date')
+                    ->pluck('count', 'date_key')
+                    ->toArray();
 
-            $presentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->where('status', 'Y')->count();
-            $absentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->where('status', 'N')->count();
-            $permissionCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->where('status', 'P')->count();
+                $presentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->where('status', 'Y')->count();
+                $absentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->where('status', 'N')->count();
+                $permissionCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->where('status', 'P')->count();
+
+                return compact('dailyData', 'presentCount', 'absentCount', 'permissionCount');
+            });
+            $dailyData = $attendanceStats['dailyData'];
+            $presentCount = $attendanceStats['presentCount'];
+            $absentCount = $attendanceStats['absentCount'];
+            $permissionCount = $attendanceStats['permissionCount'];
         }
 
         $dates = [];

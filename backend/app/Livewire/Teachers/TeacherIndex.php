@@ -3,6 +3,7 @@
 namespace App\Livewire\Teachers;
 
 use App\Models\Teacher;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -144,21 +145,25 @@ class TeacherIndex extends Component
         }
 
         // Fallback to Eloquent (Local SQL)
-        return Teacher::query()
-            ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
-            ->when($this->search, function ($q) {
-                $q->whereHas('user', function ($query) {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->role, function ($q) {
-                $q->whereHas('user', function ($query) {
-                    $query->where('role', $this->role);
-                });
-            })
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(10);
+        $cacheKey = 'teachers.index.' . md5(implode('|', [$this->search, $this->role, $this->sortBy, $this->sortDirection, $this->getPage()]));
+
+        return Cache::remember($cacheKey, 60, function () {
+            return Teacher::query()
+                ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
+                ->when($this->search, function ($q) {
+                    $q->whereHas('user', function ($query) {
+                        $query->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('email', 'like', '%' . $this->search . '%');
+                    });
+                })
+                ->when($this->role, function ($q) {
+                    $q->whereHas('user', function ($query) {
+                        $query->where('role', $this->role);
+                    });
+                })
+                ->orderBy($this->sortBy, $this->sortDirection)
+                ->paginate(10);
+        });
     }
 
     public function openCreateModal()

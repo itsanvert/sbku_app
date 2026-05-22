@@ -6,6 +6,7 @@ use App\Models\AcademicClass;
 use App\Models\Faculty;
 use App\Models\Major;
 use App\Support\FirestoreHydrator;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -156,12 +157,16 @@ class ClassIndex extends Component
     #[Computed]
     public function classes()
     {
-        return AcademicClass::with('major.faculty')
-            ->when($this->search, fn($q) => $q->where(function($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('code', 'like', '%' . $this->search . '%');
-            }))
-            ->paginate(10);
+        $cacheKey = 'classes.index.' . md5(implode('|', [$this->search, $this->getPage()]));
+
+        return Cache::remember($cacheKey, 60, function () {
+            return AcademicClass::with('major.faculty')
+                ->when($this->search, fn($q) => $q->where(function($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('code', 'like', '%' . $this->search . '%');
+                }))
+                ->paginate(10);
+        });
     }
 
     public function render()
@@ -208,7 +213,7 @@ class ClassIndex extends Component
 
         return view('livewire.classes.class-index', [
             'classes' => $this->classes,
-            'majors' => Major::select('id', 'name')->orderBy('name')->get(),
+            'majors' => Cache::remember('majors.all', 86400, fn() => Major::select('id', 'name')->orderBy('name')->get()),
         ])->layout('layouts.app');
     }
 }
