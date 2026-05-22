@@ -112,6 +112,11 @@ RUN sed -i 's/80/${PORT}/g' \
 # This is best-effort at build time; start.sh re-runs it at runtime.
 RUN php artisan package:discover --ansi 2>/dev/null || true
 
+# Pre-compile Blade templates at build time so runtime startup is faster
+# (start.sh skips view:cache when the compiled files already exist).
+# Best-effort — if it fails (e.g. missing APP_KEY), views compile on demand.
+RUN php artisan view:cache 2>/dev/null || true
+
 # Make start.sh executable (it handles the remaining runtime setup)
 RUN chmod +x /var/www/html/start.sh
 

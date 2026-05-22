@@ -153,19 +153,17 @@ EOF
     echo "OPcache successfully configured and active."
 fi
 
-# Clear caches to ensure fresh production assets
-php artisan config:clear
-php artisan view:clear
-php artisan route:clear
-php artisan event:clear
-
 # Discover package service providers (Firebase, Livewire, Flux, etc.)
 php artisan package:discover --ansi 2>/dev/null || true
 
-# Cache Laravel configurations, routes, views, and events for maximum production speed
+# Cache Laravel configurations, routes, and events for maximum production speed
 php artisan optimize
-php artisan view:cache
-php artisan event:cache
+
+# Compile Blade templates only if not already cached (saves ~7s on restarts when
+# the view cache was pre-built at Docker build time or persisted across restarts).
+if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null | head -1)" ]; then
+    php artisan view:cache
+fi
 
 # Configure Apache to listen on the runtime port (Render $PORT or ECS default 80)
 LISTEN_PORT="${PORT:-80}"
