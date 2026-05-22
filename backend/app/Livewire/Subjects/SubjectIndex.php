@@ -3,6 +3,7 @@
 namespace App\Livewire\Subjects;
 
 use App\Models\Subject;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -139,8 +140,10 @@ class SubjectIndex extends Component
                 );
             }
             
-            $items = $collection->forPage($this->getPage(), 10);
-            
+            $items = $collection
+                ->forPage($this->getPage(), 10)
+                ->map(fn (array $data) => FirestoreHydrator::subject($data));
+
             $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),

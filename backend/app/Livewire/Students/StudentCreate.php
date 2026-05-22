@@ -9,6 +9,7 @@ use App\Models\Faculty;
 use App\Models\Shift;
 use App\Models\Schedule;
 use App\Models\AcademicClass;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
@@ -45,7 +46,7 @@ class StudentCreate extends Component
     --------------------------------- */
     protected function rules()
     {
-        $isProd = config('app.env') === 'production';
+        $isProd = \App\Services\FirestoreService::isActive();
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255' . ($isProd ? '' : '|unique:users,email'),
@@ -80,7 +81,7 @@ class StudentCreate extends Component
         $validated = $this->validate();
         $firestore = app(\App\Services\FirestoreService::class);
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $userData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -149,18 +150,19 @@ class StudentCreate extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
+
             return view('livewire.students.student-create', [
-                'faculties' => collect($firestore->list('faculties'))->sortBy('name'),
+                'faculties' => FirestoreHydrator::selectOptions($firestore->list('faculties')),
                 'majors' => $this->faculty_id
-                    ? collect($firestore->list('majors', ['faculty_id' => (string)$this->faculty_id]))->sortBy('name')
+                    ? FirestoreHydrator::selectOptions($firestore->list('majors', ['faculty_id' => (string) $this->faculty_id]))
                     : collect(),
                 'academic_classes' => $this->major_id
-                    ? collect($firestore->list('academic_classes', ['major_id' => (string)$this->major_id]))->sortBy('name')
+                    ? FirestoreHydrator::academicClassCollection($firestore->list('academic_classes', ['major_id' => (string) $this->major_id]))
                     : collect(),
-                'schedules' => collect($firestore->list('schedules')),
-                'shifts' => collect($firestore->list('shifts'))->sortBy('name'),
+                'schedules' => FirestoreHydrator::scheduleCollection($firestore->list('schedules')),
+                'shifts' => FirestoreHydrator::selectOptions($firestore->list('shifts')),
             ]);
         }
 

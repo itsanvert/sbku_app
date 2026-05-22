@@ -27,8 +27,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # gRPC and Protobuf are removed to speed up build time.
 # With GOOGLE_CLOUD_USE_REST=true, they are not required for Firestore.
 
-# Enable Apache mod_rewrite once here; never changes
-RUN a2enmod rewrite
+# Enable Apache mod_rewrite, mod_deflate (gzip), mod_expires (cache headers)
+RUN a2enmod rewrite deflate expires headers
 
 # ==============================================================================
 # Stage 2: Composer (PHP dependencies)
@@ -59,15 +59,14 @@ RUN npm ci --prefer-offline
 
 # Copy only what Vite/Mix actually needs — not the entire Laravel app.
 # Add or remove lines here to match your project structure.
-COPY vite.config.js ./
-# Include postcss/tailwind configs if present (safe to copy even if absent
-# as long as the files exist; adjust to match your repo).
-COPY resources/ ./resources/
-COPY public/      ./public/
+# Tailwind needs the vendor folder to find classes in packages like Flux
+COPY --from=vendor /app/vendor ./vendor
 
-# Copy any additional config files your build tool needs:
-# COPY tailwind.config.js ./
-# COPY postcss.config.js  ./
+# Copy source files needed for Tailwind class detection
+COPY resources/ ./resources/
+COPY app/ ./app/
+COPY public/ ./public/
+COPY vite.config.js tailwind.config.js postcss.config.js ./
 
 RUN npm run build
 
@@ -88,6 +87,12 @@ COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --from=vendor  /app/vendor          ./vendor
 COPY --from=assets  /app/public/build    ./public/build
 
+# ── 1b. Apache MPM prefork config (limit workers for 512MB RAM) ─────────────
+COPY docker/mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
+COPY docker/php-memory.ini    /usr/local/etc/php/conf.d/php-memory.ini
+COPY docker/apache-compress.conf /etc/apache2/conf-available/apache-compress.conf
+RUN a2enconf apache-compress
+
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
 
@@ -103,6 +108,16 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 RUN sed -i 's/80/${PORT}/g' \
         /etc/apache2/sites-available/000-default.conf \
         /etc/apache2/ports.conf
+
+# Discover package service providers (Firebase, Livewire, Flux, etc.)
+# so they are cached even if --no-scripts skipped post-autoload-dump.
+# This is best-effort at build time; start.sh re-runs it at runtime.
+RUN php artisan package:discover --ansi 2>/dev/null || true
+
+# Pre-compile Blade templates at build time so runtime startup is faster
+# (start.sh skips view:cache when the compiled files already exist).
+# Best-effort — if it fails (e.g. missing APP_KEY), views compile on demand.
+RUN php artisan view:cache 2>/dev/null || true
 
 # Make start.sh executable (it handles the remaining runtime setup)
 RUN chmod +x /var/www/html/start.sh

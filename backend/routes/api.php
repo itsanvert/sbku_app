@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\FacultyController;
 use App\Http\Controllers\Api\MajorController;
 use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\AcademicClassController;
+use App\Http\Controllers\Api\RoomController;
 
 
 /*
@@ -23,13 +24,27 @@ use App\Http\Controllers\Api\AcademicClassController;
 // Public routes
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+
+// Health check
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'timestamp' => now()]);
+});
 
 // Public storage route for CORS support on Flutter Web
 Route::get('/storage/{path}', function ($path) {
-    $path = storage_path('app/public/' . $path);
-    if (!file_exists($path)) abort(404);
+    $fullPath = storage_path('app/public/' . $path);
+    
+    if (!file_exists($fullPath)) {
+        // Render ephemeral storage loses files on restart. 
+        // Fallback to a generated avatar instead of 404ing and breaking the app.
+        $fallbackName = pathinfo($path, PATHINFO_FILENAME);
+        // Clean up the hash name to get a generic letter
+        $fallbackLetter = substr($fallbackName, 0, 2); 
+        return redirect('https://ui-avatars.com/api/?name=' . urlencode($fallbackLetter) . '&background=random&color=fff&size=128');
+    }
 
-    return response()->file($path, [
+    return response()->file($fullPath, [
         'Access-Control-Allow-Origin' => '*',
         'Access-Control-Allow-Methods' => 'GET',
         'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
@@ -104,4 +119,25 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('majors', MajorController::class)->names('api.majors');
     Route::apiResource('subjects', SubjectController::class)->names('api.subjects');
     Route::apiResource('classes', AcademicClassController::class)->names('api.classes');
+    Route::apiResource('rooms', RoomController::class)->names('api.rooms');
+
+    // Messages
+    Route::get('messages', function () {
+        return \App\Models\Message::with('sender')
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'id' => $msg->id,
+                    'title' => $msg->title,
+                    'body' => $msg->body,
+                    'type' => $msg->type,
+                    'metadata' => $msg->metadata,
+                    'sender_name' => $msg->sender?->name ?? 'System',
+                    'receiver_id' => $msg->receiver_id,
+                    'created_at' => $msg->created_at,
+                ];
+            });
+    });
 });

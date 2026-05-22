@@ -7,7 +7,6 @@ use App\Traits\SyncsToFirestore;
 
 class Teacher extends Model
 {
-    use SyncsToFirestore;
     /**
      * Default attribute values.
      */
@@ -34,6 +33,10 @@ class Teacher extends Model
      */
     public function getNameAttribute(): ?string
     {
+        // If Firestore is active, return the value from attributes (loaded from Firestore)
+        if (\App\Services\FirestoreService::isActive()) {
+            return $this->attributes['name'] ?? ($this->attributes['user_name'] ?? null);
+        }
         $user = $this->getRelationValue('user');
         return $user instanceof Model ? $user->name : ($this->user_name ?? null);
     }
@@ -43,6 +46,10 @@ class Teacher extends Model
      */
     public function getEmailAttribute(): ?string
     {
+        // If Firestore is active, return the value from attributes (loaded from Firestore)
+        if (\App\Services\FirestoreService::isActive()) {
+            return $this->attributes['email'] ?? ($this->attributes['user_email'] ?? null);
+        }
         $user = $this->getRelationValue('user');
         return $user instanceof Model ? $user->email : ($this->user_email ?? null);
     }

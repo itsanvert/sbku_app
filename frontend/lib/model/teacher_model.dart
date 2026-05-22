@@ -1,4 +1,4 @@
-import 'package:sbku_app/service/api_service.dart';
+import 'package:sbku_app/core/constants/app_config.dart';
 
 // teacher_model.dart
 // Matches the backend API response from GET /api/teachers and GET /api/teachers/{id}
@@ -58,8 +58,12 @@ class Teacher {
     return Teacher(
       id: json['id']?.toString() ?? '',
       userId: json['user_id']?.toString(),
-      name: json['name']?.toString() ?? '',
+      name: json['name']?.toString() ??
+          json['user_name']?.toString() ??
+          json['user']?['name']?.toString() ??
+          '',
       email: json['email']?.toString() ??
+          json['user_email']?.toString() ??
           json['user']?['email']?.toString(),
       gender: json['gender']?.toString(),
       phone: json['phone']?.toString(),
@@ -70,50 +74,16 @@ class Teacher {
       year: json['year']?.toString(),
       role: json['role']?.toString() ?? 'teacher',
       profileImagePath: json['profile_image_path']?.toString(),
-      avatarUrl: _fixPhotoUrl(json['avatar_url']?.toString()),
-      // Relations may be a nested object with a 'name' field
-      major: _relationName(json['major']),
-      faculty: _relationName(json['faculty']),
-      schedule: _relationName(json['schedule']),
-      shift: _relationName(json['shift']),
+      avatarUrl: AppConfig.resolveMediaUrl(
+        json['avatar_url']?.toString() ?? json['profile_image_path']?.toString(),
+      ),
+      major: _relationName(json['major']) ?? json['major_name']?.toString(),
+      faculty: _relationName(json['faculty']) ?? json['faculty_name']?.toString(),
+      schedule: _relationName(json['schedule']) ?? json['schedule_name']?.toString(),
+      shift: _relationName(json['shift']) ?? json['shift_name']?.toString(),
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
     );
-  }
-
-  /// Rewrites localhost / 127.0.0.1 URLs to the real backend host so that
-  /// profile photos load correctly on physical devices.
-  static String? _fixPhotoUrl(String? url) {
-    if (url == null || url.isEmpty) return null;
-
-    if (url.contains('ui-avatars.com') || url.contains('googleusercontent.com')) {
-      return url;
-    }
-
-    final apiBase = ApiService.baseUrl; 
-    final uri = Uri.tryParse(apiBase);
-    if (uri == null) return url;
-    
-    final backendOrigin = '${uri.scheme}://${uri.host}${uri.hasPort ? ":${uri.port}" : ""}';
-
-    final loopbackRegex = RegExp(r'https?://(localhost|127\.0\.0\.1)(:\d+)?');
-    if (url.contains(loopbackRegex)) {
-      return url.replaceFirst(loopbackRegex, backendOrigin);
-    }
-    
-    if (!url.startsWith('http')) {
-      final cleanPath = url.startsWith('/') ? url.substring(1) : url;
-      return '$backendOrigin/$cleanPath';
-    }
-
-    return url;
-  }
-
-  static int? _parseInt(dynamic value) {
-    if (value == null) return null;
-    if (value is int) return value;
-    if (value is String) return int.tryParse(value);
-    return null;
   }
 
   /// Extracts a 'name' field from a nested relation object, or returns the

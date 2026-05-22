@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "921499566158",
-    "project_id": "sbkuapp-vert25",
-    "storage_bucket": "sbkuapp-vert25.firebasestorage.app"
+    "project_number": "449305523093",
+    "project_id": "sbkuapp-1e977",
+    "storage_bucket": "sbkuapp-1e977.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:921499566158:android:db7c3ced2e4ec6c288c31f",
+        "mobilesdk_app_id": "1:449305523093:android:fdb59ca5e0ee95cc20fc9c",
         "android_client_info": {
           "package_name": "com.sbkuapp.sbku"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD5jdFbeVz6pc-9jVFWN04y5B6L4G4DS8M"
+          "current_key": "AIzaSyCLXAbfCwHWZwZt2p3vtqbmarDKxwRERFk"
         }
       ],
       "services": {

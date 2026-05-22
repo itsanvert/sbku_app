@@ -4,6 +4,7 @@ namespace App\Livewire\Majors;
 
 use App\Models\Major;
 use App\Models\Faculty;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -148,7 +149,7 @@ class MajorIndex extends Component
 
             return view('livewire.majors.major-index', [
                 'majors' => $paginated,
-                'faculties' => collect($this->firestore->list('faculties')),
+                'faculties' => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
             ])->layout('layouts.app');
         }
 

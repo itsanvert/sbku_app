@@ -11,6 +11,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  bool _showWarmupMessage = false;
 
   @override
   void initState() {
@@ -24,6 +25,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       curve: Curves.easeIn,
     );
     _controller.forward();
+
+    // Trigger warmup feedback if the connection/auth check takes more than 800ms
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() => _showWarmupMessage = true);
+      }
+    });
   }
 
   @override
@@ -87,6 +95,35 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       fontSize: 38,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2.0,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Warmup status indicator (fades in only on cold starts / slow networks)
+                  AnimatedOpacity(
+                    opacity: _showWarmupMessage ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 500),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.0,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Warming up campus servers...',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

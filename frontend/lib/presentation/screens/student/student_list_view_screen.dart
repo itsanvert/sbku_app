@@ -16,6 +16,8 @@ class StudentListViewScreen extends StatefulWidget {
 class _StudentListScreenState extends State<StudentListViewScreen> {
   final StudentService _service = StudentService();
 
+  late Stream<List<Student>> _studentStream;
+
   List<Student> _students = [];
   bool _loading = false;
   String? _error;
@@ -32,6 +34,7 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
   @override
   void initState() {
     super.initState();
+    _studentStream = _service.streamStudents();
     _loadStudents();
   }
 
@@ -90,6 +93,9 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                 await _service.deleteStudent(student.id);
                 Navigator.pop(ctx);
                 _loadStudents(); // Reload list
+                setState(() {
+                  _studentStream = _service.streamStudents(); // Recreate stream to trigger instant refresh
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${student.name} ត្រូវបានលុបដោយជោគជ័យ'),
@@ -156,7 +162,7 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
           ),
           Expanded(
             child: StreamBuilder<List<Student>>(
-              stream: _service.streamStudents(),
+              stream: _studentStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());

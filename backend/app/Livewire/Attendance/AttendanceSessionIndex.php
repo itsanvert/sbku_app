@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Attendance;
 
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\AttendanceSession;
@@ -11,7 +12,7 @@ use Livewire\Attributes\Layout;
 class AttendanceSessionIndex extends Component
 {
     use WithPagination;
-    
+
     public function boot()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
@@ -49,14 +50,24 @@ class AttendanceSessionIndex extends Component
                 // Firestore search is limited, but we can try to filter by teacher name if we stored it
                 // For now, let's just fetch all and filter in memory if small, or just fetch all.
             }
-            
+
             $sessions = $this->firestore->list('attendance_sessions', $filters, 'started_at', 'desc');
-            
-            // Convert to a collection for pagination
+
             $collection = collect($sessions);
-            
-            $items = $collection->forPage($this->getPage(), 10);
-            
+
+            if ($this->search) {
+                $needle = strtolower($this->search);
+                $collection = $collection->filter(function ($session) use ($needle) {
+                    $teacher = strtolower($session['teacher_name'] ?? $session['teacher_user_name'] ?? '');
+
+                    return str_contains($teacher, $needle);
+                });
+            }
+
+            $items = $collection
+                ->forPage($this->getPage(), 10)
+                ->map(fn (array $data) => FirestoreHydrator::attendanceSession($data));
+
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
                 $collection->count(),
@@ -81,7 +92,7 @@ class AttendanceSessionIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            if (\App\Services\FirestoreService::isActive()) {
+            if (config('app.env') === 'production') {
                 foreach ($this->selected as $id) {
                     $this->firestore->delete('attendance_sessions', (string)$id);
                 }
