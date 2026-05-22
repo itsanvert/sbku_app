@@ -7,14 +7,8 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <link rel="preload" href="{{ asset('img/logo.jpg') }}" as="image">
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-        <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Preconnect for Chart.js CDN (used in dashboard) -->
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+        <link rel="preload" href="{{ asset('img/logo.webp') }}" as="image" type="image/webp">
+        <link rel="preload" href="{{ asset('img/logo.jpg') }}" as="image" type="image/jpeg">
 
         <!-- Styles -->
         @vite(['resources/css/app.css'])
@@ -28,7 +22,7 @@
             <flux:sidebar stashable sticky class="lg:bg-zinc-50 lg:dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
                 <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-                <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.jpg" name="SBKU" class="px-2" />
+                <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.webp" name="SBKU" class="px-2" />
 
                 <flux:navlist variant="pill" class="mt-6">
                     <flux:navlist.item icon="home" href="{{ route('dashboard') }}" :current="request()->routeIs('dashboard')">Dashboard</flux:navlist.item>
