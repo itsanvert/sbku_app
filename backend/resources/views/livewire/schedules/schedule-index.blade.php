@@ -26,7 +26,7 @@
             </div>
 
             {{-- Table --}}
-            <flux:table :paginate="$schedules">
+            <flux:table :paginate="$this->schedules">
                 <table class="w-full text-sm text-left">
                     <thead>
                         <tr class="border-b border-zinc-200 bg-zinc-50">

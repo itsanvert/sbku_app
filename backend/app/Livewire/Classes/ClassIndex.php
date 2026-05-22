@@ -6,6 +6,7 @@ use App\Models\AcademicClass;
 use App\Models\Faculty;
 use App\Models\Major;
 use App\Support\FirestoreHydrator;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -152,6 +153,17 @@ class ClassIndex extends Component
         session()->flash('message', 'Class deleted successfully.');
     }
 
+    #[Computed]
+    public function classes()
+    {
+        return AcademicClass::with('major.faculty')
+            ->when($this->search, fn($q) => $q->where(function($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('code', 'like', '%' . $this->search . '%');
+            }))
+            ->paginate(10);
+    }
+
     public function render()
     {
         if (\App\Services\FirestoreService::isActive()) {
@@ -195,11 +207,8 @@ class ClassIndex extends Component
         }
 
         return view('livewire.classes.class-index', [
-            'classes' => AcademicClass::with('major.faculty')
-                ->where('name', 'like', '%' . $this->search . '%')
-                ->orWhere('code', 'like', '%' . $this->search . '%')
-                ->paginate(10),
-            'majors' => Major::orderBy('name')->get(),
+            'classes' => $this->classes,
+            'majors' => Major::select('id', 'name')->orderBy('name')->get(),
         ])->layout('layouts.app');
     }
 }
