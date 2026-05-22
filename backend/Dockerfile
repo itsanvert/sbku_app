@@ -87,11 +87,12 @@ COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --from=vendor  /app/vendor          ./vendor
 COPY --from=assets  /app/public/build    ./public/build
 
-# ── 1b. Apache MPM prefork config (limit workers for 512MB RAM) ─────────────
-COPY docker/mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
-COPY docker/php-memory.ini    /usr/local/etc/php/conf.d/php-memory.ini
-COPY docker/apache-compress.conf /etc/apache2/conf-available/apache-compress.conf
-RUN a2enconf apache-compress
+# ── 1b. Apache MPM prefork config (tuned for throughput) ─────────────────────
+COPY docker/mpm_prefork.conf        /etc/apache2/mods-available/mpm_prefork.conf
+COPY docker/php-memory.ini           /usr/local/etc/php/conf.d/php-memory.ini
+COPY docker/apache-compress.conf     /etc/apache2/conf-available/apache-compress.conf
+COPY docker/apache-performance.conf  /etc/apache2/conf-available/apache-performance.conf
+RUN a2enconf apache-compress apache-performance
 
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .

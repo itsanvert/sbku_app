@@ -143,9 +143,9 @@ if [ "$PHP_OPCACHE_ENABLE" = "1" ] || [ "$APP_ENV" = "production" ]; then
 [opcache]
 opcache.enable=1
 opcache.enable_cli=1
-opcache.memory_consumption=64
-opcache.interned_strings_buffer=8
-opcache.max_accelerated_files=10000
+opcache.memory_consumption=128
+opcache.interned_strings_buffer=16
+opcache.max_accelerated_files=20000
 opcache.revalidate_freq=0
 opcache.validate_timestamps=0
 opcache.fast_shutdown=1
@@ -173,9 +173,13 @@ sed -i "s/80/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/
 # Set ServerName globally to suppress Apache qualified domain name warning
 echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
 
-# Start queue worker in the background for queued push notifications
-php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
-echo "Queue worker started."
+# Start queue worker in the background (skip if WEB_ONLY is set)
+if [ -z "$WEB_ONLY" ]; then
+    php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
+    echo "Queue worker started."
+else
+    echo "WEB_ONLY set — skipping queue worker."
+fi
 
 # Start Apache
 apache2-foreground
