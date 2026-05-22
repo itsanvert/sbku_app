@@ -1,21 +1,43 @@
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sbku_app/core/network/api_response_parser.dart';
 import 'package:sbku_app/model/teacher_model.dart';
 import 'package:sbku_app/service/api_service.dart';
 
-
 class TeacherService {
   final ApiService _api = ApiService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final Map<String, DateTime> _lastPoll = {};
 
-  /// Get teachers as a real-time stream for "sync" functionality.
-  Stream<List<Teacher>> streamTeachers() {
-    return _firestore.collection('teachers').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return Teacher.fromJson(data);
-      }).toList();
+  bool _shouldPoll(String key, {int minIntervalSec = 10}) {
+    final now = DateTime.now();
+    final last = _lastPoll[key];
+    if (last == null || now.difference(last).inSeconds >= minIntervalSec) {
+      _lastPoll[key] = now;
+      return true;
+    }
+    return false;
+  }
+
+  /// Get teachers as a real-time stream via API polling (debounced 10s).
+  Stream<List<Teacher>> streamTeachers() async* {
+    // 1. Fetch and emit the first event immediately (0-second mark)
+    try {
+      final paginated = await getTeachers(page: 1);
+      yield paginated.data;
+    } catch (e) {
+      print('Initial teachers fetch failed: $e');
+      yield <Teacher>[];
+    }
+
+    // 2. Poll periodically every 10 seconds in the background
+    yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+      if (!_shouldPoll('teachers')) return <Teacher>[];
+      try {
+        final paginated = await getTeachers(page: 1);
+        return paginated.data;
+      } catch (e) {
+        print('Polling teachers failed: $e');
+        return <Teacher>[];
+      }
     });
   }
 
@@ -35,20 +57,25 @@ class TeacherService {
     final response = await _api.get('teachers?$query');
 
     if (response.statusCode == 200) {
-      return TeacherPaginated.fromJson(jsonDecode(response.body));
+      final body = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
+      return TeacherPaginated.fromJson(body);
     }
 
-    throw Exception('Failed to load teachers: ${response.statusCode}');
+    throw Exception(ApiResponseParser.errorMessage(response));
   }
 
   Future<Teacher> getTeacher(String id) async {
     final response = await _api.get('teachers/$id');
 
     if (response.statusCode == 200) {
-      return Teacher.fromJson(jsonDecode(response.body));
+      final body = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
+      final data = ApiResponseParser.unwrapData(body);
+      return Teacher.fromJson(
+        data is Map<String, dynamic> ? data : body,
+      );
     }
 
-    throw Exception('Teacher not found');
+    throw Exception(ApiResponseParser.errorMessage(response));
   }
 
   Future<void> deleteTeacher(int id) async {

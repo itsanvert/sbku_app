@@ -28,6 +28,9 @@
                     <x-nav-link href="{{ route('attendance.records.index') }}" :active="request()->routeIs('attendance.records.*')">
                         {{ __('Attendance Records') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('rooms.index') }}" :active="request()->routeIs('rooms.index')">
+                        {{ __('Room') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -172,7 +175,7 @@
                     <x-responsive-nav-link href="{{ route('syllabuses.index') }}" :active="request()->routeIs('syllabuses.index')">
                 {{ __('Syllabus') }}
             </x-responsive-nav-link>
-            
+
         </div>
             </div>
 

@@ -48,6 +48,11 @@ trait SyncsToFirestore
      */
     public function syncToFirestore($event = 'updated')
     {
+        // Skip sync if Firestore is not enabled
+        if (!\App\Services\FirestoreService::isActive()) {
+            return;
+        }
+
         try {
             $firestore = \Kreait\Laravel\Firebase\Facades\Firebase::firestore()->database();
             $collection = $this->getFirestoreCollectionName();
@@ -60,6 +65,13 @@ trait SyncsToFirestore
             $data['_sync_event'] = $event;
 
             $firestore->collection($collection)->document($documentId)->set($data);
+
+            // Update the model's sync attributes without triggering another save
+            $this->timestamps = false;
+            $this->setAttribute('_synced_at', now());
+            $this->setAttribute('_sync_event', $event);
+            $this->timestamps = true;
+
         } catch (Exception $e) {
             \Log::error("Firestore Sync Error for {$this->getFirestoreCollectionName()} [{$this->getKey()}]: " . $e->getMessage());
         }

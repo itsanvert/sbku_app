@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:sbku_app/core/network/api_response_parser.dart';
 import 'package:sbku_app/model/user_model.dart';
 
 import 'api_service.dart';
@@ -7,7 +8,6 @@ import 'api_service.dart';
 class AuthService {
   final ApiService _apiService = ApiService();
 
-  // Register
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
@@ -22,21 +22,21 @@ class AuthService {
         'password_confirmation': passwordConfirmation,
       });
 
-      final data = jsonDecode(response.body);
+      final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
 
       if (response.statusCode == 201 && data['success'] == true) {
-        await _apiService.saveToken(data['token']);
+        await _apiService.saveToken(data['token'] as String);
         return {
           'success': true,
-          'user': User.fromJson(data['user']),
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Registration failed',
-          'errors': data['errors'],
+          'user': User.fromJson(data['user'] as Map<String, dynamic>),
         };
       }
+
+      return {
+        'success': false,
+        'message': ApiResponseParser.errorMessage(response, body: data),
+        'errors': data['errors'],
+      };
     } catch (e) {
       return {
         'success': false,
@@ -45,7 +45,6 @@ class AuthService {
     }
   }
 
-  // Login
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -56,20 +55,28 @@ class AuthService {
         'password': password,
       });
 
-      final data = jsonDecode(response.body);
+      final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        await _apiService.saveToken(data['token']);
+      if (response.statusCode == 200 &&
+          data['success'] == true &&
+          data['token'] != null &&
+          data['user'] != null) {
+        await _apiService.saveToken(data['token'] as String);
         return {
           'success': true,
-          'user': User.fromJson(data['user']),
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Login failed',
+          'user': User.fromJson(data['user'] as Map<String, dynamic>),
         };
       }
+
+      return {
+        'success': false,
+        'message': ApiResponseParser.errorMessage(response, body: data),
+      };
+    } on FormatException {
+      return {
+        'success': false,
+        'message': 'Invalid response from server.',
+      };
     } catch (e) {
       return {
         'success': false,
@@ -78,36 +85,39 @@ class AuthService {
     }
   }
 
-  // Logout
   Future<bool> logout() async {
     try {
-      final response = await _apiService.post('logout', {}, requiresAuth: true);
-      await _apiService.deleteToken();
-      return response.statusCode == 200;
-    } catch (e) {
-      await _apiService.deleteToken();
-      return false;
+      await _apiService.post('logout', {}, requiresAuth: true);
+    } catch (_) {
+      // Always clear local session.
     }
+    await _apiService.deleteToken();
+    return true;
   }
 
-  // Get current user
   Future<User?> getCurrentUser() async {
     try {
+      final token = await _apiService.getToken();
+      if (token == null) return null;
+
       final response = await _apiService.get('user');
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          return User.fromJson(data['user']);
+        final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
+        if (data['success'] == true && data['user'] != null) {
+          return User.fromJson(data['user'] as Map<String, dynamic>);
         }
       }
+
+      if (response.statusCode == 401) {
+        await _apiService.deleteToken();
+      }
       return null;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
 
-  // Update profile
   Future<Map<String, dynamic>> updateProfile({
     required String name,
     required String email,
@@ -115,26 +125,23 @@ class AuthService {
     try {
       final response = await _apiService.put(
         'user/profile-information',
-        {
-          'name': name,
-          'email': email,
-        },
+        {'name': name, 'email': email},
       );
 
-      final data = jsonDecode(response.body);
+      final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
 
       if (response.statusCode == 200 && data['success'] == true) {
         return {
           'success': true,
-          'user': User.fromJson(data['user']),
+          'user': User.fromJson(data['user'] as Map<String, dynamic>),
           'message': data['message'],
         };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Update failed',
-        };
       }
+
+      return {
+        'success': false,
+        'message': ApiResponseParser.errorMessage(response, body: data),
+      };
     } catch (e) {
       return {
         'success': false,
@@ -143,7 +150,6 @@ class AuthService {
     }
   }
 
-  // Update password
   Future<Map<String, dynamic>> updatePassword({
     required String currentPassword,
     required String password,
@@ -159,19 +165,16 @@ class AuthService {
         },
       );
 
-      final data = jsonDecode(response.body);
+      final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
 
       if (response.statusCode == 200 && data['success'] == true) {
-        return {
-          'success': true,
-          'message': data['message'],
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Password update failed',
-        };
+        return {'success': true, 'message': data['message']};
       }
+
+      return {
+        'success': false,
+        'message': ApiResponseParser.errorMessage(response, body: data),
+      };
     } catch (e) {
       return {
         'success': false,
@@ -180,7 +183,6 @@ class AuthService {
     }
   }
 
-  // Upload profile photo
   Future<Map<String, dynamic>> uploadProfilePhoto(String imagePath) async {
     try {
       final response = await _apiService.postMultipart(
@@ -191,20 +193,20 @@ class AuthService {
       );
 
       final responseData = await response.stream.bytesToString();
-      final data = jsonDecode(responseData);
+      final data = ApiResponseParser.asMap(jsonDecode(responseData));
 
       if (response.statusCode == 200 && data['success'] == true) {
         return {
           'success': true,
-          'user': User.fromJson(data['user']),
+          'user': User.fromJson(data['user'] as Map<String, dynamic>),
           'message': data['message'],
         };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Upload failed',
-        };
       }
+
+      return {
+        'success': false,
+        'message': data['message']?.toString() ?? 'Upload failed',
+      };
     } catch (e) {
       return {
         'success': false,
@@ -213,24 +215,23 @@ class AuthService {
     }
   }
 
-  // Delete profile photo
   Future<Map<String, dynamic>> deleteProfilePhoto() async {
     try {
       final response = await _apiService.delete('user/profile-photo');
-      final data = jsonDecode(response.body);
+      final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
 
       if (response.statusCode == 200 && data['success'] == true) {
         return {
           'success': true,
-          'user': User.fromJson(data['user']),
+          'user': User.fromJson(data['user'] as Map<String, dynamic>),
           'message': data['message'],
         };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Delete failed',
-        };
       }
+
+      return {
+        'success': false,
+        'message': ApiResponseParser.errorMessage(response, body: data),
+      };
     } catch (e) {
       return {
         'success': false,
@@ -239,12 +240,4 @@ class AuthService {
     }
   }
 
-  // Update FCM token
-  Future<void> updateFcmToken(String token) async {
-    try {
-      await _apiService.post('user/fcm-token', {'token': token}, requiresAuth: true);
-    } catch (e) {
-      print('Failed to update FCM token: $e');
-    }
-  }
 }

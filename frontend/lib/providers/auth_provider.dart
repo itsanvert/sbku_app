@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:sbku_app/core/di/service_locator.dart';
+import 'package:sbku_app/core/result.dart';
+import 'package:sbku_app/domain/repositories/auth_repository.dart';
 import 'package:sbku_app/model/user_model.dart';
-import 'package:sbku_app/service/auth_service.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthProvider with ChangeNotifier {
-  final AuthService _authService = AuthService();
+  final AuthRepository _authRepository = sl<AuthRepository>();
 
   User? _user;
   bool _isLoading = false;
@@ -26,7 +27,7 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.register(
+    final result = await _authRepository.register(
       name: name,
       email: email,
       password: password,
@@ -35,15 +36,15 @@ class AuthProvider with ChangeNotifier {
 
     _isLoading = false;
 
-    if (result['success']) {
-      _user = result['user'];
-      await _updateFcmToken();
-      notifyListeners();
-      return true;
-    } else {
-      _errorMessage = result['message'];
-      notifyListeners();
-      return false;
+    switch (result) {
+      case Success<User>():
+        _user = result.data;
+        notifyListeners();
+        return true;
+      case Failure<User>():
+        _errorMessage = _formatError(result.error);
+        notifyListeners();
+        return false;
     }
   }
 
@@ -56,28 +57,28 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.login(
+    final result = await _authRepository.login(
       email: email,
       password: password,
     );
 
     _isLoading = false;
 
-    if (result['success']) {
-      _user = result['user'];
-      await _updateFcmToken();
-      notifyListeners();
-      return true;
-    } else {
-      _errorMessage = result['message'];
-      notifyListeners();
-      return false;
+    switch (result) {
+      case Success<User>():
+        _user = result.data;
+        notifyListeners();
+        return true;
+      case Failure<User>():
+        _errorMessage = _formatError(result.error);
+        notifyListeners();
+        return false;
     }
   }
 
   // Logout
   Future<void> logout() async {
-    await _authService.logout();
+    await _authRepository.logout();
     _user = null;
     _errorMessage = null;
     notifyListeners();
@@ -85,23 +86,14 @@ class AuthProvider with ChangeNotifier {
 
   // Check authentication status
   Future<void> checkAuth() async {
-    _user = await _authService.getCurrentUser();
-    if (_user != null) {
-      await _updateFcmToken();
+    final result = await _authRepository.getCurrentUser();
+    switch (result) {
+      case Success<User?>():
+        _user = result.data;
+      case Failure<User?>():
+        _user = null;
     }
     notifyListeners();
-  }
-
-  // Helper method to sync FCM token
-  Future<void> _updateFcmToken() async {
-    try {
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        await _authService.updateFcmToken(token);
-      }
-    } catch (e) {
-      print("Failed to get/update FCM token: $e");
-    }
   }
 
   // Update profile
@@ -113,21 +105,22 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.updateProfile(
+    final result = await _authRepository.updateProfile(
       name: name,
       email: email,
     );
 
     _isLoading = false;
 
-    if (result['success']) {
-      _user = result['user'];
-      notifyListeners();
-      return true;
-    } else {
-      _errorMessage = result['message'];
-      notifyListeners();
-      return false;
+    switch (result) {
+      case Success<User>():
+        _user = result.data;
+        notifyListeners();
+        return true;
+      case Failure<User>():
+        _errorMessage = _formatError(result.error);
+        notifyListeners();
+        return false;
     }
   }
 
@@ -141,7 +134,7 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.updatePassword(
+    final result = await _authRepository.updatePassword(
       currentPassword: currentPassword,
       password: password,
       passwordConfirmation: passwordConfirmation,
@@ -149,13 +142,14 @@ class AuthProvider with ChangeNotifier {
 
     _isLoading = false;
 
-    if (result['success']) {
-      notifyListeners();
-      return true;
-    } else {
-      _errorMessage = result['message'];
-      notifyListeners();
-      return false;
+    switch (result) {
+      case Success<void>():
+        notifyListeners();
+        return true;
+      case Failure<void>():
+        _errorMessage = _formatError(result.error);
+        notifyListeners();
+        return false;
     }
   }
 
@@ -165,18 +159,19 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.uploadProfilePhoto(imagePath);
+    final result = await _authRepository.uploadProfilePhoto(imagePath);
 
     _isLoading = false;
 
-    if (result['success']) {
-      _user = result['user'];
-      notifyListeners();
-      return true;
-    } else {
-      _errorMessage = result['message'];
-      notifyListeners();
-      return false;
+    switch (result) {
+      case Success<User>():
+        _user = result.data;
+        notifyListeners();
+        return true;
+      case Failure<User>():
+        _errorMessage = _formatError(result.error);
+        notifyListeners();
+        return false;
     }
   }
 
@@ -186,18 +181,19 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.deleteProfilePhoto();
+    final result = await _authRepository.deleteProfilePhoto();
 
     _isLoading = false;
 
-    if (result['success']) {
-      _user = result['user'];
-      notifyListeners();
-      return true;
-    } else {
-      _errorMessage = result['message'];
-      notifyListeners();
-      return false;
+    switch (result) {
+      case Success<User>():
+        _user = result.data;
+        notifyListeners();
+        return true;
+      case Failure<User>():
+        _errorMessage = _formatError(result.error);
+        notifyListeners();
+        return false;
     }
   }
 
@@ -205,5 +201,12 @@ class AuthProvider with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  String _formatError(AppException error) {
+    if (error is ValidationException && error.errors.isNotEmpty) {
+      return error.flatErrors;
+    }
+    return error.message;
   }
 }

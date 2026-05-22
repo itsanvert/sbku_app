@@ -16,6 +16,8 @@ class TeacherListViewScreen extends StatefulWidget {
 class _TeacherListScreenState extends State<TeacherListViewScreen> {
   final TeacherService _service = TeacherService();
 
+  late Stream<List<Teacher>> _teacherStream;
+
   List<Teacher> _teachers = [];
   bool _loading = false;
   String? _error;
@@ -32,6 +34,7 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
   @override
   void initState() {
     super.initState();
+    _teacherStream = _service.streamTeachers();
     _loadTeachers();
   }
 
@@ -135,7 +138,7 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
           // ── Content ────────────────────────────────────────────────
           Expanded(
             child: StreamBuilder<List<Teacher>>(
-              stream: _service.streamTeachers(),
+              stream: _teacherStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());

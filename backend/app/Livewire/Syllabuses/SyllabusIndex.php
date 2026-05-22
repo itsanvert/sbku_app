@@ -6,6 +6,7 @@ use App\Models\Syllabus;
 use App\Models\Faculty;
 use App\Models\Major;
 use App\Models\Shift;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -76,7 +77,7 @@ class SyllabusIndex extends Component
     #[Computed]
     public function syllabuses()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $syllabuses = $this->firestore->list('syllabuses');
             $collection = collect($syllabuses);
 
@@ -87,22 +88,16 @@ class SyllabusIndex extends Component
                 $collection = $collection->filter(fn($s) => ($s['faculty_id'] ?? '') == $this->faculty_id);
             if ($this->major_id)
                 $collection = $collection->filter(fn($s) => ($s['major_id'] ?? '') == $this->major_id);
-            if ($this->shift_id)
-                $collection = $collection->filter(fn($s) => ($s['shift_id'] ?? '') == $this->shift_id);
+            if ($this->shift_id) {
+                $collection = $collection->filter(fn ($s) => ($s['shift_id'] ?? '') == $this->shift_id);
+            }
+            if ($this->year_id) {
+                $collection = $collection->filter(fn ($s) => ($s['year_id'] ?? '') == $this->year_id);
+            }
 
-            // Map to Model objects
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
-                $s = new Syllabus();
-                $s->forceFill($data);
-                $s->exists = true;
-
-                // Mock subject relationship
-                $subj = new \App\Models\Subject();
-                $subj->forceFill(['name' => $data['subject_name'] ?? '—', 'code' => $data['subject_code'] ?? '—']);
-                $s->setRelation('subject', $subj);
-
-                return $s;
-            });
+            $items = $collection
+                ->forPage($this->getPage(), 10)
+                ->map(fn (array $data) => FirestoreHydrator::syllabus($data));
 
             return new \Illuminate\Pagination\LengthAwarePaginator(
                 $items,
@@ -164,8 +159,8 @@ class SyllabusIndex extends Component
     public function deleteSyllabus()
     {
         if ($this->deleteSyllabusId) {
-            if (config('app.env') === 'production') {
-                $this->firestore->delete('syllabuses', (string)$this->deleteSyllabusId);
+            if (\App\Services\FirestoreService::isActive()) {
+                $this->firestore->delete('syllabuses', (string) $this->deleteSyllabusId);
             } else {
                 Syllabus::findOrFail($this->deleteSyllabusId)->delete();
             }
@@ -196,11 +191,11 @@ class SyllabusIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             return view('livewire.syllabuses.syllabus-index', [
-                'faculties' => collect($this->firestore->list('faculties'))->sortBy('name'),
-                'majors' => collect($this->firestore->list('majors'))->sortBy('name'),
-                'shifts' => collect($this->firestore->list('shifts'))->sortBy('name'),
+                'faculties' => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
+                'majors'    => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
+                'shifts'    => FirestoreHydrator::selectOptions($this->firestore->list('shifts')),
             ])->layout('layouts.app');
         }
 

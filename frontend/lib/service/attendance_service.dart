@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:sbku_app/service/api_service.dart';
 import 'package:http/http.dart' as http;
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AttendanceService {
   final ApiService _api = ApiService();
@@ -61,40 +60,66 @@ class AttendanceService {
     final response = await _api.get(endpoint);
 
     if (response.statusCode == 200) {
-      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is List) {
+        return List<Map<String, dynamic>>.from(decoded);
+      } else if (decoded is Map && decoded.containsKey('data')) {
+        return List<Map<String, dynamic>>.from(decoded['data']);
+      }
+      return <Map<String, dynamic>>[];
     }
     throw Exception('Failed to load active sessions');
   }
 
-  /// Listen to active attendance sessions in real-time from Firestore
-  Stream<List<Map<String, dynamic>>> listenToActiveSessions({String? teacherId}) {
-    Query query = FirebaseFirestore.instance.collection('attendance_sessions');
-        
-    if (teacherId != null) {
-      query = query.where('teacher_id', isEqualTo: teacherId);
+
+
+  /// Debounce helper: ensures only one in-flight request per key at a time.
+  final Map<String, DateTime> _lastPoll = {};
+
+  bool _shouldPoll(String key, {int minIntervalSec = 5}) {
+    final now = DateTime.now();
+    final last = _lastPoll[key];
+    if (last == null || now.difference(last).inSeconds >= minIntervalSec) {
+      _lastPoll[key] = now;
+      return true;
     }
-    
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+    return false;
+  }
+
+  /// Listen to active attendance sessions by polling the API (debounced 5s).
+  Stream<List<Map<String, dynamic>>> listenToActiveSessions({String? teacherId}) {
+    return Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
+      if (!_shouldPoll('active_sessions')) return <Map<String, dynamic>>[];
+      try {
+        return await getActiveSessions(teacherId: teacherId);
+      } catch (e) {
+        print('Polling active sessions failed: $e');
+        return <Map<String, dynamic>>[];
+      }
     });
   }
 
-  /// Listen to attendances for a specific session in real-time from Firestore
+  /// Listen to attendances for a specific session by polling the API (debounced 3s).
   Stream<List<Map<String, dynamic>>> listenToSessionAttendances(String sessionId) {
-    return FirebaseFirestore.instance
-        .collection('attendances')
-        .where('session_id', isEqualTo: sessionId)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+    return Stream.periodic(const Duration(seconds: 3)).asyncMap((_) async {
+      if (!_shouldPoll('session_attendances_$sessionId', minIntervalSec: 3)) return <Map<String, dynamic>>[];
+      try {
+        final data = await getApprovalList(sessionId);
+        // Combine all groups into a single list for compatibility
+        final attendances = data['attendances'] as Map<String, dynamic>?;
+        if (attendances == null) return <Map<String, dynamic>>[];
+        
+        final List<Map<String, dynamic>> all = [];
+        attendances.forEach((key, value) {
+          if (value is List) {
+            all.addAll(List<Map<String, dynamic>>.from(value));
+          }
+        });
+        return all;
+      } catch (e) {
+        print('Polling attendances failed: $e');
+        return <Map<String, dynamic>>[];
+      }
     });
   }
 

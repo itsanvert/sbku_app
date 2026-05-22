@@ -3,29 +3,23 @@
 namespace App\Services;
 
 use App\Models\Syllabus;
+use Illuminate\Support\Collection;
 
 class ScheduleConflictDetector
 {
+    public function __construct(
+        private readonly FirestoreService $firestore,
+    ) {}
+
     /**
-     * Check for teacher scheduling conflicts.
-     *
-     * A conflict exists when the same teacher is assigned to two sessions
-     * on the same day whose time ranges OVERLAP:
-     *
-     *   existing.start_time < new.end_time  AND  existing.end_time > new.start_time
-     *
-     * Back-to-back sessions share an endpoint but do NOT overlap:
-     *   Session A ends 08:30, Session B starts 08:30 → end_time > start_time = false → OK ✓
-     *
      * @param  array    $data       ['teacher_id', 'day_of_week', 'start_time', 'end_time']
-     * @param  int|null $excludeId  Syllabus ID to exclude (own row when updating)
+     * @param  int|string|null $excludeId  Syllabus ID to exclude (own row when updating)
      * @return array    ['valid' => bool, 'errors' => string[]]
      */
-    public function validate(array $data, ?int $excludeId = null): array
+    public function validate(array $data, int|string|null $excludeId = null): array
     {
         $errors = [];
 
-        // 1. Sanity: end must be after start
         if ($data['start_time'] >= $data['end_time']) {
             return [
                 'valid'  => false,
@@ -33,49 +27,88 @@ class ScheduleConflictDetector
             ];
         }
 
-        // 2. Teacher conflict — same teacher, same day, overlapping times
+        if (FirestoreService::isActive()) {
+            $syllabuses = collect($this->firestore->list('syllabuses'));
+            $teacherConflict = $this->findFirestoreConflict(
+                $syllabuses,
+                fn (array $s) => (string) ($s['teacher_id'] ?? '') === (string) $data['teacher_id'],
+                $data,
+                $excludeId,
+            );
+
+            if ($teacherConflict) {
+                $errors[] = sprintf(
+                    'Teacher conflict: "%s" is already assigned to "%s" on %s from %s to %s.',
+                    $teacherConflict['teacher_name'] ?? $teacherConflict['teacher_user_name'] ?? 'this teacher',
+                    $teacherConflict['subject_name'] ?? 'another subject',
+                    ucfirst($data['day_of_week']),
+                    \Carbon\Carbon::parse($teacherConflict['start_time'])->format('H:i'),
+                    \Carbon\Carbon::parse($teacherConflict['end_time'])->format('H:i'),
+                );
+            }
+
+            if (isset($data['major_id'], $data['year_id'], $data['semester_id'])) {
+                $classConflict = $this->findFirestoreConflict(
+                    $syllabuses,
+                    fn (array $s) => (string) ($s['major_id'] ?? '') === (string) $data['major_id']
+                        && (string) ($s['year_id'] ?? '') === (string) $data['year_id']
+                        && (int) ($s['semester_id'] ?? 0) === (int) $data['semester_id'],
+                    $data,
+                    $excludeId,
+                );
+
+                if ($classConflict) {
+                    $errors[] = sprintf(
+                        'Class conflict: this group already has "%s" (with %s) on %s from %s to %s.',
+                        $classConflict['subject_name'] ?? 'another subject',
+                        $classConflict['teacher_name'] ?? $classConflict['teacher_user_name'] ?? 'another teacher',
+                        ucfirst($data['day_of_week']),
+                        \Carbon\Carbon::parse($classConflict['start_time'])->format('H:i'),
+                        \Carbon\Carbon::parse($classConflict['end_time'])->format('H:i'),
+                    );
+                }
+            }
+
+            return [
+                'valid'  => empty($errors),
+                'errors' => $errors,
+            ];
+        }
+
         $teacherConflict = Syllabus::where('teacher_id', $data['teacher_id'])
             ->where('day_of_week', $data['day_of_week'])
-            ->where('start_time', '<', $data['end_time'])   // overlap part 1
-            ->where('end_time',   '>', $data['start_time']) // overlap part 2
-            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-            ->with([
-                'subject:id,name',
-                'teacher.user:id,name',
-            ])
+            ->where('start_time', '<', $data['end_time'])
+            ->where('end_time', '>', $data['start_time'])
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->with(['subject:id,name', 'teacher.user:id,name'])
             ->first();
 
         if ($teacherConflict) {
             $errors[] = sprintf(
                 'Teacher conflict: "%s" is already assigned to "%s" on %s from %s to %s.',
                 $teacherConflict->teacher?->user?->name ?? 'this teacher',
-                $teacherConflict->subject?->name         ?? 'another subject',
+                $teacherConflict->subject?->name ?? 'another subject',
                 ucfirst($data['day_of_week']),
                 \Carbon\Carbon::parse($teacherConflict->start_time)->format('H:i'),
                 \Carbon\Carbon::parse($teacherConflict->end_time)->format('H:i'),
             );
         }
 
-        // 3. Class-level conflict — same major/year/semester, same day, overlapping times
-        //    (a class group can't have two subjects at the same time)
         if (isset($data['major_id'], $data['year_id'], $data['semester_id'])) {
-            $classConflict = Syllabus::where('major_id',    $data['major_id'])
-                ->where('year_id',      $data['year_id'])
-                ->where('semester_id',  $data['semester_id'])
-                ->where('day_of_week',  $data['day_of_week'])
-                ->where('start_time',   '<', $data['end_time'])
-                ->where('end_time',     '>', $data['start_time'])
-                ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-                ->with([
-                    'subject:id,name',
-                    'teacher.user:id,name',
-                ])
+            $classConflict = Syllabus::where('major_id', $data['major_id'])
+                ->where('year_id', $data['year_id'])
+                ->where('semester_id', $data['semester_id'])
+                ->where('day_of_week', $data['day_of_week'])
+                ->where('start_time', '<', $data['end_time'])
+                ->where('end_time', '>', $data['start_time'])
+                ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+                ->with(['subject:id,name', 'teacher.user:id,name'])
                 ->first();
 
             if ($classConflict) {
                 $errors[] = sprintf(
                     'Class conflict: this group already has "%s" (with %s) on %s from %s to %s.',
-                    $classConflict->subject?->name        ?? 'another subject',
+                    $classConflict->subject?->name ?? 'another subject',
                     $classConflict->teacher?->user?->name ?? 'another teacher',
                     ucfirst($data['day_of_week']),
                     \Carbon\Carbon::parse($classConflict->start_time)->format('H:i'),
@@ -90,13 +123,6 @@ class ScheduleConflictDetector
         ];
     }
 
-    /**
-     * Get all of a teacher's existing syllabus slots for a given week.
-     * Useful for displaying a teacher's schedule grid without extra queries.
-     *
-     * @param  int $teacherId
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
     public function teacherWeeklySlots(int $teacherId): \Illuminate\Database\Eloquent\Collection
     {
         return Syllabus::where('teacher_id', $teacherId)
@@ -116,5 +142,38 @@ class ScheduleConflictDetector
             END")
             ->orderBy('start_time')
             ->get();
+    }
+
+    private function findFirestoreConflict(
+        Collection $syllabuses,
+        callable $scopeFilter,
+        array $data,
+        int|string|null $excludeId,
+    ): ?array {
+        return $syllabuses->first(function (array $s) use ($scopeFilter, $data, $excludeId) {
+            if ($excludeId !== null && (string) ($s['id'] ?? '') === (string) $excludeId) {
+                return false;
+            }
+
+            if (($s['day_of_week'] ?? '') !== $data['day_of_week']) {
+                return false;
+            }
+
+            if (! $scopeFilter($s)) {
+                return false;
+            }
+
+            return $this->timesOverlap(
+                $s['start_time'] ?? '',
+                $s['end_time'] ?? '',
+                $data['start_time'],
+                $data['end_time'],
+            );
+        });
+    }
+
+    private function timesOverlap(string $existingStart, string $existingEnd, string $newStart, string $newEnd): bool
+    {
+        return $existingStart < $newEnd && $existingEnd > $newStart;
     }
 }

@@ -160,7 +160,7 @@ class AttendanceIndex extends Component
 
     public function exportPdf()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $user = auth()->user();
             $filters = [];
             if ($user->role === 'student') $filters['student_id'] = is_array($user->student) ? $user->student['id'] : $user->student?->id;
@@ -201,7 +201,7 @@ class AttendanceIndex extends Component
 
     public function exportExcel()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $user = auth()->user();
             $filters = [];
             if ($user->role === 'student') $filters['student_id'] = is_array($user->student) ? $user->student['id'] : $user->student?->id;

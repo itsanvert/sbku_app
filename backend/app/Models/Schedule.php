@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\SyncsToFirestore;
+use App\Services\FirestoreService;
+use App\Repositories\FirestoreScheduleRepository;
 
 class Schedule extends Model
 {
-    use SyncsToFirestore;
 
     protected $fillable = [
         'name',
@@ -36,6 +37,87 @@ class Schedule extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
     ];
+
+    protected static $firestoreRepo;
+
+    // ── Firestore Integration ─────────────────────────────────
+
+    public static function getFirestoreRepository()
+    {
+        if (!static::$firestoreRepo) {
+            static::$firestoreRepo = new FirestoreScheduleRepository(new FirestoreService());
+        }
+        return static::$firestoreRepo;
+    }
+
+    public static function useFirestore(): bool
+    {
+        return FirestoreService::isActive();
+    }
+
+    // Override find to use Firestore when active
+    public static function find($id, $columns = ['*'])
+    {
+        if (static::useFirestore()) {
+            $data = static::getFirestoreRepository()->find($id);
+            if ($data) {
+                $model = new static();
+                $model->fill($data);
+                $model->id = $data['id'];
+                $model->exists = true;
+                return $model;
+            }
+            return null;
+        }
+        return parent::find($id, $columns);
+    }
+
+    // Override all to use Firestore when active
+    public static function all($columns = ['*'])
+    {
+        if (static::useFirestore()) {
+            $data = static::getFirestoreRepository()->all();
+            return $data->map(function ($item) {
+                $model = new static();
+                $model->fill($item);
+                $model->id = $item['id'];
+                $model->exists = true;
+                return $model;
+            });
+        }
+        return parent::all($columns);
+    }
+
+    // Override save to sync to Firestore
+    public function save(array $options = [])
+    {
+        $result = parent::save($options);
+        
+        if (static::useFirestore() && $result) {
+            $data = $this->toArray();
+            $data['id'] = $this->id;
+            
+            if ($this->wasRecentlyCreated) {
+                static::getFirestoreRepository()->create($data);
+            } else {
+                static::getFirestoreRepository()->update($this->id, $data);
+            }
+        }
+        
+        return $result;
+    }
+
+    // Override delete to remove from Firestore
+    public function delete()
+    {
+        $result = parent::delete();
+        
+        if (static::useFirestore() && $result) {
+            static::getFirestoreRepository()->delete($this->id);
+        }
+        
+        return $result;
+    }
 
     // ── Relationships ──────────────────────────────────────────────────────────
 
@@ -79,6 +161,16 @@ class Schedule extends Model
      */
     public function scopeForDay($query, string $day)
     {
+        if (static::useFirestore()) {
+            $data = static::getFirestoreRepository()->forDay($day);
+            return $data->map(function ($item) {
+                $model = new static();
+                $model->fill($item);
+                $model->id = $item['id'];
+                $model->exists = true;
+                return $model;
+            });
+        }
         return $query->whereRaw('LOWER(day_of_the_week) = ?', [strtolower($day)]);
     }
 
@@ -87,6 +179,16 @@ class Schedule extends Model
      */
     public function scopeActiveOn($query, string $date)
     {
+        if (static::useFirestore()) {
+            $data = static::getFirestoreRepository()->activeOn($date);
+            return $data->map(function ($item) {
+                $model = new static();
+                $model->fill($item);
+                $model->id = $item['id'];
+                $model->exists = true;
+                return $model;
+            });
+        }
         return $query->where(function ($q) use ($date) {
             $q->whereNull('start_date')->orWhere('start_date', '<=', $date);
         })->where(function ($q) use ($date) {
@@ -100,6 +202,16 @@ class Schedule extends Model
      */
     public function scopeOverlapping($query, string $start, string $end, ?int $excludeId = null)
     {
+        if (static::useFirestore()) {
+            $data = static::getFirestoreRepository()->overlapping($start, $end, $excludeId);
+            return $data->map(function ($item) {
+                $model = new static();
+                $model->fill($item);
+                $model->id = $item['id'];
+                $model->exists = true;
+                return $model;
+            });
+        }
         return $query
             ->where('start_time', '<', $end)
             ->where('end_time',   '>', $start)
@@ -111,6 +223,16 @@ class Schedule extends Model
      */
     public function scopeForTeacher($query, int $teacherId)
     {
+        if (static::useFirestore()) {
+            $data = static::getFirestoreRepository()->forTeacher($teacherId);
+            return $data->map(function ($item) {
+                $model = new static();
+                $model->fill($item);
+                $model->id = $item['id'];
+                $model->exists = true;
+                return $model;
+            });
+        }
         return $query->where('teacher_id', $teacherId);
     }
 

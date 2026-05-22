@@ -7,7 +7,6 @@ use App\Traits\SyncsToFirestore;
 
 class Attendance extends Model
 {
-    use SyncsToFirestore;
     protected $fillable = [
         'attendance_date',
         'check_in_time',

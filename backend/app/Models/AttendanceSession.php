@@ -8,7 +8,6 @@ use App\Traits\SyncsToFirestore;
 
 class AttendanceSession extends Model
 {
-    use SyncsToFirestore;
     protected $fillable = [
         'teacher_id',
         'faculty_id',
@@ -164,6 +163,10 @@ class AttendanceSession extends Model
 
     public function getAttendancesCountAttribute()
     {
+        // If Firestore is active, return the value from the model attributes (loaded from Firestore)
+        if (\App\Services\FirestoreService::isActive()) {
+            return $this->attributes['attendances_count'] ?? 0;
+        }
         return $this->attendances()->count();
     }
 

@@ -1,0 +1,5 @@
+frontend/android/app/*.exe
+*.exe
+node_modules/
+vendor/
+.env
