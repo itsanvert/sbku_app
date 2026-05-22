@@ -41,7 +41,11 @@ class UserCreate extends Component
         ];
 
         if ($isFirestore) {
-            app(\App\Services\FirestoreService::class)->create('users', $data);
+            $firestore = app(\App\Services\FirestoreService::class);
+            $userId = $firestore->create('users', $data);
+            if (in_array($this->role, ['teacher', 'student'])) {
+                $firestore->create($this->role . 's', ['user_id' => $userId, 'role' => $this->role]);
+            }
         } else {
             User::create($data);
         }

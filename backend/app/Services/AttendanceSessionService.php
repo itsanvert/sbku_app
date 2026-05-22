@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendPushNotification;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Message;
@@ -162,8 +163,8 @@ class AttendanceSessionService
                 'metadata'    => $data,
             ]);
 
-            // 2. Find eligible students and send individual push notifications
-            $query = Student::with('user')->whereNotNull('user_id');
+            // 2. Find eligible student IDs and dispatch a queued push notification batch
+            $query = Student::whereNotNull('user_id');
 
             if ($session->academic_class_id) {
                 $query->where('academic_class_id', $session->academic_class_id);
@@ -178,12 +179,10 @@ class AttendanceSessionService
                 $query->where('shift_id', $session->shift_id);
             }
 
-            $students = $query->get();
+            $studentIds = $query->pluck('id')->toArray();
 
-            foreach ($students as $student) {
-                if ($student->user && $student->user->fcm_token) {
-                    $this->pushService->sendToUser($student->user, $title, $body, $data);
-                }
+            if (!empty($studentIds)) {
+                SendPushNotification::dispatch($studentIds, $title, $body, $data);
             }
 
             // 3. Also broadcast to the 'all' topic as a fallback
@@ -317,7 +316,7 @@ class AttendanceSessionService
     {
         if (!$session->is_active) {
             // Fetch attendances from Firestore if in production
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $attendances = $this->firestore->list('attendances', ['session_id' => (string)$session->id]);
                 return [
                     'session'       => $session,
@@ -403,15 +402,20 @@ class AttendanceSessionService
             $checkedInStudents = $session->attendances()->pluck('student_id');
 
             $absentStudents = $allStudents->diff($checkedInStudents);
-            foreach ($absentStudents as $studentId) {
-                Attendance::create([
+
+            if ($absentStudents->isNotEmpty()) {
+                $insertData = $absentStudents->map(fn($studentId) => [
                     'attendance_date' => $session->started_at->toDateString(),
                     'status'          => 'N',
                     'verify_status'   => 'approved',
                     'student_id'      => $studentId,
                     'schedule_id'     => $session->schedule_id,
                     'session_id'      => $session->id,
-                ]);
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ])->toArray();
+
+                Attendance::insert($insertData);
             }
         });
 

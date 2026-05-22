@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('schedules', function (Blueprint $table) {
-            $table->string('day_of_the_week')->nullable();
-            $table->time('start_time')->nullable();
-            $table->time('end_time')->nullable();
+            if (!Schema::hasColumn('schedules', 'day_of_the_week')) {
+                $table->string('day_of_the_week')->nullable();
+            }
+            if (!Schema::hasColumn('schedules', 'start_time')) {
+                $table->time('start_time')->nullable();
+            }
+            if (!Schema::hasColumn('schedules', 'end_time')) {
+                $table->time('end_time')->nullable();
+            }
         });
     }
 

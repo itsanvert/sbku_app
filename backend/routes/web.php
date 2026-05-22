@@ -11,6 +11,7 @@ use App\Livewire\Majors\MajorIndex;
 use App\Livewire\Classes\ClassIndex;
 use App\Livewire\Schedules\ScheduleIndex;
 use App\Livewire\Shifts\ShiftIndex;
+use App\Livewire\Rooms\RoomIndex;
 use App\Livewire\Admin\MessageCenter;
 
 Route::get('/', function () {
@@ -28,49 +29,63 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', function (\App\Services\FirestoreService $firestore) {
-        $teacherCount = $firestore->count('teachers');
-        $studentCount = $firestore->count('students');
-        $userCount = $firestore->count('users');
-        $attendanceCount = $firestore->count('attendances');
-        $activeSessions = $firestore->count('attendance_sessions', ['is_active' => true]);
+        $isFirestore = \App\Services\FirestoreService::isActive();
 
-        // 1. Daily Attendance Data (Last 7 days)
-        // Note: For a high-performance production dashboard, you'd typically 
-        // pre-calculate these or use a summary document in Firestore.
-        $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
-        $recentAttendances = $firestore->list('attendances', [
-            ['attendance_date', '>=', $sevenDaysAgo]
-        ]);
-        
-        $dates = [];
-        $counts = [];
-        
-        // Group by date in PHP since Firestore doesn't have native SQL group-by
-        $dailyData = [];
-        foreach ($recentAttendances as $attendance) {
-            $date = $attendance['attendance_date'] ?? null;
-            if ($date) {
-                $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+        if ($isFirestore) {
+            $teacherCount = $firestore->count('teachers');
+            $studentCount = $firestore->count('students');
+            $userCount = $firestore->count('users');
+            $attendanceCount = $firestore->count('attendances');
+            $activeSessions = $firestore->count('attendance_sessions', ['is_active' => true]);
+
+            $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
+            $recentAttendances = $firestore->list('attendances', [
+                ['attendance_date', '>=', $sevenDaysAgo]
+            ]);
+            
+            $dailyData = [];
+            $presentCount = 0;
+            $absentCount = 0;
+            $permissionCount = 0;
+            foreach ($recentAttendances as $attendance) {
+                $date = $attendance['attendance_date'] ?? null;
+                if ($date) {
+                    $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+                }
+                $status = $attendance['status'] ?? '';
+                if ($status === 'Y') $presentCount++;
+                elseif ($status === 'N') $absentCount++;
+                elseif ($status === 'P') $permissionCount++;
             }
+        } else {
+            $teacherCount = \Illuminate\Support\Facades\Cache::remember('dashboard.teacher_count', 300, fn() => \App\Models\Teacher::count());
+            $studentCount = \Illuminate\Support\Facades\Cache::remember('dashboard.student_count', 300, fn() => \App\Models\Student::count());
+            $userCount = \Illuminate\Support\Facades\Cache::remember('dashboard.user_count', 300, fn() => \App\Models\User::count());
+            $attendanceCount = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_count', 300, fn() => \App\Models\Attendance::count());
+            $activeSessions = \Illuminate\Support\Facades\Cache::remember('dashboard.active_sessions', 300, fn() => \App\Models\AttendanceSession::where('is_active', true)->count());
+
+            $sevenDaysAgo = now()->subDays(7);
+            $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->selectRaw('attendance_date as date_key, COUNT(*) as count')
+                ->groupBy('attendance_date')
+                ->pluck('count', 'date_key')
+                ->toArray();
+
+            $presentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->where('status', 'Y')->count();
+            $absentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->where('status', 'N')->count();
+            $permissionCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                ->where('status', 'P')->count();
         }
 
+        $dates = [];
+        $counts = [];
         for ($i = 6; $i >= 0; $i--) {
             $dateObj = now()->subDays($i);
             $dateKey = $dateObj->format('Y-m-d');
             $dates[] = $dateObj->format('M d (D)'); 
             $counts[] = $dailyData[$dateKey] ?? 0;
-        }
-
-        // 2. Attendance Status Distribution
-        $presentCount = 0;
-        $absentCount = 0;
-        $permissionCount = 0;
-
-        foreach ($recentAttendances as $attendance) {
-            $status = $attendance['status'] ?? '';
-            if ($status === 'Y') $presentCount++;
-            elseif ($status === 'N') $absentCount++;
-            elseif ($status === 'P') $permissionCount++;
         }
 
         return view('dashboard', compact(
@@ -104,6 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/classes', ClassIndex::class)->middleware('role:admin')->name('classes.index');
     Route::get('/schedules', ScheduleIndex::class)->middleware('role:admin')->name('schedules.index');
     Route::get('/shifts', ShiftIndex::class)->middleware('role:admin')->name('shifts.index');
+    Route::get('/rooms', RoomIndex::class)->middleware('role:admin')->name('rooms.index');
     Route::get('/messages', MessageCenter::class)->name('messages');
     
     // Attendance routes
@@ -131,7 +147,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 return redirect()->back()->with('error', 'No records selected for export.');
             }
 
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $records = [];
                 foreach ($ids as $id) {
                     $data = $firestore->getDocument('attendances', (string)$id);

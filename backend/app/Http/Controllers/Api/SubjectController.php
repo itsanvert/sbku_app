@@ -10,13 +10,16 @@ use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
-    public function __construct(
-        private readonly FirestoreService $firestore
-    ) {}
+    protected $firestore;
+
+    public function __construct(FirestoreService $firestore)
+    {
+        $this->firestore = $firestore;
+    }
 
     public function index(Request $request): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $subjects = $this->firestore->list('subjects');
             return response()->json([
                 'success' => true,
@@ -44,7 +47,7 @@ class SubjectController extends Controller
             'credit_hours' => 'nullable|integer|min:1',
         ]);
 
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $id = $validated['code'];
             $subject = $this->firestore->set('subjects', $id, $validated);
             return response()->json([
@@ -70,7 +73,7 @@ class SubjectController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $subject = $this->firestore->getDocument('subjects', (string)$id);
             if (!$subject) {
                 return response()->json(['success' => false, 'message' => 'Subject not found'], 404);
@@ -92,7 +95,7 @@ class SubjectController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $subject = $this->firestore->set('subjects', (string)$id, $request->all());
             return response()->json([
                 'success' => true,
@@ -124,7 +127,7 @@ class SubjectController extends Controller
 
     public function destroy(Request $request, $id): JsonResponse
     {
-        if (config('app.env') === 'production' || $request->has('firestore')) {
+        if (FirestoreService::isActive() || $request->has('firestore')) {
             $this->firestore->delete('subjects', (string)$id);
             return response()->json([
                 'success' => true,

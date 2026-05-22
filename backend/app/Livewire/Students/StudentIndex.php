@@ -6,6 +6,7 @@ use App\Models\Student;
 use App\Models\Faculty;
 use App\Models\Major;
 use App\Models\Shift;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -73,9 +74,12 @@ class StudentIndex extends Component
     #[Computed]
     public function students()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $students = $this->firestore->list('students');
             $collection = collect($students);
+            
+            // Batch fetch schedules to avoid N+1 Firestore fetch overhead
+            $schedules = collect($this->firestore->list('schedules'))->keyBy('id');
 
             if ($this->search) {
                 $collection = $collection->filter(
@@ -87,7 +91,7 @@ class StudentIndex extends Component
             }
 
             // Map to Model objects for Blade compatibility
-            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
+            $items = $collection->forPage($this->getPage(), 10)->map(function ($data) use ($schedules) {
                 $s = new Student();
                 $s->forceFill($data);
                 $s->exists = true;
@@ -124,6 +128,19 @@ class StudentIndex extends Component
                     'name' => $data['shift_name'] ?? '—',
                 ]);
                 $s->setRelation('shift', $shift);
+
+                // 5. Hydrate Schedule relationship dynamically and fast
+                if (isset($data['schedule_id']) && $schedules->has((string) $data['schedule_id'])) {
+                    $schedule = \App\Support\FirestoreHydrator::schedule($schedules->get((string) $data['schedule_id']));
+                    $s->setRelation('schedule', $schedule);
+                } else {
+                    $schedule = new \App\Models\Schedule();
+                    $schedule->forceFill([
+                        'id' => $data['schedule_id'] ?? null,
+                        'name' => $data['schedule_display'] ?? '—',
+                    ]);
+                    $s->setRelation('schedule', $schedule);
+                }
 
                 return $s;
             });
@@ -193,8 +210,8 @@ class StudentIndex extends Component
     public function deleteStudent()
     {
         if ($this->deleteStudentId) {
-            if (config('app.env') === 'production') {
-                $this->firestore->delete('students', (string)$this->deleteStudentId);
+            if (\App\Services\FirestoreService::isActive()) {
+                $this->firestore->delete('students', (string) $this->deleteStudentId);
             } else {
                 Student::findOrFail($this->deleteStudentId)->delete();
             }
@@ -216,7 +233,7 @@ class StudentIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 foreach ($this->selected as $id) {
                     $this->firestore->delete('students', (string)$id);
                 }
@@ -252,20 +269,11 @@ class StudentIndex extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
-            $hydrate = function ($collection, $modelClass) {
-                return collect($this->firestore->list($collection))->map(function ($data) use ($modelClass) {
-                    $m = new $modelClass();
-                    $m->forceFill($data);
-                    $m->exists = true;
-                    return $m;
-                })->sortBy('name');
-            };
-
+        if (\App\Services\FirestoreService::isActive()) {
             return view('livewire.students.student-index', [
-                'faculties' => collect($this->firestore->list('faculties')),
-                'majors' => collect($this->firestore->list('majors')),
-                'shifts' => collect($this->firestore->list('shifts')),
+                'faculties' => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
+                'majors'    => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
+                'shifts'    => FirestoreHydrator::selectOptions($this->firestore->list('shifts')),
             ])->layout('layouts.app');
         }
 

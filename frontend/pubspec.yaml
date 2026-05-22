@@ -25,17 +25,13 @@ dependencies:
   flutter_dotenv: ^5.1.0
   path_provider: ^2.1.1
   # supabase_flutter: ^2.12.0
-  sqflite: ^2.4.2
   mobile_scanner: ^5.1.1
   qr_flutter: ^4.1.0
   intl: ^0.19.0
   share_plus: ^12.0.2
   reorderable_grid_view: ^2.2.8
   get_it: ^8.0.2
-  firebase_core: ^4.7.0
-  firebase_auth: ^6.4.0
-  cloud_firestore: ^6.3.0
-  firebase_messaging: ^16.2.0
+  google_fonts: ^6.1.0
   flutter_local_notifications: ^21.0.0
 
 dev_dependencies:
@@ -68,6 +64,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
+    - .env  
+    - .env.example
     - assets/images/logo.jpg
     - assets/images/campus.png

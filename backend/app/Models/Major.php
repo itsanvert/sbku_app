@@ -7,7 +7,6 @@ use App\Traits\SyncsToFirestore;
 
 class Major extends Model
 {
-    use SyncsToFirestore;
     protected $fillable = [
         'faculty_id',
         'name',

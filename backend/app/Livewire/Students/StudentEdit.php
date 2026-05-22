@@ -9,6 +9,7 @@ use App\Models\Faculty;
 use App\Models\Schedule;
 use App\Models\Shift;
 use App\Models\AcademicClass;
+use App\Support\FirestoreHydrator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
@@ -95,7 +96,7 @@ class StudentEdit extends Component
 
     public function save()
     {
-        $isProd = config('app.env') === 'production';
+        $isProd = \App\Services\FirestoreService::isActive();
         $this->validate([
             'name' => 'required',
             'email' => 'required|email' . ($isProd ? '' : '|unique:users,email,'.$this->userId),
@@ -166,15 +167,15 @@ class StudentEdit extends Component
         if (\App\Services\FirestoreService::isActive()) {
             $firestore = app(\App\Services\FirestoreService::class);
             return view('livewire.students.student-edit', [
-                'faculties' => collect($firestore->list('faculties'))->sortBy('name'),
-                'majors' => $this->faculty_id 
-                    ? collect($firestore->list('majors', ['faculty_id' => (string)$this->faculty_id]))->sortBy('name')
+                'faculties' => FirestoreHydrator::selectOptions($firestore->list('faculties')),
+                'majors' => $this->faculty_id
+                    ? FirestoreHydrator::selectOptions($firestore->list('majors', ['faculty_id' => (string) $this->faculty_id]))
                     : collect(),
-                'academic_classes' => $this->major_id 
-                    ? collect($firestore->list('academic_classes', ['major_id' => (string)$this->major_id]))->sortBy('name')
+                'academic_classes' => $this->major_id
+                    ? FirestoreHydrator::academicClassCollection($firestore->list('academic_classes', ['major_id' => (string) $this->major_id]))
                     : collect(),
-                'schedules' => collect($firestore->list('schedules')),
-                'shifts'    => collect($firestore->list('shifts'))->sortBy('name'),
+                'schedules' => FirestoreHydrator::scheduleCollection($firestore->list('schedules')),
+                'shifts' => FirestoreHydrator::selectOptions($firestore->list('shifts')),
             ]);
         }
 

@@ -1,3 +1,5 @@
+import 'package:sbku_app/core/constants/app_config.dart';
+
 class Student {
   final String id;
   final String name;
@@ -33,17 +35,36 @@ class Student {
     return Student(
       id: json['id']?.toString() ?? '',
       userId: json['user_id']?.toString(),
-      name: json['name']?.toString() ?? '',
-      email: json['email']?.toString() ?? json['user']?['email']?.toString(),
+      name: json['name']?.toString() ??
+          json['user_name']?.toString() ??
+          json['user']?['name']?.toString() ??
+          '',
+      email: json['email']?.toString() ??
+          json['user_email']?.toString() ??
+          json['user']?['email']?.toString(),
       gender: json['gender']?.toString(),
       dob: json['dob']?.toString(),
-      faculty: json['faculty']?['name']?.toString() ?? json['faculty']?.toString(),
-      major: json['major']?['name']?.toString() ?? json['major']?.toString(),
+      faculty: _relationName(json['faculty']) ?? json['faculty_name']?.toString(),
+      major: _relationName(json['major']) ?? json['major_name']?.toString(),
       year: _parseInt(json['year']),
-      shift: json['shift']?.toString(),
+      shift: _relationName(json['shift']) ?? json['shift_name']?.toString(),
       generation: json['generation']?.toString(),
-      avatarUrl: json['avatar_url']?.toString(),
+      avatarUrl: _resolveAvatar(json),
       createdAt: json['created_at']?.toString(),
+    );
+  }
+
+  static String? _relationName(dynamic value) {
+    if (value == null) return null;
+    if (value is Map) return value['name']?.toString();
+    if (value is String) return value;
+    return null;
+  }
+
+  static String? _resolveAvatar(Map<String, dynamic> json) {
+    return AppConfig.resolveMediaUrl(
+      json['avatar_url']?.toString() ??
+          json['profile_image_path']?.toString(),
     );
   }
 
@@ -71,10 +92,8 @@ class Student {
       };
 }
 
-// For backward compatibility if needed:
 typedef StudentModel = Student;
 
-// ── Paginated wrapper ──────────────────────────────────────────────────
 class StudentPaginated {
   final List<Student> data;
   final int currentPage;
@@ -89,11 +108,18 @@ class StudentPaginated {
   });
 
   factory StudentPaginated.fromJson(Map<String, dynamic> json) {
+    final raw = json['data'];
+    final List<Student> students = raw is List
+        ? raw
+            .map((e) => Student.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList()
+        : [];
+
     return StudentPaginated(
-      data: (json['data'] as List).map((e) => Student.fromJson(e)).toList(),
+      data: students,
       currentPage: _parseInt(json['current_page']) ?? 1,
       lastPage: _parseInt(json['last_page']) ?? 1,
-      total: _parseInt(json['total']) ?? 0,
+      total: _parseInt(json['total']) ?? students.length,
     );
   }
 

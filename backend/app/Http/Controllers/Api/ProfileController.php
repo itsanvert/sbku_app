@@ -7,6 +7,7 @@ use App\Http\Resources\UserResource;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -29,20 +30,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
         ]);
 
-        $user->forceFill([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-        ])->save();
+        $user->forceFill($validated)->save();
 
-        // Flat format for Flutter AuthService compatibility
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'user'    => (new UserResource($user->fresh()))->resolve(),
+            'user'    => (new UserResource($user))->resolve(),
         ]);
     }
 
@@ -65,9 +62,7 @@ class ProfileController extends Controller
             ], 422);
         }
 
-        $user->forceFill([
-            'password' => Hash::make($request->password),
-        ])->save();
+        $user->update(['password' => Hash::make($request->password)]);
 
         return response()->json([
             'success' => true,
@@ -86,29 +81,22 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        $user->updateProfilePhoto($request->file('photo'));
+        $oldPath = $user->profile_photo_path;
+        $path = $request->file('photo')->store('profile-photos', 'public');
 
-        $photoPath = $user->profile_photo_path;
+        $user->update(['profile_photo_path' => $path]);
 
-        if (config('app.env') === 'production' || $request->has('firestore')) {
-            $firestore = app(\App\Services\FirestoreService::class);
-            
-            if ($teacher = $user->teacher) {
-                $firestore->set('teachers', (string)$teacher['id'], ['profile_image_path' => $photoPath]);
-            }
-            if ($student = $user->student) {
-                $firestore->set('students', (string)$student['id'], ['profile_image_path' => $photoPath]);
-            }
-        } else {
-            if ($user->teacher) {
-                $user->teacher->update(['profile_image_path' => $photoPath]);
-            }
-            if ($user->student) {
-                $user->student->update(['profile_image_path' => $photoPath]);
-            }
+        // Sync to teacher/student profile_image_path
+        if ($user->role === 'teacher' && $user->teacher) {
+            $user->teacher->update(['profile_image_path' => $path]);
+        } elseif ($user->role === 'student' && $user->student) {
+            $user->student->update(['profile_image_path' => $path]);
         }
 
-        // Flat format for Flutter AuthService compatibility
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Profile photo updated successfully',
@@ -122,9 +110,20 @@ class ProfileController extends Controller
     public function deleteProfilePhoto(Request $request)
     {
         $user = $request->user();
-        $user->deleteProfilePhoto();
 
-        // Flat format for Flutter AuthService compatibility
+        if ($user->profile_photo_path) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        // Clear teacher/student profile_image_path as well
+        if ($user->role === 'teacher' && $user->teacher) {
+            $user->teacher->update(['profile_image_path' => null]);
+        } elseif ($user->role === 'student' && $user->student) {
+            $user->student->update(['profile_image_path' => null]);
+        }
+
+        $user->update(['profile_photo_path' => null]);
+
         return response()->json([
             'success' => true,
             'message' => 'Profile photo deleted successfully',
@@ -142,9 +141,8 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-        $user->forceFill([
-            'fcm_token' => $request->token,
-        ])->save();
+
+        $user->forceFill(['fcm_token' => $request->token])->save();
 
         return response()->json([
             'success' => true,

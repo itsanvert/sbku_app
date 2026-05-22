@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:sbku_app/model/student_model.dart';
 import 'package:sbku_app/service/student_service.dart';
 
-class ShowStudentScreen extends StatelessWidget {
+class ShowStudentScreen extends StatefulWidget {
   final String studentId;
 
   const ShowStudentScreen({super.key, required this.studentId});
+
+  @override
+  State<ShowStudentScreen> createState() => _ShowStudentScreenState();
+}
+
+class _ShowStudentScreenState extends State<ShowStudentScreen> {
+  final StudentService _service = StudentService();
+  late final Future<Student> _studentFuture;
 
   static const _primary =
       Color.fromARGB(255, 241, 177, 99); // indigo theme for students
@@ -15,13 +23,18 @@ class ShowStudentScreen extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _studentFuture = _service.getStudent(widget.studentId);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final StudentService service = StudentService();
     return Scaffold(
       backgroundColor:
           _isDarkMode(context) ? const Color(0xFF121212) : Colors.white,
       body: FutureBuilder<Student>(
-        future: service.getStudent(studentId),
+        future: _studentFuture,
         builder: (context, snapshot) {
           // ── Loading ──────────────────────────────────────────────
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -87,8 +100,8 @@ class ShowStudentScreen extends StatelessWidget {
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
                     decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                   gradient: LinearGradient(
+                        colors: [Color(0xFFFF5722), Color(0xFFFF8A65)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),

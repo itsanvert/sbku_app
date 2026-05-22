@@ -1,25 +1,88 @@
 #!/bin/bash
+
+# Exit on error
 set -e
 
-# ==============================================================================
-# Runtime startup script
-# ==============================================================================
-# Steps previously done at Docker build time are now here because they ran
-# AFTER "COPY . ." and therefore busted the layer cache on every single push.
-# Running them at container start costs ~2–3 seconds and is fully equivalent.
+# Normalize DB_CONNECTION: strip CR/LF and quotes, make lowercase so comparisons work
+if [ -n "$DB_CONNECTION" ]; then
+    DB_CONNECTION="$(printf '%s' "$DB_CONNECTION" | tr -d '\r' | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')"
+fi
 
-# ------------------------------------------------------------------------------
-# 1. SQLite database (only when DB_CONNECTION=sqlite)
-# ------------------------------------------------------------------------------
+# If DB_DATABASE references a sqlite file, prefer sqlite connection
+if [ -n "$DB_DATABASE" ] && printf '%s' "$DB_DATABASE" | grep -qi "sqlite"; then
+    DB_CONNECTION=sqlite
+fi
+
+# ── Neon (serverless Postgres) ────────────────────────────────
+if [ -n "$NEON_DATABASE_URL" ]; then
+    echo "Detected NEON_DATABASE_URL — switching to PostgreSQL (Neon)..."
+    NEON_URL="$(printf '%s' "$NEON_DATABASE_URL" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'")"
+    # Strip postgresql:// prefix
+    WITHOUT_PROTO="${NEON_URL#*://}"
+    # Extract credentials and host/db
+    CREDS_AND_HOST="${WITHOUT_PROTO%%\?*}"
+    # user:pass@host:port/db
+    USER_PASS="${CREDS_AND_HOST%%@*}"
+    HOST_DB="${CREDS_AND_HOST#*@}"
+    DB_USER="${USER_PASS%%:*}"
+    DB_PASS="${USER_PASS#*:}"
+    DB_HOST_PORT="${HOST_DB%%/*}"
+    DB_NAME="${HOST_DB#*/}"
+    # Split host:port
+    DB_HOST_VAL="${DB_HOST_PORT%%:*}"
+    DB_PORT_VAL="${DB_HOST_PORT#*:}"
+    [ "$DB_HOST_VAL" = "$DB_PORT_VAL" ] && DB_PORT_VAL="5432"
+
+    export DB_CONNECTION="pgsql"
+    export DATABASE_URL="$NEON_URL"
+    export DB_HOST="$DB_HOST_VAL"
+    export DB_PORT="$DB_PORT_VAL"
+    export DB_DATABASE="$DB_NAME"
+    export DB_USERNAME="$DB_USER"
+    export DB_PASSWORD="$DB_PASS"
+    export DB_SSLMODE="require"
+    echo "Neon PostgreSQL configured: host=$DB_HOST_VAL port=$DB_PORT_VAL db=$DB_NAME user=$DB_USER"
+fi
+
+# Sanitize DATABASE_URL and DB_HOST to remove stray CR/LF or quotes
+if [ -n "$DATABASE_URL" ]; then
+    DATABASE_URL="$(printf '%s' "$DATABASE_URL" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'" )"
+    export DATABASE_URL
+fi
+if [ -n "$DB_HOST" ]; then
+    DB_HOST="$(printf '%s' "$DB_HOST" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'" )"
+    export DB_HOST
+fi
+
+# If we're using sqlite, ensure no DATABASE_URL or remote DB vars override connection
+if [ "$DB_CONNECTION" = "sqlite" ]; then
+    unset DATABASE_URL || true
+    export DB_HOST=""
+    export DB_PORT=""
+    export DB_USERNAME=""
+    export DB_PASSWORD=""
+    # leave DB_DATABASE pointing to the sqlite file
+fi
+
+# Create sqlite database if it doesn't exist (if still using it)
 if [ "$DB_CONNECTION" = "sqlite" ]; then
     mkdir -p database
     touch database/database.sqlite
 fi
 
-# ------------------------------------------------------------------------------
-# 2. Firebase credentials
-#    Priority: mounted secret file > env var JSON blob
-# ------------------------------------------------------------------------------
+# Ensure storage directories exist and are writable
+mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+
+# Render persistent disk — create session / cache dirs and set www-data ownership
+SESSION_DIR="${SESSION_FILES:-/var/data/sessions}"
+CACHE_DIR="${CACHE_FILE_PATH:-/var/data/cache}"
+mkdir -p "$SESSION_DIR" "$CACHE_DIR"
+chown www-data:www-data "$SESSION_DIR" "$CACHE_DIR"
+chmod 775 "$SESSION_DIR" "$CACHE_DIR"
+
+# Fix Firebase permissions on Render
 if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     echo "Found Firebase credentials in /etc/secrets, preparing for use..."
     mkdir -p storage/app
@@ -27,6 +90,15 @@ if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
+    if [ -z "$USE_FIRESTORE" ]; then
+        export USE_FIRESTORE="true"
+    fi
+    # Fall back to SQLite only if no external DB host is configured
+    if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
+        export DB_CONNECTION="sqlite"
+        export DB_DATABASE="/var/data/database.sqlite"
+        unset DATABASE_URL
+    fi
 elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     echo "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
     mkdir -p storage/app
@@ -34,57 +106,76 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
+    if [ -z "$USE_FIRESTORE" ]; then
+        export USE_FIRESTORE="true"
+    fi
+    # Fall back to SQLite only if no external DB host is configured
+    if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
+        export DB_CONNECTION="sqlite"
+        export DB_DATABASE="/var/data/database.sqlite"
+        unset DATABASE_URL
+    fi
 fi
 
-# ------------------------------------------------------------------------------
-# 3. Force SQLite in-memory for all artisan commands
-#    (bypasses PostgreSQL/Firestore connectivity checks at boot time)
-# ------------------------------------------------------------------------------
-export DB_CONNECTION=sqlite
-export DB_DATABASE=:memory:
-export DB_HOST=127.0.0.1
+# Run migrations (skip only when using SQLite with Firestore)
+if [ "$USE_FIRESTORE" = "true" ] && [ "$DB_CONNECTION" = "sqlite" ]; then
+    echo "USE_FIRESTORE is true with SQLite - skipping database migrations"
+    DB_PATH="${DB_DATABASE:-/var/data/database.sqlite}"
+    DB_DIR=$(dirname "$DB_PATH")
+    mkdir -p "$DB_DIR"
+    touch "$DB_PATH"
+    echo "Created empty SQLite database at $DB_PATH"
+elif [ "$DB_CONNECTION" = "sqlite" ]; then
+    php artisan migrate --force --database=sqlite
+else
+    php artisan migrate --force
+fi
 
-# ------------------------------------------------------------------------------
-# 4. Autoloader + storage symlink + permissions
-#    (moved from Dockerfile build time to avoid cache-busting on every push)
-# ------------------------------------------------------------------------------
-composer dump-autoload --optimize --no-dev --no-scripts --quiet
+# Public storage symlink for profile images (idempotent)
+php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
 
-php artisan storage:link --no-interaction --quiet || true
+# Enable and optimize PHP OPcache for fast production API performance
+if [ "$PHP_OPCACHE_ENABLE" = "1" ] || [ "$APP_ENV" = "production" ]; then
+    echo "Configuring and enabling PHP OPcache for maximum API response speed..."
+    OPCACHE_INI="/usr/local/etc/php/conf.d/docker-php-ext-opcache.ini"
+    docker-php-ext-enable opcache 2>/dev/null || true
+    cat <<EOF > "$OPCACHE_INI"
+[opcache]
+opcache.enable=1
+opcache.enable_cli=1
+opcache.memory_consumption=64
+opcache.interned_strings_buffer=8
+opcache.max_accelerated_files=10000
+opcache.revalidate_freq=0
+opcache.validate_timestamps=0
+opcache.fast_shutdown=1
+EOF
+    echo "OPcache successfully configured and active."
+fi
 
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R ug+rwx storage bootstrap/cache
+# Discover package service providers (Firebase, Livewire, Flux, etc.)
+php artisan package:discover --ansi 2>/dev/null || true
 
-# ------------------------------------------------------------------------------
-# 5. Clear and warm Laravel caches
-# ------------------------------------------------------------------------------
-php artisan config:clear
-php artisan view:clear
-php artisan route:clear
+# Cache Laravel configurations, routes, and events for maximum production speed
 php artisan optimize
 
-# ------------------------------------------------------------------------------
-# 6. Apache port binding (Render injects $PORT at runtime)
-#    The Dockerfile already baked in ${PORT} as a literal placeholder;
-#    this resolves it to the actual value at startup.
-#    Both sed passes are safe with || true — one will always be a no-op.
-# ------------------------------------------------------------------------------
-if [ -n "$PORT" ]; then
-    sed -i "s/\${PORT}/$PORT/g" \
-        /etc/apache2/sites-available/000-default.conf \
-        /etc/apache2/ports.conf || true
-    sed -i "s/80/$PORT/g" \
-        /etc/apache2/sites-available/000-default.conf \
-        /etc/apache2/ports.conf || true
+# Compile Blade templates only if not already cached (saves ~7s on restarts when
+# the view cache was pre-built at Docker build time or persisted across restarts).
+if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null | head -1)" ]; then
+    php artisan view:cache
 fi
 
-# ------------------------------------------------------------------------------
-# 7. Optional: run migrations on every deploy
-#    Uncomment if you want automatic migration at startup.
-# ------------------------------------------------------------------------------
-# php artisan migrate --force --no-interaction --quiet
+# Configure Apache to listen on the runtime port (Render $PORT or ECS default 80)
+LISTEN_PORT="${PORT:-80}"
+sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
+sed -i "s/80/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
 
-# ------------------------------------------------------------------------------
-# 8. Hand off to Apache
-# ------------------------------------------------------------------------------
-exec apache2-foreground
+# Set ServerName globally to suppress Apache qualified domain name warning
+echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
+
+# Start queue worker in the background for queued push notifications
+php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
+echo "Queue worker started."
+
+# Start Apache
+apache2-foreground
