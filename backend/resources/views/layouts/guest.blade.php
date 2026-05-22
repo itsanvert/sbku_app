@@ -26,6 +26,7 @@
 
         @vite(['resources/js/app.js'])
         @livewireScripts
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" defer></script>
 
     </body>
 </html>
