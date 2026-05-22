@@ -99,7 +99,7 @@ USE_FIRESTORE=false          # Set to true to enable Firestore syncing
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CREDENTIALS=/path/to/credentials.json
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
-GOOGLE_CLOUD_USE_REST=true   # For Render/cloud environments
+GOOGLE_CLOUD_USE_REST=true   # For cloud environments
 ```
 
 ## How It Works

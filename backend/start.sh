@@ -75,14 +75,14 @@ mkdir -p storage/framework/sessions storage/framework/views storage/framework/ca
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
-# Render persistent disk — create session / cache dirs and set www-data ownership
+# Create session / cache directories and set www-data ownership
 SESSION_DIR="${SESSION_FILES:-/var/data/sessions}"
 CACHE_DIR="${CACHE_FILE_PATH:-/var/data/cache}"
 mkdir -p "$SESSION_DIR" "$CACHE_DIR"
 chown www-data:www-data "$SESSION_DIR" "$CACHE_DIR"
 chmod 775 "$SESSION_DIR" "$CACHE_DIR"
 
-# Fix Firebase permissions on Render
+# Set up Firebase credentials from secrets mount
 if [ -f "/etc/secrets/firebase-credentials.json" ]; then
     echo "Found Firebase credentials in /etc/secrets, preparing for use..."
     mkdir -p storage/app
@@ -165,7 +165,7 @@ if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null |
     php artisan view:cache
 fi
 
-# Configure Apache to listen on the runtime port (Render $PORT or ECS default 80)
+# Configure Apache to listen on the runtime port ($PORT env var or default 80)
 LISTEN_PORT="${PORT:-80}"
 sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
 sed -i "s/80/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
