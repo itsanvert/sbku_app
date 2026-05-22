@@ -14,8 +14,8 @@
         <!-- Preconnect for Chart.js CDN (used in dashboard) -->
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <!-- Styles -->
+        @vite(['resources/css/app.css'])
 
         <!-- Styles -->
         @livewireStyles
@@ -139,6 +139,7 @@
 
         @stack('modals')
 
+        @vite(['resources/js/app.js'])
         @livewireScripts
         @fluxScripts
         @stack('scripts')
