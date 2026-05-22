@@ -28,7 +28,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # With GOOGLE_CLOUD_USE_REST=true, they are not required for Firestore.
 
 # Enable Apache mod_rewrite, mod_deflate (gzip), mod_expires (cache headers)
-RUN a2enmod rewrite deflate expires
+RUN a2enmod rewrite deflate expires headers
 
 # ==============================================================================
 # Stage 2: Composer (PHP dependencies)
