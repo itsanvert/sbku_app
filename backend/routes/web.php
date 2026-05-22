@@ -58,16 +58,16 @@ Route::middleware([
                 elseif ($status === 'P') $permissionCount++;
             }
         } else {
-            $teacherCount = \App\Models\Teacher::count();
-            $studentCount = \App\Models\Student::count();
-            $userCount = \App\Models\User::count();
-            $attendanceCount = \App\Models\Attendance::count();
-            $activeSessions = \App\Models\AttendanceSession::where('is_active', true)->count();
+            $teacherCount = \Illuminate\Support\Facades\Cache::remember('dashboard.teacher_count', 300, fn() => \App\Models\Teacher::count());
+            $studentCount = \Illuminate\Support\Facades\Cache::remember('dashboard.student_count', 300, fn() => \App\Models\Student::count());
+            $userCount = \Illuminate\Support\Facades\Cache::remember('dashboard.user_count', 300, fn() => \App\Models\User::count());
+            $attendanceCount = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_count', 300, fn() => \App\Models\Attendance::count());
+            $activeSessions = \Illuminate\Support\Facades\Cache::remember('dashboard.active_sessions', 300, fn() => \App\Models\AttendanceSession::where('is_active', true)->count());
 
             $sevenDaysAgo = now()->subDays(7);
             $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->selectRaw("DATE_FORMAT(attendance_date, '%Y-%m-%d') as date_key, COUNT(*) as count")
-                ->groupBy('date_key')
+                ->selectRaw('attendance_date as date_key, COUNT(*) as count')
+                ->groupBy('attendance_date')
                 ->pluck('count', 'date_key')
                 ->toArray();
 
