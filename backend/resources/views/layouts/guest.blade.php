@@ -8,7 +8,7 @@
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <link rel="preload" href="{{ asset('img/logo.jpg') }}" as="image">
-        <link rel="preconnect" href="https://unpkg.com" crossorigin>
+        <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
@@ -17,7 +17,6 @@
         <!-- Styles -->
         @vite(['resources/css/app.css'])
 
-        <!-- Styles -->
         @livewireStyles
     </head>
     <body>
@@ -27,7 +26,6 @@
 
         @vite(['resources/js/app.js'])
         @livewireScripts
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" defer></script>
 
     </body>
 </html>
