@@ -4,9 +4,8 @@ namespace App\Livewire\Syllabuses;
 
 use App\Models\Syllabus;
 use App\Models\Faculty;
-use App\Models\Major;
-use App\Models\Shift;
 use App\Support\FirestoreHydrator;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -108,33 +107,37 @@ class SyllabusIndex extends Component
             );
         }
 
-        $query = Syllabus::query()
-            ->with(['faculty', 'major', 'subject', 'teacher.user', 'shift'])
-            ->join('subjects', 'syllabuses.subject_id', '=', 'subjects.id')
-            ->select('syllabuses.*', 'subjects.name as subject_name');
+        $cacheKey = 'syllabuses.index.' . md5(implode('|', [$this->search, $this->faculty_id, $this->major_id, $this->shift_id, $this->year_id, $this->sortBy, $this->sortDirection, $this->getPage()]));
 
-        if ($this->search) {
-            $query->where('subjects.name', 'like', '%' . $this->search . '%');
-        }
+        return Cache::remember($cacheKey, 60, function () {
+            $query = Syllabus::query()
+                ->with(['faculty', 'major', 'subject', 'teacher.user', 'shift'])
+                ->join('subjects', 'syllabuses.subject_id', '=', 'subjects.id')
+                ->select('syllabuses.*', 'subjects.name as subject_name');
 
-        if ($this->faculty_id) {
-            $query->where('faculty_id', $this->faculty_id);
-        }
+            if ($this->search) {
+                $query->where('subjects.name', 'like', '%' . $this->search . '%');
+            }
 
-        if ($this->major_id) {
-            $query->where('major_id', $this->major_id);
-        }
+            if ($this->faculty_id) {
+                $query->where('faculty_id', $this->faculty_id);
+            }
 
-        if ($this->shift_id) {
-            $query->where('shift_id', $this->shift_id);
-        }
+            if ($this->major_id) {
+                $query->where('major_id', $this->major_id);
+            }
 
-        if ($this->year_id) {
-            $query->where('year_id', $this->year_id);
-        }
+            if ($this->shift_id) {
+                $query->where('shift_id', $this->shift_id);
+            }
 
-        return $query->orderBy($this->sortBy == 'subject_name' ? 'subjects.name' : 'syllabuses.' . $this->sortBy, $this->sortDirection)
-            ->paginate(10);
+            if ($this->year_id) {
+                $query->where('year_id', $this->year_id);
+            }
+
+            return $query->orderBy($this->sortBy == 'subject_name' ? 'subjects.name' : 'syllabuses.' . $this->sortBy, $this->sortDirection)
+                ->paginate(10);
+        });
     }
 
     public function openCreateModal()
@@ -191,18 +194,8 @@ class SyllabusIndex extends Component
 
     public function render()
     {
-        if (\App\Services\FirestoreService::isActive()) {
-            return view('livewire.syllabuses.syllabus-index', [
-                'faculties' => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
-                'majors'    => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
-                'shifts'    => FirestoreHydrator::selectOptions($this->firestore->list('shifts')),
-            ])->layout('layouts.app');
-        }
-
         return view('livewire.syllabuses.syllabus-index', [
-            'faculties' => Faculty::orderBy('name')->get(),
-            'majors' => Major::orderBy('name')->get(),
-            'shifts' => Shift::orderBy('name')->get(),
+            'faculties' => Cache::remember('faculties.all', 86400, fn() => Faculty::orderBy('name')->get(['id', 'name'])),
         ])->layout('layouts.app');
     }
 }

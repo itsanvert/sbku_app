@@ -4,6 +4,7 @@ namespace App\Livewire\Schedules;
 
 use App\Models\Schedule;
 use App\Support\FirestoreHydrator;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -163,12 +164,16 @@ class ScheduleIndex extends Component
     #[Computed]
     public function schedules()
     {
-        return Schedule::with(['teacher.user', 'subject', 'academicClass', 'room'])
-            ->when($this->search, fn($q) => $q->where(function($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('day_of_the_week', 'like', '%' . $this->search . '%');
-            }))
-            ->paginate(10);
+        $cacheKey = 'schedules.index.' . md5(implode('|', [$this->search, $this->getPage()]));
+
+        return Cache::remember($cacheKey, 60, function () {
+            return Schedule::with(['teacher.user', 'subject', 'academicClass', 'room'])
+                ->when($this->search, fn($q) => $q->where(function($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('day_of_the_week', 'like', '%' . $this->search . '%');
+                }))
+                ->paginate(10);
+        });
     }
 
     public function render()
@@ -206,11 +211,11 @@ class ScheduleIndex extends Component
 
         return view('livewire.schedules.schedule-index', [
             'schedules' => $this->schedules,
-            'teachers' => \App\Models\Teacher::with('user')->select('id', 'user_id')->get(),
-            'subjects' => \App\Models\Subject::select('id', 'name')->orderBy('name')->get(),
-            'academicClasses' => \App\Models\AcademicClass::select('id', 'name')->orderBy('name')->get(),
-            'rooms' => \App\Models\Room::select('id', 'name', 'code')->orderBy('name')->get(),
-            'syllabuses' => \App\Models\Syllabus::with(['subject:id,name', 'teacher.user:id,name'])->select('id', 'name', 'subject_id', 'teacher_id')->get(),
+            'teachers' => Cache::remember('sch.teachers', 86400, fn() => \App\Models\Teacher::with('user')->select('id', 'user_id')->get()),
+            'subjects' => Cache::remember('sch.subjects', 86400, fn() => \App\Models\Subject::select('id', 'name')->orderBy('name')->get()),
+            'academicClasses' => Cache::remember('sch.classes', 86400, fn() => \App\Models\AcademicClass::select('id', 'name')->orderBy('name')->get()),
+            'rooms' => Cache::remember('sch.rooms', 86400, fn() => \App\Models\Room::select('id', 'name', 'code')->orderBy('name')->get()),
+            'syllabuses' => Cache::remember('sch.syllabuses', 86400, fn() => \App\Models\Syllabus::with(['subject:id,name', 'teacher.user:id,name'])->select('id', 'name', 'subject_id', 'teacher_id')->get()),
         ])->layout('layouts.app');
     }
 }
