@@ -171,7 +171,9 @@ sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf
 sed -i "s/80/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
 
 # Set ServerName globally to suppress Apache qualified domain name warning
-echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
+# UseCanonicalName Off ensures PHP uses the real Host header, not ServerName
+echo "ServerName _default_" >> /etc/apache2/apache2.conf || true
+echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf || true
 
 # Start queue worker in the background (skip if WEB_ONLY is set)
 if [ -z "$WEB_ONLY" ]; then
