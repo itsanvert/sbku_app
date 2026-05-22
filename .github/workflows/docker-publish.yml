@@ -39,20 +39,30 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
+          aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
 
       - name: Get ECR Registry URI
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Extract Docker metadata
+      - name: Extract Docker metadata (GHCR)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}
-            ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}
+          images: ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract Docker metadata (ECR)
+        if: steps.ecr.outputs.registry != ''
+        id: meta-ecr
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}
           tags: |
             type=sha,prefix=
             type=ref,event=branch
@@ -64,8 +74,8 @@ jobs:
         with:
           context: ./backend
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}${{ steps.meta-ecr.conclusion == 'success' && format(',{0}', steps.meta-ecr.outputs.tags) || '' }}
+          labels: ${{ steps.meta.outputs.labels }}${{ steps.meta-ecr.conclusion == 'success' && format(',{0}', steps.meta-ecr.outputs.labels) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
