@@ -235,7 +235,7 @@ class StudentIndex extends Component
         if (!empty($this->selected)) {
             if (\App\Services\FirestoreService::isActive()) {
                 foreach ($this->selected as $id) {
-                    $this->firestore->delete('students', (string) $id);
+                    $this->firestore->delete('students', (string)$id);
                 }
             } else {
                 Student::whereIn('id', $this->selected)->delete();

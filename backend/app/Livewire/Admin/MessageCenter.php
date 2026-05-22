@@ -22,7 +22,7 @@ class MessageCenter extends Component
 
     private $firestore;
 
-    public function boot()
+    public function __construct()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }

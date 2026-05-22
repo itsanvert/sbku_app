@@ -92,7 +92,7 @@ class AttendanceSessionIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            if (\App\Services\FirestoreService::isActive()) {
+            if (config('app.env') === 'production') {
                 foreach ($this->selected as $id) {
                     $this->firestore->delete('attendance_sessions', (string)$id);
                 }
