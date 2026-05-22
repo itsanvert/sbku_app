@@ -73,19 +73,20 @@
     </div>
 
     {{-- ── RIGHT: Image Panel ── --}}
-  <div class="hidden lg:flex flex-1 items-center justify-center bg-slate-100 relative overflow-hidden">
+  <div class="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 relative overflow-hidden">
 
-    {{-- Subtle background texture --}}
-    <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 20% 80%, #cbd5e1 0%, transparent 50%), radial-gradient(circle at 80% 20%, #e2e8f0 0%, transparent 50%);"></div>
+    {{-- Decorative circles --}}
+    <div class="absolute top-20 left-20 w-72 h-72 bg-orange-300/30 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-20 right-20 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl"></div>
 
-    <lottie-player
-        src="{{ asset('lottie/welcome.json') }}"
-        background="transparent"
-        speed="1"
-        loop
-        autoplay
-        style="width: 500px; height: 500px; position: relative; z-index: 1;">
-    </lottie-player>
+    {{-- Brand panel --}}
+    <div class="relative z-10 text-center px-8">
+        <div class="w-32 h-32 mx-auto mb-6 bg-white/80 backdrop-blur rounded-2xl shadow-lg flex items-center justify-center">
+            <img src="{{ asset('img/logo.jpg') }}" alt="SBKU" class="w-24 h-24 object-contain rounded-lg">
+        </div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">SBKU App</h2>
+        <p class="text-lg text-gray-600">Student Attendance System</p>
+    </div>
 
     <footer class="absolute bottom-0 left-0 w-full z-10">
     <div class="bg-white/50 backdrop-blur-md border-t border-orange-100/60"
