@@ -7,12 +7,8 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <link rel="preload" href="{{ asset('img/logo.jpg') }}" as="image">
-        <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link rel="preload" href="{{ asset('img/logo.webp') }}" as="image" type="image/webp">
+        <link rel="preload" href="{{ asset('img/logo.jpg') }}" as="image" type="image/jpeg">
 
         <!-- Styles -->
         @vite(['resources/css/app.css'])
