@@ -19,7 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (config('app.env') === 'production') {
+        if ($appUrl = config('app.url')) {
+            \Illuminate\Support\Facades\URL::forceRootUrl($appUrl);
+        }
+
+        if (config('app.env') === 'production' && ($_SERVER['HTTPS'] ?? $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? null) === 'on') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
