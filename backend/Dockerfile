@@ -2,7 +2,7 @@
 # Stage 1: PHP Extensions (the slow part — cached aggressively)
 # ==============================================================================
 # Uses a pre-built base so grpc/protobuf are NOT compiled from source.
-# On Render, this stage is fully cached after the first build as long as
+# This stage is fully cached after the first build as long as
 # nothing in this layer changes.
 FROM php:8.4-apache AS php-base
 
@@ -105,7 +105,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
         /etc/apache2/apache2.conf \
         /etc/apache2/conf-available/*.conf
 
-# Render injects $PORT at runtime (default 8080)
+# Runtime port (default 8080, configurable via $PORT env var)
 RUN sed -i 's/80/${PORT}/g' \
         /etc/apache2/sites-available/000-default.conf \
         /etc/apache2/ports.conf

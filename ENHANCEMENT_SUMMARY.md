@@ -226,7 +226,7 @@ flutter logs | grep -i "lifecycle"
 ### For Deployment
 
 - **`backend/DEPLOYMENT.md`** - Deployment instructions (existing)
-- **`render.yaml`** - Render.com configuration (existing)
+- **`Dockerfile`** - Docker production build configuration
 
 ---
 

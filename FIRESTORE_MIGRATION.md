@@ -22,7 +22,7 @@ The following environment variables control Firestore usage:
 - `FIREBASE_PROJECT_ID`: Firebase project ID (e.g., `sbkuapp-vert25`)
 - `FIREBASE_CREDENTIALS`: Path to Firebase service account credentials JSON file
 - `GOOGLE_APPLICATION_CREDENTIALS`: Path to Google Cloud credentials (same as FIREBASE_CREDENTIALS)
-- `GOOGLE_CLOUD_USE_REST`: Set to `true` to use REST API instead of gRPC (required for Render)
+- `GOOGLE_CLOUD_USE_REST`: Set to `true` to use REST API instead of gRPC (recommended for cloud environments)
 
 ### Database Configuration
 
@@ -91,9 +91,9 @@ The migration script:
 
 ## Deployment
 
-### Render Configuration
+### Environment Configuration
 
-The `render.yaml` file has been updated with:
+Configure your `.env` file with:
 - `DB_CONNECTION` set to `sqlite`
 - `USE_FIRESTORE` set to `true`
 - Firebase credentials configuration
@@ -120,7 +120,7 @@ To test Firestore integration locally:
 ### PostgreSQL Connection Errors
 
 If you see PostgreSQL connection errors in production:
-1. Ensure `USE_FIRESTORE=true` is set in render.yaml
+1. Ensure `USE_FIRESTORE=true` is set in your `.env` or container environment
 2. Verify that the database configuration is using SQLite
 3. Check that migrations are being skipped in start.sh
 4. Clear Laravel configuration cache: `php artisan config:clear`
@@ -130,7 +130,7 @@ If you see PostgreSQL connection errors in production:
 If Firestore connection fails:
 1. Verify Firebase credentials are properly configured
 2. Check that `FIREBASE_PROJECT_ID` is correct
-3. Ensure `GOOGLE_CLOUD_USE_REST=true` is set (required for Render)
+3. Ensure `GOOGLE_CLOUD_USE_REST=true` is set (recommended for cloud environments)
 4. Check Firebase project permissions and Firestore rules
 
 ### Data Not Loading
@@ -144,8 +144,8 @@ If data is not loading from Firestore:
 ## Rollback
 
 To rollback to PostgreSQL:
-1. Set `USE_FIRESTORE=false` in render.yaml
-2. Configure PostgreSQL connection in render.yaml
+1. Set `USE_FIRESTORE=false` in your `.env` or container environment
+2. Configure PostgreSQL connection in your `.env`
 3. Remove the database configuration changes
 4. Deploy the application
 
