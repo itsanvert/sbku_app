@@ -206,7 +206,7 @@
 
                 <!-- Footer-style Summary Summary section -->
                 <div class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between text-white border border-gray-700">
-                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10 opacity-10"></div>
                     <div class="flex items-center space-x-5 mb-4 md:mb-0 relative z-10">
                         <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg border-2 border-white/20">
                             <flux:icon name="rocket-launch" variant="solid" class="w-7 h-7 text-white"/>
