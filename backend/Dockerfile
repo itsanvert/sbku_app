@@ -27,8 +27,9 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # gRPC and Protobuf are removed to speed up build time.
 # With GOOGLE_CLOUD_USE_REST=true, they are not required for Firestore.
 
-# Enable Apache mod_rewrite once here; never changes
-RUN a2enmod rewrite
+# Enable Apache mod_rewrite, mod_deflate (gzip), mod_expires (cache headers)
+RUN a2enmod rewrite deflate expires
+RUN a2enconf apache-compress
 
 # ==============================================================================
 # Stage 2: Composer (PHP dependencies)
@@ -90,6 +91,7 @@ COPY --from=assets  /app/public/build    ./public/build
 # ── 1b. Apache MPM prefork config (limit workers for 512MB RAM) ─────────────
 COPY docker/mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
 COPY docker/php-memory.ini    /usr/local/etc/php/conf.d/php-memory.ini
+COPY docker/apache-compress.conf /etc/apache2/conf-available/apache-compress.conf
 
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
