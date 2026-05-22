@@ -22,8 +22,14 @@ class DatabaseSeeder extends Seeder
         $bizFaculty = Faculty::firstOrCreate(['name' => 'មហាវិទ្យាល័យគ្រប់គ្រង (Management)']);
 
         // 2. Create Major
-        $csMajor = Major::firstOrCreate(['name' => 'Computer Science']);
-        $baMajor = Major::firstOrCreate(['name' => 'Business Administration']);
+        $csMajor = Major::firstOrCreate(
+            ['name' => 'Computer Science'],
+            ['faculty_id' => $itFaculty->id]
+        );
+        $baMajor = Major::firstOrCreate(
+            ['name' => 'Business Administration'],
+            ['faculty_id' => $bizFaculty->id]
+        );
 
         // 3. Create Shift
         $morningShift = Shift::firstOrCreate(['name' => 'ព្រឹក (Morning)']);

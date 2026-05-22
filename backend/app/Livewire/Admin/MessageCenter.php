@@ -22,7 +22,7 @@ class MessageCenter extends Component
 
     private $firestore;
 
-    public function boot()
+    public function __construct()
     {
         $this->firestore = app(\App\Services\FirestoreService::class);
     }
@@ -36,7 +36,7 @@ class MessageCenter extends Component
 
     public function sendMessage(PushNotificationService $pushService)
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $this->validate([
                 'title' => 'required|string|max:255',
                 'body' => 'required|string',
@@ -92,10 +92,10 @@ class MessageCenter extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $messagesData = $this->firestore->list('messages', [], 'created_at', 'desc');
             $collection = collect($messagesData);
-            
+
             $items = $collection->forPage($this->getPage(), 10)->map(function ($data) {
                 $m = new Message();
                 $m->forceFill($data);

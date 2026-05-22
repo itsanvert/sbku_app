@@ -24,7 +24,7 @@ class FirestoreService
      */
     public static function isActive(): bool
     {
-        return config('auth.providers.users.driver') === 'firestore' || config('app.env') === 'production';
+        return env('USE_FIRESTORE', false) === 'true';
     }
 
     /**

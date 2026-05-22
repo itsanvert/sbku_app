@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\Syllabus;
 use App\Models\Teacher;
 use Illuminate\Support\Str;
+use App\Support\FirestoreHydrator;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -45,17 +46,22 @@ class AttendanceCreate extends Component
     public string $longitude = '104.9282';
 
     // Derived preview
-    public ?Syllabus $selectedSyllabus   = null;
-    public int       $enrolledStudents   = 0;
+    public ?object $selectedSyllabus   = null;
+    public int     $enrolledStudents   = 0;
 
-    protected $rules = [
-        'teacher_id'  => 'required|exists:teachers,id',
-        'syllabus_id' => 'required|exists:syllabuses,id',
-        'faculty_id'  => 'required',
-        'major_id'    => 'required',
-        'latitude'    => 'required|numeric',
-        'longitude'   => 'required|numeric',
-    ];
+    protected function rules(): array
+    {
+        $isFirestore = \App\Services\FirestoreService::isActive();
+
+        return [
+            'teacher_id'  => 'required' . ($isFirestore ? '' : '|exists:teachers,id'),
+            'syllabus_id' => 'required' . ($isFirestore ? '' : '|exists:syllabuses,id'),
+            'faculty_id'  => 'required',
+            'major_id'    => 'required',
+            'latitude'    => 'required|numeric',
+            'longitude'   => 'required|numeric',
+        ];
+    }
 
     protected $messages = [
         'syllabus_id.required' => 'Please select a syllabus / class schedule.',
@@ -90,13 +96,12 @@ class AttendanceCreate extends Component
             return;
         }
 
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $syllabusData = $this->firestore->getDocument('syllabuses', (string)$value);
             if (!$syllabusData) return;
 
-            // Mock Syllabus object for the preview if needed, or just use the array
-            $this->selectedSyllabus = (object) $syllabusData; 
-            
+            $this->selectedSyllabus = FirestoreHydrator::syllabusObject($syllabusData);
+
             $this->faculty_id       = $syllabusData['faculty_id']       ?? '';
             $this->major_id         = $syllabusData['major_id']         ?? '';
             $this->year_id          = $syllabusData['year_id']          ?? '';
@@ -184,20 +189,20 @@ class AttendanceCreate extends Component
 
     public function render()
     {
-        if (config('app.env') === 'production') {
-            $teachers = collect($this->firestore->list('teachers'));
-            
-            $syllabuses = $this->teacher_id
-                ? collect($this->firestore->list('syllabuses', ['teacher_id' => (string)$this->teacher_id]))
-                    ->filter(fn($s) => isset($s['day_of_week']) && isset($s['start_time']))
-                : collect();
+        if (\App\Services\FirestoreService::isActive()) {
+            $syllabusRows = $this->teacher_id
+                ? array_values(array_filter(
+                    $this->firestore->list('syllabuses', ['teacher_id' => (string) $this->teacher_id]),
+                    fn ($s) => isset($s['day_of_week'], $s['start_time'])
+                ))
+                : [];
 
             return view('livewire.attendance.attendance-create', [
-                'teachers'   => $teachers,
-                'syllabuses' => $syllabuses,
-                'faculties'  => collect($this->firestore->list('faculties')),
-                'majors'     => collect($this->firestore->list('majors')),
-                'rooms'      => collect($this->firestore->list('rooms')),
+                'teachers'   => FirestoreHydrator::teacherCollection($this->firestore->list('teachers')),
+                'syllabuses' => FirestoreHydrator::syllabusCollection($syllabusRows),
+                'faculties'  => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
+                'majors'     => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
+                'rooms'      => FirestoreHydrator::selectOptions($this->firestore->list('rooms')),
             ]);
         }
 
@@ -207,15 +212,15 @@ class AttendanceCreate extends Component
                 ->whereNotNull('day_of_week')
                 ->whereNotNull('start_time')
                 ->with(['subject', 'major', 'shift'])
-                ->orderByRaw("CASE 
-                    WHEN day_of_week = 'monday' THEN 1 
-                    WHEN day_of_week = 'tuesday' THEN 2 
-                    WHEN day_of_week = 'wednesday' THEN 3 
-                    WHEN day_of_week = 'thursday' THEN 4 
-                    WHEN day_of_week = 'friday' THEN 5 
-                    WHEN day_of_week = 'saturday' THEN 6 
-                    WHEN day_of_week = 'sunday' THEN 7 
-                    ELSE 8 
+                ->orderByRaw("CASE
+                    WHEN day_of_week = 'monday' THEN 1
+                    WHEN day_of_week = 'tuesday' THEN 2
+                    WHEN day_of_week = 'wednesday' THEN 3
+                    WHEN day_of_week = 'thursday' THEN 4
+                    WHEN day_of_week = 'friday' THEN 5
+                    WHEN day_of_week = 'saturday' THEN 6
+                    WHEN day_of_week = 'sunday' THEN 7
+                    ELSE 8
                 END")
                 ->orderBy('start_time')
                 ->get()

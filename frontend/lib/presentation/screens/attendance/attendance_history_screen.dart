@@ -9,7 +9,7 @@ import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sbku_app/service/api_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:sbku_app/core/constants/app_config.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Teacher Attendance History Screen
@@ -687,7 +687,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
 
                 final avatarUrl = s['avatar_url'] ??
                     (s['profile_image_path'] != null
-                        ? '${dotenv.env['API_URL']}/api/storage/${s['profile_image_path']}'
+                        ? AppConfig.storageUrl(s['profile_image_path'] as String)
                         : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=6366f1&color=ffffff');
 
                 return Card(

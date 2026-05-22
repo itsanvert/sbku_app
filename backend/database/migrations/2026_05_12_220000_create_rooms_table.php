@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('rooms', function (Blueprint $chunk) {
-            $chunk->id();
-            $chunk->string('name');
-            $chunk->string('code')->unique()->nullable();
-            $chunk->timestamps();
-        });
+        if (!Schema::hasTable('rooms')) {
+            Schema::create('rooms', function (Blueprint $chunk) {
+                $chunk->id();
+                $chunk->string('name');
+                $chunk->string('code')->unique()->nullable();
+                $chunk->timestamps();
+            });
+        }
     }
 
     /**

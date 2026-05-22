@@ -70,7 +70,7 @@ class UserIndex extends Component
     #[Computed]
     public function users()
     {
-        if (config('app.env') === 'production') {
+        if (\App\Services\FirestoreService::isActive()) {
             $users = $this->firestore->list('users');
             $collection = collect($users);
 
@@ -138,7 +138,7 @@ class UserIndex extends Component
     public function deleteUser()
     {
         if ($this->deleteUserId) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 $this->firestore->delete('users', (string)$this->deleteUserId);
             } else {
                 User::findOrFail($this->deleteUserId)->delete();
@@ -160,7 +160,7 @@ class UserIndex extends Component
     public function deleteSelected()
     {
         if (!empty($this->selected)) {
-            if (config('app.env') === 'production') {
+            if (\App\Services\FirestoreService::isActive()) {
                 foreach ($this->selected as $id) {
                     $this->firestore->delete('users', (string)$id);
                 }

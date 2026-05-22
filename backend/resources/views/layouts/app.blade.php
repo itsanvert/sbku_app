@@ -8,8 +8,11 @@
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Preconnect for Chart.js CDN (used in dashboard) -->
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])

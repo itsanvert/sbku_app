@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
@@ -62,18 +63,20 @@ class ThemeProvider with ChangeNotifier {
       scaffoldBackgroundColor: const Color(0xFFF3F4F6),
 
       // AppBar
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF111827),
+        foregroundColor: const Color(0xFF111827),
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: Color(0xFF111827)),
-        titleTextStyle: TextStyle(
-          color: Color(0xFF111827),
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+        iconTheme: const IconThemeData(color: Color(0xFF111827)),
+        titleTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarBrightness: Brightness.light,
           statusBarIconBrightness: Brightness.dark,
         ),
@@ -94,8 +97,8 @@ class ThemeProvider with ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        labelStyle: const TextStyle(color: Color(0xFF6B7280)),
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+        labelStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF6B7280))),
+        hintStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF9CA3AF))),
         prefixIconColor: _primary,
         suffixIconColor: const Color(0xFF9CA3AF),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -126,22 +129,22 @@ class ThemeProvider with ChangeNotifier {
       ),
 
       // Text
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.bold),
-        displayMedium: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.bold),
-        displaySmall: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
-        headlineLarge: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
-        headlineMedium: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600),
-        headlineSmall: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600),
-        titleLarge: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
-        titleMedium: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600),
-        titleSmall: TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500),
-        bodyLarge: TextStyle(color: Color(0xFF1F2937)),
-        bodyMedium: TextStyle(color: Color(0xFF4B5563)),
-        bodySmall: TextStyle(color: Color(0xFF6B7280)),
-        labelLarge: TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w600),
-        labelMedium: TextStyle(color: Color(0xFF6B7280)),
-        labelSmall: TextStyle(color: Color(0xFF9CA3AF)),
+      textTheme: GoogleFonts.hanumanTextTheme().copyWith(
+        displayLarge: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.bold),
+        displayMedium: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.bold),
+        displaySmall: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
+        headlineLarge: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
+        headlineMedium: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600),
+        headlineSmall: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600),
+        titleLarge: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
+        titleMedium: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600),
+        titleSmall: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500),
+        bodyLarge: const TextStyle(color: Color(0xFF1F2937)),
+        bodyMedium: const TextStyle(color: Color(0xFF4B5563)),
+        bodySmall: const TextStyle(color: Color(0xFF6B7280)),
+        labelLarge: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w600),
+        labelMedium: const TextStyle(color: Color(0xFF6B7280)),
+        labelSmall: const TextStyle(color: Color(0xFF9CA3AF)),
       ),
 
       // Icons
@@ -156,10 +159,12 @@ class ThemeProvider with ChangeNotifier {
       ),
 
       // ListTile
-      listTileTheme: const ListTileThemeData(
-        iconColor: Color(0xFF6B7280),
-        textColor: Color(0xFF1F2937),
-        subtitleTextStyle: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+      listTileTheme: ListTileThemeData(
+        iconColor: const Color(0xFF6B7280),
+        textColor: const Color(0xFF1F2937),
+        subtitleTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+        ),
       ),
 
       // Elevated button
@@ -170,7 +175,9 @@ class ThemeProvider with ChangeNotifier {
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          textStyle: GoogleFonts.hanuman(
+            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
         ),
       ),
 
@@ -205,18 +212,22 @@ class ThemeProvider with ChangeNotifier {
         backgroundColor: Colors.white,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: const TextStyle(
-          color: Color(0xFF111827),
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+        titleTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        contentTextStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 15),
+        contentTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 15),
+        ),
       ),
 
       // Snackbar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: const Color(0xFF1F2937),
-        contentTextStyle: const TextStyle(color: Colors.white),
+        contentTextStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Colors.white)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -224,7 +235,9 @@ class ThemeProvider with ChangeNotifier {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFFF3F4F6),
-        labelStyle: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500),
+        labelStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500),
+        ),
         side: const BorderSide(color: Color(0xFFE5E7EB)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -260,18 +273,20 @@ class ThemeProvider with ChangeNotifier {
       scaffoldBackgroundColor: const Color(0xFF020617), // Slate 950
 
       // AppBar
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF0F172A),
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
-        titleTextStyle: TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarBrightness: Brightness.dark,
           statusBarIconBrightness: Brightness.light,
         ),
@@ -291,8 +306,8 @@ class ThemeProvider with ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF1E293B),
-        labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-        hintStyle: const TextStyle(color: Color(0xFF64748B)),
+        labelStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF94A3B8))),
+        hintStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF64748B))),
         prefixIconColor: _primary,
         suffixIconColor: const Color(0xFF64748B),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -323,22 +338,22 @@ class ThemeProvider with ChangeNotifier {
       ),
 
       // Text
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        displayMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        displaySmall: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        headlineLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        headlineMedium: TextStyle(color: Color(0xFFF1F5F9), fontWeight: FontWeight.w600),
-        headlineSmall: TextStyle(color: Color(0xFFF1F5F9), fontWeight: FontWeight.w600),
-        titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        titleMedium: TextStyle(color: Color(0xFFF1F5F9), fontWeight: FontWeight.w600),
-        titleSmall: TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.w500),
-        bodyLarge: TextStyle(color: Color(0xFFE2E8F0)),
-        bodyMedium: TextStyle(color: Color(0xFFCBD5E1)),
-        bodySmall: TextStyle(color: Color(0xFF94A3B8)),
-        labelLarge: TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.w600),
-        labelMedium: TextStyle(color: Color(0xFF94A3B8)),
-        labelSmall: TextStyle(color: Color(0xFF64748B)),
+      textTheme: GoogleFonts.hanumanTextTheme().copyWith(
+        displayLarge: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        displayMedium: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        displaySmall: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        headlineLarge: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        headlineMedium: const TextStyle(color: Color(0xFFF1F5F9), fontWeight: FontWeight.w600),
+        headlineSmall: const TextStyle(color: Color(0xFFF1F5F9), fontWeight: FontWeight.w600),
+        titleLarge: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        titleMedium: const TextStyle(color: Color(0xFFF1F5F9), fontWeight: FontWeight.w600),
+        titleSmall: const TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.w500),
+        bodyLarge: const TextStyle(color: Color(0xFFE2E8F0)),
+        bodyMedium: const TextStyle(color: Color(0xFFCBD5E1)),
+        bodySmall: const TextStyle(color: Color(0xFF94A3B8)),
+        labelLarge: const TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.w600),
+        labelMedium: const TextStyle(color: Color(0xFF94A3B8)),
+        labelSmall: const TextStyle(color: Color(0xFF64748B)),
       ),
 
       // Icons
@@ -353,10 +368,12 @@ class ThemeProvider with ChangeNotifier {
       ),
 
       // ListTile
-      listTileTheme: const ListTileThemeData(
-        iconColor: Color(0xFF94A3B8),
-        textColor: Color(0xFFE2E8F0),
-        subtitleTextStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+      listTileTheme: ListTileThemeData(
+        iconColor: const Color(0xFF94A3B8),
+        textColor: const Color(0xFFE2E8F0),
+        subtitleTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+        ),
       ),
 
       // Elevated button
@@ -367,7 +384,9 @@ class ThemeProvider with ChangeNotifier {
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          textStyle: GoogleFonts.hanuman(
+            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
         ),
       ),
 
@@ -402,18 +421,22 @@ class ThemeProvider with ChangeNotifier {
         backgroundColor: const Color(0xFF1E293B),
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+        titleTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        contentTextStyle: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 15),
+        contentTextStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 15),
+        ),
       ),
 
       // Snackbar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: const Color(0xFF1E293B),
-        contentTextStyle: const TextStyle(color: Colors.white),
+        contentTextStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Colors.white)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -421,7 +444,9 @@ class ThemeProvider with ChangeNotifier {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFF1E293B),
-        labelStyle: const TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.w500),
+        labelStyle: GoogleFonts.hanuman(
+          textStyle: const TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.w500),
+        ),
         side: const BorderSide(color: Color(0xFF334155)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
