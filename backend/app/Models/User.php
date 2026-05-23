@@ -77,7 +77,7 @@ class User extends Authenticatable
      */
     public function getProfilePhotoUrlAttribute()
     {
-        $baseUrl = request()->getSchemeAndHttpHost() . '/api/storage/';
+        $baseUrl = rtrim(config('app.url', request()->getSchemeAndHttpHost()), '/') . '/api/storage/';
 
         // 1. Check if user has a direct photo path (Jetstream standard)
         if ($this->profile_photo_path) {

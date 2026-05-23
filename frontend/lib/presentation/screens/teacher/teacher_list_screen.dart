@@ -149,7 +149,11 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
-                          onPressed: () => setState(() {}),
+                          onPressed: () {
+                            setState(() {
+                              _teacherStream = _service.streamTeachers();
+                            });
+                          },
                           icon: const Icon(Icons.refresh),
                           label: const Text('Retry'),
                         ),
