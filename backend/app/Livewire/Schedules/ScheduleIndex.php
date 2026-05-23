@@ -63,6 +63,10 @@ class ScheduleIndex extends Component
         if (!$this->syllabus_id) {
             $this->subject_id = null;
             $this->teacher_id = null;
+            $this->day_of_the_week = null;
+            $this->start_time = null;
+            $this->end_time = null;
+            $this->class_id = null;
             return;
         }
 
@@ -70,11 +74,19 @@ class ScheduleIndex extends Component
             $syllabus = $this->firestore->getDocument('syllabuses', (string)$this->syllabus_id);
             $this->subject_id = $syllabus['subject_id'] ?? null;
             $this->teacher_id = $syllabus['teacher_id'] ?? null;
+            $this->day_of_the_week = $syllabus['day_of_week'] ?? null;
+            $this->start_time = $syllabus['start_time'] ?? null;
+            $this->end_time = $syllabus['end_time'] ?? null;
+            $this->class_id = $syllabus['academic_class_id'] ?? null;
         } else {
             $syllabus = \App\Models\Syllabus::find($this->syllabus_id);
             if ($syllabus) {
                 $this->subject_id = $syllabus->subject_id;
                 $this->teacher_id = $syllabus->teacher_id;
+                $this->day_of_the_week = $syllabus->day_of_week;
+                $this->start_time = $syllabus->start_time;
+                $this->end_time = $syllabus->end_time;
+                $this->class_id = $syllabus->academic_class_id;
             }
         }
     }
