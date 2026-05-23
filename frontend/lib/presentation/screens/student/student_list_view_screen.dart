@@ -127,7 +127,11 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                         const SizedBox(height: 12),
                         Text('Error: ${snapshot.error}'),
                         ElevatedButton(
-                          onPressed: () => setState(() {}),
+                          onPressed: () {
+                            setState(() {
+                              _studentStream = _service.streamStudents();
+                            });
+                          },
                           child: const Text('Retry'),
                         ),
                       ],

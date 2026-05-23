@@ -8,38 +8,29 @@ import 'package:sbku_app/service/api_service.dart';
 
 class TeacherService {
   final ApiService _api = ApiService();
-  final Map<String, DateTime> _lastPoll = {};
-
-  bool _shouldPoll(String key, {int minIntervalSec = 10}) {
-    final now = DateTime.now();
-    final last = _lastPoll[key];
-    if (last == null || now.difference(last).inSeconds >= minIntervalSec) {
-      _lastPoll[key] = now;
-      return true;
-    }
-    return false;
-  }
-
-  /// Get teachers as a real-time stream via API polling (debounced 10s).
+  /// Get teachers as a real-time stream via API polling.
   Stream<List<Teacher>> streamTeachers() async* {
+    List<Teacher> cachedData = [];
+
     // 1. Fetch and emit the first event immediately (0-second mark)
     try {
       final paginated = await getTeachers(page: 1);
-      yield paginated.data;
+      cachedData = paginated.data;
+      yield cachedData;
     } catch (e) {
       print('Initial teachers fetch failed: $e');
-      yield <Teacher>[];
+      yield* Stream.error(e);
     }
 
     // 2. Poll periodically every 10 seconds in the background
     yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
-      if (!_shouldPoll('teachers')) return <Teacher>[];
       try {
         final paginated = await getTeachers(page: 1);
-        return paginated.data;
+        cachedData = paginated.data;
+        return cachedData;
       } catch (e) {
         print('Polling teachers failed: $e');
-        return <Teacher>[];
+        return cachedData;
       }
     });
   }

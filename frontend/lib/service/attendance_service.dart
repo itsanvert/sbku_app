@@ -73,52 +73,66 @@ class AttendanceService {
 
 
 
-  /// Debounce helper: ensures only one in-flight request per key at a time.
-  final Map<String, DateTime> _lastPoll = {};
+  /// Listen to active attendance sessions by polling the API.
+  Stream<List<Map<String, dynamic>>> listenToActiveSessions({String? teacherId}) async* {
+    List<Map<String, dynamic>> cachedData = [];
 
-  bool _shouldPoll(String key, {int minIntervalSec = 5}) {
-    final now = DateTime.now();
-    final last = _lastPoll[key];
-    if (last == null || now.difference(last).inSeconds >= minIntervalSec) {
-      _lastPoll[key] = now;
-      return true;
+    // 1. Fetch immediately
+    try {
+      cachedData = await getActiveSessions(teacherId: teacherId);
+      yield cachedData;
+    } catch (e) {
+      print('Initial active sessions fetch failed: $e');
+      yield* Stream.error(e);
     }
-    return false;
-  }
 
-  /// Listen to active attendance sessions by polling the API (debounced 5s).
-  Stream<List<Map<String, dynamic>>> listenToActiveSessions({String? teacherId}) {
-    return Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
-      if (!_shouldPoll('active_sessions')) return <Map<String, dynamic>>[];
+    // 2. Poll periodically
+    yield* Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
       try {
-        return await getActiveSessions(teacherId: teacherId);
+        cachedData = await getActiveSessions(teacherId: teacherId);
+        return cachedData;
       } catch (e) {
         print('Polling active sessions failed: $e');
-        return <Map<String, dynamic>>[];
+        return cachedData;
       }
     });
   }
 
-  /// Listen to attendances for a specific session by polling the API (debounced 3s).
-  Stream<List<Map<String, dynamic>>> listenToSessionAttendances(String sessionId) {
-    return Stream.periodic(const Duration(seconds: 3)).asyncMap((_) async {
-      if (!_shouldPoll('session_attendances_$sessionId', minIntervalSec: 3)) return <Map<String, dynamic>>[];
+  /// Listen to attendances for a specific session by polling the API.
+  Stream<List<Map<String, dynamic>>> listenToSessionAttendances(String sessionId) async* {
+    List<Map<String, dynamic>> cachedData = [];
+
+    Future<List<Map<String, dynamic>>> fetchAttendances() async {
+      final data = await getApprovalList(sessionId);
+      final attendances = data['attendances'] as Map<String, dynamic>?;
+      if (attendances == null) return <Map<String, dynamic>>[];
+      
+      final List<Map<String, dynamic>> all = [];
+      attendances.forEach((key, value) {
+        if (value is List) {
+          all.addAll(List<Map<String, dynamic>>.from(value));
+        }
+      });
+      return all;
+    }
+
+    // 1. Fetch immediately
+    try {
+      cachedData = await fetchAttendances();
+      yield cachedData;
+    } catch (e) {
+      print('Initial attendances fetch failed: $e');
+      yield* Stream.error(e);
+    }
+
+    // 2. Poll periodically
+    yield* Stream.periodic(const Duration(seconds: 3)).asyncMap((_) async {
       try {
-        final data = await getApprovalList(sessionId);
-        // Combine all groups into a single list for compatibility
-        final attendances = data['attendances'] as Map<String, dynamic>?;
-        if (attendances == null) return <Map<String, dynamic>>[];
-        
-        final List<Map<String, dynamic>> all = [];
-        attendances.forEach((key, value) {
-          if (value is List) {
-            all.addAll(List<Map<String, dynamic>>.from(value));
-          }
-        });
-        return all;
+        cachedData = await fetchAttendances();
+        return cachedData;
       } catch (e) {
         print('Polling attendances failed: $e');
-        return <Map<String, dynamic>>[];
+        return cachedData;
       }
     });
   }
