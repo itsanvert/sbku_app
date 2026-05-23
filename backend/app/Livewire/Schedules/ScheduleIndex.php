@@ -58,7 +58,18 @@ class ScheduleIndex extends Component
 
     public function updatingSearch() { $this->resetPage(); }
 
-    public function onSyllabusChange()
+    #[Computed]
+    public function syllabusRoom()
+    {
+        if (!$this->syllabus_id) return null;
+        if (\App\Services\FirestoreService::isActive()) {
+            $syllabus = $this->firestore->getDocument('syllabuses', (string)$this->syllabus_id);
+            return $syllabus['room_id'] ?? null;
+        }
+        return \App\Models\Syllabus::where('id', $this->syllabus_id)->value('room_id');
+    }
+
+    public function updatedSyllabusId()
     {
         if (!$this->syllabus_id) {
             $this->subject_id = null;
@@ -75,7 +86,7 @@ class ScheduleIndex extends Component
             $syllabus = $this->firestore->getDocument('syllabuses', (string)$this->syllabus_id);
             $this->subject_id = $syllabus['subject_id'] ?? null;
             $this->teacher_id = $syllabus['teacher_id'] ?? null;
-            $this->day_of_the_week = $syllabus['day_of_week'] ?? null;
+            $this->day_of_the_week = isset($syllabus['day_of_week']) ? ucfirst($syllabus['day_of_week']) : null;
             $this->start_time = $syllabus['start_time'] ?? null;
             $this->end_time = $syllabus['end_time'] ?? null;
             $this->class_id = $syllabus['academic_class_id'] ?? null;
@@ -85,7 +96,7 @@ class ScheduleIndex extends Component
             if ($syllabus) {
                 $this->subject_id = $syllabus->subject_id;
                 $this->teacher_id = $syllabus->teacher_id;
-                $this->day_of_the_week = $syllabus->day_of_week;
+                $this->day_of_the_week = $syllabus->day_of_week ? ucfirst($syllabus->day_of_week) : null;
                 $this->start_time = $syllabus->start_time;
                 $this->end_time = $syllabus->end_time;
                 $this->class_id = $syllabus->academic_class_id;

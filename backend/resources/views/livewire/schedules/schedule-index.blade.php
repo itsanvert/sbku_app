@@ -117,15 +117,18 @@
                             @endforeach
                         </flux:select>
 
-                        <flux:select label="Room" wire:model="room_id">
+                        <flux:select label="Room" wire:model="room_id" @if($this->syllabusRoom) disabled @endif>
                             <flux:select.option value="">Select Room</flux:select.option>
                             @foreach($rooms as $room)
                                 <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
                             @endforeach
                         </flux:select>
+                        @if($this->syllabusRoom)
+                            <p class="text-xs text-zinc-500 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
+                        @endif
                     </div>
 
-                    <flux:select label="Link to Syllabus" wire:model="syllabus_id" wire:change="onSyllabusChange">
+                    <flux:select label="Link to Syllabus" wire:model.live="syllabus_id">
                         <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
                         @foreach($syllabuses as $syllabus)
                             <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
@@ -198,15 +201,18 @@
                             @endforeach
                         </flux:select>
 
-                        <flux:select label="Room" wire:model="room_id">
+                        <flux:select label="Room" wire:model="room_id" @if($this->syllabusRoom) disabled @endif>
                             <flux:select.option value="">Select Room</flux:select.option>
                             @foreach($rooms as $room)
                                 <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
                             @endforeach
                         </flux:select>
+                        @if($this->syllabusRoom)
+                            <p class="text-xs text-zinc-500 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
+                        @endif
                     </div>
 
-                    <flux:select label="Link to Syllabus" wire:model="syllabus_id" wire:change="onSyllabusChange">
+                    <flux:select label="Link to Syllabus" wire:model.live="syllabus_id">
                         <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
                         @foreach($syllabuses as $syllabus)
                             <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
