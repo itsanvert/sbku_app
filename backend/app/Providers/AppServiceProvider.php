@@ -19,7 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\URL::forceScheme('https');
+        // Only force HTTPS in production when behind a trusted proxy
+        if (config('app.env') === 'production' && request()->server('HTTP_X_FORWARDED_PROTO') === 'https') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
 
         // Register custom Firestore User Provider for state management and auth
         \Illuminate\Support\Facades\Auth::provider('firestore', function ($app, array $config) {
