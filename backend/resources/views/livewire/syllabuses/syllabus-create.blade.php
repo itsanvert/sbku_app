@@ -84,8 +84,8 @@
                 </flux:field>
             </div>
 
-            {{-- Row 3: Year, Semester, Shift --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {{-- Row 3: Year, Semester, Shift, Room --}}
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <flux:field>
                     <flux:label>Year</flux:label>
                     <flux:select wire:model="year_id" placeholder="Select Year">
@@ -115,6 +115,17 @@
                         @endforeach
                     </flux:select>
                     <flux:error name="shift_id" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>Room</flux:label>
+                    <flux:select wire:model="room_id" placeholder="Select Room">
+                        <flux:select.option value="">Select Room</flux:select.option>
+                        @foreach($rooms as $r)
+                            <flux:select.option value="{{ $r->id }}">{{ $r->name }} ({{ $r->code }})</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="room_id" />
                 </flux:field>
             </div>
 

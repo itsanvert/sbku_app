@@ -23,6 +23,7 @@ class Syllabus extends Model
         'start_time',
         'end_time',
         'academic_class_id',
+        'room_id',
     ];
 
     /**
@@ -65,6 +66,11 @@ class Syllabus extends Model
     public function academicClass(): BelongsTo
     {
         return $this->belongsTo(AcademicClass::class);
+    }
+
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class);
     }
 
     /**
