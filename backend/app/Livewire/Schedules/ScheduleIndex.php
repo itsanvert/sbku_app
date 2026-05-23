@@ -58,6 +58,27 @@ class ScheduleIndex extends Component
 
     public function updatingSearch() { $this->resetPage(); }
 
+    public function onSyllabusChange()
+    {
+        if (!$this->syllabus_id) {
+            $this->subject_id = null;
+            $this->teacher_id = null;
+            return;
+        }
+
+        if (\App\Services\FirestoreService::isActive()) {
+            $syllabus = $this->firestore->getDocument('syllabuses', (string)$this->syllabus_id);
+            $this->subject_id = $syllabus['subject_id'] ?? null;
+            $this->teacher_id = $syllabus['teacher_id'] ?? null;
+        } else {
+            $syllabus = \App\Models\Syllabus::find($this->syllabus_id);
+            if ($syllabus) {
+                $this->subject_id = $syllabus->subject_id;
+                $this->teacher_id = $syllabus->teacher_id;
+            }
+        }
+    }
+
     public function openCreateModal()
     {
         $this->reset(['name', 'day_of_the_week', 'start_time', 'end_time', 'start_date', 'end_date', 'class_id', 'teacher_id', 'subject_id', 'room_id', 'syllabus_id']);
