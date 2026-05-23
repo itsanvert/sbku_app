@@ -177,6 +177,11 @@ class SyllabusEdit extends Component
         $this->dispatch('syllabusUpdated');
     }
 
+    public function updatedFacultyId()
+    {
+        $this->major_id = null;
+    }
+
     public function closeModal()
     {
         $this->dispatch('closeModal');
@@ -217,7 +222,9 @@ class SyllabusEdit extends Component
 
         return view('livewire.syllabuses.syllabus-edit', [
             'faculties' => Faculty::orderBy('name')->get(),
-            'majors'    => Major::orderBy('name')->get(),
+            'majors'    => $this->faculty_id
+                ? Major::where('faculty_id', $this->faculty_id)->orderBy('name')->get()
+                : Major::orderBy('name')->get(),
             'shifts'    => Shift::orderBy('name')->get(),
             'subjects'  => Subject::orderBy('name')->get(),
             'teachers'  => Teacher::with('user')->get(),

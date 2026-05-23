@@ -38,7 +38,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <flux:field>
                     <flux:label>Faculty</flux:label>
-                    <flux:select wire:model="faculty_id" placeholder="Select Faculty">
+                    <flux:select wire:model.live="faculty_id" placeholder="Select Faculty">
                         <flux:select.option value="">Select Faculty</flux:select.option>
                         @foreach($faculties as $f)
                             <flux:select.option value="{{ $f->id }}">{{ $f->name }}</flux:select.option>
