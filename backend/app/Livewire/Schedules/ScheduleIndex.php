@@ -67,6 +67,7 @@ class ScheduleIndex extends Component
             $this->start_time = null;
             $this->end_time = null;
             $this->class_id = null;
+            $this->room_id = null;
             return;
         }
 
@@ -78,6 +79,7 @@ class ScheduleIndex extends Component
             $this->start_time = $syllabus['start_time'] ?? null;
             $this->end_time = $syllabus['end_time'] ?? null;
             $this->class_id = $syllabus['academic_class_id'] ?? null;
+            $this->room_id = $syllabus['room_id'] ?? null;
         } else {
             $syllabus = \App\Models\Syllabus::find($this->syllabus_id);
             if ($syllabus) {
@@ -87,6 +89,7 @@ class ScheduleIndex extends Component
                 $this->start_time = $syllabus->start_time;
                 $this->end_time = $syllabus->end_time;
                 $this->class_id = $syllabus->academic_class_id;
+                $this->room_id = $syllabus->room_id;
             }
         }
     }
@@ -248,7 +251,7 @@ class ScheduleIndex extends Component
             'subjects' => Cache::remember('sch.subjects', 86400, fn() => \App\Models\Subject::select('id', 'name')->orderBy('name')->get()),
             'academicClasses' => Cache::remember('sch.classes', 86400, fn() => \App\Models\AcademicClass::select('id', 'name')->orderBy('name')->get()),
             'rooms' => Cache::remember('sch.rooms', 86400, fn() => \App\Models\Room::select('id', 'name', 'code')->orderBy('name')->get()),
-            'syllabuses' => Cache::remember('sch.syllabuses', 86400, fn() => \App\Models\Syllabus::with(['subject:id,name', 'teacher.user:id,name'])->select('id', 'subject_id', 'teacher_id')->get()),
+            'syllabuses' => Cache::remember('sch.syllabuses', 86400, fn() => \App\Models\Syllabus::with(['subject:id,name', 'teacher.user:id,name'])->select('id', 'subject_id', 'teacher_id', 'room_id', 'academic_class_id', 'day_of_week', 'start_time', 'end_time')->get()),
         ])->layout('layouts.app');
     }
 }
