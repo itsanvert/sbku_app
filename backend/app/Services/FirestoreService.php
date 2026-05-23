@@ -12,10 +12,16 @@ class FirestoreService
 
     public function __construct()
     {
+        if (!static::isActive()) {
+            $this->db = null;
+            return;
+        }
+
         try {
             $this->db = Firebase::firestore()->database();
         } catch (\Exception $e) {
             \Log::error("Failed to initialize Firestore: " . $e->getMessage());
+            $this->db = null;
         }
     }
 
