@@ -34,7 +34,8 @@ if [ -n "$NEON_DATABASE_URL" ]; then
     [ "$DB_HOST_VAL" = "$DB_PORT_VAL" ] && DB_PORT_VAL="5432"
 
     export DB_CONNECTION="pgsql"
-    export DATABASE_URL="$NEON_URL"
+    # NOTE: Do NOT set DATABASE_URL — it passes ?sslmode=require as a query
+    # string that conflicts with DB_SSLMODE=require in Laravel's connector.
     export DB_HOST="$DB_HOST_VAL"
     export DB_PORT="$DB_PORT_VAL"
     export DB_DATABASE="$DB_NAME"
