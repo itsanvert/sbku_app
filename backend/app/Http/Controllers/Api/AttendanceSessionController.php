@@ -188,7 +188,7 @@ class AttendanceSessionController extends Controller
                 return [
                     'id' => data_get($a, 'id'),
                     'student_id' => data_get($a, 'student_id'),
-                    'student_name' => data_get($a, 'student_name') ?? data_get($a, 'student.user.name') ?? 'Unknown',
+                    'student_name' => data_get($a, 'student_name') ?? data_get($a, 'student.user.name'),
                     'student_code' => data_get($a, 'student_code') ?? '',
                     'avatar_url' => data_get($a, 'avatar_url') ?? data_get($a, 'student.avatar_url'),
                     'faculty' => data_get($a, 'faculty_name') ?? data_get($a, 'student.faculty.name') ?? '—',

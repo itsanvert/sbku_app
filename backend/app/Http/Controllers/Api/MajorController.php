@@ -35,7 +35,7 @@ class MajorController extends Controller
                 'name' => $m->name,
                 'code' => $m->code,
                 'faculty_id' => (string)$m->faculty_id,
-                'faculty_name' => $m->faculty->name ?? 'Unknown',
+                'faculty_name' => $m->faculty?->name,
             ])
         ]);
     }

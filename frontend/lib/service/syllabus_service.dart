@@ -20,17 +20,17 @@ class SyllabusService {
     return list.map((item) {
       final json = Map<String, dynamic>.from(item as Map);
       return SyllabusModel(
-        id: json['id'].toString(),
-        facultyName: json['faculty_name']?.toString() ?? 'Unknown',
-        majorName: json['major_name']?.toString() ?? 'Unknown',
-        yearName: json['year_name']?.toString() ?? json['year_id']?.toString() ?? 'Unknown Year',
+        id: json['id']?.toString() ?? '',
+        facultyName: json['faculty_name']?.toString() ?? '—',
+        majorName: json['major_name']?.toString() ?? '—',
+        yearName: json['year_name']?.toString() ?? json['year_id']?.toString() ?? '—',
         semesterName: json['semester_name']?.toString() ??
-            (json['semester_id'] != null ? 'Semester ${json['semester_id']}' : 'Unknown Semester'),
-        subjectName: json['subject_name']?.toString() ?? 'Unknown Subject',
-        teacherName: json['teacher_name']?.toString() ?? 'Unknown Teacher',
-        shiftName: json['shift_name']?.toString() ?? 'Unknown Shift',
+            (json['semester_id'] != null ? 'Semester ${json['semester_id']}' : '—'),
+        subjectName: json['subject_name']?.toString() ?? '—',
+        teacherName: json['teacher_name']?.toString() ?? '—',
+        shiftName: json['shift_name']?.toString() ?? '—',
         creditHours: json['credit_hours']?.toString() ?? '3',
-        scheduleInfo: json['schedule_description']?.toString() ?? 'TBD',
+        scheduleInfo: json['schedule_description']?.toString() ?? '—',
       );
     }).toList();
   }
