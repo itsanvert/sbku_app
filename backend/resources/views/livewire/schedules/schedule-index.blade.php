@@ -117,7 +117,7 @@
                             @endforeach
                         </flux:select>
 
-                        <flux:select label="Room" wire:model="room_id" @if($this->syllabusRoom) disabled @endif>
+                        <flux:select label="Room" wire:model="room_id" :disabled="$this->syllabusRoom ? true : false">
                             <flux:select.option value="">Select Room</flux:select.option>
                             @foreach($rooms as $room)
                                 <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
@@ -201,7 +201,7 @@
                             @endforeach
                         </flux:select>
 
-                        <flux:select label="Room" wire:model="room_id" @if($this->syllabusRoom) disabled @endif>
+                        <flux:select label="Room" wire:model="room_id" :disabled="$this->syllabusRoom ? true : false">
                             <flux:select.option value="">Select Room</flux:select.option>
                             @foreach($rooms as $room)
                                 <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
