@@ -649,7 +649,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final primary = theme.primaryColor;
 
-    final name = a['student_name'] ?? 'Unknown';
+    final name = a['student_name'] ?? '—';
     final code = a['student_code'] ?? '';
     final checkIn = a['check_in_time'] ?? '--:--';
     final isPermission = a['status'] == 'P';
@@ -914,7 +914,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     final isDark = theme.brightness == Brightness.dark;
     final isApproved = status == 'approved';
     final color = isApproved ? Colors.green : Colors.red;
-    final name = a['student_name'] ?? 'Unknown';
+    final name = a['student_name'] ?? '—';
     final code = a['student_code'] ?? '';
     final reason = a['reject_reason'];
 
@@ -989,7 +989,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
 
   // ── Student Profile Bottom Sheet ────────────────────────────
   void _showStudentProfile(Map<String, dynamic> a) {
-    final name = a['student_name'] ?? 'Unknown';
+    final name = a['student_name'] ?? '—';
     final code = a['student_code'] ?? '';
     final faculty = a['faculty'] ?? '—';
     final major = a['major'] ?? '—';

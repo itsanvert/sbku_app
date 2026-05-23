@@ -143,7 +143,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           final isPresent = record['status'] == 'Y';
           final date = record['attendance_date'] ?? '';
           final studentName =
-              record['student_name'] ?? record['student']?['name'] ?? 'Unknown';
+              record['student_name'] ?? record['student']?['name'] ?? '—';
           final checkIn = record['check_in_time'];
           final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -627,7 +627,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         final name = r['student_name'] ??
             r['student']?['name'] ??
             r['student']?['user']?['name'] ??
-            'Unknown';
+            '—';
 
         final avatarUrl = r['student']?['avatar_url'] ??
             'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=6366f1&color=ffffff';
@@ -679,7 +679,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       padding: const EdgeInsets.all(16),
       itemBuilder: (context, index) {
         final s = students[index];
-        final name = s['student_name']?.toString() ?? 'Unknown';
+        final name = s['student_name']?.toString() ?? '—';
         final present = s['present_days'] ?? 0;
         final absent = s['absent_days'] ?? 0;
         final total = s['total_days'] ?? 0;
