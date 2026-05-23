@@ -125,7 +125,7 @@
                         </flux:select>
                     </div>
 
-                    <flux:select label="Link to Syllabus" wire:model="syllabus_id">
+                    <flux:select label="Link to Syllabus" wire:model="syllabus_id" wire:change="onSyllabusChange">
                         <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
                         @foreach($syllabuses as $syllabus)
                             <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
@@ -206,7 +206,7 @@
                         </flux:select>
                     </div>
 
-                    <flux:select label="Link to Syllabus" wire:model="syllabus_id">
+                    <flux:select label="Link to Syllabus" wire:model="syllabus_id" wire:change="onSyllabusChange">
                         <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
                         @foreach($syllabuses as $syllabus)
                             <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
