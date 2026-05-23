@@ -136,5 +136,5 @@ ENV APP_ENV=production \
     GOOGLE_CLOUD_USE_REST=true \
     PORT=80
 
-EXPOSE 8080
+EXPOSE 80
 CMD ["/var/www/html/start.sh"]
