@@ -118,6 +118,8 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
 fi
 
 # Run migrations (skip only when using SQLite with Firestore)
+# NOTE: If migration fails, log a warning but DO NOT block Apache startup.
+# A 502 from a crashed container is worse than a running app with stale schema.
 if [ "$USE_FIRESTORE" = "true" ] && [ "$DB_CONNECTION" = "sqlite" ]; then
     echo "USE_FIRESTORE is true with SQLite - skipping database migrations"
     DB_PATH="${DB_DATABASE:-/var/data/database.sqlite}"
@@ -126,9 +128,9 @@ if [ "$USE_FIRESTORE" = "true" ] && [ "$DB_CONNECTION" = "sqlite" ]; then
     touch "$DB_PATH"
     echo "Created empty SQLite database at $DB_PATH"
 elif [ "$DB_CONNECTION" = "sqlite" ]; then
-    php artisan migrate --force --database=sqlite
+    php artisan migrate --force --database=sqlite 2>/dev/null || echo "Warning: SQLite migration failed"
 else
-    php artisan migrate --force
+    php artisan migrate --force 2>/dev/null || echo "Warning: database migration failed (tables may be stale)"
 fi
 
 # Public storage symlink for profile images (idempotent)
@@ -163,7 +165,7 @@ php artisan optimize 2>/dev/null || echo "Warning: optimize failed (config/route
 # Compile Blade templates only if not already cached (saves ~7s on restarts when
 # the view cache was pre-built at Docker build time or persisted across restarts).
 if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null | head -1)" ]; then
-    php artisan view:cache
+    php artisan view:cache 2>/dev/null || echo "Warning: view cache failed (templates compile on demand)"
 fi
 
 # Re-apply storage ownership because php artisan optimize may create new files as root
