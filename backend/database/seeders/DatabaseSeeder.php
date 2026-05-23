@@ -52,12 +52,32 @@ class DatabaseSeeder extends Seeder
             Subject::firstOrCreate(['code' => $s['code']], $s);
         }
 
-        // 5. Create Teacher User
+        // 5. Create Admin Users
+        User::firstOrCreate(
+            ['email' => 'superadmin@gmail.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('12345678'),
+                'role' => 'super_admin',
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('12345678'),
+                'role' => 'admin',
+            ]
+        );
+
+        // 6. Create Teacher User
         $teacherUser = User::firstOrCreate(
             ['email' => 'teacher@sbku.edu.kh'],
             [
                 'name' => 'Mr. Sophal Dara',
                 'password' => Hash::make('password'),
+                'role' => 'teacher',
             ]
         );
 
