@@ -8,7 +8,6 @@ import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:sbku_app/service/api_service.dart';
 import 'package:sbku_app/core/constants/app_config.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -642,7 +641,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             title:
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: r['check_in_time'] != null
-                ? Text('ចូល: ${_formatTime(r['check_in_time'])}',
+                ? Text('ចូល: ${_formatTime(r['check_in_time']?.toString())}',
                     style: TextStyle(
                       fontSize: 12, 
                       color: Colors.blue.shade600,
@@ -1016,16 +1015,6 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       return dateTimeStr ?? '--:--';
     }
   }
-
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '--';
-    try {
-      final dt = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return dateStr;
-    }
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1049,6 +1038,31 @@ class _StudentAttendanceHistoryScreenState
   bool _hasMore = true;
 
   String? _studentId;
+
+  String _formatTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
+    try {
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      final dt = DateTime.parse(dateTimeStr);
+      return DateFormat('h:mm a').format(dt);
+    } catch (_) {
+      return dateTimeStr ?? '--:--';
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
+    }
+  }
 
   @override
   void initState() {
@@ -1239,30 +1253,5 @@ class _StudentAttendanceHistoryScreenState
             style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
       ],
     );
-  }
-
-  String _formatTime(String? dateTimeStr) {
-    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
-    try {
-      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
-        final now = DateTime.now();
-        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
-        dateTimeStr = '$datePrefix $dateTimeStr';
-      }
-      final dt = DateTime.parse(dateTimeStr);
-      return DateFormat('h:mm a').format(dt);
-    } catch (_) {
-      return dateTimeStr ?? '--:--';
-    }
-  }
-
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '--';
-    try {
-      final dt = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return dateStr;
-    }
   }
 }

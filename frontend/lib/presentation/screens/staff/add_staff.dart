@@ -113,36 +113,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
     );
   }
 
-  Future<void> _handleImageUpload() async {
-    await _formController.showImageSourceDialog(context);
-    if (mounted) setState(() {});
-  }
-
   // Build profile image widget - supports both mobile & web
-  Widget _buildProfileImage() {
-    ImageProvider? imageProvider;
-
-    if (_formController.hasImage) {
-      if (kIsWeb) {
-        imageProvider = MemoryImage(_formController.profileImageBytes!);
-      } else {
-        imageProvider = FileImage(_formController.profileImage!);
-      }
-    }
-
-    return CircleAvatar(
-      radius: 60,
-      backgroundColor: Colors.orange.shade100,
-      backgroundImage: imageProvider,
-      child: imageProvider == null
-          ? Icon(
-              Icons.person,
-              size: 60,
-              color: Colors.orange.shade300,
-            )
-          : null,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,3 +252,4 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
     );
   }
 }
+
