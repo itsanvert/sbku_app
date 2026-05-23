@@ -21,10 +21,10 @@ class AppServiceProvider extends ServiceProvider
     {
         if ($appUrl = config('app.url')) {
             \Illuminate\Support\Facades\URL::forceRootUrl($appUrl);
-        }
 
-        if (config('app.env') === 'production' && ($_SERVER['HTTPS'] ?? $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? null) === 'on') {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            if (str_starts_with($appUrl, 'https')) {
+                \Illuminate\Support\Facades\URL::forceScheme('https');
+            }
         }
 
         // Register custom Firestore User Provider for state management and auth
