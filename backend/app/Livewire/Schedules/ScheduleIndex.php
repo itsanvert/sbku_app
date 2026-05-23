@@ -215,7 +215,7 @@ class ScheduleIndex extends Component
             'subjects' => Cache::remember('sch.subjects', 86400, fn() => \App\Models\Subject::select('id', 'name')->orderBy('name')->get()),
             'academicClasses' => Cache::remember('sch.classes', 86400, fn() => \App\Models\AcademicClass::select('id', 'name')->orderBy('name')->get()),
             'rooms' => Cache::remember('sch.rooms', 86400, fn() => \App\Models\Room::select('id', 'name', 'code')->orderBy('name')->get()),
-            'syllabuses' => Cache::remember('sch.syllabuses', 86400, fn() => \App\Models\Syllabus::with(['subject:id,name', 'teacher.user:id,name'])->select('id', 'name', 'subject_id', 'teacher_id')->get()),
+            'syllabuses' => Cache::remember('sch.syllabuses', 86400, fn() => \App\Models\Syllabus::with(['subject:id,name', 'teacher.user:id,name'])->select('id', 'subject_id', 'teacher_id')->get()),
         ])->layout('layouts.app');
     }
 }
