@@ -165,6 +165,10 @@ if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null |
     php artisan view:cache
 fi
 
+# Re-apply storage ownership because php artisan optimize may create new files as root
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+
 # Configure Apache to listen on the runtime port ($PORT env var or default 80)
 LISTEN_PORT="${PORT:-80}"
 sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
