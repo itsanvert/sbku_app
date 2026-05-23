@@ -18,7 +18,6 @@ class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
 
   final storage = const FlutterSecureStorage();
-  // Single shared HTTP client for the entire app to maintain Keep-Alive, DNS, and SSL session caching.
   static final http.Client _sharedClient = http.Client();
   final http.Client _client;
 
@@ -86,6 +85,16 @@ class ApiService {
     return headers;
   }
 
+  /// Build a full URL without producing double-slashes.
+  /// `endpoint` must NOT start with a slash.
+  Uri _buildUri(String endpoint) {
+    final base = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    final path = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    return Uri.parse('$base/$path');
+  }
+
   /// Retry wrapper with exponential backoff
   Future<http.Response> _retryableRequest<T>(
     Future<http.Response> Function() request,
@@ -132,13 +141,17 @@ class ApiService {
     }
 
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.get(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
         ));
 
     if (response.statusCode == 200) {
       _setCache(cacheKey, response);
+    } else {
+      print('[ApiService GET ${response.statusCode}] $uri');
+      print('  Body: ${response.body}');
     }
 
     return response;
@@ -151,12 +164,18 @@ class ApiService {
     bool requiresAuth = false,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.post(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         ));
     if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    if (response.statusCode >= 400) {
+      print('[ApiService POST ${response.statusCode}] $uri');
+      print('  Request body: $body');
+      print('  Response body: ${response.body}');
+    }
     return response;
   }
 
@@ -167,12 +186,18 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.put(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         ));
     if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    if (response.statusCode >= 400) {
+      print('[ApiService PUT ${response.statusCode}] $uri');
+      print('  Request body: $body');
+      print('  Response body: ${response.body}');
+    }
     return response;
   }
 
@@ -182,11 +207,16 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.delete(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
         ));
     if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    if (response.statusCode >= 400) {
+      print('[ApiService DELETE ${response.statusCode}] $uri');
+      print('  Response body: ${response.body}');
+    }
     return response;
   }
 
@@ -203,7 +233,7 @@ class ApiService {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/$endpoint'),
+        _buildUri(endpoint),
       );
 
       // Add headers
@@ -232,8 +262,9 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     return await _retryableRequest(() => _client.patch(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         ));

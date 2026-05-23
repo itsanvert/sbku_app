@@ -50,7 +50,6 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
   late Animation<double> _pulseAnim;
   late Animation<double> _resultScaleAnim;
   late Animation<double> _resultFadeAnim;
-  late Animation<double> _modeSlideAnim;
 
   @override
   void initState() {
@@ -92,9 +91,6 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
       duration: const Duration(milliseconds: 300),
     );
 
-    _modeSlideAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _modeTabController, curve: Curves.easeInOut),
-    );
   }
 
   @override
@@ -1248,3 +1244,5 @@ class _CornerPainter extends CustomPainter {
   bool shouldRepaint(covariant _CornerPainter old) =>
       old.color != color || old.strokeWidth != strokeWidth;
 }
+
+

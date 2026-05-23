@@ -19,12 +19,9 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
   late Stream<List<Student>> _studentStream;
 
   List<Student> _students = [];
-  bool _loading = false;
-  String? _error;
 
   // Pagination
   int _page = 1;
-  int _lastPage = 1;
 
   // Filters
   String? _selectedFaculty;
@@ -41,22 +38,15 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
   Future<void> _loadStudents({bool reset = false}) async {
     if (reset) _page = 1;
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
 
     try {
-      final result = await _service.getStudents(page: _page);
+      final paginated = await _service.getStudents(page: _page);
       setState(() {
-        _students = result.data;
-        _lastPage = result.lastPage;
+        _students = paginated.data;
       });
     } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _loading = false);
-    }
+          } finally {
+          }
   }
 
   List<Student> get filteredStudents {
@@ -74,47 +64,6 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
     }
 
     return result;
-  }
-
-  void _showDeleteDialog(Student student) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('លុបសិស្ស'),
-        content: Text('តើអ្នកប្រាកដថាចង់លុប ${student.name} ឬទេ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('បោះបង់'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await _service.deleteStudent(student.id);
-                Navigator.pop(ctx);
-                _loadStudents(); // Reload list
-                setState(() {
-                  _studentStream = _service.streamStudents(); // Recreate stream to trigger instant refresh
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${student.name} ត្រូវបានលុបដោយជោគជ័យ'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } catch (e) {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('លុប'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -164,7 +113,8 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
             child: StreamBuilder<List<Student>>(
               stream: _studentStream,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
@@ -186,7 +136,7 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
                 }
 
                 final students = snapshot.data ?? [];
-                
+
                 // Apply client-side filters
                 var filtered = students;
                 if (_selectedFaculty != null) {

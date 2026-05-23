@@ -651,7 +651,6 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
 
     final name = a['student_name'] ?? '—';
     final code = a['student_code'] ?? '';
-    final checkIn = a['check_in_time'] ?? '--:--';
     final isPermission = a['status'] == 'P';
 
     final borderColor =
@@ -996,7 +995,6 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     final year = a['year']?.toString() ?? '—';
     final shift = a['shift'] ?? '—';
     final generation = a['generation']?.toString() ?? '—';
-    final checkIn = a['check_in_time'] ?? '--:--';
     final status = a['verify_status'] ?? 'pending';
 
     showModalBottomSheet(
@@ -1141,7 +1139,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
               _profileRow(Icons.calendar_today_outlined, 'Year', year),
               _profileRow(Icons.schedule_outlined, 'Shift', shift),
               _profileRow(Icons.groups_outlined, 'Generation', generation),
-              _profileRow(Icons.login_outlined, 'Check-in', checkIn),
+              _profileRow(Icons.login_outlined, 'Check-in', a['check_in_time'] ?? '--:--'),
 
               const SizedBox(height: 16),
             ],
@@ -1371,15 +1369,6 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     }
   }
 
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '--';
-    try {
-      final dt = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return dateStr;
-    }
-  }
 
   String _fixUrl(String? url) {
     if (url == null || url.isEmpty) return '';
@@ -1398,3 +1387,5 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     return url;
   }
 }
+
+

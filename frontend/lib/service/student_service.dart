@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:sbku_app/core/constants/api_endpoints.dart';
 import 'package:sbku_app/core/network/api_response_parser.dart';
+import 'package:sbku_app/core/result.dart';
 import 'package:sbku_app/model/student_model.dart';
 import 'package:sbku_app/service/api_service.dart';
 
@@ -54,7 +57,7 @@ class StudentService {
       'sort_dir=$sortDir',
     ].join('&');
 
-    final response = await _api.get('students?$query');
+    final response = await _api.get('${ApiEndpoints.students}?$query');
 
     if (response.statusCode == 200) {
       final body = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
@@ -65,7 +68,7 @@ class StudentService {
   }
 
   Future<Student> getStudent(String id) async {
-    final response = await _api.get('students/$id');
+    final response = await _api.get(ApiEndpoints.student(int.parse(id)));
 
     if (response.statusCode == 200) {
       final body = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
@@ -79,7 +82,7 @@ class StudentService {
   }
 
   Future<void> deleteStudent(String id) async {
-    final response = await _api.delete('students/$id');
+    final response = await _api.delete(ApiEndpoints.student(int.parse(id)));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete student');
@@ -89,13 +92,13 @@ class StudentService {
   Future<void> createStudent(Map<String, dynamic> data, {String? filePath}) async {
     if (filePath != null) {
       final fields = data.map((key, value) => MapEntry(key, value.toString()));
-      final response = await _api.postMultipart('students', fields, 'photo', filePath);
-      
+      final response = await _api.postMultipart(ApiEndpoints.students, fields, 'photo', filePath);
+
       if (response.statusCode != 201) {
         throw Exception('Failed to create student with photo');
       }
     } else {
-      final response = await _api.post('students', data, requiresAuth: true);
+      final response = await _api.post(ApiEndpoints.students, data, requiresAuth: true);
       if (response.statusCode != 201) {
         final body = jsonDecode(response.body);
         throw Exception(body['message'] ?? 'Failed to create student');
@@ -105,17 +108,16 @@ class StudentService {
 
   Future<void> updateStudent(int id, Map<String, dynamic> data, {String? filePath}) async {
     if (filePath != null) {
-      // Laravel handles PUT with multipart a bit differently (often requires _method: PUT)
       final fields = data.map((key, value) => MapEntry(key, value.toString()));
       fields['_method'] = 'PUT';
-      
-      final response = await _api.postMultipart('students/$id', fields, 'photo', filePath);
-      
+
+      final response = await _api.postMultipart(ApiEndpoints.student(id), fields, 'photo', filePath);
+
       if (response.statusCode != 200) {
         throw Exception('Failed to update student with photo');
       }
     } else {
-      final response = await _api.put('students/$id', data);
+      final response = await _api.put(ApiEndpoints.student(id), data);
       if (response.statusCode != 200) {
         throw Exception('Failed to update student');
       }

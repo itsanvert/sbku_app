@@ -5,7 +5,6 @@ import 'package:sbku_app/presentation/screens/student/student_list_view_screen.d
 import 'package:sbku_app/presentation/screens/syllabus/syllabus_list_view_screen.dart';
 import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
 import 'package:sbku_app/presentation/screens/teacher/teacher_list_screen.dart';
-import 'package:sbku_app/presentation/screens/messages/message_list_screen.dart';
 
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/campus_slider_widget.dart';

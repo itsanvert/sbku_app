@@ -157,7 +157,8 @@ fi
 php artisan package:discover --ansi 2>/dev/null || true
 
 # Cache Laravel configurations, routes, and events for maximum production speed
-php artisan optimize
+# NOTE: Do NOT block startup if this fails — Apache must always start
+php artisan optimize 2>/dev/null || echo "Warning: optimize failed (config/route/event cache skipped)"
 
 # Compile Blade templates only if not already cached (saves ~7s on restarts when
 # the view cache was pre-built at Docker build time or persisted across restarts).
@@ -170,9 +171,10 @@ chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
 # Configure Apache to listen on the runtime port ($PORT env var or default 80)
-LISTEN_PORT="${PORT:-80}"
+LISTEN_PORT="${PORT:-8080}"
 sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
-sed -i "s/80/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
+# NOTE: Do NOT add a sed replacing bare "80" here — it corrupts port numbers
+# (e.g., "8080" contains two non-overlapping "80" substrings, causing doubling).
 
 # Set ServerName globally to suppress Apache qualified domain name warning
 # UseCanonicalName Off ensures PHP uses the real Host header, not ServerName
