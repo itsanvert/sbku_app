@@ -134,7 +134,7 @@ RUN chmod +x /var/www/html/start.sh
 ENV APP_ENV=production \
     APP_DEBUG=false \
     GOOGLE_CLOUD_USE_REST=true \
-    PORT=8080
+    PORT=80
 
 EXPOSE 8080
 CMD ["/var/www/html/start.sh"]

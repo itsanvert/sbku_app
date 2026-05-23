@@ -173,7 +173,7 @@ chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
 # Configure Apache to listen on the runtime port ($PORT env var or default 80)
-LISTEN_PORT="${PORT:-8080}"
+LISTEN_PORT="${PORT:-80}"
 sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf || true
 # NOTE: Do NOT add a sed replacing bare "80" here — it corrupts port numbers
 # (e.g., "8080" contains two non-overlapping "80" substrings, causing doubling).
