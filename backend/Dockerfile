@@ -105,8 +105,13 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
         /etc/apache2/apache2.conf \
         /etc/apache2/conf-available/*.conf
 
-# Runtime port (default 8080, configurable via $PORT env var)
-RUN sed -i 's/80/${PORT}/g' \
+# Runtime port (default 80, configurable via $PORT env var at container runtime)
+# IMPORTANT: Only replace the standalone bare port token; using a raw "80" global
+# replacement would also corrupt any other port that contains "80" (e.g. 8080).
+# start.sh re-runs this at runtime with the actual PORT value.
+RUN sed -ri \
+    -e 's/^Listen 80$/Listen ${PORT}/' \
+    -e 's/:80>/:${PORT}>/' \
         /etc/apache2/sites-available/000-default.conf \
         /etc/apache2/ports.conf
 
@@ -136,5 +141,11 @@ ENV APP_ENV=production \
     GOOGLE_CLOUD_USE_REST=true \
     PORT=80
 
+# Use an ENTRYPOINT so the shell/sh form works reliably, and CMD keeps the default.
+# CMD here supplies the default args to ENTRYPOINT; overriding CMD at docker run -e PORT=XYZ is easy.
+ENTRYPOINT ["sh", "/var/www/html/start.sh"]
 EXPOSE 80
-CMD ["/var/www/html/start.sh"]
+
+# HEALTHCHECK: fail fast if Apache isn't responding
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=45s \
+  CMD curl -fsS "http://localhost:${PORT:-80}/" > /dev/null || exit 1
