@@ -8,7 +8,7 @@
   "containerDefinitions": [
     {
       "name": "Main",
-      "image": "617207029940.dkr.ecr.ap-southeast-2.amazonaws.com/sbku-backend:latest",
+      "image": "617207029940.dkr.ecr.ap-southeast-2.amazonaws.com/sbku_app:uat",
       "essential": true,
       "portMappings": [
         {
