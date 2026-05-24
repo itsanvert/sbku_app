@@ -112,6 +112,8 @@ RUN a2enconf apache-compress apache-performance
 # The frontend requires: cd frontend && flutter build web --release
 # Content appears at build/web/ and gets COPY'd here.
 # If this is empty, the Flutter layer is skipped and the nginx start.sh warns.
+# Ensure the build context always contains this path so COPY never fails.
+RUN mkdir -p frontend/build/web
 COPY frontend/build/web/ /var/www/html/build/web/
 
 # ── 2. Application source (changes every push — intentionally last) ──────────
