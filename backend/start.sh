@@ -3,6 +3,35 @@
 # Exit on error
 set -e
 
+# ── Ensure .env exists ──────────────────────────────────────────────────────
+# .env is excluded from Docker build context (in .dockerignore) for security.
+# Copy from .env.production if available, otherwise create a minimal one.
+if [ ! -f /var/www/html/.env ]; then
+    echo "No .env file found — creating from .env.production..."
+    if [ -f /var/www/html/.env.production ]; then
+        cp /var/www/html/.env.production /var/www/html/.env
+    else
+        echo "No .env.production either — creating minimal .env..."
+        cat > /var/www/html/.env << 'ENVEOF'
+APP_NAME=SBKU
+APP_ENV=production
+APP_KEY=
+APP_DEBUG=false
+APP_URL=http://localhost
+ENVEOF
+    fi
+fi
+
+# Generate APP_KEY if missing
+if ! grep -q '^APP_KEY=base64:' /var/www/html/.env 2>/dev/null; then
+    echo "APP_KEY is missing — generating..."
+    NEW_KEY=$(php artisan key:generate --show 2>/dev/null || echo "")
+    if [ -n "$NEW_KEY" ]; then
+        sed -i "s|^APP_KEY=.*|APP_KEY=$NEW_KEY|" /var/www/html/.env
+        echo "APP_KEY generated successfully."
+    fi
+fi
+
 # Normalize DB_CONNECTION: strip CR/LF and quotes, make lowercase so comparisons work
 if [ -n "$DB_CONNECTION" ]; then
     DB_CONNECTION="$(printf '%s' "$DB_CONNECTION" | tr -d '\r' | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')"
