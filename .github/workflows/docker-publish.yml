@@ -97,6 +97,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
-          service: sbku-backend
-          cluster: sbku-backend
+          service: sbku_app-4b02
+          cluster: default
           wait-for-service-stability: true
