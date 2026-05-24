@@ -167,7 +167,8 @@ RUN sed -ri \
 # Discover package service providers (Firebase, Livewire, Flux, etc.)
 # so they are cached even if --no-scripts skipped post-autoload-dump.
 # This is best-effort at build time; start.sh re-runs it at runtime.
-RUN php artisan package:discover --ansi 2>/dev/null || true
+RUN rm -f bootstrap/cache/packages.php && \
+    php artisan package:discover --ansi 2>/dev/null || true
 
 # Pre-compile Blade templates at build time so runtime startup is faster
 # (start.sh skips view:cache when the compiled files already exist).

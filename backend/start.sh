@@ -230,6 +230,7 @@ EOF
     log "OPcache configured with JIT enabled."
 fi
 
+rm -f bootstrap/cache/packages.php
 php artisan package:discover --ansi 2>/dev/null || true
 php artisan optimize 2>/dev/null || warn "Optimize failed (config/route/event cache skipped)"
 
