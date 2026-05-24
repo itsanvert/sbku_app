@@ -30,6 +30,20 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # Enable Apache mod_rewrite, mod_deflate (gzip), mod_expires (cache headers)
 RUN a2enmod rewrite deflate expires headers
 
+# Install nginx (used as the production front-end proxy / static-file server)
+# Nginx will listen on port 80 and serve:
+#   /  → Flutter web build  (/var/www/html/build/web/)
+#   /api/*, /dashboard, /login  → Apache/PHP on 127.0.0.1:8080
+RUN apt-get update && apt-get install -y --no-install-recommends nginx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy nginx config before the build is finalised so the image has it baked in
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+
+# Install PHP-FPM (provides a fastcgi backend if nginx is configured for it)
+RUN docker-php-ext-install opcache 2>/dev/null || true \
+    && mkdir -p /run/php
+
 # ==============================================================================
 # Stage 2: Composer (PHP dependencies)
 # Runs in parallel with Stage 3 — only re-runs when composer.* changes
@@ -94,6 +108,12 @@ COPY docker/apache-compress.conf     /etc/apache2/conf-available/apache-compress
 COPY docker/apache-performance.conf  /etc/apache2/conf-available/apache-performance.conf
 RUN a2enconf apache-compress apache-performance
 
+# ── 1c. Flutter web build ─────────────────────────────────────────────────────
+# The frontend requires: cd frontend && flutter build web --release
+# Content appears at build/web/ and gets COPY'd here.
+# If this is empty, the Flutter layer is skipped and the nginx start.sh warns.
+COPY frontend/build/web/ /var/www/html/build/web/
+
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
 
@@ -105,15 +125,10 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
         /etc/apache2/apache2.conf \
         /etc/apache2/conf-available/*.conf
 
-# Runtime port (default 80, configurable via $PORT env var at container runtime)
-# IMPORTANT: Only replace the standalone bare port token; using a raw "80" global
-# replacement would also corrupt any other port that contains "80" (e.g. 8080).
-# start.sh re-runs this at runtime with the actual PORT value.
-RUN sed -ri \
-    -e 's/^Listen 80$/Listen ${PORT}/' \
-    -e 's/:80>/:${PORT}>/' \
-        /etc/apache2/sites-available/000-default.conf \
-        /etc/apache2/ports.conf
+# ── Apache listen port ────────────────────────────────────────────────────────
+# Apache is a backend service (behind nginx), so it always listens on 8080.
+# Nginx (on port 80) proxies /api/*, /dashboard, /login → Apache 8080.
+RUN sed -ri 's/:80>/:8080>/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
 
 # Discover package service providers (Firebase, Livewire, Flux, etc.)
 # so they are cached even if --no-scripts skipped post-autoload-dump.
@@ -141,11 +156,12 @@ ENV APP_ENV=production \
     GOOGLE_CLOUD_USE_REST=true \
     PORT=80
 
-# Use an ENTRYPOINT so the shell/sh form works reliably, and CMD keeps the default.
-# CMD here supplies the default args to ENTRYPOINT; overriding CMD at docker run -e PORT=XYZ is easy.
+# ENTRYPOINT: run the runtime startup script (navigates nginx + Apache startup, flushes caches)
+# start.sh is the only entrypoint; it manages Apache (8080) + nginx (80) internally.
 ENTRYPOINT ["sh", "/var/www/html/start.sh"]
-EXPOSE 80
+EXPOSE 8080
+# EXPOSE 80 is implicit (nginx); EXPOSE 8080 (Apache backend) is exposed for diagnostics.
 
-# HEALTHCHECK: fail fast if Apache isn't responding
+# HEALTHCHECK: fail fast if nginx isn't responding
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=45s \
-  CMD curl -fsS "http://localhost:${PORT:-80}/" > /dev/null || exit 1
+  CMD curl -fsS "http://localhost/index.html" > /dev/null || exit 1
