@@ -4,12 +4,11 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "executionRoleArn": "arn:aws:iam::617207029940:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "name": "sbku-backend",
-      "image": "ACCOUNT_ID.dkr.ecr.ap-southeast-2.amazonaws.com/sbku-backend:latest",
+      "image": "617207029940.dkr.ecr.ap-southeast-2.amazonaws.com/sbku-backend:latest",
       "essential": true,
       "portMappings": [
         {
@@ -32,13 +31,13 @@
         { "name": "USE_FIRESTORE", "value": "false" }
       ],
       "secrets": [
-        { "name": "APP_KEY", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/APP_KEY" },
-        { "name": "DB_HOST", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_HOST" },
-        { "name": "DB_PORT", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_PORT" },
-        { "name": "DB_DATABASE", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_DATABASE" },
-        { "name": "DB_USERNAME", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_USERNAME" },
-        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_PASSWORD" },
-        { "name": "NEON_DATABASE_URL", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/NEON_DATABASE_URL" }
+        { "name": "APP_KEY", "valueFrom": "arn:aws:ssm:ap-southeast-2:617207029940:parameter/sbku/APP_KEY" },
+        { "name": "DB_HOST", "valueFrom": "arn:aws:ssm:ap-southeast-2:617207029940:parameter/sbku/DB_HOST" },
+        { "name": "DB_PORT", "valueFrom": "arn:aws:ssm:ap-southeast-2:617207029940:parameter/sbku/DB_PORT" },
+        { "name": "DB_DATABASE", "valueFrom": "arn:aws:ssm:ap-southeast-2:617207029940:parameter/sbku/DB_DATABASE" },
+        { "name": "DB_USERNAME", "valueFrom": "arn:aws:ssm:ap-southeast-2:617207029940:parameter/sbku/DB_USERNAME" },
+        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:ssm:ap-southeast-2:617207029940:parameter/sbku/DB_PASSWORD" },
+        { "name": "NEON_DATABASE_URL", "valueFrom": "arn:aws:ssm:ap-southeast-2:617207029940:parameter/sbku/NEON_DATABASE_URL" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
