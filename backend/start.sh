@@ -210,14 +210,13 @@ if [ -f "$PHPFPM_POOL" ]; then
     sed -i 's/^pm.max_spare_servers = .*/pm.max_spare_servers = 5/' "$PHPFPM_POOL" 2>/dev/null || true
 fi
 
-# ── PHP-FPM (optional — if php-fpm binary is available) ───────────────────
-if command -v php-fpm &> /dev/null; then
+# ── PHP-FPM (optional — only starts if binary exists) ─────────────────────
+if [ -x "$(command -v php-fpm 2>/dev/null)" ]; then
     echo "Starting PHP-FPM..."
     php-fpm -y /usr/local/etc/php-fpm.conf &
-    PHPFPM_PID=$!
     sleep 1
 else
-    echo "PHP-FPM not installed — Apache will use mod_php instead."
+    echo "PHP-FPM not available — Apache uses mod_php (no php-fpm needed)."
 fi
 
 # ── Flutter web build check ───────────────────────────────────────────────
@@ -268,16 +267,28 @@ apache2-foreground &
 APACHE_PID=$!
 sleep 3
 
-# Verify Apache is listening on 8080
-if command -v ss &> /dev/null; then
-    ss -tlnp | grep -q ':8080' && echo "✓ Apache confirmed listening on port 8080" || echo "✗ Apache NOT listening on port 8080"
-elif command -v netstat &> /dev/null; then
-    netstat -tlnp 2>/dev/null | grep -q ':8080' && echo "✓ Apache confirmed listening on port 8080" || echo "✗ Apache NOT listening on port 8080"
-fi
+# Wait for Apache to start listening (up to 15s)
+for i in 1 2 3 4 5; do
+    if command -v ss &> /dev/null; then
+        ss -tlnp 2>/dev/null | grep -q ':8080' && echo "✓ Apache listening on port 8080" && break
+    elif command -v netstat &> /dev/null; then
+        netstat -tlnp 2>/dev/null | grep -q ':8080' && echo "✓ Apache listening on port 8080" && break
+    fi
+    [ "$i" -eq 5 ] && echo "✗ Apache NOT listening on port 8080 after 15s"
+    sleep 3
+done
 
-# Quick Apache connectivity test
+# Quick Apache connectivity test (retry a few times)
 if command -v curl &> /dev/null; then
-    curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null && echo " — Apache reachable on 8080" || echo " — Apache unreachable on 8080"
+    for i in 1 2 3; do
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null || echo "000")
+        if [ "$HTTP_CODE" != "000" ]; then
+            echo "Apache reachable on 8080 (HTTP $HTTP_CODE)"
+            break
+        fi
+        [ "$i" -eq 3 ] && echo "Apache unreachable on 8080 after 3 attempts"
+        sleep 2
+    done
 fi
 
 # ── Start nginx as the foreground entrypoint ──────────────────────────────
