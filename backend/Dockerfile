@@ -119,9 +119,22 @@ COPY frontend/build/web/ /var/www/html/build/web/
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
 
-# ── 2b. Ensure .env exists (runtime fallback in start.sh) ───────────────────
-# .env and .env.production are excluded by .dockerignore/.gitignore.
-# start.sh creates .env from .env.example at runtime and generates APP_KEY.
+# ── 2b. Create .env at build time ───────────────────────────────────────────
+# .env is excluded by .dockerignore (secrets). Create it here with production
+# config. APP_KEY is generated at runtime by start.sh.
+RUN if [ ! -f .env ] && [ -f .env.example ]; then \
+        cp .env.example .env && \
+        sed -i 's|^APP_URL=.*|APP_URL=http://localhost|' .env && \
+        sed -i 's|^DB_HOST=.*|DB_HOST=ep-fragrant-recipe-a7rnwwa3.ap-southeast-2.aws.neon.tech|' .env && \
+        sed -i 's|^DB_DATABASE=.*|DB_DATABASE=neondb|' .env && \
+        sed -i 's|^DB_USERNAME=.*|DB_USERNAME=neondb_owner|' .env && \
+        sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=npg_PTQUFJLvd94h|' .env && \
+        sed -i 's|^DB_CONNECTION=.*|DB_CONNECTION=pgsql|' .env && \
+        sed -i 's|^DB_PORT=.*|DB_PORT=5432|' .env && \
+        sed -i 's|^DB_SSLMODE=.*|DB_SSLMODE=require|' .env && \
+        sed -i 's|^DATABASE_URL=.*|# DATABASE_URL removed — using individual DB vars|' .env && \
+        echo ".env created at build time"; \
+    fi
 
 # ── 3. Apache document root → Laravel public/ ────────────────────────────────
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
