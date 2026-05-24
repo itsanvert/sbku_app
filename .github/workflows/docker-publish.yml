@@ -11,6 +11,7 @@ on:
 env:
   REGISTRY_GHCR: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  AWS_REGION: ap-southeast-2
 
 jobs:
   build-and-push:
@@ -33,15 +34,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Amazon ECR
+      - name: Configure AWS credentials
         if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
+          aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
 
-      - name: Get ECR Registry URI
+      - name: Log in to Amazon ECR
         if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -79,3 +80,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
+
+      - name: Render ECS task definition
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: backend/ecs-task-definition.json
+          container-name: sbku-backend
+          image: ${{ steps.meta-ecr.outputs.tags || steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:${{ github.sha }}
+
+      - name: Deploy to Amazon ECS
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: sbku-backend
+          cluster: sbku-backend
+          wait-for-service-stability: true

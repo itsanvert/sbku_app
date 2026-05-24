@@ -1,0 +1,60 @@
+{
+  "family": "sbku-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "sbku-backend",
+      "image": "ACCOUNT_ID.dkr.ecr.ap-southeast-2.amazonaws.com/sbku-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "APP_ENV", "value": "production" },
+        { "name": "APP_DEBUG", "value": "false" },
+        { "name": "APP_URL", "value": "https://YOUR_DOMAIN" },
+        { "name": "DB_CONNECTION", "value": "pgsql" },
+        { "name": "DB_SSLMODE", "value": "require" },
+        { "name": "SESSION_DRIVER", "value": "file" },
+        { "name": "CACHE_STORE", "value": "file" },
+        { "name": "FILESYSTEM_DISK", "value": "public" },
+        { "name": "QUEUE_CONNECTION", "value": "sync" },
+        { "name": "LOG_LEVEL", "value": "error" },
+        { "name": "USE_FIRESTORE", "value": "false" }
+      ],
+      "secrets": [
+        { "name": "APP_KEY", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/APP_KEY" },
+        { "name": "DB_HOST", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_HOST" },
+        { "name": "DB_PORT", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_PORT" },
+        { "name": "DB_DATABASE", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_DATABASE" },
+        { "name": "DB_USERNAME", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_USERNAME" },
+        { "name": "DB_PASSWORD", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/DB_PASSWORD" },
+        { "name": "NEON_DATABASE_URL", "valueFrom": "arn:aws:ssm:ap-southeast-2:ACCOUNT_ID:parameter/sbku/NEON_DATABASE_URL" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/sbku-backend",
+          "awslogs-region": "ap-southeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://localhost/ || exit 1"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
