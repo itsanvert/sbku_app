@@ -254,7 +254,6 @@ else
         echo "✗ nginx failed to start — falling back to Apache only"
         wait $APACHE_PID
     fi
-sed -i "s|daemon on|daemon off|g" /etc/nginx/nginx.conf 2>/dev/null || true
 fi
 
 # Block so the container stays alive
