@@ -119,10 +119,9 @@ COPY frontend/build/web/ /var/www/html/build/web/
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
 
-# ── 2b. Ensure .env exists ──────────────────────────────────────────────────
-# .env is excluded by .dockerignore (contains secrets), so copy .env.production
-# if no .env is present. Environment variables at runtime override any file.
-RUN if [ ! -f .env ]; then cp .env.production .env 2>/dev/null || true; fi
+# ── 2b. Ensure .env exists (runtime fallback in start.sh) ───────────────────
+# .env and .env.production are excluded by .dockerignore/.gitignore.
+# start.sh creates .env from .env.example at runtime and generates APP_KEY.
 
 # ── 3. Apache document root → Laravel public/ ────────────────────────────────
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
