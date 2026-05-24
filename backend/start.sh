@@ -75,6 +75,11 @@ if [ -n "$DB_HOST" ]; then
     export DB_HOST
 fi
 
+# PostgreSQL keepalive — prevents Neon serverless from suspending between queries
+export PGKEEPALIVESIDLE=60
+export PGKEEPALIVESINTERVAL=10
+export PGKEEPALIVESCOUNT=5
+
 if [ "$DB_CONNECTION" = "sqlite" ]; then
     unset DATABASE_URL || true
     export DB_HOST=""
