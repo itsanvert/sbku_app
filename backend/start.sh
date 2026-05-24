@@ -225,6 +225,36 @@ if [ -z "$(find /var/www/html/build/web -maxdepth 0 -type d 2>/dev/null)" ]; the
     echo "         Run flutter build web --release and rebuild the Docker image."
 fi
 
+# If index.html is missing from Flutter build, create a placeholder so nginx doesn't 403
+if [ ! -f /var/www/html/build/web/index.html ]; then
+    echo "No Flutter index.html found — creating placeholder page..."
+    cat > /var/www/html/build/web/index.html << 'PLACEHOLDER'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBKU App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f5f5f5; }
+        .container { text-align: center; padding: 2rem; }
+        h1 { font-size: 2rem; color: #333; margin-bottom: 0.5rem; }
+        p { color: #666; font-size: 1.1rem; }
+        .status { display: inline-block; margin-top: 1rem; padding: 0.5rem 1.5rem; background: #10b981; color: white; border-radius: 6px; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SBKU App</h1>
+        <p>Backend is running</p>
+        <div class="status">API Available</div>
+    </div>
+</body>
+</html>
+PLACEHOLDER
+fi
+
 # ── Phase 2: Queue worker & Apache ────────────────────────────────────────────
 # Start queue worker in the background (skip if WEB_ONLY is set)
 if [ -z "$WEB_ONLY" ]; then
