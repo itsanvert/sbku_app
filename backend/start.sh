@@ -4,43 +4,30 @@
 set -e
 
 # ── Ensure .env exists ──────────────────────────────────────────────────────
-# .env is excluded from Docker build context (in .dockerignore) for security.
-# Create from .env.example (which IS in git) if no .env is present.
+# .env is created at build time by the Dockerfile from .env.example with real
+# DB credentials. At runtime, just generate APP_KEY if missing.
 if [ ! -f /var/www/html/.env ]; then
-    echo "No .env file found — creating from .env.example..."
-    if [ -f /var/www/html/.env.example ]; then
-        cp /var/www/html/.env.example /var/www/html/.env
-    else
-        echo "WARNING: No .env.example either — creating minimal .env..."
-        cat > /var/www/html/.env << 'ENVEOF'
+    echo "WARNING: No .env file found — creating minimal fallback..."
+    cat > /var/www/html/.env << 'ENVEOF'
 APP_NAME=SBKU
 APP_ENV=production
 APP_KEY=
 APP_DEBUG=false
 APP_URL=http://localhost
+DB_CONNECTION=sqlite
+DB_DATABASE=/var/data/database.sqlite
 ENVEOF
-    fi
-    # Replace placeholder values with real Neon DB config
-    sed -i 's|^APP_URL=.*|APP_URL=http://localhost|' /var/www/html/.env
-    sed -i 's|^DB_HOST=.*|DB_HOST=ep-fragrant-recipe-a7rnwwa3.ap-southeast-2.aws.neon.tech|' /var/www/html/.env
-    sed -i 's|^DB_DATABASE=.*|DB_DATABASE=neondb|' /var/www/html/.env
-    sed -i 's|^DB_USERNAME=.*|DB_USERNAME=neondb_owner|' /var/www/html/.env
-    sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=npg_PTQUFJLvd94h|' /var/www/html/.env
-    sed -i 's|^DB_CONNECTION=.*|DB_CONNECTION=pgsql|' /var/www/html/.env
-    sed -i 's|^DB_PORT=.*|DB_PORT=5432|' /var/www/html/.env
-    sed -i 's|^DB_SSLMODE=.*|DB_SSLMODE=require|' /var/www/html/.env
-    # Replace or remove DATABASE_URL placeholder (individual DB vars take precedence)
-    sed -i 's|^DATABASE_URL=.*|# DATABASE_URL removed — using individual DB vars|' /var/www/html/.env
-    echo ".env created and configured with Neon PostgreSQL."
 fi
 
 # Generate APP_KEY if missing or still has placeholder value
 APP_KEY_VAL=$(grep '^APP_KEY=' /var/www/html/.env 2>/dev/null | cut -d= -f2- || true)
 if [ -z "$APP_KEY_VAL" ] || echo "$APP_KEY_VAL" | grep -q "YOUR_APP_KEY_HERE" 2>/dev/null; then
     echo "APP_KEY is missing or has placeholder — generating..."
+    # Remove the placeholder line first so artisan can generate cleanly
+    sed -i '/^APP_KEY=/d' /var/www/html/.env
     NEW_KEY=$(php /var/www/html/artisan key:generate --show 2>/dev/null || echo "")
     if [ -n "$NEW_KEY" ]; then
-        sed -i "s|^APP_KEY=.*|APP_KEY=$NEW_KEY|" /var/www/html/.env
+        echo "APP_KEY=$NEW_KEY" >> /var/www/html/.env
         echo "APP_KEY generated successfully."
     else
         echo "WARNING: Failed to generate APP_KEY"
