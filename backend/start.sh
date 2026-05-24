@@ -184,6 +184,48 @@ sed -i "s/\${PORT}/$LISTEN_PORT/g" /etc/apache2/sites-available/000-default.conf
 echo "ServerName _default_" >> /etc/apache2/apache2.conf || true
 echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf || true
 
+# ── Phase 1: Start Apache on port 8080 on behalf of nginx ─────────────────────
+# Reconfigure Apache to listen on 8080 so nginx (port 80) → proxy → Apache (8080)
+# This avoids two processes binding the same port, giving nginx full routing control.
+sed -ri \
+    -e 's/^Listen 80$/Listen 8080/' \
+    -e 's/:80>/:8080>/' \
+    /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf || true
+
+if [ -s /var/log/apache2/httpd.pid ] || ps aux | grep -v grep | grep -q '[a]pache2'; then
+    # Stop any Apache (port 80) already running so sed above takes effect
+    # (docker-php-ext-install may have pre-warmed it, or the base image spawns it)
+    pkill -TERM apache2 2>/dev/null || true
+    sleep 1
+fi
+
+# Rewrite PHP-FPM pool to use dynamic so pm.max_children = 10 is safe on t3.micro
+PHPFPM_POOL="/usr/local/etc/php-fpm.d/www.conf"
+if [ -f "$PHPFPM_POOL" ]; then
+    sed -i 's/^pm = .*/pm = dynamic/' "$PHPFPM_POOL" 2>/dev/null || true
+    sed -i 's/^pm.max_children = .*/pm.max_children = 10/' "$PHPFPM_POOL" 2>/dev/null || true
+    sed -i 's/^pm.start_servers = .*/pm.start_servers = 3/' "$PHPFPM_POOL" 2>/dev/null || true
+    sed -i 's/^pm.min_spare_servers = .*/pm.min_spare_servers = 3/' "$PHPFPM_POOL" 2>/dev/null || true
+    sed -i 's/^pm.max_spare_servers = .*/pm.max_spare_servers = 5/' "$PHPFPM_POOL" 2>/dev/null || true
+fi
+
+# Start PHP-FPM in background (for nginx → php-fpm fastcgi, alternative to Apache)
+php-fpm -y /usr/local/etc/php-fpm.conf 2>/dev/null &
+PHPFPM_PID=$!
+sleep 1
+
+# Ensure nginx compile-time config exists (if not, create it)
+if [ ! -f /etc/nginx/nginx.conf ]; then
+    echo "WARNING: /etc/nginx/nginx.conf not found — nginx install may have failed."
+fi
+
+# Flutter web build directory check (must exist from Docker COPY or Dockerfile stage)
+if [ -z "$(find /var/www/html/build/web -maxdepth 0 -type d 2>/dev/null)" ]; then
+    echo "WARNING: /var/www/html/build/web/ not found — Flutter web build was not copied into the image."
+    echo "         Run flutter build web --release and rebuild the Docker image."
+fi
+
+# ── Phase 2: Queue worker & Apache ────────────────────────────────────────────
 # Start queue worker in the background (skip if WEB_ONLY is set)
 if [ -z "$WEB_ONLY" ]; then
     php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
@@ -192,5 +234,28 @@ else
     echo "WEB_ONLY set — skipping queue worker."
 fi
 
-# Start Apache
-apache2-foreground
+# Start Apache on port 8080 in background (if nginx → php-fpm is not used)
+# Apache stays running only for legacy uses; nginx handles all incoming traffic.
+apache2-foreground &
+APACHE_PID=$!
+sleep 2
+
+# ── Phase 3: Start nginx as the foreground entrypoint ──────────────────────────
+echo "Starting nginx on port ${PORT:-80} ..."
+if [ -f /var/run/nginx.pid ] && kill -0 "$(cat /var/run/nginx.pid)" 2>/dev/null; then
+    echo "nginx already running."
+else
+    nginx -g "daemon off;" &
+    Nginx_PID=$!
+    sleep 1
+    if kill -0 $Nginx_PID 2>/dev/null; then
+        echo "✓ nginx is PID $Nginx_PID"
+    else
+        echo "✗ nginx failed to start — falling back to Apache only"
+        wait $APACHE_PID
+    fi
+sed -i "s|daemon on|daemon off|g" /etc/nginx/nginx.conf 2>/dev/null || true
+fi
+
+# Block so the container stays alive
+wait $Nginx_PID || wait $APACHE_PID
