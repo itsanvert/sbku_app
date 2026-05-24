@@ -66,7 +66,7 @@ RUN composer install \
 # This means PHP-only changes no longer bust the npm cache.
 # Only re-runs when package.json or actual frontend source changes.
 # ==============================================================================
-FROM node:20-alpine AS assets
+FROM node:22-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline
@@ -146,8 +146,11 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 
 # ── Apache listen port ────────────────────────────────────────────────────────
 # Apache is a backend service (behind nginx), so it always listens on 8080.
-# Nginx (on port 80) proxies /api/*, /dashboard, /login → Apache 8080.
-RUN sed -ri 's/:80>/:8080>/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
+# Nginx (on port 80) proxies all requests → Apache 8080.
+RUN sed -ri \
+    -e 's/^Listen [0-9]+/Listen 8080/' \
+    -e 's/:80>/:8080>/g' \
+    /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
 
 # Discover package service providers (Firebase, Livewire, Flux, etc.)
 # so they are cached even if --no-scripts skipped post-autoload-dump.
