@@ -53,10 +53,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=
+            type=sha,prefix=sha-,format=long
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=uat,enable={{is_default_branch}}
 
       - name: Extract Docker metadata (ECR)
         if: steps.ecr.outputs.registry != ''
@@ -65,10 +66,11 @@ jobs:
         with:
           images: ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}
           tags: |
-            type=sha,prefix=
+            type=sha,prefix=sha-,format=long
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=uat,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -88,7 +90,7 @@ jobs:
         with:
           task-definition: backend/ecs-task-definition.json
           container-name: sbku-backend
-          image: ${{ steps.meta-ecr.outputs.tags || steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:${{ github.sha }}
+          image: ${{ steps.meta-ecr.outputs.tags || steps.ecr.outputs.registry }}/${{ github.event.repository.name }}@${{ github.sha }}
 
       - name: Deploy to Amazon ECS
         if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'

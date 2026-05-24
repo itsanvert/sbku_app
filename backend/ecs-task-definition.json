@@ -50,11 +50,18 @@
       },
       "healthCheck": {
         "command": ["CMD-SHELL", "curl -fsS http://localhost/ || exit 1"],
-        "interval": 30,
-        "timeout": 10,
+        "interval": 15,
+        "timeout": 5,
         "retries": 3,
         "startPeriod": 60
+      },
+      "linuxParameters": {
+        "initProcessEnabled": true
       }
     }
-  ]
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  }
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Local Docker build smoke-test for sbku-backend
-# Run from: cd backend && bash /dev/stdin < this-file  OR  source this-file
+# Run from: cd backend && bash build_smoketest.sh
 
 set -e
 
@@ -22,6 +22,7 @@ FILES=(
     "docker/php-memory.ini"
     "docker/apache-compress.conf"
     "docker/apache-performance.conf"
+    "docker/nginx.conf"
     "composer.json"
     "composer.lock"
     "package.json"
@@ -37,21 +38,20 @@ done
 
 # 3. Check .env exists (only warn, don't fail)
 if [ ! -f ".env" ]; then
-    echo "WARN: .env not found. Create one before deploying to EC2."
+    echo "WARN: .env not found. Create one before deploying:"
     echo "      cp .env.example .env   then fill in APP_KEY, DB_*, etc."
+    echo "      NOTE: In ECS, secrets come from task definition / SSM."
 fi
 
-# 4. Quick Dockerfile syntax check (lint via build --dry-run equivalent)
+# 4. Quick Dockerfile syntax check
 echo ""
 echo "--- Checking Dockerfile for common issues ---"
-if grep -n "s/80/" Dockerfile 2>/dev/null | grep -v "^Binary"; then
-    echo "WARN: Found bare 's/80/' sed pattern — this is now fixed in the Dockerfile."
+if grep -n "npg_" Dockerfile 2>/dev/null; then
+    echo "ERROR: Hardcoded database credentials found in Dockerfile!"
+    exit 1
 fi
-# Check for safe sed anchoring
-if grep -n "s/^Listen 80" Dockerfile > /dev/null 2>&1; then
-    echo "  OK: Dockerfile uses anchored sed (s/^Listen 80$/)"
-else
-    echo "WARN: Expected anchored sed for Apache port replacement not found."
+if grep -n "password" Dockerfile 2>/dev/null | grep -iv "^[^:]*:[^:]*#\|composer\|password_reset\|Password\|PASSWORD"; then
+    echo "WARN: Possible hardcoded password in Dockerfile — verify."
 fi
 
 # 5. Verify start.sh exists and is executable
@@ -60,22 +60,30 @@ echo "--- Checking start.sh ---"
 if [ -f "start.sh" ]; then
     chmod +x start.sh 2>/dev/null || true
     echo "  OK: start.sh present"
+    if grep -q "cleanup()" start.sh 2>/dev/null; then
+        echo "  OK: start.sh has graceful shutdown trap"
+    else
+        echo "  WARN: start.sh missing graceful shutdown trap"
+    fi
 else
     echo "ERROR: start.sh not found — ENTRYPOINT will fail!"
     exit 1
 fi
 
-# 6. Start.sh health-check: verify sed anchor is present
+# 6. Check nginx config for HTTP/2 support
 echo ""
-echo "--- Checking start.sh runtime sed ---"
-if grep -q 's/^Listen 80' start.sh 2>/dev/null; then
-    echo "  OK: start.sh uses anchored sed"
-elif grep -q '\${PORT}' start.sh 2>/dev/null; then
-    echo "  OK: start.sh replaces \${PORT} literal token (safe)"
+echo "--- Checking nginx.conf ---"
+if grep -q "reuseport" docker/nginx.conf 2>/dev/null; then
+    echo "  OK: nginx.conf has modern socket options"
 else
-    echo "WARN: start.sh port-replacement pattern unexpected."
+    echo "  WARN: nginx.conf missing reuseport directive"
 fi
 
 echo ""
 echo "=== Preflight OK — ready to build ==="
 echo "Run:  docker build -t sbku-backend ."
+echo ""
+echo "To deploy to ECS:"
+echo "  1. Push image to ECR"
+echo "  2. Update ecs-task-definition.json with your ACCOUNT_ID"
+echo "  3. aws ecs update-service --cluster sbku-backend --service sbku-backend --force-new-deployment"

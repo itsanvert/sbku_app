@@ -1,10 +1,20 @@
 # ==============================================================================
+# Build ARGs — override to pin specific versions
+# ==============================================================================
+ARG PHP_VERSION=8.4
+ARG NODE_VERSION=22
+ARG COMPOSER_VERSION=2
+ARG NGINX_VERSION=
+
+# ==============================================================================
 # Stage 1: PHP Extensions (the slow part — cached aggressively)
 # ==============================================================================
-# Uses a pre-built base so grpc/protobuf are NOT compiled from source.
-# This stage is fully cached after the first build as long as
-# nothing in this layer changes.
-FROM php:8.4-apache AS php-base
+FROM php:${PHP_VERSION}-apache AS php-base
+
+LABEL org.opencontainers.image.title="SBKU Backend"
+LABEL org.opencontainers.image.description="PHP + Nginx production image for sbku backend"
+LABEL org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY:-sbku/sbku_app}"
+LABEL org.opencontainers.image.vendor="SBKU"
 
 # Install system deps in one layer, clean up immediately
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -16,13 +26,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev \
         libpq-dev \
         zlib1g-dev \
-        zip unzip git curl \
+        zip unzip git curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions via docker-php-ext-install (fast, no compilation)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
+        pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip opcache
 
 # gRPC and Protobuf are removed to speed up build time.
 # With GOOGLE_CLOUD_USE_REST=true, they are not required for Firestore.
@@ -30,25 +40,30 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # Enable Apache mod_rewrite, mod_deflate (gzip), mod_expires (cache headers)
 RUN a2enmod rewrite deflate expires headers
 
+# PHP JIT configuration for production performance
+RUN { \
+        echo 'opcache.jit_buffer_size=100M'; \
+        echo 'opcache.jit=tracing'; \
+    } > /usr/local/etc/php/conf.d/docker-php-ext-jit.ini
+
 # Install nginx (used as the production front-end proxy / static-file server)
 # Nginx will listen on port 80 and serve:
 #   /  → Flutter web build  (/var/www/html/build/web/)
 #   /api/*, /dashboard, /login  → Apache/PHP on 127.0.0.1:8080
-RUN apt-get update && apt-get install -y --no-install-recommends nginx \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        nginx${NGINX_VERSION:+=${NGINX_VERSION}} \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy nginx config before the build is finalised so the image has it baked in
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 
-# Install PHP-FPM (provides a fastcgi backend if nginx is configured for it)
-RUN docker-php-ext-install opcache 2>/dev/null || true \
-    && mkdir -p /run/php
+RUN mkdir -p /run/php
 
 # ==============================================================================
 # Stage 2: Composer (PHP dependencies)
 # Runs in parallel with Stage 3 — only re-runs when composer.* changes
 # ==============================================================================
-FROM composer:2 AS vendor
+FROM composer:${COMPOSER_VERSION} AS vendor
 WORKDIR /app
 # Copy only the lockfiles first so this layer is cached unless deps change
 COPY composer.json composer.lock ./
@@ -66,7 +81,7 @@ RUN composer install \
 # This means PHP-only changes no longer bust the npm cache.
 # Only re-runs when package.json or actual frontend source changes.
 # ==============================================================================
-FROM node:22-alpine AS assets
+FROM node:${NODE_VERSION}-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline
@@ -120,20 +135,17 @@ COPY frontend/build/web/ /var/www/html/build/web/
 COPY . .
 
 # ── 2b. Create .env at build time ───────────────────────────────────────────
-# .env is excluded by .dockerignore (secrets). Create it here with production
-# config. APP_KEY is generated at runtime by start.sh.
+# .env is excluded by .dockerignore (secrets). Create a minimal placeholder.
+# All secrets (DB creds, APP_KEY, etc.) are injected at runtime via
+# ECS task definition environment variables or AWS SSM Parameter Store.
 RUN if [ ! -f .env ] && [ -f .env.example ]; then \
         cp .env.example .env && \
         sed -i 's|^APP_URL=.*|APP_URL=http://localhost|' .env && \
-        sed -i 's|^DB_HOST=.*|DB_HOST=ep-fragrant-recipe-a7rnwwa3.ap-southeast-2.aws.neon.tech|' .env && \
-        sed -i 's|^DB_DATABASE=.*|DB_DATABASE=neondb|' .env && \
-        sed -i 's|^DB_USERNAME=.*|DB_USERNAME=neondb_owner|' .env && \
-        sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=npg_PTQUFJLvd94h|' .env && \
         sed -i 's|^DB_CONNECTION=.*|DB_CONNECTION=pgsql|' .env && \
+        sed -i 's|^DB_HOST=.*|DB_HOST=localhost|' .env && \
         sed -i 's|^DB_PORT=.*|DB_PORT=5432|' .env && \
-        sed -i 's|^DB_SSLMODE=.*|DB_SSLMODE=require|' .env && \
-        sed -i 's|^DATABASE_URL=.*|# DATABASE_URL removed — using individual DB vars|' .env && \
-        echo ".env created at build time"; \
+        sed -i 's|^DB_DATABASE=.*|DB_DATABASE=neondb|' .env && \
+        echo ".env placeholder created at build time (secrets injected at runtime)"; \
     fi
 
 # ── 3. Apache document root → Laravel public/ ────────────────────────────────
@@ -178,12 +190,15 @@ ENV APP_ENV=production \
     GOOGLE_CLOUD_USE_REST=true \
     PORT=80
 
-# ENTRYPOINT: run the runtime startup script (navigates nginx + Apache startup, flushes caches)
-# start.sh is the only entrypoint; it manages Apache (8080) + nginx (80) internally.
-ENTRYPOINT ["sh", "/var/www/html/start.sh"]
-EXPOSE 8080
-# EXPOSE 80 is implicit (nginx); EXPOSE 8080 (Apache backend) is exposed for diagnostics.
-
 # HEALTHCHECK: fail fast if nginx isn't responding
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=45s \
-  CMD curl -fsS "http://localhost/" > /dev/null || exit 1
+# ECS uses this to determine container health for Fargate service auto-recovery.
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 --start-period=60s \
+  CMD curl -fsS "http://localhost/" > /dev/null 2>&1 || curl -fsS "http://127.0.0.1:8080/" > /dev/null 2>&1 || exit 1
+
+# ENTRYPOINT: run the runtime startup script (manages nginx + Apache startup)
+# start.sh handles all runtime initialization including secret injection.
+ENTRYPOINT ["sh", "/var/www/html/start.sh"]
+
+# ECS Fargate uses the containerPort from task definition; EXPOSE is documentary.
+EXPOSE 80
+EXPOSE 8080
