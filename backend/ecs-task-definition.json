@@ -7,7 +7,7 @@
   "executionRoleArn": "arn:aws:iam::617207029940:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
-      "name": "sbku-backend",
+      "name": "Main",
       "image": "617207029940.dkr.ecr.ap-southeast-2.amazonaws.com/sbku-backend:latest",
       "essential": true,
       "portMappings": [

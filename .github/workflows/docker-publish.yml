@@ -89,7 +89,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: backend/ecs-task-definition.json
-          container-name: sbku-backend
+          container-name: Main
           image: ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:${{ github.sha }}
 
       - name: Deploy to Amazon ECS
