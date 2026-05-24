@@ -34,9 +34,11 @@ cleanup() {
     log "Shutdown complete."
     exit 0
 }
-trap 'cleanup SIGTERM' SIGTERM
-trap 'cleanup SIGINT' SIGINT
-trap 'cleanup SIGQUIT' SIGQUIT
+trap 'cleanup SIGTERM' TERM
+
+trap 'cleanup SIGINT' INT
+
+trap 'cleanup SIGQUIT' QUIT
 
 # ── Ensure .env exists ──────────────────────────────────────────────────────
 if [ ! -f /var/www/html/.env ]; then
@@ -109,7 +111,8 @@ fi
 # Only parse NEON_DATABASE_URL if DB_HOST is NOT already set (secrets take priority)
 if [ -n "$NEON_DATABASE_URL" ] && [ -z "$DB_HOST" ]; then
     log "Parsing NEON_DATABASE_URL for PostgreSQL connection..."
-    NEON_URL="$(printf '%s' "$NEON_DATABASE_URL" | tr -d '\r\n\"\'"'"'")"
+    NEON_URL="$(printf '%s' "$NEON_DATABASE_URL")"
+    NEON_URL="${NEON_URL//[$'\t\r\n\"\'\\']/}"
     WITHOUT_PROTO="${NEON_URL#*://}"
     CREDS_AND_HOST="${WITHOUT_PROTO%%\?*}"
     USER_PASS="${CREDS_AND_HOST%%@*}"

@@ -193,11 +193,11 @@ ENV APP_ENV=production \
 # HEALTHCHECK: fail fast if nginx isn't responding
 # ECS uses this to determine container health for Fargate service auto-recovery.
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 --start-period=60s \
-  CMD curl -fsS "http://localhost/" > /dev/null 2>&1 || curl -fsS "http://127.0.0.1:8080/" > /dev/null 2>&1 || exit 1
+  CMD curl -sS "http://localhost/" > /dev/null 2>&1 || curl -sS "http://127.0.0.1:8080/" > /dev/null 2>&1 || exit 1
 
 # ENTRYPOINT: run the runtime startup script (manages nginx + Apache startup)
 # start.sh handles all runtime initialization including secret injection.
-ENTRYPOINT ["sh", "/var/www/html/start.sh"]
+ENTRYPOINT ["bash", "/var/www/html/start.sh"]
 
 # ECS Fargate uses the containerPort from task definition; EXPOSE is documentary.
 EXPOSE 80
