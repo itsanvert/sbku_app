@@ -181,9 +181,10 @@ chmod -R 775 storage bootstrap/cache
 APACHE_PORTS="/etc/apache2/ports.conf"
 APACHE_SITE="/etc/apache2/sites-available/000-default.conf"
 
-# Force ports.conf to have ONLY "Listen 8080"
+# Set Apache to listen ONLY on port 8080 (idempotent — won't duplicate)
 echo "Configuring Apache to listen on port 8080..."
-sed -i 's/^Listen [0-9]\+/Listen 8080/' "$APACHE_PORTS" 2>/dev/null || true
+# Remove ALL existing Listen directives, then add exactly one Listen 8080
+sed -ni '/^Listen /!p' "$APACHE_PORTS"
 echo "Listen 8080" >> "$APACHE_PORTS"
 
 # Ensure VirtualHost uses *:8080
