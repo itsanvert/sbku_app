@@ -183,4 +183,4 @@ EXPOSE 8080
 
 # HEALTHCHECK: fail fast if nginx isn't responding
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=45s \
-  CMD curl -fsS "http://localhost/index.html" > /dev/null || exit 1
+  CMD curl -fsS "http://localhost/" > /dev/null || exit 1
