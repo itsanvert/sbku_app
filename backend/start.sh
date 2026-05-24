@@ -2,9 +2,45 @@
 
 set -e
 
+# ── ECS / Container metadata ─────────────────────────────────────────────
+log() { echo "[$(date -Iseconds)] $*"; }
+warn() { echo "[$(date -Iseconds)] WARNING: $*" >&2; }
+error() { echo "[$(date -Iseconds)] ERROR: $*" >&2; }
+
+ECS_CONTAINER_METADATA_URI_V4="${ECS_CONTAINER_METADATA_URI_V4:-}"
+if [ -n "$ECS_CONTAINER_METADATA_URI_V4" ]; then
+    log "Running on AWS ECS (Fargate/EC2) — metadata URI available"
+fi
+
+# ── Graceful shutdown trap ───────────────────────────────────────────────
+# ECS sends SIGTERM, then SIGKILL after the stop timeout (default 30s).
+# We forward the signal to all child processes and wait for them.
+cleanup() {
+    local signal=$1
+    log "Received $signal — shutting down gracefully..."
+    if [ -n "$NGINX_PID" ] && kill -0 "$NGINX_PID" 2>/dev/null; then
+        log "Stopping nginx (PID $NGINX_PID)..."
+        nginx -s quit 2>/dev/null || kill -TERM "$NGINX_PID" 2>/dev/null || true
+    fi
+    if [ -n "$APACHE_PID" ] && kill -0 "$APACHE_PID" 2>/dev/null; then
+        log "Stopping Apache (PID $APACHE_PID)..."
+        kill -TERM "$APACHE_PID" 2>/dev/null || true
+    fi
+    if [ -n "$QUEUE_PID" ] && kill -0 "$QUEUE_PID" 2>/dev/null; then
+        log "Stopping queue worker (PID $QUEUE_PID)..."
+        kill -TERM "$QUEUE_PID" 2>/dev/null || true
+    fi
+    wait
+    log "Shutdown complete."
+    exit 0
+}
+trap 'cleanup SIGTERM' SIGTERM
+trap 'cleanup SIGINT' SIGINT
+trap 'cleanup SIGQUIT' SIGQUIT
+
 # ── Ensure .env exists ──────────────────────────────────────────────────────
 if [ ! -f /var/www/html/.env ]; then
-    echo "WARNING: No .env file found — creating minimal fallback..."
+    warn "No .env file found — creating minimal fallback..."
     cat > /var/www/html/.env << 'ENVEOF'
 APP_NAME=SBKU
 APP_ENV=production
@@ -18,31 +54,62 @@ fi
 
 # Generate APP_KEY if missing or still has placeholder value
 APP_KEY_VAL=$(grep '^APP_KEY=' /var/www/html/.env 2>/dev/null | cut -d= -f2- || true)
-if [ -z "$APP_KEY_VAL" ] || echo "$APP_KEY_VAL" | grep -q "YOUR_APP_KEY_HERE" 2>/dev/null; then
-    echo "APP_KEY is missing or has placeholder — generating..."
+if [ -z "$APP_KEY_VAL" ] || echo "$APP_KEY_VAL" | grep -q "YOUR_APP_KEY_HERE\|^APP_KEY=$" 2>/dev/null; then
+    log "APP_KEY is missing or has placeholder — generating..."
     sed -i '/^APP_KEY=/d' /var/www/html/.env
     NEW_KEY=$(php /var/www/html/artisan key:generate --show 2>/dev/null || echo "")
     if [ -n "$NEW_KEY" ]; then
         echo "APP_KEY=$NEW_KEY" >> /var/www/html/.env
-        echo "APP_KEY generated successfully."
+        log "APP_KEY generated successfully."
     else
-        echo "WARNING: Failed to generate APP_KEY"
+        error "Failed to generate APP_KEY"
     fi
 fi
 
-# Normalize DB_CONNECTION
-if [ -n "$DB_CONNECTION" ]; then
-    DB_CONNECTION="$(printf '%s' "$DB_CONNECTION" | tr -d '\r' | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')"
-fi
+# ── Write ECS secrets / env vars into .env ──────────────────────────────
+# ECS task definition provides these via "environment" or "secrets" (SSM).
+# We overlay them on .env so Laravel can read them via $_ENV / getenv().
+write_env() {
+    local key="$1"
+    local val="$2"
+    if [ -n "$val" ]; then
+        # Remove existing line, append new one
+        sed -i "/^${key}=/d" /var/www/html/.env 2>/dev/null || true
+        echo "${key}=${val}" >> /var/www/html/.env
+    fi
+}
 
-if [ -n "$DB_DATABASE" ] && printf '%s' "$DB_DATABASE" | grep -qi "sqlite"; then
-    DB_CONNECTION=sqlite
-fi
+write_env "APP_ENV" "${APP_ENV:-production}"
+write_env "APP_DEBUG" "${APP_DEBUG:-false}"
+write_env "APP_URL" "${APP_URL:-http://localhost}"
+write_env "DB_CONNECTION" "${DB_CONNECTION:-pgsql}"
+write_env "DB_HOST" "${DB_HOST:-}"
+write_env "DB_PORT" "${DB_PORT:-5432}"
+write_env "DB_DATABASE" "${DB_DATABASE:-}"
+write_env "DB_USERNAME" "${DB_USERNAME:-}"
+write_env "DB_PASSWORD" "${DB_PASSWORD:-}"
+write_env "DB_SSLMODE" "${DB_SSLMODE:-require}"
+write_env "SESSION_DRIVER" "${SESSION_DRIVER:-file}"
+write_env "CACHE_STORE" "${CACHE_STORE:-file}"
+write_env "FILESYSTEM_DISK" "${FILESYSTEM_DISK:-public}"
+write_env "QUEUE_CONNECTION" "${QUEUE_CONNECTION:-sync}"
+write_env "LOG_LEVEL" "${LOG_LEVEL:-error}"
+write_env "USE_FIRESTORE" "${USE_FIRESTORE:-false}"
 
-# ── Neon (serverless Postgres) ────────────────────────────────
 if [ -n "$NEON_DATABASE_URL" ]; then
-    echo "Detected NEON_DATABASE_URL — switching to PostgreSQL (Neon)..."
-    NEON_URL="$(printf '%s' "$NEON_DATABASE_URL" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'")"
+    write_env "NEON_DATABASE_URL" "$NEON_DATABASE_URL"
+    log "NEON_DATABASE_URL provided — PostgreSQL will be configured via start.sh logic"
+fi
+
+if [ -n "$DATABASE_URL" ]; then
+    write_env "DATABASE_URL" "$DATABASE_URL"
+fi
+
+# ── Neon (serverless Postgres) auto-parsing ──────────────────────────
+# Only parse NEON_DATABASE_URL if DB_HOST is NOT already set (secrets take priority)
+if [ -n "$NEON_DATABASE_URL" ] && [ -z "$DB_HOST" ]; then
+    log "Parsing NEON_DATABASE_URL for PostgreSQL connection..."
+    NEON_URL="$(printf '%s' "$NEON_DATABASE_URL" | tr -d '\r\n\"\'"'"'")"
     WITHOUT_PROTO="${NEON_URL#*://}"
     CREDS_AND_HOST="${WITHOUT_PROTO%%\?*}"
     USER_PASS="${CREDS_AND_HOST%%@*}"
@@ -55,24 +122,14 @@ if [ -n "$NEON_DATABASE_URL" ]; then
     DB_PORT_VAL="${DB_HOST_PORT#*:}"
     [ "$DB_HOST_VAL" = "$DB_PORT_VAL" ] && DB_PORT_VAL="5432"
 
-    export DB_CONNECTION="pgsql"
-    export DB_HOST="$DB_HOST_VAL"
-    export DB_PORT="$DB_PORT_VAL"
-    export DB_DATABASE="$DB_NAME"
-    export DB_USERNAME="$DB_USER"
-    export DB_PASSWORD="$DB_PASS"
-    export DB_SSLMODE="require"
-    echo "Neon PostgreSQL configured: host=$DB_HOST_VAL port=$DB_PORT_VAL db=$DB_NAME user=$DB_USER"
-fi
-
-# Sanitize env vars
-if [ -n "$DATABASE_URL" ]; then
-    DATABASE_URL="$(printf '%s' "$DATABASE_URL" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'")"
-    export DATABASE_URL
-fi
-if [ -n "$DB_HOST" ]; then
-    DB_HOST="$(printf '%s' "$DB_HOST" | tr -d '\r' | tr -d '\n' | tr -d '"' | tr -d "'")"
-    export DB_HOST
+    write_env "DB_CONNECTION" "pgsql"
+    write_env "DB_HOST" "$DB_HOST_VAL"
+    write_env "DB_PORT" "$DB_PORT_VAL"
+    write_env "DB_DATABASE" "$DB_NAME"
+    write_env "DB_USERNAME" "$DB_USER"
+    write_env "DB_PASSWORD" "$DB_PASS"
+    write_env "DB_SSLMODE" "require"
+    log "Neon PostgreSQL configured: host=$DB_HOST_VAL port=$DB_PORT_VAL db=$DB_NAME user=$DB_USER"
 fi
 
 # PostgreSQL keepalive — prevents Neon serverless from suspending between queries
@@ -80,20 +137,18 @@ export PGKEEPALIVESIDLE=60
 export PGKEEPALIVESINTERVAL=10
 export PGKEEPALIVESCOUNT=5
 
+# ── SQLite fallback ────────────────────────────────────────────────────
 if [ "$DB_CONNECTION" = "sqlite" ]; then
     unset DATABASE_URL || true
-    export DB_HOST=""
-    export DB_PORT=""
-    export DB_USERNAME=""
-    export DB_PASSWORD=""
-fi
-
-if [ "$DB_CONNECTION" = "sqlite" ]; then
+    write_env "DB_HOST" ""
+    write_env "DB_PORT" ""
+    write_env "DB_USERNAME" ""
+    write_env "DB_PASSWORD" ""
     mkdir -p database
     touch database/database.sqlite
 fi
 
-# Storage directories
+# ── Storage directories ─────────────────────────────────────────────────
 mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
@@ -104,79 +159,79 @@ mkdir -p "$SESSION_DIR" "$CACHE_DIR"
 chown www-data:www-data "$SESSION_DIR" "$CACHE_DIR"
 chmod 775 "$SESSION_DIR" "$CACHE_DIR"
 
-# Firebase credentials
+# ── Firebase credentials ────────────────────────────────────────────────
 if [ -f "/etc/secrets/firebase-credentials.json" ]; then
-    echo "Found Firebase credentials in /etc/secrets, preparing for use..."
+    log "Found Firebase credentials in /etc/secrets, preparing for use..."
     mkdir -p storage/app
     cp /etc/secrets/firebase-credentials.json storage/app/firebase-credentials.json
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
-    if [ -z "$USE_FIRESTORE" ]; then
-        export USE_FIRESTORE="true"
-    fi
+    [ -z "$USE_FIRESTORE" ] && export USE_FIRESTORE="true"
     if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
         export DB_CONNECTION="sqlite"
-        export DB_DATABASE="/var/data/database.sqlite"
+        write_env "DB_CONNECTION" "sqlite"
+        write_env "DB_DATABASE" "/var/data/database.sqlite"
         unset DATABASE_URL
     fi
 elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
-    echo "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
+    log "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
     mkdir -p storage/app
     echo "$FIREBASE_CREDENTIALS_JSON" > storage/app/firebase-credentials.json
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
-    if [ -z "$USE_FIRESTORE" ]; then
-        export USE_FIRESTORE="true"
-    fi
+    [ -z "$USE_FIRESTORE" ] && export USE_FIRESTORE="true"
     if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
         export DB_CONNECTION="sqlite"
-        export DB_DATABASE="/var/data/database.sqlite"
+        write_env "DB_CONNECTION" "sqlite"
+        write_env "DB_DATABASE" "/var/data/database.sqlite"
         unset DATABASE_URL
     fi
 fi
 
-# Run migrations
+# ── Database migrations ────────────────────────────────────────────────
 if [ "$USE_FIRESTORE" = "true" ] && [ "$DB_CONNECTION" = "sqlite" ]; then
-    echo "USE_FIRESTORE is true with SQLite - skipping database migrations"
+    log "USE_FIRESTORE=true with SQLite — skipping database migrations"
     DB_PATH="${DB_DATABASE:-/var/data/database.sqlite}"
     DB_DIR=$(dirname "$DB_PATH")
     mkdir -p "$DB_DIR"
     touch "$DB_PATH"
-    echo "Created empty SQLite database at $DB_PATH"
+    log "Created empty SQLite database at $DB_PATH"
 elif [ "$DB_CONNECTION" = "sqlite" ]; then
-    php artisan migrate --force --database=sqlite 2>/dev/null || echo "Warning: SQLite migration failed"
+    php artisan migrate --force --database=sqlite 2>/dev/null || warn "SQLite migration failed"
 else
-    php artisan migrate --force 2>/dev/null || echo "Warning: database migration failed (tables may be stale)"
+    php artisan migrate --force 2>/dev/null || warn "Database migration failed (tables may be stale)"
 fi
 
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
 
-# OPcache
+# ── OPcache ──────────────────────────────────────────────────────────────
 if [ "$PHP_OPCACHE_ENABLE" = "1" ] || [ "$APP_ENV" = "production" ]; then
-    echo "Configuring and enabling PHP OPcache for maximum API response speed..."
+    log "Configuring and enabling PHP OPcache..."
     OPCACHE_INI="/usr/local/etc/php/conf.d/docker-php-ext-opcache.ini"
     docker-php-ext-enable opcache 2>/dev/null || true
     cat <<EOF > "$OPCACHE_INI"
 [opcache]
 opcache.enable=1
 opcache.enable_cli=1
-opcache.memory_consumption=128
+opcache.memory_consumption=256
 opcache.interned_strings_buffer=16
 opcache.max_accelerated_files=20000
 opcache.revalidate_freq=0
 opcache.validate_timestamps=0
 opcache.fast_shutdown=1
+opcache.jit_buffer_size=100M
+opcache.jit=tracing
 EOF
-    echo "OPcache successfully configured and active."
+    log "OPcache configured with JIT enabled."
 fi
 
 php artisan package:discover --ansi 2>/dev/null || true
-php artisan optimize 2>/dev/null || echo "Warning: optimize failed (config/route/event cache skipped)"
+php artisan optimize 2>/dev/null || warn "Optimize failed (config/route/event cache skipped)"
 
 if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null | head -1)" ]; then
-    php artisan view:cache 2>/dev/null || echo "Warning: view cache failed (templates compile on demand)"
+    php artisan view:cache 2>/dev/null || warn "View cache failed (templates compile on demand)"
 fi
 
 chown -R www-data:www-data storage bootstrap/cache
@@ -186,22 +241,18 @@ chmod -R 775 storage bootstrap/cache
 APACHE_PORTS="/etc/apache2/ports.conf"
 APACHE_SITE="/etc/apache2/sites-available/000-default.conf"
 
-# Set Apache to listen ONLY on port 8080 (idempotent — won't duplicate)
-echo "Configuring Apache to listen on port 8080..."
-# Remove ALL existing Listen directives, then add exactly one Listen 8080
+log "Configuring Apache to listen on port 8080..."
 sed -ni '/^Listen /!p' "$APACHE_PORTS"
 echo "Listen 8080" >> "$APACHE_PORTS"
 
-# Ensure VirtualHost uses *:8080
 sed -i 's/:[0-9]\+>/:8080>/g' "$APACHE_SITE" 2>/dev/null || true
 
-# Set ServerName globally
 echo "ServerName _default_" >> /etc/apache2/apache2.conf || true
 echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf || true
 
 # Stop any stale Apache on old port 80
 if [ -s /var/log/apache2/httpd.pid ] || ps aux | grep -v grep | grep -q '[a]pache2'; then
-    echo "Stopping existing Apache process..."
+    log "Stopping existing Apache process..."
     pkill -TERM apache2 2>/dev/null || true
     sleep 2
 fi
@@ -218,20 +269,20 @@ fi
 
 # ── PHP-FPM (optional — only starts if binary exists) ─────────────────────
 if [ -x "$(command -v php-fpm 2>/dev/null)" ]; then
-    echo "Starting PHP-FPM..."
+    log "Starting PHP-FPM..."
     php-fpm -y /usr/local/etc/php-fpm.conf &
     sleep 1
 else
-    echo "PHP-FPM not available — Apache uses mod_php (no php-fpm needed)."
+    log "PHP-FPM not available — Apache uses mod_php (no php-fpm needed)."
 fi
 
 # ── Flutter web build check ───────────────────────────────────────────────
 if [ -z "$(find /var/www/html/build/web -maxdepth 0 -type d 2>/dev/null)" ]; then
-    echo "WARNING: /var/www/html/build/web/ not found — Flutter web build was not copied into the image."
+    warn "/var/www/html/build/web/ not found — Flutter web build was not copied into the image."
 fi
 
 if [ ! -f /var/www/html/build/web/index.html ]; then
-    echo "No Flutter index.html found — creating placeholder page..."
+    log "No Flutter index.html found — creating placeholder page..."
     cat > /var/www/html/build/web/index.html << 'PLACEHOLDER'
 <!DOCTYPE html>
 <html lang="en">
@@ -262,13 +313,14 @@ fi
 # ── Queue worker ─────────────────────────────────────────────────────────
 if [ -z "$WEB_ONLY" ]; then
     php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
-    echo "Queue worker started."
+    QUEUE_PID=$!
+    log "Queue worker started (PID $QUEUE_PID)."
 else
-    echo "WEB_ONLY set — skipping queue worker."
+    log "WEB_ONLY set — skipping queue worker."
 fi
 
 # ── Start Apache on port 8080 in background ──────────────────────────────
-echo "Starting Apache on port 8080..."
+log "Starting Apache on port 8080..."
 apache2-foreground &
 APACHE_PID=$!
 sleep 3
@@ -276,11 +328,11 @@ sleep 3
 # Wait for Apache to start listening (up to 15s)
 for i in 1 2 3 4 5; do
     if command -v ss &> /dev/null; then
-        ss -tlnp 2>/dev/null | grep -q ':8080' && echo "✓ Apache listening on port 8080" && break
+        ss -tlnp 2>/dev/null | grep -q ':8080' && log "✓ Apache listening on port 8080" && break
     elif command -v netstat &> /dev/null; then
-        netstat -tlnp 2>/dev/null | grep -q ':8080' && echo "✓ Apache listening on port 8080" && break
+        netstat -tlnp 2>/dev/null | grep -q ':8080' && log "✓ Apache listening on port 8080" && break
     fi
-    [ "$i" -eq 5 ] && echo "✗ Apache NOT listening on port 8080 after 15s"
+    [ "$i" -eq 5 ] && warn "Apache NOT listening on port 8080 after 15s"
     sleep 3
 done
 
@@ -289,29 +341,31 @@ if command -v curl &> /dev/null; then
     for i in 1 2 3; do
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" != "000" ]; then
-            echo "Apache reachable on 8080 (HTTP $HTTP_CODE)"
+            log "Apache reachable on 8080 (HTTP $HTTP_CODE)"
             break
         fi
-        [ "$i" -eq 3 ] && echo "Apache unreachable on 8080 after 3 attempts"
+        [ "$i" -eq 3 ] && warn "Apache unreachable on 8080 after 3 attempts"
         sleep 2
     done
 fi
 
 # ── Start nginx as the foreground entrypoint ──────────────────────────────
-echo "Starting nginx on port ${PORT:-80}..."
+log "Starting nginx on port ${PORT:-80}..."
 if [ -f /var/run/nginx.pid ] && kill -0 "$(cat /var/run/nginx.pid)" 2>/dev/null; then
-    echo "nginx already running."
+    log "nginx already running."
 else
     nginx -g "daemon off;" &
-    Nginx_PID=$!
+    NGINX_PID=$!
     sleep 1
-    if kill -0 $Nginx_PID 2>/dev/null; then
-        echo "✓ nginx is PID $Nginx_PID"
+    if kill -0 $NGINX_PID 2>/dev/null; then
+        log "✓ nginx is PID $NGINX_PID"
     else
-        echo "✗ nginx failed to start — falling back to Apache only"
+        error "nginx failed to start — falling back to Apache only"
         wait $APACHE_PID
     fi
 fi
 
-# Block so the container stays alive
-wait $Nginx_PID || wait $APACHE_PID
+log "SBKU backend is fully operational."
+
+# Block so the container stays alive (handles signals via trap)
+wait $NGINX_PID || wait $APACHE_PID
