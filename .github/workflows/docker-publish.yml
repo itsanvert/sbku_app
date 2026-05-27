@@ -88,8 +88,8 @@ jobs:
         if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ${{ secrets.EC2_HOST != '' && secrets.EC2_HOST || '32.236.105.9' }}
+          username: ${{ secrets.EC2_USER != '' && secrets.EC2_USER || 'ec2-user' }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.ecr.outputs.registry }}
