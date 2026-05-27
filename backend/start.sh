@@ -1,12 +1,15 @@
 #!/bin/bash
 
-set -e
-
-# ── ECS / Container metadata ─────────────────────────────────────────────
-log() { echo "[$(date -Iseconds)] $*"; }
-warn() { echo "[$(date -Iseconds)] WARNING: $*" >&2; }
+# ── Logging helpers ─────────────────────────────────────────────────────
+log()   { echo "[$(date -Iseconds)] $*"; }
+warn()  { echo "[$(date -Iseconds)] WARNING: $*" >&2; }
 error() { echo "[$(date -Iseconds)] ERROR: $*" >&2; }
 
+# IMPORTANT: Do NOT use `set -e`. A failure in any one step (migration,
+# config cache, etc.) should NOT kill the whole container. We handle
+# errors explicitly so Apache and nginx always get a chance to start.
+
+# ── ECS / Container metadata ─────────────────────────────────────────────
 ECS_CONTAINER_METADATA_URI_V4="${ECS_CONTAINER_METADATA_URI_V4:-}"
 if [ -n "$ECS_CONTAINER_METADATA_URI_V4" ]; then
     log "Running on AWS ECS (Fargate/EC2) — metadata URI available"
@@ -14,7 +17,6 @@ fi
 
 # ── Graceful shutdown trap ───────────────────────────────────────────────
 # ECS sends SIGTERM, then SIGKILL after the stop timeout (default 30s).
-# We forward the signal to all child processes and wait for them.
 cleanup() {
     local signal=$1
     log "Received $signal — shutting down gracefully..."
@@ -35,9 +37,7 @@ cleanup() {
     exit 0
 }
 trap 'cleanup SIGTERM' TERM
-
 trap 'cleanup SIGINT' INT
-
 trap 'cleanup SIGQUIT' QUIT
 
 # ── Ensure .env exists ──────────────────────────────────────────────────────
@@ -58,24 +58,21 @@ fi
 APP_KEY_VAL=$(grep '^APP_KEY=' /var/www/html/.env 2>/dev/null | cut -d= -f2- || true)
 if [ -z "$APP_KEY_VAL" ] || echo "$APP_KEY_VAL" | grep -q "YOUR_APP_KEY_HERE\|^APP_KEY=$" 2>/dev/null; then
     log "APP_KEY is missing or has placeholder — generating..."
-    sed -i '/^APP_KEY=/d' /var/www/html/.env
+    sed -i '/^APP_KEY=/d' /var/www/html/.env 2>/dev/null || true
     NEW_KEY=$(php /var/www/html/artisan key:generate --show 2>/dev/null || echo "")
     if [ -n "$NEW_KEY" ]; then
         echo "APP_KEY=$NEW_KEY" >> /var/www/html/.env
         log "APP_KEY generated successfully."
     else
-        error "Failed to generate APP_KEY"
+        error "Failed to generate APP_KEY — continuing anyway"
     fi
 fi
 
 # ── Write ECS secrets / env vars into .env ──────────────────────────────
-# ECS task definition provides these via "environment" or "secrets" (SSM).
-# We overlay them on .env so Laravel can read them via $_ENV / getenv().
 write_env() {
     local key="$1"
     local val="$2"
     if [ -n "$val" ]; then
-        # Remove existing line, append new one
         sed -i "/^${key}=/d" /var/www/html/.env 2>/dev/null || true
         echo "${key}=${val}" >> /var/www/html/.env
     fi
@@ -100,7 +97,7 @@ write_env "USE_FIRESTORE" "${USE_FIRESTORE:-false}"
 
 if [ -n "$NEON_DATABASE_URL" ]; then
     write_env "NEON_DATABASE_URL" "$NEON_DATABASE_URL"
-    log "NEON_DATABASE_URL provided — PostgreSQL will be configured via start.sh logic"
+    log "NEON_DATABASE_URL provided"
 fi
 
 if [ -n "$DATABASE_URL" ]; then
@@ -108,7 +105,6 @@ if [ -n "$DATABASE_URL" ]; then
 fi
 
 # ── Neon (serverless Postgres) auto-parsing ──────────────────────────
-# Only parse NEON_DATABASE_URL if DB_HOST is NOT already set (secrets take priority)
 if [ -n "$NEON_DATABASE_URL" ] && [ -z "$DB_HOST" ]; then
     log "Parsing NEON_DATABASE_URL for PostgreSQL connection..."
     NEON_URL="$(printf '%s' "$NEON_DATABASE_URL")"
@@ -135,7 +131,7 @@ if [ -n "$NEON_DATABASE_URL" ] && [ -z "$DB_HOST" ]; then
     log "Neon PostgreSQL configured: host=$DB_HOST_VAL port=$DB_PORT_VAL db=$DB_NAME user=$DB_USER"
 fi
 
-# PostgreSQL keepalive — prevents Neon serverless from suspending between queries
+# PostgreSQL keepalive
 export PGKEEPALIVESIDLE=60
 export PGKEEPALIVESINTERVAL=10
 export PGKEEPALIVESCOUNT=5
@@ -153,82 +149,39 @@ fi
 
 # ── Storage directories ─────────────────────────────────────────────────
 mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
 SESSION_DIR="${SESSION_FILES:-/var/data/sessions}"
 CACHE_DIR="${CACHE_FILE_PATH:-/var/data/cache}"
 mkdir -p "$SESSION_DIR" "$CACHE_DIR"
-chown www-data:www-data "$SESSION_DIR" "$CACHE_DIR"
-chmod 775 "$SESSION_DIR" "$CACHE_DIR"
+chown www-data:www-data "$SESSION_DIR" "$CACHE_DIR" 2>/dev/null || true
+chmod 775 "$SESSION_DIR" "$CACHE_DIR" 2>/dev/null || true
 
 # ── Firebase credentials ────────────────────────────────────────────────
 if [ -f "/etc/secrets/firebase-credentials.json" ]; then
-    log "Found Firebase credentials in /etc/secrets, preparing for use..."
+    log "Found Firebase credentials in /etc/secrets"
     mkdir -p storage/app
     cp /etc/secrets/firebase-credentials.json storage/app/firebase-credentials.json
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
     [ -z "$USE_FIRESTORE" ] && export USE_FIRESTORE="true"
-    if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
-        export DB_CONNECTION="sqlite"
-        write_env "DB_CONNECTION" "sqlite"
-        write_env "DB_DATABASE" "/var/data/database.sqlite"
-        unset DATABASE_URL
-    fi
 elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
-    log "Found FIREBASE_CREDENTIALS_JSON env var, creating file..."
+    log "Found FIREBASE_CREDENTIALS_JSON env var"
     mkdir -p storage/app
     echo "$FIREBASE_CREDENTIALS_JSON" > storage/app/firebase-credentials.json
     chmod 644 storage/app/firebase-credentials.json
     export FIREBASE_CREDENTIALS="storage/app/firebase-credentials.json"
     export GOOGLE_APPLICATION_CREDENTIALS="/var/www/html/storage/app/firebase-credentials.json"
     [ -z "$USE_FIRESTORE" ] && export USE_FIRESTORE="true"
-    if [ -z "$DB_HOST" ] && [ "$DB_CONNECTION" != "pgsql" ] && [ "$DB_CONNECTION" != "mysql" ] && [ "$DB_CONNECTION" != "mariadb" ]; then
-        export DB_CONNECTION="sqlite"
-        write_env "DB_CONNECTION" "sqlite"
-        write_env "DB_DATABASE" "/var/data/database.sqlite"
-        unset DATABASE_URL
-    fi
 fi
 
-# ── Database migrations ────────────────────────────────────────────────
-if [ "$USE_FIRESTORE" = "true" ] && [ "$DB_CONNECTION" = "sqlite" ]; then
-    log "USE_FIRESTORE=true with SQLite — skipping database migrations"
-    DB_PATH="${DB_DATABASE:-/var/data/database.sqlite}"
-    DB_DIR=$(dirname "$DB_PATH")
-    mkdir -p "$DB_DIR"
-    touch "$DB_PATH"
-    log "Created empty SQLite database at $DB_PATH"
-elif [ "$DB_CONNECTION" = "sqlite" ]; then
-    php artisan migrate --force --database=sqlite 2>/dev/null || warn "SQLite migration failed"
-else
-    php artisan migrate --force 2>/dev/null || warn "Database migration failed (tables may be stale)"
-fi
+# ── Laravel initialization (best-effort — don't block Apache on failure) ──
+log "Running Laravel setup (best-effort)..."
 
+php artisan migrate --force 2>/dev/null || warn "Migration failed (tables may be stale)"
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
-
-# ── OPcache ──────────────────────────────────────────────────────────────
-if [ "$PHP_OPCACHE_ENABLE" = "1" ] || [ "$APP_ENV" = "production" ]; then
-    log "Configuring and enabling PHP OPcache..."
-    OPCACHE_INI="/usr/local/etc/php/conf.d/docker-php-ext-opcache.ini"
-    docker-php-ext-enable opcache 2>/dev/null || true
-    cat <<EOF > "$OPCACHE_INI"
-[opcache]
-opcache.enable=1
-opcache.enable_cli=1
-opcache.memory_consumption=256
-opcache.interned_strings_buffer=16
-opcache.max_accelerated_files=20000
-opcache.revalidate_freq=0
-opcache.validate_timestamps=0
-opcache.fast_shutdown=1
-opcache.jit_buffer_size=100M
-opcache.jit=tracing
-EOF
-    log "OPcache configured with JIT enabled."
-fi
 
 rm -f bootstrap/cache/packages.php
 php artisan package:discover --ansi 2>/dev/null || true
@@ -238,81 +191,73 @@ if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null |
     php artisan view:cache 2>/dev/null || warn "View cache failed (templates compile on demand)"
 fi
 
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
-# ── Apache: configure to listen on port 8080 for nginx proxy ─────────────
-APACHE_PORTS="/etc/apache2/ports.conf"
-APACHE_SITE="/etc/apache2/sites-available/000-default.conf"
-
-log "Configuring Apache to listen on port 8080..."
-sed -ni '/^Listen /!p' "$APACHE_PORTS"
-echo "Listen 8080" >> "$APACHE_PORTS"
-
-sed -i 's/:[0-9]\+>/:8080>/g' "$APACHE_SITE" 2>/dev/null || true
-
-echo "ServerName _default_" >> /etc/apache2/apache2.conf || true
-echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf || true
-
-# Stop any stale Apache on old port 80
-if [ -s /var/log/apache2/httpd.pid ] || ps aux | grep -v grep | grep -q '[a]pache2'; then
-    log "Stopping existing Apache process..."
-    pkill -TERM apache2 2>/dev/null || true
-    sleep 2
+# ── Flutter web build check & 502 error page ────────────────────────────
+FLUTTER_DIR="/var/www/html/build/web"
+if [ -z "$(find "$FLUTTER_DIR" -maxdepth 0 -type d 2>/dev/null)" ]; then
+    warn "$FLUTTER_DIR/ not found — creating default"
+    mkdir -p "$FLUTTER_DIR"
 fi
 
-# ── PHP-FPM pool tuning ──────────────────────────────────────────────────
-PHPFPM_POOL="/usr/local/etc/php-fpm.d/www.conf"
-if [ -f "$PHPFPM_POOL" ]; then
-    sed -i 's/^pm = .*/pm = dynamic/' "$PHPFPM_POOL" 2>/dev/null || true
-    sed -i 's/^pm.max_children = .*/pm.max_children = 10/' "$PHPFPM_POOL" 2>/dev/null || true
-    sed -i 's/^pm.start_servers = .*/pm.start_servers = 3/' "$PHPFPM_POOL" 2>/dev/null || true
-    sed -i 's/^pm.min_spare_servers = .*/pm.min_spare_servers = 3/' "$PHPFPM_POOL" 2>/dev/null || true
-    sed -i 's/^pm.max_spare_servers = .*/pm.max_spare_servers = 5/' "$PHPFPM_POOL" 2>/dev/null || true
-fi
-
-# ── PHP-FPM (optional — only starts if binary exists) ─────────────────────
-if [ -x "$(command -v php-fpm 2>/dev/null)" ]; then
-    log "Starting PHP-FPM..."
-    php-fpm -y /usr/local/etc/php-fpm.conf &
-    sleep 1
-else
-    log "PHP-FPM not available — Apache uses mod_php (no php-fpm needed)."
-fi
-
-# ── Flutter web build check ───────────────────────────────────────────────
-if [ -z "$(find /var/www/html/build/web -maxdepth 0 -type d 2>/dev/null)" ]; then
-    warn "/var/www/html/build/web/ not found — Flutter web build was not copied into the image."
-fi
-
-if [ ! -f /var/www/html/build/web/index.html ]; then
-    log "No Flutter index.html found — creating placeholder page..."
-    cat > /var/www/html/build/web/index.html << 'PLACEHOLDER'
+if [ ! -f "$FLUTTER_DIR/index.html" ]; then
+    log "No Flutter index.html — creating status page..."
+    cat > "$FLUTTER_DIR/index.html" << 'STATUS'
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBKU App</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f5f5f5; }
-        .container { text-align: center; padding: 2rem; }
-        h1 { font-size: 2rem; color: #333; margin-bottom: 0.5rem; }
-        p { color: #666; font-size: 1.1rem; }
-        .status { display: inline-block; margin-top: 1rem; padding: 0.5rem 1.5rem; background: #10b981; color: white; border-radius: 6px; font-weight: 500; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SBKU App</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f5f5f5; }
+.container { text-align:center; padding:2rem; }
+h1 { font-size:2rem; color:#333; margin-bottom:0.5rem; }
+p { color:#666; }
+.status { display:inline-block; margin-top:1rem; padding:0.5rem 1.5rem; background:#10b981; color:white; border-radius:6px; font-weight:500; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>SBKU App</h1>
-        <p>Backend is running</p>
-        <div class="status">API Available</div>
-    </div>
+<div class="container">
+<h1>SBKU App</h1>
+<p>Backend is running</p>
+<div class="status">API Available</div>
+</div>
 </body>
 </html>
-PLACEHOLDER
+STATUS
 fi
+
+# Create the nginx 502 error page (served directly by nginx when Apache is down)
+cat > "$FLUTTER_DIR/502.html" << 'ERR502'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>502 Bad Gateway</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#fef2f2; }
+.container { text-align:center; padding:2rem; max-width:480px; }
+h1 { font-size:2.5rem; color:#dc2626; margin-bottom:0.5rem; }
+p { color:#666; line-height:1.5; margin-bottom:0.5rem; }
+.hint { font-size:0.85rem; color:#999; margin-top:1.5rem; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>502</h1>
+<p>The backend server is not reachable right now.</p>
+<p>The API service (Apache) is starting up or is temporarily down.</p>
+<div class="hint">Please wait a moment and refresh. If the issue persists, check the server logs.</div>
+</div>
+</body>
+</html>
+ERR502
+log "502 error page created at $FLUTTER_DIR/502.html"
 
 # ── Queue worker ─────────────────────────────────────────────────────────
 if [ -z "$WEB_ONLY" ]; then
@@ -323,15 +268,54 @@ else
     log "WEB_ONLY set — skipping queue worker."
 fi
 
-# ── Start Apache on port 8080 in background ──────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════
+# Apache & nginx startup
+# ══════════════════════════════════════════════════════════════════════════
+
+# ── 1. Validate Apache config ──────────────────────────────────────────
+log "Validating Apache configuration..."
+if ! apachectl configtest 2>&1; then
+    error "Apache configuration is INVALID — fix the config and rebuild."
+    error "If Apache cannot start, nginx will return 502 for all proxied requests."
+    # We still continue so the container doesn't restart-loop. nginx serves
+    # the Flutter app at least, and shows 502.html for API calls.
+fi
+
+# ── 2. Configure Apache for port 8080 ──────────────────────────────────
+APACHE_PORTS="/etc/apache2/ports.conf"
+APACHE_SITE="/etc/apache2/sites-available/000-default.conf"
+
+log "Configuring Apache to listen on port 8080..."
+sed -ni '/^Listen /!p' "$APACHE_PORTS" 2>/dev/null || true
+echo "Listen 8080" >> "$APACHE_PORTS"
+sed -i 's/:[0-9]\+>/:8080>/g' "$APACHE_SITE" 2>/dev/null || true
+echo "ServerName _default_" >> /etc/apache2/apache2.conf 2>/dev/null || true
+echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf 2>/dev/null || true
+
+# Stop any stale Apache on old port 80
+if [ -s /var/log/apache2/httpd.pid ] || ps aux 2>/dev/null | grep -v grep | grep -q '[a]pache2'; then
+    log "Stopping existing Apache process..."
+    pkill -TERM apache2 2>/dev/null || true
+    sleep 2
+fi
+
+# ── 3. PHP-FPM (optional — only if binary exists) ─────────────────────
+if [ -x "$(command -v php-fpm 2>/dev/null)" ]; then
+    log "Starting PHP-FPM..."
+    php-fpm -y /usr/local/etc/php-fpm.conf &
+    sleep 1
+else
+    log "Apache uses mod_php (no php-fpm needed)."
+fi
+
+# ── 4. Start Apache on port 8080 in background ─────────────────────────
 log "Starting Apache on port 8080..."
 apache2-foreground &
 APACHE_PID=$!
-sleep 3
 
-# Wait for Apache to start listening (up to 15s)
+# Wait for Apache to start listening (up to 30s, polling every 3s)
 APACHE_READY=false
-for i in 1 2 3 4 5; do
+for i in $(seq 1 10); do
     if command -v ss &> /dev/null; then
         if ss -tlnp 2>/dev/null | grep -q ':8080'; then
             log "✓ Apache listening on port 8080"; APACHE_READY=true; break
@@ -341,18 +325,15 @@ for i in 1 2 3 4 5; do
             log "✓ Apache listening on port 8080"; APACHE_READY=true; break
         fi
     fi
-    # Fallback: check if PID is still alive
     if ! kill -0 "$APACHE_PID" 2>/dev/null; then
         error "Apache process (PID $APACHE_PID) died prematurely!"
-        error "Check Apache error logs: docker exec <container> cat /var/log/apache2/error.log"
-        APACHE_READY=false
+        error "Check logs: cat /var/log/apache2/error.log"
         break
     fi
-    [ "$i" -eq 5 ] && warn "Apache NOT listening on port 8080 after 15s — check config"
     sleep 3
 done
 
-# Quick Apache connectivity test (retry a few times)
+# Verify Apache responds to HTTP
 if [ "$APACHE_READY" = true ] && command -v curl &> /dev/null; then
     for i in 1 2 3; do
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null || echo "000")
@@ -360,18 +341,23 @@ if [ "$APACHE_READY" = true ] && command -v curl &> /dev/null; then
             log "Apache reachable on 8080 (HTTP $HTTP_CODE)"
             break
         fi
-        [ "$i" -eq 3 ] && warn "Apache unreachable on 8080 after 3 attempts"
+        [ "$i" -eq 3 ] && warn "Apache unreachable on 8080 after 3 curl attempts"
         sleep 2
     done
 fi
 
 if [ "$APACHE_READY" = false ]; then
-    error "Apache is not running — nginx will return 502 Bad Gateway for all proxied requests."
-    error "Check Apache error logs: docker exec <container> cat /var/log/apache2/error.log"
-    error "Check PHP error logs: docker exec <container> cat /var/www/html/storage/logs/laravel.log"
+    error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    error "Apache is NOT running on port 8080."
+    error "Nginx will return 502 Bad Gateway for all API calls."
+    error ""
+    error "Check Apache error log:  cat /var/log/apache2/error.log"
+    error "Check Apache access log: cat /var/log/apache2/access.log"
+    error "Check Laravel log:       cat storage/logs/laravel.log"
+    error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 fi
 
-# ── Start nginx as the foreground entrypoint ──────────────────────────────
+# ── 5. Start nginx ─────────────────────────────────────────────────────
 log "Starting nginx on port ${PORT:-80}..."
 if [ -f /var/run/nginx.pid ] && kill -0 "$(cat /var/run/nginx.pid)" 2>/dev/null; then
     log "nginx already running."
@@ -379,15 +365,20 @@ else
     nginx -g "daemon off;" &
     NGINX_PID=$!
     sleep 1
-    if kill -0 $NGINX_PID 2>/dev/null; then
+    if kill -0 "$NGINX_PID" 2>/dev/null; then
         log "✓ nginx is PID $NGINX_PID"
     else
-        error "nginx failed to start — falling back to Apache only"
-        wait $APACHE_PID
+        error "nginx failed to start — check nginx config"
+        error "nginx -t output:"
+        nginx -t 2>&1 || true
     fi
 fi
 
-log "SBKU backend is fully operational."
+if [ "$APACHE_READY" = true ]; then
+    log "✓ SBKU backend is fully operational (nginx → Apache on 8080)."
+else
+    warn "SBKU backend started with Apache DOWN — API calls will return 502."
+fi
 
 # Block so the container stays alive (handles signals via trap)
 wait $NGINX_PID || wait $APACHE_PID
