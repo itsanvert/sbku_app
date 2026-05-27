@@ -16,7 +16,7 @@ LABEL org.opencontainers.image.description="PHP + Nginx production image for sbk
 LABEL org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY:-sbku/sbku_app}"
 LABEL org.opencontainers.image.vendor="SBKU"
 
-# Install system deps in one layer, clean up immediately
+# Install system deps + PHP extensions in one layer, clean up immediately
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpng-dev \
         libjpeg-dev \
@@ -27,12 +27,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq-dev \
         zlib1g-dev \
         zip unzip git curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions via docker-php-ext-install (fast, no compilation)
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip opcache
+        pdo_pgsql mbstring bcmath gd zip opcache \
+    && pecl install redis \
+    && docker-php-ext-enable redis
 
 # gRPC and Protobuf are removed to speed up build time.
 # With GOOGLE_CLOUD_USE_REST=true, they are not required for Firestore.
@@ -116,7 +116,7 @@ COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --from=vendor  /app/vendor          ./vendor
 COPY --from=assets  /app/public/build    ./public/build
 
-# ── 1b. Apache MPM prefork config (tuned for throughput) ─────────────────────
+# ── 1b. Apache & PHP performance config ─────────────────────────────────────
 COPY docker/mpm_prefork.conf        /etc/apache2/mods-available/mpm_prefork.conf
 COPY docker/php-memory.ini           /usr/local/etc/php/conf.d/php-memory.ini
 COPY docker/apache-compress.conf     /etc/apache2/conf-available/apache-compress.conf
@@ -129,7 +129,6 @@ RUN a2enconf apache-compress apache-performance && \
 # Content appears at build/web/ and gets COPY'd here.
 # If this is empty, the Flutter layer is skipped and start.sh warns.
 # Nginx serves it at / from /var/www/html/build/web/
-RUN mkdir -p frontend/build/web
 COPY frontend/build/web/ /var/www/html/build/web/
 
 # ── 2. Application source (changes every push — intentionally last) ──────────
@@ -176,16 +175,11 @@ RUN apachectl configtest 2>&1 || { \
         exit 1; \
     }
 
-# Discover package service providers (Firebase, Livewire, Flux, etc.)
-# so they are cached even if --no-scripts skipped post-autoload-dump.
-# This is best-effort at build time; start.sh re-runs it at runtime.
+# Discover package service providers and pre-cache config at build time
+# start.sh skips these if files already exist. Best-effort — failures are non-fatal.
 RUN rm -f bootstrap/cache/packages.php && \
     php artisan package:discover --ansi 2>/dev/null || true
-
-# Pre-compile Blade templates at build time so runtime startup is faster
-# (start.sh skips view:cache when the compiled files already exist).
-# Best-effort — if it fails (e.g. missing APP_KEY), views compile on demand.
-RUN php artisan view:cache 2>/dev/null || true
+RUN php artisan config:cache 2>/dev/null || true
 
 # Make start.sh executable (it handles the remaining runtime setup)
 RUN chmod +x /var/www/html/start.sh

@@ -9,7 +9,7 @@ class SyllabusService {
   Future<List<SyllabusModel>> getSyllabus() async {
     final response = await _apiService.get(
       ApiEndpoints.syllabus,
-      requiresAuth: false,
+      requiresAuth: true,
     );
 
     if (response.statusCode != 200) {
