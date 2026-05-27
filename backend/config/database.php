@@ -95,7 +95,10 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => env('DB_SSLMODE', 'prefer') . ';connect_timeout=' . env('DB_CONNECT_TIMEOUT', 10),
+            'options' => extension_loaded('pdo_pgsql') ? [
+                \PDO::ATTR_TIMEOUT => (int) env('DB_CONNECT_TIMEOUT', 10),
+            ] : [],
         ],
 
         'sqlsrv' => [
