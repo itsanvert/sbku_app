@@ -330,18 +330,30 @@ APACHE_PID=$!
 sleep 3
 
 # Wait for Apache to start listening (up to 15s)
+APACHE_READY=false
 for i in 1 2 3 4 5; do
     if command -v ss &> /dev/null; then
-        ss -tlnp 2>/dev/null | grep -q ':8080' && log "✓ Apache listening on port 8080" && break
+        if ss -tlnp 2>/dev/null | grep -q ':8080'; then
+            log "✓ Apache listening on port 8080"; APACHE_READY=true; break
+        fi
     elif command -v netstat &> /dev/null; then
-        netstat -tlnp 2>/dev/null | grep -q ':8080' && log "✓ Apache listening on port 8080" && break
+        if netstat -tlnp 2>/dev/null | grep -q ':8080'; then
+            log "✓ Apache listening on port 8080"; APACHE_READY=true; break
+        fi
     fi
-    [ "$i" -eq 5 ] && warn "Apache NOT listening on port 8080 after 15s"
+    # Fallback: check if PID is still alive
+    if ! kill -0 "$APACHE_PID" 2>/dev/null; then
+        error "Apache process (PID $APACHE_PID) died prematurely!"
+        error "Check Apache error logs: docker exec <container> cat /var/log/apache2/error.log"
+        APACHE_READY=false
+        break
+    fi
+    [ "$i" -eq 5 ] && warn "Apache NOT listening on port 8080 after 15s — check config"
     sleep 3
 done
 
 # Quick Apache connectivity test (retry a few times)
-if command -v curl &> /dev/null; then
+if [ "$APACHE_READY" = true ] && command -v curl &> /dev/null; then
     for i in 1 2 3; do
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" != "000" ]; then
@@ -351,6 +363,12 @@ if command -v curl &> /dev/null; then
         [ "$i" -eq 3 ] && warn "Apache unreachable on 8080 after 3 attempts"
         sleep 2
     done
+fi
+
+if [ "$APACHE_READY" = false ]; then
+    error "Apache is not running — nginx will return 502 Bad Gateway for all proxied requests."
+    error "Check Apache error logs: docker exec <container> cat /var/log/apache2/error.log"
+    error "Check PHP error logs: docker exec <container> cat /var/www/html/storage/logs/laravel.log"
 fi
 
 # ── Start nginx as the foreground entrypoint ──────────────────────────────
