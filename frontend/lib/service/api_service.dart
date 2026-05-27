@@ -161,7 +161,7 @@ class ApiService {
   Future<http.Response> post(
     String endpoint,
     Map<String, dynamic> body, {
-    bool requiresAuth = false,
+    bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
     final uri = _buildUri(endpoint);

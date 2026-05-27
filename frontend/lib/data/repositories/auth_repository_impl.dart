@@ -109,6 +109,10 @@ class AuthRepositoryImpl with ApiErrorHandler implements AuthRepository {
         }
       }
 
+      if (response.statusCode == 401) {
+        await _api.deleteToken();
+      }
+
       return null;
     });
   }
