@@ -121,13 +121,14 @@ COPY docker/mpm_prefork.conf        /etc/apache2/mods-available/mpm_prefork.conf
 COPY docker/php-memory.ini           /usr/local/etc/php/conf.d/php-memory.ini
 COPY docker/apache-compress.conf     /etc/apache2/conf-available/apache-compress.conf
 COPY docker/apache-performance.conf  /etc/apache2/conf-available/apache-performance.conf
-RUN a2enconf apache-compress apache-performance
+RUN a2enconf apache-compress apache-performance && \
+    a2enmod mpm_prefork
 
 # ── 1c. Flutter web build ─────────────────────────────────────────────────────
 # The frontend requires: cd frontend && flutter build web --release
 # Content appears at build/web/ and gets COPY'd here.
-# If this is empty, the Flutter layer is skipped and the nginx start.sh warns.
-# Ensure the build context always contains this path so COPY never fails.
+# If this is empty, the Flutter layer is skipped and start.sh warns.
+# Nginx serves it at / from /var/www/html/build/web/
 RUN mkdir -p frontend/build/web
 COPY frontend/build/web/ /var/www/html/build/web/
 
@@ -150,19 +151,30 @@ RUN if [ ! -f .env ] && [ -f .env.example ]; then \
 
 # ── 3. Apache document root → Laravel public/ ────────────────────────────────
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+RUN sed -ri \
+        -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" \
         /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' \
         /etc/apache2/apache2.conf \
-        /etc/apache2/conf-available/*.conf
+        /etc/apache2/conf-available/*.conf 2>/dev/null; \
+    sed -ri \
+        -e "s!DocumentRoot /var/www!DocumentRoot ${APACHE_DOCUMENT_ROOT}!g" \
+        /etc/apache2/sites-available/*.conf 2>/dev/null || true
 
 # ── Apache listen port ────────────────────────────────────────────────────────
 # Apache is a backend service (behind nginx), so it always listens on 8080.
 # Nginx (on port 80) proxies all requests → Apache 8080.
 RUN sed -ri \
-    -e 's/^Listen [0-9]+/Listen 8080/' \
-    -e 's/:80>/:8080>/g' \
-    /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
+        -e 's/^Listen .*/Listen 8080/' \
+        -e 's/<VirtualHost \*:.*>/<VirtualHost *:8080>/g' \
+        /etc/apache2/ports.conf \
+        /etc/apache2/sites-available/000-default.conf 2>/dev/null || true
+
+# Validate Apache config after all changes
+RUN apachectl configtest 2>&1 || { \
+        echo "ERROR: Apache configuration test failed — check Dockerfile settings"; \
+        apachectl -S 2>&1 | head -20; \
+        exit 1; \
+    }
 
 # Discover package service providers (Firebase, Livewire, Flux, etc.)
 # so they are cached even if --no-scripts skipped post-autoload-dump.
