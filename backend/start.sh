@@ -177,15 +177,39 @@ elif [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
     [ -z "$USE_FIRESTORE" ] && export USE_FIRESTORE="true"
 fi
 
+# ── Redis (if REDIS_HOST is set, configure .env for redis cache/session) ────
+if [ -n "$REDIS_HOST" ]; then
+    log "Redis host detected — enabling redis cache and session driver..."
+    write_env "CACHE_STORE" "redis"
+    write_env "SESSION_DRIVER" "redis"
+    write_env "REDIS_HOST" "$REDIS_HOST"
+    write_env "REDIS_PASSWORD" "${REDIS_PASSWORD:-}"
+    write_env "REDIS_PORT" "${REDIS_PORT:-6379}"
+fi
+
 # ── Laravel initialization (best-effort — don't block Apache on failure) ──
 log "Running Laravel setup (best-effort)..."
 
-php artisan migrate --force 2>/dev/null || warn "Migration failed (tables may be stale)"
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
+
+# Only run migration if there are pending changes
+PENDING_MIGRATIONS=$(php artisan migrate:status 2>/dev/null | grep -c "Pending" || true)
+if [ "$PENDING_MIGRATIONS" -gt 0 ]; then
+    log "$PENDING_MIGRATIONS pending migration(s) — applying..."
+    php artisan migrate --force 2>/dev/null || warn "Migration failed (tables may be stale)"
+else
+    log "No pending migrations — skipping."
+fi
 
 rm -f bootstrap/cache/packages.php
 php artisan package:discover --ansi 2>/dev/null || true
-php artisan optimize 2>/dev/null || warn "Optimize failed (config/route/event cache skipped)"
+
+# Only run optimize if cache files are stale/missing
+if [ ! -f bootstrap/cache/config.php ] || [ ! -f bootstrap/cache/routes-v7.php ]; then
+    php artisan optimize 2>/dev/null || warn "Optimize failed (config/route/event cache skipped)"
+else
+    log "Cache files exist — skipping artisan optimize."
+fi
 
 if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null | head -1)" ]; then
     php artisan view:cache 2>/dev/null || warn "View cache failed (templates compile on demand)"
