@@ -84,20 +84,24 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: false
 
-      - name: Render ECS task definition
+      - name: Deploy to EC2 via SSH
         if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
-        id: render
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: appleboy/ssh-action@v1
         with:
-          task-definition: backend/ecs-task-definition.json
-          container-name: Main
-          image: ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:sha-${{ github.sha }}
-
-      - name: Deploy to Amazon ECS
-        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.render.outputs.task-definition }}
-          service: sbku_app-4b02
-          cluster: default
-          wait-for-service-stability: true
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.ecr.outputs.registry }}
+            docker pull ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:sha-${{ github.sha }}
+            docker tag ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:sha-${{ github.sha }} ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:uat
+            docker tag ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:sha-${{ github.sha }} ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:latest
+            docker stop sbku-backend || true
+            docker rm sbku-backend || true
+            docker run -d --name sbku-backend \
+              -p 80:80 \
+              -p 8080:8080 \
+              --restart no \
+              --env-file /home/ec2-user/.env.production \
+              ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}:sha-${{ github.sha }}
+            docker system prune -f || true
