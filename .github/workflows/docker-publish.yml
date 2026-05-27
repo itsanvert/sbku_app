@@ -35,7 +35,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
-        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -43,7 +42,6 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
 
       - name: Log in to Amazon ECR
-        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/uat') && github.event_name != 'pull_request'
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -60,7 +58,6 @@ jobs:
             type=raw,value=uat,enable={{is_default_branch}}
 
       - name: Extract Docker metadata (ECR)
-        if: steps.ecr.outputs.registry != ''
         id: meta-ecr
         uses: docker/metadata-action@v5
         with:
@@ -77,8 +74,12 @@ jobs:
         with:
           context: ./backend
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}${{ steps.meta-ecr.conclusion == 'success' && format(',{0}', steps.meta-ecr.outputs.tags) || '' }}
-          labels: ${{ steps.meta.outputs.labels }}${{ steps.meta-ecr.conclusion == 'success' && format(',{0}', steps.meta-ecr.outputs.labels) || '' }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ steps.meta-ecr.outputs.tags }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            ${{ steps.meta-ecr.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
