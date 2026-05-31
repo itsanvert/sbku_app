@@ -153,6 +153,7 @@ jobs:
             APP_URL=http://localhost
             ENVEOF
               sudo chmod 600 "$ENV_FILE"
+              sudo chown ec2-user:ec2-user "$ENV_FILE"
             fi
 
             # ── 6. Start new container with auto-restart ──
