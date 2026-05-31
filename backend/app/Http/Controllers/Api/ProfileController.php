@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
+use Laravel\Fortify\Contracts\UpdatesUserPasswords;
 
 /**
  * API controller for profile management.
@@ -25,44 +27,23 @@ class ProfileController extends Controller
     /**
      * Update user profile information
      */
-    public function updateProfile(Request $request)
+    public function updateProfile(Request $request, UpdatesUserProfileInformation $updater)
     {
-        $user = $request->user();
-
-        $validated = $request->validate([
-            'name'  => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-        ]);
-
-        $user->forceFill($validated)->save();
+        $updater->update($request->user(), $request->only(['name', 'email']));
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'user'    => (new UserResource($user))->resolve(),
+            'user'    => (new UserResource($request->user()->fresh()))->resolve(),
         ]);
     }
 
     /**
      * Update user password
      */
-    public function updatePassword(Request $request)
+    public function updatePassword(Request $request, UpdatesUserPasswords $updater)
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $user = $request->user();
-
-        if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'The current password is incorrect.',
-            ], 422);
-        }
-
-        $user->update(['password' => Hash::make($request->password)]);
+        $updater->update($request->user(), $request->all());
 
         return response()->json([
             'success' => true,
@@ -81,21 +62,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        $oldPath = $user->profile_photo_path;
-        $path = $request->file('photo')->store('profile-photos', 'public');
-
-        $user->update(['profile_photo_path' => $path]);
-
-        // Sync to teacher/student profile_image_path
-        if ($user->role === 'teacher' && $user->teacher) {
-            $user->teacher->update(['profile_image_path' => $path]);
-        } elseif ($user->role === 'student' && $user->student) {
-            $user->student->update(['profile_image_path' => $path]);
-        }
-
-        if ($oldPath) {
-            Storage::disk('public')->delete($oldPath);
-        }
+        $user->updateProfilePhoto($request->file('photo'));
 
         return response()->json([
             'success' => true,
@@ -111,18 +78,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if ($user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
-        }
-
-        // Clear teacher/student profile_image_path as well
-        if ($user->role === 'teacher' && $user->teacher) {
-            $user->teacher->update(['profile_image_path' => null]);
-        } elseif ($user->role === 'student' && $user->student) {
-            $user->student->update(['profile_image_path' => null]);
-        }
-
-        $user->update(['profile_photo_path' => null]);
+        $user->deleteProfilePhoto();
 
         return response()->json([
             'success' => true,

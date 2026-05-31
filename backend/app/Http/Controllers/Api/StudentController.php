@@ -33,18 +33,24 @@ class StudentController extends Controller
             ? $request->sort_by
             : 'id';
         $sortDir = $request->sort_dir === 'desc' ? 'desc' : 'asc';
+        $perPage = min(max((int) $request->per_page ?: 10, 1), 100);
 
         $students = Student::select('students.*')
             ->join('users', 'students.user_id', '=', 'users.id')
-            ->with(['user', 'major', 'faculty', 'academicClass'])
+            ->with([
+                'user' => fn ($q) => $q->select('id', 'name', 'email'),
+                'major' => fn ($q) => $q->select('id', 'name'),
+                'faculty' => fn ($q) => $q->select('id', 'name'),
+                'academicClass' => fn ($q) => $q->select('id', 'name'),
+            ])
             ->when($request->search, function ($q) use ($request) {
                 $q->where(function ($query) use ($request) {
-                    $query->where('users.name', 'ilike', '%'.$request->search.'%')
-                          ->orWhere('users.email', 'ilike', '%'.$request->search.'%');
+                    $query->where('users.name', 'like', '%'.$request->search.'%')
+                          ->orWhere('users.email', 'like', '%'.$request->search.'%');
                 });
             })
             ->orderBy($sortBy === 'id' ? 'students.id' : 'students.'.$sortBy, $sortDir)
-            ->paginate(min((int) $request->per_page ?: 10, 100));
+            ->paginate($perPage);
 
         return response()->json($students);
     }

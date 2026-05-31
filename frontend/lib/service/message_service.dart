@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/service/api_service.dart';
 
 class MessageService {
-  final ApiService _api = ApiService();
+  final ApiService _api = sl<ApiService>();
 
   /// Poll messages from the API.
   Stream<List<Map<String, dynamic>>> listenToMessages({String? userId}) async* {
@@ -27,18 +28,23 @@ class MessageService {
       yield cachedData;
     } catch (e) {
       print('Initial messages fetch failed: $e');
-      yield* Stream.error(e);
     }
 
-    // 2. Poll periodically
-    yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+    // 2. Poll with adaptive backoff
+    var pollInterval = const Duration(seconds: 10);
+    while (true) {
+      await Future.delayed(pollInterval);
       try {
         cachedData = await fetchMessages();
-        return cachedData;
+        pollInterval = const Duration(seconds: 10);
+        yield cachedData;
       } catch (e) {
         print('Polling messages failed: $e');
-        return cachedData;
+        pollInterval = Duration(
+          seconds: (pollInterval.inSeconds * 2).clamp(10, 60),
+        );
+        yield cachedData;
       }
-    });
+    }
   }
 }

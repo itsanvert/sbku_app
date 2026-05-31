@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:sbku_app/core/constants/app_config.dart';
 import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/presentation/screens/home/home_screen.dart';
 import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
-import 'package:sbku_app/service/api_service.dart';
 import 'package:sbku_app/service/notification_service_v2.dart';
 import 'package:sbku_app/service/app_lifecycle_manager.dart';
 import 'package:sbku_app/service/platform_channel_service.dart';
@@ -56,13 +56,21 @@ Future<void> main() async {
 
   try {
     await dotenv.load(fileName: '.env');
-  } catch (_) {
+    print('✓ .env loaded successfully');
+  } catch (e) {
+    print('✗ Failed to load .env: $e');
     try {
       await dotenv.load(fileName: '.env.example');
-    } catch (_) {
-      print('Could not load .env file, using defaults');
+      print('✓ .env.example loaded as fallback');
+    } catch (e2) {
+      print('✗ Failed to load .env.example: $e2');
+      print('⚠ Using hardcoded fallback: ${AppConfig.localApiHost}');
     }
   }
+
+  // Debug: show which API URL is actually being resolved
+  print('🔧 Resolved API URL: ${AppConfig.apiBaseUrl}');
+  print('🔧 Resolved API Host: ${AppConfig.apiHost}');
 
   setupServiceLocator();
 
@@ -184,9 +192,6 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 
   Future<void> _checkAuth() async {
-    // Start server warm-up silently in the background (no await)
-    _warmUpServer();
-
     final startTime = DateTime.now();
 
     // Check auth status (makes /api/user API call if token is saved)
@@ -202,16 +207,6 @@ class _AuthCheckState extends State<AuthCheck> {
 
     if (mounted) {
       setState(() => _isChecking = false);
-    }
-  }
-
-  Future<void> _warmUpServer() async {
-    try {
-      final apiService = sl<ApiService>();
-      await apiService.healthCheck();
-      print('Render API Warm-up: Server is warm and ready!');
-    } catch (e) {
-      print('Render API Warm-up failed: $e');
     }
   }
 
