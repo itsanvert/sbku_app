@@ -195,14 +195,9 @@ log "Running Laravel setup (best-effort)..."
 
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
 
-# Only run migration if there are pending changes (with timeout)
-PENDING_MIGRATIONS=$(timeout 15 php artisan migrate:status 2>/dev/null | grep -c "Pending" || true)
-if [ "$PENDING_MIGRATIONS" -gt 0 ]; then
-    log "$PENDING_MIGRATIONS pending migration(s) — applying..."
-    timeout 30 php artisan migrate --force 2>/dev/null || warn "Migration timed out or failed (tables may be stale)"
-else
-    log "No pending migrations — skipping."
-fi
+# Apply pending migrations (idempotent — no-op if nothing pending).
+# This also handles the case where the DB connection is cold (Neon cold-start).
+timeout 30 php artisan migrate --force 2>&1 || warn "Migration failed (tables may be stale)"
 
 rm -f bootstrap/cache/packages.php
 php artisan package:discover --ansi 2>/dev/null || true
