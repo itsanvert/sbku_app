@@ -295,6 +295,21 @@ else
 fi
 
 # ══════════════════════════════════════════════════════════════════════════
+# Self-signed SSL certificate (for HTTPS on port 443)
+# ══════════════════════════════════════════════════════════════════════════
+SSL_CERT="/etc/ssl/certs/self-signed.crt"
+SSL_KEY="/etc/ssl/private/self-signed.key"
+if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
+    log "Generating self-signed SSL certificate..."
+    mkdir -p /etc/ssl/certs /etc/ssl/private
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout "$SSL_KEY" \
+        -out "$SSL_CERT" \
+        -subj "/C=US/ST=State/L=City/O=SBKU/CN=_"
+    log "Self-signed SSL certificate generated."
+fi
+
+# ══════════════════════════════════════════════════════════════════════════
 # Apache & nginx startup
 # ══════════════════════════════════════════════════════════════════════════
 

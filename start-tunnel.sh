@@ -75,7 +75,8 @@ sudo docker stop "$CONTAINER_NAME" 2>/dev/null || true
 sudo docker rm "$CONTAINER_NAME" 2>/dev/null || true
 sudo docker run -d \
   --name "$CONTAINER_NAME" \
-  -p 8080:80 \
+  -p 80:80 \
+  -p 443:443 \
   --memory="768m" \
   --memory-reservation="512m" \
   --env-file "$ENV_FILE" \

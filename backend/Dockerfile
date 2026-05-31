@@ -52,6 +52,7 @@ RUN a2enmod rewrite deflate expires headers
 #   /api/*, /dashboard, /login  → Apache/PHP on 127.0.0.1:8080
 RUN apt-get update && apt-get install -y --no-install-recommends \
         nginx${NGINX_VERSION:+=${NGINX_VERSION}} \
+        openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy nginx config before the build is finalised so the image has it baked in
@@ -222,4 +223,5 @@ ENTRYPOINT ["bash", "/var/www/html/start.sh"]
 
 # ECS Fargate uses the containerPort from task definition; EXPOSE is documentary.
 EXPOSE 80
+EXPOSE 443
 EXPOSE 8080
