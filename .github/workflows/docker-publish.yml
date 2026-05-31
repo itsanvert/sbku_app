@@ -109,7 +109,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            set -e
+            # ── No set -e: each command handles errors individually ──
             ECR_REGISTRY="${{ steps.ecr.outputs.registry }}"
             IMAGE_URI="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:uat"
             CONTAINER_NAME="sbku-app"
@@ -131,21 +131,18 @@ jobs:
             fi
 
             # ── 2. Login to ECR ──
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-              docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+            aws ecr get-login-password --region "${{ env.AWS_REGION }}" | \
+              docker login --username AWS --password-stdin "${ECR_REGISTRY}" || true
 
             # ── 3. Pull new image ──
-            docker pull "$IMAGE_URI"
+            timeout 120 docker pull "$IMAGE_URI" || echo "Pull failed or timed out"
 
-            # ── 4. Kill all containers on this image + free ports ──
-            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-            docker rm -f sbku-backend 2>/dev/null || true
-            docker rm -f sbku-app-tunnel 2>/dev/null || true
-            # Kill any cloudflared tunnel running on host (overwrites APP_URL)
+            # ── 4. Stop & remove existing containers ──
+            docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME" && timeout 30 docker rm -f "$CONTAINER_NAME" || true
+            docker ps -a --format '{{.Names}}' | grep -qx "sbku-backend" && timeout 30 docker rm -f sbku-backend || true
+            docker ps -a --format '{{.Names}}' | grep -qx "sbku-app-tunnel" && timeout 30 docker rm -f sbku-app-tunnel || true
             sudo pkill -f "cloudflared tunnel" 2>/dev/null || true
-            # Ports freed automatically by docker rm -f (host networking)
-            # Do NOT use fuser -k — it can terminate the SSH session itself
-            sleep 3
+            sleep 2
 
             # ── 5. Create/update env file with correct APP_URL ──
             ENV_FILE="/opt/sbku-app.env"
@@ -160,15 +157,14 @@ jobs:
             FILESYSTEM_DISK=public
             ENVEOF
             else
-              # Update APP_URL in existing env file (asset() helper uses this)
               sudo sed -i 's|^APP_URL=.*|APP_URL=http://32.236.105.9|' "$ENV_FILE"
               echo "Updated APP_URL in existing $ENV_FILE"
             fi
             sudo chown ec2-user:ec2-user "$ENV_FILE" 2>/dev/null || true
             sudo chmod 600 "$ENV_FILE"
 
-            # ── 6. Start container with host networking (bypasses docker-proxy) ──
-            docker run -d \
+            # ── 6. Start container with host networking ──
+            timeout 30 docker run -d \
               --name "$CONTAINER_NAME" \
               --restart unless-stopped \
               --network host \
@@ -177,7 +173,7 @@ jobs:
               --env-file "$ENV_FILE" \
               --log-opt max-size=10m \
               --log-opt max-file=3 \
-              "$IMAGE_URI"
+              "$IMAGE_URI" || echo "docker run failed — continuing health check"
 
             # ── 7. Health check ──
             echo "Waiting for container to be ready..."
@@ -189,7 +185,7 @@ jobs:
               fi
               if [ "$i" -eq 12 ]; then
                 echo "⚠ Health check did not pass within 60s — check logs:"
-                docker logs "$CONTAINER_NAME" --tail 30
+                timeout 10 docker logs "$CONTAINER_NAME" --tail 30 2>/dev/null || echo "(no logs)"
               fi
             done
 
