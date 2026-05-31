@@ -20,6 +20,9 @@ fi
 cleanup() {
     local signal=$1
     log "Received $signal — shutting down gracefully..."
+    if [ -n "$WATCHDOG_PID" ] && kill -0 "$WATCHDOG_PID" 2>/dev/null; then
+        kill -TERM "$WATCHDOG_PID" 2>/dev/null || true
+    fi
     if [ -n "$NGINX_PID" ] && kill -0 "$NGINX_PID" 2>/dev/null; then
         log "Stopping nginx (PID $NGINX_PID)..."
         nginx -s quit 2>/dev/null || kill -TERM "$NGINX_PID" 2>/dev/null || true
@@ -192,11 +195,11 @@ log "Running Laravel setup (best-effort)..."
 
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
 
-# Only run migration if there are pending changes
-PENDING_MIGRATIONS=$(php artisan migrate:status 2>/dev/null | grep -c "Pending" || true)
+# Only run migration if there are pending changes (with timeout)
+PENDING_MIGRATIONS=$(timeout 15 php artisan migrate:status 2>/dev/null | grep -c "Pending" || true)
 if [ "$PENDING_MIGRATIONS" -gt 0 ]; then
     log "$PENDING_MIGRATIONS pending migration(s) — applying..."
-    php artisan migrate --force 2>/dev/null || warn "Migration failed (tables may be stale)"
+    timeout 30 php artisan migrate --force 2>/dev/null || warn "Migration timed out or failed (tables may be stale)"
 else
     log "No pending migrations — skipping."
 fi
@@ -308,6 +311,42 @@ if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
         -subj "/C=US/ST=State/L=City/O=SBKU/CN=_"
     log "Self-signed SSL certificate generated."
 fi
+
+# ══════════════════════════════════════════════════════════════════════════
+# Process watchdog — restarts Apache if it dies, logs memory on OOM risk
+# ══════════════════════════════════════════════════════════════════════════
+watchdog() {
+    while true; do
+        sleep 15
+
+        # Check Apache
+        if [ -n "$APACHE_PID" ] && ! kill -0 "$APACHE_PID" 2>/dev/null; then
+            warn "Apache (PID $APACHE_PID) died — restarting..."
+            apache2-foreground &
+            APACHE_PID=$!
+            log "Apache restarted (new PID $APACHE_PID)"
+        fi
+
+        # Check Nginx
+        if [ -n "$NGINX_PID" ] && ! kill -0 "$NGINX_PID" 2>/dev/null; then
+            warn "Nginx (PID $NGINX_PID) died — restarting..."
+            nginx -g "daemon off;" &
+            NGINX_PID=$!
+            log "Nginx restarted (new PID $NGINX_PID)"
+        fi
+
+        # Log memory every 2 minutes for OOM debugging
+        MEM_PCT=$(free | awk '/Mem:/ {printf "%.0f", $3/$2 * 100}' 2>/dev/null || echo "?")
+        if [ "${MEM_PCT}" -gt 90 ] 2>/dev/null; then
+            warn "Memory critical: ${MEM_PCT}% used"
+        fi
+    done
+}
+
+# Start watchdog in background
+watchdog &
+WATCHDOG_PID=$!
+log "Process watchdog started (PID $WATCHDOG_PID)"
 
 # ══════════════════════════════════════════════════════════════════════════
 # Apache & nginx startup
@@ -422,4 +461,4 @@ else
 fi
 
 # Block so the container stays alive (handles signals via trap)
-wait $NGINX_PID || wait $APACHE_PID
+wait $NGINX_PID 2>/dev/null || wait $APACHE_PID 2>/dev/null || wait $WATCHDOG_PID
