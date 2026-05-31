@@ -207,16 +207,16 @@ fi
 rm -f bootstrap/cache/packages.php
 php artisan package:discover --ansi 2>/dev/null || true
 
-# Only run optimize if cache files are stale/missing
-if [ ! -f bootstrap/cache/config.php ] || [ ! -f bootstrap/cache/routes-v7.php ]; then
-    php artisan optimize 2>/dev/null || warn "Optimize failed (config/route/event cache skipped)"
-else
-    log "Cache files exist — skipping artisan optimize."
-fi
+# ── Regenerate config/route/event cache at runtime ──────────────────────────
+# Build-time config:cache bakes stale values (e.g. APP_URL from build .env).
+# We must clear and re-cache so runtime env vars take effect.
+log "Regenerating config, route, and view caches with runtime environment..."
+rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/events.php
+php artisan optimize 2>/dev/null || warn "Optimize failed (config/route/event cache skipped)"
 
-if [ -z "$(find storage/framework/views/ -maxdepth 1 -name '*.php' 2>/dev/null | head -1)" ]; then
-    php artisan view:cache 2>/dev/null || warn "View cache failed (templates compile on demand)"
-fi
+log "Caching views..."
+rm -rf storage/framework/views/*.php
+php artisan view:cache 2>/dev/null || warn "View cache failed (templates compile on demand)"
 
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true

@@ -11,5 +11,6 @@ public/storage
 *.md
 *.pem
 *.ps1
+public/build
 bootstrap/cache/packages.php
 bootstrap/cache/config.php
