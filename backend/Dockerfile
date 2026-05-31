@@ -166,13 +166,11 @@ RUN if [ ! -f .env ] && [ -f .env.example ]; then \
 # ── 3. Apache document root → Laravel public/ ────────────────────────────────
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri \
-        -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" \
+        -e "s!DocumentRoot /var/www/html!DocumentRoot ${APACHE_DOCUMENT_ROOT}!g" \
+        -e "s!<Directory /var/www/html!<Directory ${APACHE_DOCUMENT_ROOT}!g" \
         /etc/apache2/sites-available/*.conf \
         /etc/apache2/apache2.conf \
-        /etc/apache2/conf-available/*.conf 2>/dev/null; \
-    sed -ri \
-        -e "s!DocumentRoot /var/www!DocumentRoot ${APACHE_DOCUMENT_ROOT}!g" \
-        /etc/apache2/sites-available/*.conf 2>/dev/null || true
+        /etc/apache2/conf-available/*.conf 2>/dev/null || true
 
 # ── Apache listen port ────────────────────────────────────────────────────────
 # Apache is a backend service (behind nginx), so it always listens on 8080.
