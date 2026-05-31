@@ -141,7 +141,7 @@ jobs:
             docker stop "$CONTAINER_NAME" 2>/dev/null || true
             docker rm "$CONTAINER_NAME" 2>/dev/null || true
 
-            # ── 5. Create env file if missing ──
+            # ── 5. Create env file if missing, fix ownership ──
             ENV_FILE="/opt/sbku-app.env"
             if [ ! -f "$ENV_FILE" ]; then
               echo "Creating $ENV_FILE ..."
@@ -152,9 +152,10 @@ jobs:
             APP_DEBUG=false
             APP_URL=http://localhost
             ENVEOF
-              sudo chmod 600 "$ENV_FILE"
-              sudo chown ec2-user:ec2-user "$ENV_FILE"
             fi
+            # Always ensure ec2-user can read it (fixes stale root-owned file)
+            sudo chown ec2-user:ec2-user "$ENV_FILE" 2>/dev/null || true
+            sudo chmod 600 "$ENV_FILE"
 
             # ── 6. Start new container with auto-restart ──
             docker run -d \
