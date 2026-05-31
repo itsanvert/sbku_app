@@ -1,4 +1,4 @@
-name: Build & Publish Docker Image
+name: Build, Publish & Deploy Docker Image
 
 on:
   push:
@@ -12,6 +12,8 @@ env:
   REGISTRY_GHCR: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   AWS_REGION: ap-southeast-2
+  ECR_REPOSITORY: sbku_app
+  FLUTTER_VERSION: '3.27'
 
 jobs:
   build-and-push:
@@ -23,6 +25,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Build Flutter Web
+        run: |
+          cd frontend
+          flutter pub get
+          flutter build web --release
+          mkdir -p ../backend/frontend/build/web
+          cp -r build/web/* ../backend/frontend/build/web/
+          echo "Flutter web build complete"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -61,7 +79,7 @@ jobs:
         id: meta-ecr
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.ecr.outputs.registry }}/${{ github.event.repository.name }}
+          images: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
           tags: |
             type=sha,prefix=sha-,format=long
             type=ref,event=branch
@@ -83,5 +101,104 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/uat' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            ECR_REGISTRY="${{ steps.ecr.outputs.registry }}"
+            IMAGE_URI="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:uat"
+            CONTAINER_NAME="sbku-app"
+
+            echo "=== Deploying $IMAGE_URI to EC2 ==="
+
+            # ── 1. Setup swap if missing (prevents OOM on t3.micro) ──
+            if ! swapon --show 2>/dev/null | grep -q .; then
+              echo "Creating 1 GB swap file..."
+              sudo dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+              echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+              echo "Swap enabled"
+            else
+              echo "Swap already configured:"
+              swapon --show
+            fi
+
+            # ── 2. Login to ECR ──
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+              docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+
+            # ── 3. Pull new image ──
+            docker pull "$IMAGE_URI"
+
+            # ── 4. Stop & remove old container ──
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm "$CONTAINER_NAME" 2>/dev/null || true
+
+            # ── 5. Create env file if missing ──
+            ENV_FILE="/opt/sbku-app.env"
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "Creating $ENV_FILE ..."
+              sudo tee "$ENV_FILE" > /dev/null << 'ENVEOF'
+            NEON_DATABASE_URL="postgresql://neondb_owner:npg_PTQUFJLvd94h@ep-fragrant-recipe-a7rnwwa3.ap-southeast-2.aws.neon.tech/neondb?sslmode=require"
+            APP_KEY=base64:qA+gNzOOJyERlAI2Qx1u7AK8j/pJ0npT5KMqaOl3sCE=
+            APP_ENV=production
+            APP_DEBUG=false
+            APP_URL=http://localhost
+            ENVEOF
+              sudo chmod 600 "$ENV_FILE"
+            fi
+
+            # ── 6. Start new container with auto-restart ──
+            docker run -d \
+              --name "$CONTAINER_NAME" \
+              --restart unless-stopped \
+              -p 80:80 \
+              -p 443:443 \
+              --memory="768m" \
+              --memory-reservation="512m" \
+              --env-file "$ENV_FILE" \
+              --log-opt max-size=10m \
+              --log-opt max-file=3 \
+              "$IMAGE_URI"
+
+            # ── 7. Health check ──
+            echo "Waiting for container to be ready..."
+            for i in $(seq 1 12); do
+              sleep 5
+              if curl -sf http://localhost/ > /dev/null 2>&1; then
+                echo "✓ Container is healthy (HTTP 200)"
+                break
+              fi
+              if [ "$i" -eq 12 ]; then
+                echo "⚠ Health check did not pass within 60s — check logs:"
+                docker logs "$CONTAINER_NAME" --tail 30
+              fi
+            done
+
+            echo "=== Deployment complete ==="
 
 

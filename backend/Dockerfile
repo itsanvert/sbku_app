@@ -46,6 +46,13 @@ RUN a2enmod rewrite deflate expires headers
 #   echo 'opcache.jit_buffer_size=100M' >> ...
 #   echo 'opcache.jit=tracing'          >> ...
 
+# OPcache tuning for low-memory environments
+RUN echo 'opcache.memory_consumption=32' >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini && \
+    echo 'opcache.interned_strings_buffer=8' >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini && \
+    echo 'opcache.max_accelerated_files=4000' >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini && \
+    echo 'opcache.revalidate_freq=60' >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini && \
+    echo 'opcache.fast_shutdown=1' >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
+
 # Install nginx (used as the production front-end proxy / static-file server)
 # Nginx will listen on port 80 and serve:
 #   /  → Flutter web build  (/var/www/html/build/web/)
@@ -127,9 +134,9 @@ RUN a2enconf apache-compress apache-performance && \
     echo '' >> /etc/apache2/apache2.conf && \
     echo '# ── MPM prefork limits (t3.micro = 1 GB RAM) ─────────────────' >> /etc/apache2/apache2.conf && \
     echo '<IfModule mpm_prefork_module>' >> /etc/apache2/apache2.conf && \
-    echo '    ServerLimit         4' >> /etc/apache2/apache2.conf && \
-    echo '    MaxRequestWorkers   4' >> /etc/apache2/apache2.conf && \
-    echo '    MaxConnectionsPerChild 2000' >> /etc/apache2/apache2.conf && \
+    echo '    ServerLimit         2' >> /etc/apache2/apache2.conf && \
+    echo '    MaxRequestWorkers   2' >> /etc/apache2/apache2.conf && \
+    echo '    MaxConnectionsPerChild 500' >> /etc/apache2/apache2.conf && \
     echo '</IfModule>' >> /etc/apache2/apache2.conf
 
 # ── 1c. Flutter web build ─────────────────────────────────────────────────────

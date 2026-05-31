@@ -5,7 +5,7 @@ class AppConfig {
   AppConfig._();
 
   /// Local Laragon fallback (used if .env is missing).
-  static const String localApiHost = 'http://192.168.1.101:8000';
+  static const String localApiHost = 'http://32.236.105.9';
 
   static String get apiHost {
     final fromEnv = dotenv.env['API_URL']?.trim();
