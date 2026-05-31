@@ -32,12 +32,12 @@ dependencies:
   reorderable_grid_view: ^2.2.8
   get_it: ^8.0.2
   google_fonts: ^6.1.0
-  flutter_local_notifications: ^19.0.0
+  flutter_local_notifications: ^21.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.7
 
