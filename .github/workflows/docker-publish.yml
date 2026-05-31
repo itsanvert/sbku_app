@@ -146,7 +146,7 @@ jobs:
             sudo fuser -k 8080/tcp 2>/dev/null || true
             sleep 3
 
-            # ── 5. Create env file if missing, fix ownership ──
+            # ── 5. Create/update env file with correct APP_URL ──
             ENV_FILE="/opt/sbku-app.env"
             if [ ! -f "$ENV_FILE" ]; then
               echo "Creating $ENV_FILE ..."
@@ -155,9 +155,13 @@ jobs:
             APP_KEY=base64:qA+gNzOOJyERlAI2Qx1u7AK8j/pJ0npT5KMqaOl3sCE=
             APP_ENV=production
             APP_DEBUG=false
-            APP_URL=http://localhost
+            APP_URL=http://32.236.105.9
             FILESYSTEM_DISK=public
             ENVEOF
+            else
+              # Update APP_URL in existing env file (asset() helper uses this)
+              sudo sed -i 's|^APP_URL=.*|APP_URL=http://32.236.105.9|' "$ENV_FILE"
+              echo "Updated APP_URL in existing $ENV_FILE"
             fi
             sudo chown ec2-user:ec2-user "$ENV_FILE" 2>/dev/null || true
             sudo chmod 600 "$ENV_FILE"
