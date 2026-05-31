@@ -139,13 +139,6 @@ RUN a2enconf apache-compress apache-performance && \
     echo '    MaxConnectionsPerChild 500' >> /etc/apache2/apache2.conf && \
     echo '</IfModule>' >> /etc/apache2/apache2.conf
 
-# ── 1c. Flutter web build ─────────────────────────────────────────────────────
-# The frontend requires: cd frontend && flutter build web --release
-# Content appears at build/web/ and gets COPY'd here.
-# If this is empty, the Flutter layer is skipped and start.sh warns.
-# Nginx serves it at / from /var/www/html/build/web/
-COPY frontend/build/web/ /var/www/html/build/web/
-
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
 
