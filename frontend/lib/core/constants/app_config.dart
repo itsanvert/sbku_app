@@ -1,6 +1,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Runtime configuration for API and asset URLs.
+/// Runtime configuration for API and asset URLs.*
 class AppConfig {
   AppConfig._();
 

@@ -76,6 +76,8 @@ sudo docker rm "$CONTAINER_NAME" 2>/dev/null || true
 sudo docker run -d \
   --name "$CONTAINER_NAME" \
   -p 8080:80 \
+  --memory="768m" \
+  --memory-reservation="512m" \
   --env-file "$ENV_FILE" \
   "$IMAGE_NAME"
 
