@@ -137,11 +137,19 @@ jobs:
             # ── 3. Pull new image ──
             docker pull "$IMAGE_URI"
 
-            # ── 4. Force remove old container & release ports ──
+            # ── 4. Debug: check what's on port 80 ──
+            echo "=== Processes on port 80 ==="
+            sudo ss -tlnp 2>/dev/null | grep ':80 ' || echo "(none via ss)"
+            sudo lsof -i :80 2>/dev/null || echo "(none via lsof)"
+
+            # ── 5. Kill anything on port 80/443, force remove container ──
+            sudo fuser -k 80/tcp 2>/dev/null || true
+            sudo fuser -k 443/tcp 2>/dev/null || true
+            sudo pkill -f "nginx" 2>/dev/null || true
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
             sleep 3
 
-            # ── 5. Create env file if missing, fix ownership ──
+            # ── 6. Create env file if missing, fix ownership ──
             ENV_FILE="/opt/sbku-app.env"
             if [ ! -f "$ENV_FILE" ]; then
               echo "Creating $ENV_FILE ..."
@@ -157,7 +165,7 @@ jobs:
             sudo chown ec2-user:ec2-user "$ENV_FILE" 2>/dev/null || true
             sudo chmod 600 "$ENV_FILE"
 
-            # ── 6. Start new container with auto-restart ──
+            # ── 7. Start new container with auto-restart ──
             docker run -d \
               --name "$CONTAINER_NAME" \
               --restart unless-stopped \
@@ -170,7 +178,7 @@ jobs:
               --log-opt max-file=3 \
               "$IMAGE_URI"
 
-            # ── 7. Health check ──
+            # ── 8. Health check ──
             echo "Waiting for container to be ready..."
             for i in $(seq 1 12); do
               sleep 5
