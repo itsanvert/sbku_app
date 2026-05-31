@@ -151,7 +151,13 @@ jobs:
             ENVEOF
             else
               sudo sed -i 's|^APP_URL=.*|APP_URL=http://32.236.105.9|' "$ENV_FILE"
+              sudo sed -i '/^ASSET_URL=/d' "$ENV_FILE"   # remove stale tunnel URL
             fi
+
+            # Disable any cron/systemd that would restart the tunnel
+            sudo crontab -l 2>/dev/null | grep -v 'start-tunnel\|cloudflared' | sudo crontab - 2>/dev/null || true
+            sudo systemctl disable cloudflared 2>/dev/null || true
+            sudo systemctl stop cloudflared 2>/dev/null || true
 
             # Kill old container in DETACHED background (nohup + disown)
             # This avoids SSH session death caused by docker kill on host-networked containers
