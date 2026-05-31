@@ -143,9 +143,8 @@ jobs:
             docker rm -f sbku-app-tunnel 2>/dev/null || true
             # Kill any cloudflared tunnel running on host (overwrites APP_URL)
             sudo pkill -f "cloudflared tunnel" 2>/dev/null || true
-            sudo fuser -k 80/tcp 2>/dev/null || true
-            sudo fuser -k 443/tcp 2>/dev/null || true
-            sudo fuser -k 8080/tcp 2>/dev/null || true
+            # Ports freed automatically by docker rm -f (host networking)
+            # Do NOT use fuser -k — it can terminate the SSH session itself
             sleep 3
 
             # ── 5. Create/update env file with correct APP_URL ──
