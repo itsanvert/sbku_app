@@ -137,7 +137,11 @@ RUN a2enconf apache-compress apache-performance && \
     echo '    ServerLimit         10' >> /etc/apache2/apache2.conf && \
     echo '    MaxRequestWorkers   10' >> /etc/apache2/apache2.conf && \
     echo '    MaxConnectionsPerChild 500' >> /etc/apache2/apache2.conf && \
-    echo '</IfModule>' >> /etc/apache2/apache2.conf
+    echo '</IfModule>' >> /etc/apache2/apache2.conf && \
+    echo '' >> /etc/apache2/apache2.conf && \
+    echo '# Disable sendfile + mmap — hangs on Docker overlay2 filesystem' >> /etc/apache2/apache2.conf && \
+    echo 'EnableSendfile Off' >> /etc/apache2/apache2.conf && \
+    echo 'EnableMMAP Off' >> /etc/apache2/apache2.conf
 
 # ── 2. Application source (changes every push — intentionally last) ──────────
 COPY . .
