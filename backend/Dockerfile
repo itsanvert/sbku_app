@@ -40,11 +40,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Enable Apache mod_rewrite, mod_deflate (gzip), mod_expires (cache headers)
 RUN a2enmod rewrite deflate expires headers
 
-# PHP JIT configuration for production performance
-RUN { \
-        echo 'opcache.jit_buffer_size=100M'; \
-        echo 'opcache.jit=tracing'; \
-    } > /usr/local/etc/php/conf.d/docker-php-ext-jit.ini
+# PHP JIT is disabled on t3.micro (1 GB RAM) because mod_php/prefork
+# allocates JIT buffer per child — 100 MB × 10 children = 1 GB.
+# Remove the next two lines on a larger instance to re-enable:
+#   echo 'opcache.jit_buffer_size=100M' >> ...
+#   echo 'opcache.jit=tracing'          >> ...
 
 # Install nginx (used as the production front-end proxy / static-file server)
 # Nginx will listen on port 80 and serve:

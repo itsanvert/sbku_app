@@ -284,12 +284,14 @@ ERR502
 log "502 error page created at $FLUTTER_DIR/502.html"
 
 # ── Queue worker ─────────────────────────────────────────────────────────
-if [ -z "$WEB_ONLY" ]; then
+# Disabled by default on memory-constrained instances (t3.micro = 1 GB).
+# Set ENABLE_QUEUE=true in the environment to start the worker.
+if [ "${ENABLE_QUEUE:-false}" = "true" ]; then
     php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
     QUEUE_PID=$!
     log "Queue worker started (PID $QUEUE_PID)."
 else
-    log "WEB_ONLY set — skipping queue worker."
+    log "ENABLE_QUEUE not set — skipping queue worker (saves ~50 MB RAM)."
 fi
 
 # ══════════════════════════════════════════════════════════════════════════
