@@ -137,17 +137,23 @@ jobs:
             # ── 3. Pull new image ──
             docker pull "$IMAGE_URI"
 
-            # ── 4. Debug: check what's on port 80 ──
-            echo "=== Processes on port 80 ==="
-            sudo ss -tlnp 2>/dev/null | grep ':80 ' || echo "(none via ss)"
-            sudo lsof -i :80 2>/dev/null || echo "(none via lsof)"
-
-            # ── 5. Kill anything on port 80/443, force remove container ──
-            sudo fuser -k 80/tcp 2>/dev/null || true
-            sudo fuser -k 443/tcp 2>/dev/null || true
-            sudo pkill -f "nginx" 2>/dev/null || true
+            # ── 4. Force remove old container ──
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-            sleep 3
+            docker network prune -f 2>/dev/null || true
+
+            # ── 5. Wait up to 30s for port 80 to be released ──
+            echo "Waiting for port 80 to be released..."
+            for i in $(seq 1 30); do
+              if ! ss -tlnp 2>/dev/null | grep -q ':80 '; then
+                echo "Port 80 is free (${i}s)"
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "⚠ Port 80 still busy after 30s — forcing removal"
+                docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+              fi
+              sleep 1
+            done
 
             # ── 6. Create env file if missing, fix ownership ──
             ENV_FILE="/opt/sbku-app.env"
