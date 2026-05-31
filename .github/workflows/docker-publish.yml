@@ -139,21 +139,23 @@ jobs:
 
             # ── 4. Force remove old container ──
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-            docker network prune -f 2>/dev/null || true
 
-            # ── 5. Wait up to 30s for port 80 to be released ──
-            echo "Waiting for port 80 to be released..."
-            for i in $(seq 1 30); do
-              if ! ss -tlnp 2>/dev/null | grep -q ':80 '; then
-                echo "Port 80 is free (${i}s)"
-                break
+            # ── 5. Kill orphaned docker-proxy holding port 80/443 ──
+            for port in 80 443; do
+              PIDS=$(sudo fuser "$port/tcp" 2>/dev/null || echo "")
+              if [ -n "$PIDS" ]; then
+                echo "Killing processes on port $port: $PIDS"
+                sudo kill $PIDS 2>/dev/null || true
+                sleep 2
+                STILL=$(sudo fuser "$port/tcp" 2>/dev/null || echo "")
+                if [ -n "$STILL" ]; then
+                  echo "Force killing remaining on port $port: $STILL"
+                  sudo kill -9 $STILL 2>/dev/null || true
+                  sleep 1
+                fi
               fi
-              if [ "$i" -eq 30 ]; then
-                echo "⚠ Port 80 still busy after 30s — forcing removal"
-                docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-              fi
-              sleep 1
             done
+            echo "Port 80 is free"
 
             # ── 6. Create env file if missing, fix ownership ──
             ENV_FILE="/opt/sbku-app.env"
