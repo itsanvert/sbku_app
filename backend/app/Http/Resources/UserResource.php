@@ -26,8 +26,8 @@ class UserResource extends JsonResource
             'profile_image_path' => $this->profile_image_path,
             'two_factor_enabled' => $this->two_factor_secret !== null,
             'role'               => $this->role,
-            'student_id'         => $this->student_id ?? data_get($this->student, 'id'),
-            'teacher_id'         => $this->teacher_id ?? data_get($this->teacher, 'id'),
+            'student_id'         => $this->student_id ?? ($this->relationLoaded('student') ? data_get($this->student, 'id') : null),
+            'teacher_id'         => $this->teacher_id ?? ($this->relationLoaded('teacher') ? data_get($this->teacher, 'id') : null),
             'created_at'         => $this->created_at,
             'updated_at'         => $this->updated_at,
         ];

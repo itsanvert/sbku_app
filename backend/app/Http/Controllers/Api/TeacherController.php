@@ -12,18 +12,30 @@ class TeacherController extends Controller
 
     public function index(Request $request)
     {
-
+        $sortBy = in_array($request->sort_by, ['id', 'teachers.id', 'user_id', 'faculty_id', 'major_id', 'created_at'], true)
+            ? $request->sort_by
+            : 'id';
+        $sortDir = $request->sort_dir === 'desc' ? 'desc' : 'asc';
+        $perPage = min(max((int) $request->per_page ?: 10, 1), 100);
 
         $teachers = Teacher::query()
-            ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
+            ->with([
+                'user' => fn ($q) => $q->select('id', 'name', 'email'),
+                'user.teacher',
+                'user.student',
+                'major' => fn ($q) => $q->select('id', 'name'),
+                'faculty' => fn ($q) => $q->select('id', 'name'),
+                'schedule' => fn ($q) => $q->select('id', 'name'),
+                'shift' => fn ($q) => $q->select('id', 'name'),
+            ])
             ->whereHas('user', function($q) use ($request) {
                 $q->when($request->search, function($query) use ($request) {
                     $query->where('name', 'like', '%'.$request->search.'%')
                           ->orWhere('email', 'like', '%'.$request->search.'%');
                 });
             })
-            ->orderBy($request->sort_by ?? 'id', $request->sort_dir ?? 'asc')
-            ->paginate($request->per_page ?? 10);
+            ->orderBy(str_contains($sortBy, '.') ? $sortBy : 'teachers.'.$sortBy, $sortDir)
+            ->paginate($perPage);
 
         return response()->json($teachers);
     }
@@ -77,10 +89,8 @@ class TeacherController extends Controller
     {
 
 
-        $teacher = Teacher::findOrFail($id);
-        return response()->json(
-            $teacher->load(['user', 'major', 'faculty', 'schedule', 'shift'])
-        );
+        $teacher = Teacher::with(['user', 'major', 'faculty', 'schedule', 'shift'])->findOrFail($id);
+        return response()->json($teacher);
     }
 
     public function update(Request $request, $id)

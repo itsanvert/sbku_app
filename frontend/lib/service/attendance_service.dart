@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/service/api_service.dart';
 import 'package:http/http.dart' as http;
 
 class AttendanceService {
-  final ApiService _api = ApiService();
+  final ApiService _api = sl<ApiService>();
 
   // ── Attendance Sessions ──────────────────────────────────────
 
@@ -83,19 +84,24 @@ class AttendanceService {
       yield cachedData;
     } catch (e) {
       print('Initial active sessions fetch failed: $e');
-      yield* Stream.error(e);
     }
 
-    // 2. Poll periodically
-    yield* Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
+    // 2. Poll with adaptive backoff
+    var pollInterval = const Duration(seconds: 5);
+    while (true) {
+      await Future.delayed(pollInterval);
       try {
         cachedData = await getActiveSessions(teacherId: teacherId);
-        return cachedData;
+        pollInterval = const Duration(seconds: 5);
+        yield cachedData;
       } catch (e) {
         print('Polling active sessions failed: $e');
-        return cachedData;
+        pollInterval = Duration(
+          seconds: (pollInterval.inSeconds * 2).clamp(5, 60),
+        );
+        yield cachedData;
       }
-    });
+    }
   }
 
   /// Listen to attendances for a specific session by polling the API.
@@ -122,19 +128,24 @@ class AttendanceService {
       yield cachedData;
     } catch (e) {
       print('Initial attendances fetch failed: $e');
-      yield* Stream.error(e);
     }
 
-    // 2. Poll periodically
-    yield* Stream.periodic(const Duration(seconds: 3)).asyncMap((_) async {
+    // 2. Poll with adaptive backoff
+    var pollInterval = const Duration(seconds: 3);
+    while (true) {
+      await Future.delayed(pollInterval);
       try {
         cachedData = await fetchAttendances();
-        return cachedData;
+        pollInterval = const Duration(seconds: 3);
+        yield cachedData;
       } catch (e) {
         print('Polling attendances failed: $e');
-        return cachedData;
+        pollInterval = Duration(
+          seconds: (pollInterval.inSeconds * 2).clamp(3, 60),
+        );
+        yield cachedData;
       }
-    });
+    }
   }
 
   /// Get session details.

@@ -1,10 +1,11 @@
 import 'package:sbku_app/core/constants/api_endpoints.dart';
+import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/core/network/api_response_parser.dart';
 import 'package:sbku_app/model/syllabus_model.dart';
 import 'package:sbku_app/service/api_service.dart';
 
 class SyllabusService {
-  final ApiService _apiService = ApiService();
+  final ApiService _apiService = sl<ApiService>();
 
   Future<List<SyllabusModel>> getSyllabus() async {
     final response = await _apiService.get(

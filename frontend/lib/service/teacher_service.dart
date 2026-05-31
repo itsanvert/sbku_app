@@ -1,38 +1,43 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:sbku_app/core/constants/api_endpoints.dart';
+import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/core/network/api_response_parser.dart';
-import 'package:sbku_app/core/result.dart';
 import 'package:sbku_app/model/teacher_model.dart';
 import 'package:sbku_app/service/api_service.dart';
 
 class TeacherService {
-  final ApiService _api = ApiService();
+  final ApiService _api = sl<ApiService>();
   /// Get teachers as a real-time stream via API polling.
   Stream<List<Teacher>> streamTeachers() async* {
     List<Teacher> cachedData = [];
 
-    // 1. Fetch and emit the first event immediately (0-second mark)
+    // 1. Fetch and emit the first event immediately
     try {
       final paginated = await getTeachers(page: 1);
       cachedData = paginated.data;
       yield cachedData;
     } catch (e) {
       print('Initial teachers fetch failed: $e');
-      yield* Stream.error(e);
     }
 
-    // 2. Poll periodically every 10 seconds in the background
-    yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
+    // 2. Poll with adaptive backoff on failure
+    var pollInterval = const Duration(seconds: 10);
+    while (true) {
+      await Future.delayed(pollInterval);
       try {
         final paginated = await getTeachers(page: 1);
         cachedData = paginated.data;
-        return cachedData;
+        pollInterval = const Duration(seconds: 10);
+        yield cachedData;
       } catch (e) {
         print('Polling teachers failed: $e');
-        return cachedData;
+        pollInterval = Duration(
+          seconds: (pollInterval.inSeconds * 2).clamp(10, 60),
+        );
+        yield cachedData;
       }
-    });
+    }
   }
 
   Future<TeacherPaginated> getTeachers({
@@ -48,7 +53,7 @@ class TeacherService {
       'sort_dir=$sortDir',
     ].join('&');
 
-    final response = await _api.get('${ApiEndpoints.teachers}?$query');
+    final response = await _api.get('${ApiEndpoints.teachers}?$query', timeout: ApiService.extendedTimeout);
 
     if (response.statusCode == 200) {
       final body = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
