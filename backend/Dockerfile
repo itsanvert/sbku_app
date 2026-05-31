@@ -134,8 +134,8 @@ RUN a2enconf apache-compress apache-performance && \
     echo '' >> /etc/apache2/apache2.conf && \
     echo '# ── MPM prefork limits (t3.micro = 1 GB RAM) ─────────────────' >> /etc/apache2/apache2.conf && \
     echo '<IfModule mpm_prefork_module>' >> /etc/apache2/apache2.conf && \
-    echo '    ServerLimit         2' >> /etc/apache2/apache2.conf && \
-    echo '    MaxRequestWorkers   2' >> /etc/apache2/apache2.conf && \
+    echo '    ServerLimit         10' >> /etc/apache2/apache2.conf && \
+    echo '    MaxRequestWorkers   10' >> /etc/apache2/apache2.conf && \
     echo '    MaxConnectionsPerChild 500' >> /etc/apache2/apache2.conf && \
     echo '</IfModule>' >> /etc/apache2/apache2.conf
 
