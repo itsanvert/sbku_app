@@ -221,44 +221,8 @@ php artisan view:cache 2>/dev/null || warn "View cache failed (templates compile
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
-# ── Flutter web build check & 502 error page ────────────────────────────
-FLUTTER_DIR="/var/www/html/build/web"
-if [ -z "$(find "$FLUTTER_DIR" -maxdepth 0 -type d 2>/dev/null)" ]; then
-    warn "$FLUTTER_DIR/ not found — creating default"
-    mkdir -p "$FLUTTER_DIR"
-fi
-
-if [ ! -f "$FLUTTER_DIR/index.html" ]; then
-    log "No Flutter index.html — creating status page..."
-    cat > "$FLUTTER_DIR/index.html" << 'STATUS'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SBKU App</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:-apple-system,sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f5f5f5; }
-.container { text-align:center; padding:2rem; }
-h1 { font-size:2rem; color:#333; margin-bottom:0.5rem; }
-p { color:#666; }
-.status { display:inline-block; margin-top:1rem; padding:0.5rem 1.5rem; background:#10b981; color:white; border-radius:6px; font-weight:500; }
-</style>
-</head>
-<body>
-<div class="container">
-<h1>SBKU App</h1>
-<p>Backend is running</p>
-<div class="status">API Available</div>
-</div>
-</body>
-</html>
-STATUS
-fi
-
-# Create the nginx 502 error page (served directly by nginx when Apache is down)
-cat > "$FLUTTER_DIR/502.html" << 'ERR502'
+# ── 502 error page (served directly by nginx when Apache is down) ──────
+cat > /var/www/html/public/502.html << 'ERR502'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -284,7 +248,7 @@ p { color:#666; line-height:1.5; margin-bottom:0.5rem; }
 </body>
 </html>
 ERR502
-log "502 error page created at $FLUTTER_DIR/502.html"
+log "502 error page created at /var/www/html/public/502.html"
 
 # ── Queue worker ─────────────────────────────────────────────────────────
 # Disabled by default on memory-constrained instances (t3.micro = 1 GB).
