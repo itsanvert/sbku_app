@@ -137,12 +137,14 @@ jobs:
             # ── 3. Pull new image ──
             docker pull "$IMAGE_URI"
 
-            # ── 4. Force remove old container & kill leftover port processes ──
+            # ── 4. Kill all containers on this image + free ports ──
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f sbku-backend 2>/dev/null || true
+            docker rm -f sbku-app-tunnel 2>/dev/null || true
             sudo fuser -k 80/tcp 2>/dev/null || true
             sudo fuser -k 443/tcp 2>/dev/null || true
             sudo fuser -k 8080/tcp 2>/dev/null || true
-            sleep 2
+            sleep 3
 
             # ── 5. Create env file if missing, fix ownership ──
             ENV_FILE="/opt/sbku-app.env"
