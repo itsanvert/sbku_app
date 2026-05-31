@@ -136,9 +136,11 @@ jobs:
 
             # ── 3. Gracefully stop existing containers first (frees memory for pull) ──
             echo "Stopping existing containers..."
-            docker stop "$CONTAINER_NAME" 2>/dev/null; docker rm "$CONTAINER_NAME" 2>/dev/null; true
-            docker stop sbku-backend 2>/dev/null; docker rm sbku-backend 2>/dev/null; true
-            docker stop sbku-app-tunnel 2>/dev/null; docker rm sbku-app-tunnel 2>/dev/null; true
+            trap '' TERM
+            docker kill "$CONTAINER_NAME" 2>/dev/null; docker rm "$CONTAINER_NAME" 2>/dev/null; true
+            docker kill sbku-backend 2>/dev/null; docker rm sbku-backend 2>/dev/null; true
+            docker kill sbku-app-tunnel 2>/dev/null; docker rm sbku-app-tunnel 2>/dev/null; true
+            trap - TERM
             sudo pkill -f "cloudflared tunnel" 2>/dev/null || true
             sleep 2
             echo "--- Memory after stop ---"
