@@ -141,6 +141,8 @@ jobs:
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
             docker rm -f sbku-backend 2>/dev/null || true
             docker rm -f sbku-app-tunnel 2>/dev/null || true
+            # Kill any cloudflared tunnel running on host (overwrites APP_URL)
+            sudo pkill -f "cloudflared tunnel" 2>/dev/null || true
             sudo fuser -k 80/tcp 2>/dev/null || true
             sudo fuser -k 443/tcp 2>/dev/null || true
             sudo fuser -k 8080/tcp 2>/dev/null || true
