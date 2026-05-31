@@ -156,6 +156,7 @@ jobs:
             APP_ENV=production
             APP_DEBUG=false
             APP_URL=http://localhost
+            FILESYSTEM_DISK=public
             ENVEOF
             fi
             sudo chown ec2-user:ec2-user "$ENV_FILE" 2>/dev/null || true

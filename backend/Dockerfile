@@ -195,16 +195,17 @@ RUN echo "=== Apache MPM configuration ===" && \
     grep -E "ServerLimit|MaxRequestWorkers" /etc/apache2/apache2.conf && \
     echo "=== MPM OK ==="
 
-# Discover package service providers and pre-cache config at build time
-# start.sh skips these if files already exist. Best-effort — failures are non-fatal.
+# Discover package service providers at build time
+# Config/route/view caches are regenerated at runtime by start.sh with correct env vars.
 RUN rm -f bootstrap/cache/packages.php && \
     php artisan package:discover --ansi 2>/dev/null || true
-RUN php artisan config:cache 2>/dev/null || true
 
 # Make start.sh executable (it handles the remaining runtime setup)
 RUN chmod +x /var/www/html/start.sh
 
 # ── Removed from build time (moved to start.sh): ─────────────────────────────
+#   config:cache            — moved to start.sh: regenerated with runtime env vars
+#   view:cache              — moved to start.sh: regenerated with runtime env vars
 #   composer dump-autoload   — re-ran on every push; ~2 sec saved
 #   php artisan storage:link — re-ran on every push; symlink is idempotent
 #   chown / chmod storage    — re-ran on every push; applied at runtime instead
