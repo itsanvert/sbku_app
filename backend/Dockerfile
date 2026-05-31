@@ -153,6 +153,10 @@ RUN if [ ! -f .env ] && [ -f .env.example ]; then \
         sed -i 's|^DB_HOST=.*|DB_HOST=localhost|' .env && \
         sed -i 's|^DB_PORT=.*|DB_PORT=5432|' .env && \
         sed -i 's|^DB_DATABASE=.*|DB_DATABASE=neondb|' .env && \
+        sed -i 's|^DB_USERNAME=.*|DB_USERNAME=|' .env && \
+        sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=|' .env && \
+        sed -i '/^DATABASE_URL=/d' .env && \
+        sed -i '/^DB_SSLMODE=/d' .env && \
         echo ".env placeholder created at build time (secrets injected at runtime)"; \
     fi
 
