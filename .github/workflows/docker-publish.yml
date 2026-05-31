@@ -137,27 +137,14 @@ jobs:
             # ── 3. Pull new image ──
             docker pull "$IMAGE_URI"
 
-            # ── 4. Force remove old container ──
+            # ── 4. Force remove old container & kill leftover port processes ──
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            sudo fuser -k 80/tcp 2>/dev/null || true
+            sudo fuser -k 443/tcp 2>/dev/null || true
+            sudo fuser -k 8080/tcp 2>/dev/null || true
+            sleep 2
 
-            # ── 5. Kill orphaned docker-proxy holding port 80/443 ──
-            for port in 80 443; do
-              PIDS=$(sudo fuser "$port/tcp" 2>/dev/null || echo "")
-              if [ -n "$PIDS" ]; then
-                echo "Killing processes on port $port: $PIDS"
-                sudo kill $PIDS 2>/dev/null || true
-                sleep 2
-                STILL=$(sudo fuser "$port/tcp" 2>/dev/null || echo "")
-                if [ -n "$STILL" ]; then
-                  echo "Force killing remaining on port $port: $STILL"
-                  sudo kill -9 $STILL 2>/dev/null || true
-                  sleep 1
-                fi
-              fi
-            done
-            echo "Port 80 is free"
-
-            # ── 6. Create env file if missing, fix ownership ──
+            # ── 5. Create env file if missing, fix ownership ──
             ENV_FILE="/opt/sbku-app.env"
             if [ ! -f "$ENV_FILE" ]; then
               echo "Creating $ENV_FILE ..."
@@ -169,16 +156,14 @@ jobs:
             APP_URL=http://localhost
             ENVEOF
             fi
-            # Always ensure ec2-user can read it (fixes stale root-owned file)
             sudo chown ec2-user:ec2-user "$ENV_FILE" 2>/dev/null || true
             sudo chmod 600 "$ENV_FILE"
 
-            # ── 7. Start new container with auto-restart ──
+            # ── 6. Start container with host networking (bypasses docker-proxy) ──
             docker run -d \
               --name "$CONTAINER_NAME" \
               --restart unless-stopped \
-              -p 80:80 \
-              -p 443:443 \
+              --network host \
               --memory="768m" \
               --memory-reservation="512m" \
               --env-file "$ENV_FILE" \
@@ -186,7 +171,7 @@ jobs:
               --log-opt max-file=3 \
               "$IMAGE_URI"
 
-            # ── 8. Health check ──
+            # ── 7. Health check ──
             echo "Waiting for container to be ready..."
             for i in $(seq 1 12); do
               sleep 5
