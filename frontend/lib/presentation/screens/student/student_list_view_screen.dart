@@ -4,6 +4,7 @@ import 'package:sbku_app/presentation/screens/student/show_student.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 import 'package:sbku_app/service/student_service.dart';
 
 class StudentListViewScreen extends StatefulWidget {
@@ -115,7 +116,7 @@ class _StudentListScreenState extends State<StudentListViewScreen> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     !snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ListItemSkeleton();
                 }
 
                 if (snapshot.hasError) {

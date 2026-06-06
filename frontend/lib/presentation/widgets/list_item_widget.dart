@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'shimmer_widget.dart';
 
 /// A generic list item widget that displays an entity with avatar, info, and actions
 class ListItemWidget<T> extends StatelessWidget {
@@ -249,6 +250,76 @@ class ItemAction {
       color: color,
       icon: icon,
       isIcon: true,
+    );
+  }
+}
+
+class ListItemSkeleton extends StatelessWidget {
+  final int itemCount;
+  final EdgeInsets? margin;
+  final EdgeInsets? padding;
+  final double borderRadius;
+  final double spacing;
+
+  const ListItemSkeleton({
+    super.key,
+    this.itemCount = 4,
+    this.margin,
+    this.padding,
+    this.borderRadius = 14,
+    this.spacing = 16,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveMargin =
+        margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 6);
+    final effectivePadding = padding ?? const EdgeInsets.all(14);
+    final bgColor =
+        isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB);
+
+    return Column(
+      children: List.generate(itemCount, (index) {
+        return Container(
+          margin: effectiveMargin,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderColor),
+          ),
+          child: Padding(
+            padding: effectivePadding,
+            child: Row(
+              children: [
+                const ShimmerWidget(width: 44, height: 44, borderRadius: 22),
+                SizedBox(width: spacing),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ShimmerWidget(
+                        width: 180,
+                        height: 15,
+                        borderRadius: 4,
+                      ),
+                      const SizedBox(height: 6),
+                      ShimmerWidget(
+                        width: 120,
+                        height: 13,
+                        borderRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }

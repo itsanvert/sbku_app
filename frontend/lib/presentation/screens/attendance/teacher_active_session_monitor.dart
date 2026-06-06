@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/api_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Teacher Active Session Monitor — with anti-cheating approval checklist
@@ -415,7 +416,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
         ),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: primary))
+          ? const Center(child: ShimmerBlock(width: 200, height: 200, borderRadius: 16))
           : TabBarView(
               controller: _tabController,
               children: [
@@ -1296,8 +1297,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                    child: ShimmerWidget(width: 16, height: 16, borderRadius: 8),
                   )
                 : const Icon(Icons.stop_circle_outlined),
             label: Text(_isEnding ? 'កំពុងបិទ...' : 'បិទវេនវត្តមាន'),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 import 'package:intl/intl.dart';
 
 class TeacherActiveSessionsListScreen extends StatefulWidget {
@@ -106,7 +107,7 @@ class _TeacherActiveSessionsListScreenState
 
   Widget _buildBody(ThemeData theme, bool isDark) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const ActiveSessionCardSkeleton();
     }
 
     if (_errorMessage != null) {
