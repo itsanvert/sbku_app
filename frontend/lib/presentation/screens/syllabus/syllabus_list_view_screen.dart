@@ -3,6 +3,7 @@ import 'package:sbku_app/model/syllabus_model.dart';
 import 'package:sbku_app/presentation/screens/syllabus/show_syllabus.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 import 'package:sbku_app/service/syllabus_service.dart';
 
 class SyllabusListViewScreen extends StatefulWidget {
@@ -94,7 +95,7 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
         title: 'កម្មវិធីសិក្សា (Syllabus)',
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SyllabusCardSkeleton()
           : _error != null
               ? _buildErrorState()
               : Column(

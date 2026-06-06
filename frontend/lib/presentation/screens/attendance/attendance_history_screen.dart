@@ -9,6 +9,7 @@ import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sbku_app/core/constants/app_config.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Teacher Attendance History Screen
@@ -78,7 +79,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ប្រវត្តិវត្តមាន'),
       body: _isLoading && _records.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? const Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16))
           : _error != null && _records.isEmpty
               ? _buildError()
               : _records.isEmpty
@@ -133,7 +134,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
+                child: ShimmerWidget(width: 24, height: 24, borderRadius: 12),
               ),
             );
           }
@@ -375,10 +376,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
+                child: ShimmerWidget(width: 20, height: 20, borderRadius: 10),
               ),
             )
           else
@@ -439,7 +437,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_dailyLoading)
           const Expanded(
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16)))
         else if (_dailyData != null) ...[
           // Summary cards
           _buildSummaryCards(_dailyData!['summary']),
@@ -510,7 +508,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_monthlyLoading)
           const Expanded(
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16)))
         else if (_monthlyData != null)
           Expanded(
             child: _buildStudentSummaryList(List<Map<String, dynamic>>.from(
@@ -550,7 +548,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_yearlyLoading)
           const Expanded(
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16)))
         else if (_yearlyData != null) ...[
           // Monthly breakdown chart substitute
           if (_yearlyData!['monthly_breakdown'] != null)
@@ -1121,7 +1119,7 @@ class _StudentAttendanceHistoryScreenState
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ប្រវត្តិវត្តមានរបស់ខ្ញុំ'),
       body: _isLoading && _records.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? const Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16))
           : RefreshIndicator(
               onRefresh: () => _loadHistory(),
               child: Column(
@@ -1166,8 +1164,7 @@ class _StudentAttendanceHistoryScreenState
                                 return const Center(
                                   child: Padding(
                                     padding: EdgeInsets.all(16),
-                                    child: CircularProgressIndicator(
-                                        color: Colors.orange),
+                                    child: ShimmerWidget(width: 24, height: 24, borderRadius: 12),
                                   ),
                                 );
                               }

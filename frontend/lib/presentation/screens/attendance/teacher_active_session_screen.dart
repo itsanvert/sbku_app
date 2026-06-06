@@ -5,6 +5,7 @@ import 'package:sbku_app/data/dummy_data.dart';
 import 'package:sbku_app/model/attendance_session_model.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 import 'package:sbku_app/service/location_service.dart';
 
 class TeacherStartAttendanceScreen extends StatefulWidget {
@@ -166,7 +167,7 @@ class _TeacherStartAttendanceScreenState
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? const ShimmerWidget(width: 24, height: 24, borderRadius: 12)
                   : const Text(
                       'បើកវេនវត្តមាន',
                       style: TextStyle(fontSize: 16, color: Colors.white),

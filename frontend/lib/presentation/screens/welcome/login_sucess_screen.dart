@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sbku_app/presentation/screens/home/home_screen.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 class LoginSuccessScreen extends StatefulWidget {
   final String? userName;
@@ -492,16 +493,6 @@ class _CountdownChipState extends State<_CountdownChip>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  value: 1 - _ctrl.value,
-                  strokeWidth: 2.5,
-                  backgroundColor: const Color(0xFFFFDDD3),
-                  valueColor: const AlwaysStoppedAnimation<Color>(_primary),
-                ),
-              ),
               const SizedBox(width: 8),
               Text(
                 'Redirecting in ${remaining}s',

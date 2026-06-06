@@ -5,6 +5,7 @@ import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/service/message_service.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/screens/attendance/qr_scan_attendance_screen.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 
 class MessageListScreen extends StatefulWidget {
   const MessageListScreen({super.key});
@@ -27,7 +28,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
         stream: _messageService.listenToMessages(userId: user?.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListCardListSkeleton();
           }
 
           if (snapshot.hasError) {

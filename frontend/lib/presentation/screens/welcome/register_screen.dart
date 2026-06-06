@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/presentation/screens/home/home_screen.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -223,11 +224,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
+                                child: ShimmerWidget(
+                                    width: 20, height: 20, borderRadius: 10),
                               )
                             : const Text(
                                 'Register',

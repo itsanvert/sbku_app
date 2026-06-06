@@ -7,6 +7,7 @@ import 'package:sbku_app/model/staff_model.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/appbutton_widget.dart';
 import 'package:sbku_app/presentation/widgets/custom_text_field.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 class AddStaffScreen extends StatefulWidget {
   final StaffModel? staff;
@@ -237,7 +238,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
 
                 // Submit Button
                 _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const ShimmerWidget(width: 24, height: 24, borderRadius: 12)
                     : AppButton(
                         label: _isEditing ? 'Update Staff' : 'Add Staff',
                         onPressed: _handleSave,

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 
 /// Student Attendance Verification Status Screen
@@ -90,7 +91,7 @@ class _StudentAttendanceStatusScreenState
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ស្ថានភាពវត្តមានរបស់ខ្ញុំ'),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: primary))
+          ? Center(child: const ShimmerWidget(width: 200, height: 200, borderRadius: 16))
           : _error != null && _records.isEmpty
               ? _buildError()
               : RefreshIndicator(

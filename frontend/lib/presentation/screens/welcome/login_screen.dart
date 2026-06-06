@@ -55,8 +55,7 @@ class _LoginScreenState extends State<LoginScreen>
     _logoController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 550));
 
-    _fadeAnim =
-        CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
 
     // Stagger each element by slicing the 0..1 interval
     _headerSlideAnim = _makeSlide(_slideController, 0.0, 0.55);
@@ -65,8 +64,7 @@ class _LoginScreenState extends State<LoginScreen>
     _buttonSlideAnim = _makeSlide(_slideController, 0.50, 1.0);
 
     _logoScaleAnim = Tween<double>(begin: 0.6, end: 1.0).animate(
-        CurvedAnimation(
-            parent: _logoController, curve: Curves.elasticOut));
+        CurvedAnimation(parent: _logoController, curve: Curves.elasticOut));
 
     _emailFocus.addListener(() {
       _emailFocused.value = _emailFocus.hasFocus;
@@ -318,9 +316,7 @@ class _LoginScreenState extends State<LoginScreen>
         textAlign: TextAlign.center,
         style: TextStyle(
             fontSize: 14,
-            color: isDark
-                ? const Color(0xFF94A3B8)
-                : Colors.grey.shade500),
+            color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
       ),
     ]);
   }
@@ -334,8 +330,7 @@ class _LoginScreenState extends State<LoginScreen>
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor =
-        isDark ? const Color(0xFF334155) : Colors.grey.shade200;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey.shade200;
     final focusedBorderColor = _primary;
     final fillColor = isDark
         ? (isFocused ? const Color(0xFF253043) : const Color(0xFF1E293B))
@@ -348,16 +343,12 @@ class _LoginScreenState extends State<LoginScreen>
       labelText: label,
       hintText: hint,
       hintStyle: TextStyle(
-          color: isDark
-              ? const Color(0xFF64748B)
-              : Colors.grey.shade400,
+          color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400,
           fontSize: 14),
       labelStyle: TextStyle(
           color: isFocused
               ? _primary
-              : (isDark
-                  ? const Color(0xFF94A3B8)
-                  : Colors.grey.shade500),
+              : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
           fontSize: 14),
       prefixIcon: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -369,15 +360,13 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon,
-            color: isFocused ? _primary : _primary.withOpacity(0.7),
-            size: 18),
+            color: isFocused ? _primary : _primary.withOpacity(0.7), size: 18),
       ),
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffix,
       filled: true,
       fillColor: fillColor,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: borderColor)),
@@ -510,15 +499,16 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildLoginButton() {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
+        final isLoading = authProvider.isLoading;
         return ValueListenableBuilder<bool>(
           valueListenable: _buttonPressed,
           builder: (context, pressed, _) {
             return GestureDetector(
-              onTapDown: (_) => _buttonPressed.value = true,
-              onTapUp: (_) => _buttonPressed.value = false,
+              onTapDown: isLoading ? null : (_) => _buttonPressed.value = true,
+              onTapUp: isLoading ? null : (_) => _buttonPressed.value = false,
               onTapCancel: () => _buttonPressed.value = false,
               child: AnimatedScale(
-                scale: pressed ? 0.96 : 1.0,
+                scale: pressed && !isLoading ? 0.96 : 1.0,
                 duration: const Duration(milliseconds: 120),
                 curve: Curves.easeOut,
                 child: AnimatedContainer(
@@ -527,13 +517,13 @@ class _LoginScreenState extends State<LoginScreen>
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     gradient: LinearGradient(
-                      colors: pressed
+                      colors: pressed && !isLoading
                           ? [_primaryDark, _primaryDark]
                           : [_primary, _primaryDark],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    boxShadow: pressed
+                    boxShadow: pressed || isLoading
                         ? []
                         : [
                             BoxShadow(
@@ -548,18 +538,17 @@ class _LoginScreenState extends State<LoginScreen>
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(14),
-                      onTap: authProvider.isLoading ? null : _login,
+                      onTap: isLoading ? null : _login,
                       splashColor: Colors.white.withOpacity(0.1),
                       highlightColor: Colors.white.withOpacity(0.05),
                       child: Center(
-                        child: authProvider.isLoading
+                        child: isLoading
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                  color: Colors.white,
                                 ),
                               )
                             : const Row(
@@ -600,9 +589,7 @@ class _LoginScreenState extends State<LoginScreen>
           color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isDark
-                ? const Color(0xFF334155)
-                : Colors.grey.shade200,
+            color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
           ),
         ),
         child: Row(
@@ -610,17 +597,13 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             Icon(Icons.info_outline_rounded,
                 size: 14,
-                color: isDark
-                    ? const Color(0xFF64748B)
-                    : Colors.grey.shade400),
+                color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
             const SizedBox(width: 6),
             Text(
               'Contact admin to create an account',
               style: TextStyle(
                 fontSize: 12,
-                color: isDark
-                    ? const Color(0xFF94A3B8)
-                    : Colors.grey.shade500,
+                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
               ),
             ),
           ],

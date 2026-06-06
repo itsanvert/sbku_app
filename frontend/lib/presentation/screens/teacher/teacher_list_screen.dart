@@ -4,6 +4,7 @@ import 'package:sbku_app/presentation/screens/teacher/show_teacher.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 import 'package:sbku_app/service/teacher_service.dart';
 
 class TeacherListViewScreen extends StatefulWidget {
@@ -132,7 +133,7 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     !snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ListItemSkeleton();
                 }
 
                 if (snapshot.hasError) {
