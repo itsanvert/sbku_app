@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -355,11 +355,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
+                                child: ShimmerWidget(
+                                    width: 20, height: 20, borderRadius: 10),
                               )
                             : const Text('Update Profile'),
                       ),
@@ -494,11 +491,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
+                                child: ShimmerWidget(
+                                    width: 20, height: 20, borderRadius: 10),
                               )
                             : const Text('Update Password'),
                       ),
@@ -513,3 +507,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

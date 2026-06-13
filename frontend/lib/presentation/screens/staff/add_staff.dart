@@ -7,6 +7,7 @@ import 'package:sbku_app/model/staff_model.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/appbutton_widget.dart';
 import 'package:sbku_app/presentation/widgets/custom_text_field.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 class AddStaffScreen extends StatefulWidget {
   final StaffModel? staff;
@@ -113,36 +114,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
     );
   }
 
-  Future<void> _handleImageUpload() async {
-    await _formController.showImageSourceDialog(context);
-    if (mounted) setState(() {});
-  }
-
   // Build profile image widget - supports both mobile & web
-  Widget _buildProfileImage() {
-    ImageProvider? imageProvider;
-
-    if (_formController.hasImage) {
-      if (kIsWeb) {
-        imageProvider = MemoryImage(_formController.profileImageBytes!);
-      } else {
-        imageProvider = FileImage(_formController.profileImage!);
-      }
-    }
-
-    return CircleAvatar(
-      radius: 60,
-      backgroundColor: Colors.orange.shade100,
-      backgroundImage: imageProvider,
-      child: imageProvider == null
-          ? Icon(
-              Icons.person,
-              size: 60,
-              color: Colors.orange.shade300,
-            )
-          : null,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -266,7 +238,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
 
                 // Submit Button
                 _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const ShimmerWidget(width: 24, height: 24, borderRadius: 12)
                     : AppButton(
                         label: _isEditing ? 'Update Staff' : 'Add Staff',
                         onPressed: _handleSave,
@@ -281,3 +253,4 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
     );
   }
 }
+

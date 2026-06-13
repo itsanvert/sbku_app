@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'shimmer_widget.dart';
 
 class ImageSlider extends StatefulWidget {
   final List<String> imagePaths;
@@ -113,6 +114,65 @@ class ImageSlider extends StatefulWidget {
 
   @override
   State<ImageSlider> createState() => _ImageSliderState();
+}
+
+class ImageSliderSkeleton extends StatelessWidget {
+  final double height;
+  final double borderRadius;
+  final EdgeInsets padding;
+  final EdgeInsets itemPadding;
+  final int indicatorCount;
+  final double indicatorSpacing;
+
+  const ImageSliderSkeleton({
+    super.key,
+    this.height = 220,
+    this.borderRadius = 12,
+    this.padding = EdgeInsets.zero,
+    this.itemPadding = const EdgeInsets.symmetric(horizontal: 16),
+    this.indicatorCount = 3,
+    this.indicatorSpacing = 12,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: Column(
+        children: [
+          SizedBox(
+            height: height,
+            child: Padding(
+              padding: itemPadding,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(borderRadius),
+                child: ShimmerWidget(
+                  width: double.infinity,
+                  height: height,
+                  borderRadius: borderRadius,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(indicatorCount, (i) {
+              return Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: indicatorSpacing / 2),
+                child: ShimmerWidget(
+                  width: i == 0 ? 24 : 8,
+                  height: 8,
+                  borderRadius: 4,
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ImageSliderState extends State<ImageSlider> {

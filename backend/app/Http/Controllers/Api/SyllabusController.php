@@ -33,22 +33,21 @@ class SyllabusController extends Controller
         return [
             'id'                   => (string) ($s['id'] ?? ''),
             'faculty_id'           => (string) ($s['faculty_id'] ?? ''),
-            'faculty_name'         => $s['faculty_name'] ?? $model?->faculty?->name ?? 'Unknown',
+            'faculty_name'         => $s['faculty_name'] ?? $model?->faculty?->name,
             'major_id'             => (string) ($s['major_id'] ?? ''),
-            'major_name'           => $s['major_name'] ?? $model?->major?->name ?? 'Unknown',
+            'major_name'           => $s['major_name'] ?? $model?->major?->name,
             'subject_id'           => (string) ($s['subject_id'] ?? ''),
-            'subject_name'         => $s['subject_name'] ?? $model?->subject?->name ?? 'Unknown',
+            'subject_name'         => $s['subject_name'] ?? $model?->subject?->name,
             'teacher_id'           => (string) ($s['teacher_id'] ?? ''),
             'teacher_name'         => $s['teacher_name']
                 ?? $model?->teacher?->user?->name
-                ?? $s['teacher_user_name']
-                ?? 'Unknown',
+                ?? $s['teacher_user_name'],
             'shift_id'             => (string) ($s['shift_id'] ?? ''),
-            'shift_name'           => $s['shift_name'] ?? $model?->shift?->name ?? 'Unknown',
+            'shift_name'           => $s['shift_name'] ?? $model?->shift?->name,
             'year_id'              => $yearId,
             'semester_id'          => (string) ($s['semester_id'] ?? ''),
             'semester_name'        => $s['semester_name'] ?? ('Semester ' . ($s['semester_id'] ?? '')),
-            'year_name'            => $s['year_name'] ?? ($yearId ? 'ឆ្នាំទី ' . substr((string) $yearId, 1) : 'Unknown Year'),
+            'year_name'            => $s['year_name'] ?? ($yearId ? 'ឆ្នាំទី ' . substr((string) $yearId, 1) : null),
             'credit_hours'         => (string) ($s['credit_hours'] ?? $model?->subject?->credit_hours ?? 3),
             'schedule_description' => $s['schedule_description'] ?? 'TBD',
         ];

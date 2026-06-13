@@ -4,6 +4,8 @@ namespace App\Livewire\Schedules;
 
 use App\Models\Schedule;
 use App\Support\FirestoreHydrator;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -55,6 +57,53 @@ class ScheduleIndex extends Component
     }
 
     public function updatingSearch() { $this->resetPage(); }
+
+    #[Computed]
+    public function syllabusRoom()
+    {
+        if (!$this->syllabus_id) return null;
+        if (\App\Services\FirestoreService::isActive()) {
+            $syllabus = $this->firestore->getDocument('syllabuses', (string)$this->syllabus_id);
+            return $syllabus['room_id'] ?? null;
+        }
+        return \App\Models\Syllabus::where('id', $this->syllabus_id)->value('room_id');
+    }
+
+    public function updatedSyllabusId()
+    {
+        if (!$this->syllabus_id) {
+            $this->subject_id = null;
+            $this->teacher_id = null;
+            $this->day_of_the_week = null;
+            $this->start_time = null;
+            $this->end_time = null;
+            $this->class_id = null;
+            $this->room_id = null;
+            return;
+        }
+
+        if (\App\Services\FirestoreService::isActive()) {
+            $syllabus = $this->firestore->getDocument('syllabuses', (string)$this->syllabus_id);
+            $this->subject_id = $syllabus['subject_id'] ?? null;
+            $this->teacher_id = $syllabus['teacher_id'] ?? null;
+            $this->day_of_the_week = isset($syllabus['day_of_week']) ? ucfirst($syllabus['day_of_week']) : null;
+            $this->start_time = $syllabus['start_time'] ?? null;
+            $this->end_time = $syllabus['end_time'] ?? null;
+            $this->class_id = $syllabus['academic_class_id'] ?? null;
+            $this->room_id = $syllabus['room_id'] ?? null;
+        } else {
+            $syllabus = \App\Models\Syllabus::find($this->syllabus_id);
+            if ($syllabus) {
+                $this->subject_id = $syllabus->subject_id;
+                $this->teacher_id = $syllabus->teacher_id;
+                $this->day_of_the_week = $syllabus->day_of_week ? ucfirst($syllabus->day_of_week) : null;
+                $this->start_time = $syllabus->start_time;
+                $this->end_time = $syllabus->end_time;
+                $this->class_id = $syllabus->academic_class_id;
+                $this->room_id = $syllabus->room_id;
+            }
+        }
+    }
 
     public function openCreateModal()
     {
@@ -159,6 +208,21 @@ class ScheduleIndex extends Component
         session()->flash('message', 'Schedule deleted successfully.');
     }
 
+    #[Computed]
+    public function schedules()
+    {
+        $cacheKey = 'schedules.index.' . md5(implode('|', [$this->search, $this->getPage()]));
+
+        return Cache::remember($cacheKey, 60, function () {
+            return Schedule::with(['teacher.user', 'subject', 'academicClass', 'room'])
+                ->when($this->search, fn($q) => $q->where(function($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('day_of_the_week', 'like', '%' . $this->search . '%');
+                }))
+                ->paginate(10);
+        });
+    }
+
     public function render()
     {
         if (\App\Services\FirestoreService::isActive()) {
@@ -193,15 +257,12 @@ class ScheduleIndex extends Component
         }
 
         return view('livewire.schedules.schedule-index', [
-            'schedules' => Schedule::with(['teacher.user', 'subject', 'academicClass', 'room'])
-                ->where('name', 'like', '%' . $this->search . '%')
-                ->orWhere('day_of_the_week', 'like', '%' . $this->search . '%')
-                ->paginate(10),
-            'teachers' => \App\Models\Teacher::with('user')->get(),
-            'subjects' => \App\Models\Subject::orderBy('name')->get(),
-            'academicClasses' => \App\Models\AcademicClass::orderBy('name')->get(),
-            'rooms' => \App\Models\Room::orderBy('name')->get(),
-            'syllabuses' => \App\Models\Syllabus::with(['subject', 'teacher.user'])->get(),
+            'schedules' => $this->schedules,
+            'teachers' => Cache::remember('sch.teachers', 86400, fn() => \App\Models\Teacher::with('user')->select('id', 'user_id')->get()),
+            'subjects' => Cache::remember('sch.subjects', 86400, fn() => \App\Models\Subject::select('id', 'name')->orderBy('name')->get()),
+            'academicClasses' => Cache::remember('sch.classes', 86400, fn() => \App\Models\AcademicClass::select('id', 'name')->orderBy('name')->get()),
+            'rooms' => Cache::remember('sch.rooms', 86400, fn() => \App\Models\Room::select('id', 'name', 'code')->orderBy('name')->get()),
+            'syllabuses' => Cache::remember('sch.syllabuses', 86400, fn() => \App\Models\Syllabus::with(['subject:id,name', 'teacher.user:id,name'])->select('id', 'subject_id', 'teacher_id', 'room_id', 'academic_class_id', 'day_of_week', 'start_time', 'end_time')->get()),
         ])->layout('layouts.app');
     }
 }

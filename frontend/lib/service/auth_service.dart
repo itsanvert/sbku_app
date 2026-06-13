@@ -1,12 +1,13 @@
 import 'dart:convert';
 
+import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/core/network/api_response_parser.dart';
 import 'package:sbku_app/model/user_model.dart';
 
 import 'api_service.dart';
 
 class AuthService {
-  final ApiService _apiService = ApiService();
+  final ApiService _apiService = sl<ApiService>();
 
   Future<Map<String, dynamic>> register({
     required String name,
@@ -20,7 +21,7 @@ class AuthService {
         'email': email,
         'password': password,
         'password_confirmation': passwordConfirmation,
-      });
+      }, requiresAuth: false);
 
       final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
 
@@ -53,7 +54,7 @@ class AuthService {
       final response = await _apiService.post('login', {
         'email': email,
         'password': password,
-      });
+      }, requiresAuth: false);
 
       final data = ApiResponseParser.asMap(ApiResponseParser.decodeBody(response));
 

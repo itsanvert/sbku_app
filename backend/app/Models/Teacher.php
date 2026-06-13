@@ -59,7 +59,7 @@ class Teacher extends Model
      */
     public function getAvatarUrlAttribute(): string
     {
-        $baseUrl = request()->getSchemeAndHttpHost() . '/api/storage/';
+        $baseUrl = rtrim(config('app.url', request()->getSchemeAndHttpHost()), '/') . '/api/storage/';
         $name = $this->name ?? 'T';
         return $this->profile_image_path
             ? $baseUrl . $this->profile_image_path

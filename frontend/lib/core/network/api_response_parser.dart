@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 /// Helpers for parsing Laravel API responses (flat or `{ success, data }` envelope).
@@ -11,10 +10,26 @@ class ApiResponseParser {
     return jsonDecode(response.body);
   }
 
+  /// Safely coerces [body] to `Map<String, dynamic>`.
+  ///
+  /// Returns an empty map if [body] is not a map-like object.
+  /// Use [requireMap] if an absent map should be treated as an error.
   static Map<String, dynamic> asMap(dynamic body) {
     if (body is Map<String, dynamic>) return body;
     if (body is Map) return Map<String, dynamic>.from(body);
     return {};
+  }
+
+  /// Same as [asMap] but throws a [FormatException] if [body] is not a map.
+  /// Callers that *require* a map (e.g. parsing a single-object response)
+  /// should prefer this method to avoid silent empty-map returns.
+  static Map<String, dynamic> requireMap(dynamic body) {
+    if (body is Map<String, dynamic>) return body;
+    if (body is Map) return Map<String, dynamic>.from(body);
+    throw FormatException(
+      'Expected a JSON object but got ${body.runtimeType}. '
+      'Raw body: ${body?.toString() ?? "null"}',
+    );
   }
 
   /// Unwraps `data` when the API uses the standard envelope.
@@ -26,10 +41,21 @@ class ApiResponseParser {
     return body;
   }
 
+  /// Extracts a `List` from [body].
+  ///
+  /// Handles two response shapes:
+  /// - Flat list: `[{...}, {...}]` → returns the list directly
+  /// - Envelope: `{ success: true, data: [{...}] }` → unwraps then returns
+  ///
+  /// Returns an empty list if the body does not contain a list.
   static List<dynamic> asList(dynamic body, {String listKey = 'data'}) {
+    // Step 1: unwrap envelope once, never twice
     final unwrapped = unwrapData(body);
+
+    // Step 2: if it's already a list, return it
     if (unwrapped is List) return unwrapped;
 
+    // Step 3: otherwise look inside a named key
     final map = asMap(unwrapped);
     final list = map[listKey];
     if (list is List) return list;

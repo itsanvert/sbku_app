@@ -8,8 +8,8 @@ import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/request_permission_screen.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:sbku_app/service/api_service.dart';
 import 'package:sbku_app/core/constants/app_config.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Teacher Attendance History Screen
@@ -79,7 +79,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ប្រវត្តិវត្តមាន'),
       body: _isLoading && _records.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? const Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16))
           : _error != null && _records.isEmpty
               ? _buildError()
               : _records.isEmpty
@@ -134,7 +134,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
+                child: ShimmerWidget(width: 24, height: 24, borderRadius: 12),
               ),
             );
           }
@@ -143,7 +143,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           final isPresent = record['status'] == 'Y';
           final date = record['attendance_date'] ?? '';
           final studentName =
-              record['student_name'] ?? record['student']?['name'] ?? 'Unknown';
+              record['student_name'] ?? record['student']?['name'] ?? '—';
           final checkIn = record['check_in_time'];
           final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -376,10 +376,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
+                child: ShimmerWidget(width: 20, height: 20, borderRadius: 10),
               ),
             )
           else
@@ -440,7 +437,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_dailyLoading)
           const Expanded(
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16)))
         else if (_dailyData != null) ...[
           // Summary cards
           _buildSummaryCards(_dailyData!['summary']),
@@ -511,7 +508,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_monthlyLoading)
           const Expanded(
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16)))
         else if (_monthlyData != null)
           Expanded(
             child: _buildStudentSummaryList(List<Map<String, dynamic>>.from(
@@ -551,7 +548,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         ),
         if (_yearlyLoading)
           const Expanded(
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16)))
         else if (_yearlyData != null) ...[
           // Monthly breakdown chart substitute
           if (_yearlyData!['monthly_breakdown'] != null)
@@ -627,7 +624,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         final name = r['student_name'] ??
             r['student']?['name'] ??
             r['student']?['user']?['name'] ??
-            'Unknown';
+            '—';
 
         final avatarUrl = r['student']?['avatar_url'] ??
             'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=6366f1&color=ffffff';
@@ -642,7 +639,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
             title:
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: r['check_in_time'] != null
-                ? Text('ចូល: ${_formatTime(r['check_in_time'])}',
+                ? Text('ចូល: ${_formatTime(r['check_in_time']?.toString())}',
                     style: TextStyle(
                       fontSize: 12, 
                       color: Colors.blue.shade600,
@@ -679,7 +676,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       padding: const EdgeInsets.all(16),
       itemBuilder: (context, index) {
         final s = students[index];
-        final name = s['student_name']?.toString() ?? 'Unknown';
+        final name = s['student_name']?.toString() ?? '—';
         final present = s['present_days'] ?? 0;
         final absent = s['absent_days'] ?? 0;
         final total = s['total_days'] ?? 0;
@@ -1016,16 +1013,6 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
       return dateTimeStr ?? '--:--';
     }
   }
-
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '--';
-    try {
-      final dt = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return dateStr;
-    }
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1049,6 +1036,31 @@ class _StudentAttendanceHistoryScreenState
   bool _hasMore = true;
 
   String? _studentId;
+
+  String _formatTime(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
+    try {
+      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
+        final now = DateTime.now();
+        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
+        dateTimeStr = '$datePrefix $dateTimeStr';
+      }
+      final dt = DateTime.parse(dateTimeStr);
+      return DateFormat('h:mm a').format(dt);
+    } catch (_) {
+      return dateTimeStr ?? '--:--';
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '--';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
+    }
+  }
 
   @override
   void initState() {
@@ -1107,7 +1119,7 @@ class _StudentAttendanceHistoryScreenState
     return Scaffold(
       appBar: AppBarWidget.simple(title: 'ប្រវត្តិវត្តមានរបស់ខ្ញុំ'),
       body: _isLoading && _records.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? const Center(child: ShimmerWidget(width: 200, height: 200, borderRadius: 16))
           : RefreshIndicator(
               onRefresh: () => _loadHistory(),
               child: Column(
@@ -1152,8 +1164,7 @@ class _StudentAttendanceHistoryScreenState
                                 return const Center(
                                   child: Padding(
                                     padding: EdgeInsets.all(16),
-                                    child: CircularProgressIndicator(
-                                        color: Colors.orange),
+                                    child: ShimmerWidget(width: 24, height: 24, borderRadius: 12),
                                   ),
                                 );
                               }
@@ -1239,30 +1250,5 @@ class _StudentAttendanceHistoryScreenState
             style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
       ],
     );
-  }
-
-  String _formatTime(String? dateTimeStr) {
-    if (dateTimeStr == null || dateTimeStr.isEmpty) return '--:--';
-    try {
-      if (dateTimeStr.length <= 8 && dateTimeStr.contains(':')) {
-        final now = DateTime.now();
-        final datePrefix = DateFormat('yyyy-MM-dd').format(now);
-        dateTimeStr = '$datePrefix $dateTimeStr';
-      }
-      final dt = DateTime.parse(dateTimeStr);
-      return DateFormat('h:mm a').format(dt);
-    } catch (_) {
-      return dateTimeStr ?? '--:--';
-    }
-  }
-
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '--';
-    try {
-      final dt = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return dateStr;
-    }
   }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Users;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -102,18 +103,22 @@ class UserIndex extends Component
             );
         }
 
-        return User::query()
-            ->when($this->search, function ($q) {
-                $q->where(function($query) {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                          ->orWhere('email', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->role, function ($q) {
-                $q->where('role', $this->role);
-            })
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(10);
+        $cacheKey = 'users.index.' . md5(implode('|', [$this->search, $this->role, $this->sortBy, $this->sortDirection, $this->getPage()]));
+
+        return Cache::remember($cacheKey, 60, function () {
+            return User::query()
+                ->when($this->search, function ($q) {
+                    $q->where(function($query) {
+                        $query->where('name', 'like', '%' . $this->search . '%')
+                              ->orWhere('email', 'like', '%' . $this->search . '%');
+                    });
+                })
+                ->when($this->role, function ($q) {
+                    $q->where('role', $this->role);
+                })
+                ->orderBy($this->sortBy, $this->sortDirection)
+                ->paginate(10);
+        });
     }
 
     public function openCreateModal()

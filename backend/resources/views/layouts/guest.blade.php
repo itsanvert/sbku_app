@@ -7,14 +7,12 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <link rel="preload" href="{{ asset('img/logo.webp') }}" as="image" type="image/webp">
+        <link rel="preload" href="{{ asset('img/logo.jpg') }}" as="image" type="image/jpeg">
 
         <!-- Styles -->
+        @vite(['resources/css/app.css'])
+
         @livewireStyles
     </head>
     <body>
@@ -22,8 +20,9 @@
             {{ $slot }}
         </div>
 
+        @vite(['resources/js/app.js'])
         @livewireScripts
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" defer></script>
 
     </body>
 </html>

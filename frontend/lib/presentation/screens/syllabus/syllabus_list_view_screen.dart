@@ -3,6 +3,7 @@ import 'package:sbku_app/model/syllabus_model.dart';
 import 'package:sbku_app/presentation/screens/syllabus/show_syllabus.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
 import 'package:sbku_app/service/syllabus_service.dart';
 
 class SyllabusListViewScreen extends StatefulWidget {
@@ -14,7 +15,7 @@ class SyllabusListViewScreen extends StatefulWidget {
 
 class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
   final SyllabusService _service = SyllabusService();
-  
+
   List<SyllabusModel> _allModels = [];
   bool _isLoading = true;
   String? _error;
@@ -35,11 +36,18 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
         _isLoading = true;
         _error = null;
       });
-      final models = await _service.getSyllabus();
-      setState(() {
-        _allModels = models;
-        _isLoading = false;
-      });
+      final result = await _service.getSyllabus();
+      if (result.isNotEmpty) {
+        setState(() {
+          _allModels = result;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'No syllabus found';
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -48,7 +56,7 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
     }
   }
 
-  /// ✅ Grouping logic for Year -> Semester -> Subjects
+  /// Grouping logic for Year -> Semester -> Subjects
   Map<String, Map<String, List<SyllabusModel>>> get _groupedSyllabus {
     final filtered = _allModels.where((s) {
       if (_selectedFaculty != null && s.facultyName != _selectedFaculty) {
@@ -81,27 +89,28 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F9FC),
+      backgroundColor:
+          isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F9FC),
       appBar: AppBarWidget.simple(
         title: 'កម្មវិធីសិក្សា (Syllabus)',
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator()) 
-        : _error != null 
-          ? _buildErrorState()
-          : Column(
-              children: [
-                _buildFilters(),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _fetchSyllabus,
-                    child: _allModels.isEmpty && _error == null
-                        ? _buildEmptyState()
-                        : _buildCurriculumList(_groupedSyllabus),
-                  ),
+      body: _isLoading
+          ? const SyllabusCardSkeleton()
+          : _error != null
+              ? _buildErrorState()
+              : Column(
+                  children: [
+                    _buildFilters(),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _fetchSyllabus,
+                        child: _allModels.isEmpty && _error == null
+                            ? _buildEmptyState()
+                            : _buildCurriculumList(_groupedSyllabus),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
     );
   }
 
@@ -145,7 +154,8 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
     );
   }
 
-  Widget _buildCurriculumList(Map<String, Map<String, List<SyllabusModel>>> grouped) {
+  Widget _buildCurriculumList(
+      Map<String, Map<String, List<SyllabusModel>>> grouped) {
     // Collect years in order
     final yearKeys = grouped.keys.toList()..sort();
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -161,7 +171,8 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
         return Card(
           elevation: isDark ? 0 : 2,
           margin: const EdgeInsets.only(bottom: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,9 +180,12 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
               // Year Header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFF1E3A8A), // Indigo or Slate
+                  color: isDark
+                      ? const Color(0xFF334155)
+                      : const Color(0xFF1E3A8A),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
@@ -207,7 +221,9 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(
             children: [
-              Icon(Icons.school_outlined, size: 18, color: isDark ? Colors.blue.shade300 : Colors.blueGrey),
+              Icon(Icons.school_outlined,
+                  size: 18,
+                  color: isDark ? Colors.blue.shade300 : Colors.blueGrey),
               const SizedBox(width: 8),
               Text(
                 name,
@@ -220,7 +236,11 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
             ],
           ),
         ),
-        Divider(height: 1, endIndent: 16, indent: 16, color: isDark ? Colors.white10 : Colors.black12),
+        Divider(
+            height: 1,
+            endIndent: 16,
+            indent: 16,
+            color: isDark ? Colors.white10 : Colors.black12),
         ...subjects.map((s) => _buildSubjectTile(s)),
         const SizedBox(height: 8),
       ],
@@ -232,9 +252,14 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? Colors.blue.withOpacity(0.12) : Colors.blue.withOpacity(0.05),
+        color: isDark
+            ? Colors.blue.withOpacity(0.12)
+            : Colors.blue.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.blue.withOpacity(0.2) : Colors.blue.withOpacity(0.1)),
+        border: Border.all(
+            color: isDark
+                ? Colors.blue.withOpacity(0.2)
+                : Colors.blue.withOpacity(0.1)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -257,20 +282,24 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
                   Expanded(
                     child: Text(
                       s.subjectName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.blue.withOpacity(0.2) : Colors.indigo.withOpacity(0.1),
+                      color: isDark
+                          ? Colors.blue.withOpacity(0.2)
+                          : Colors.indigo.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${s.creditHours} Credits',
                       style: TextStyle(
-                        fontSize: 10, 
-                        color: isDark ? Colors.blue.shade200 : Colors.indigo, 
+                        fontSize: 10,
+                        color: isDark ? Colors.blue.shade200 : Colors.indigo,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -280,13 +309,23 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.person_outline, size: 14, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  Icon(Icons.person_outline,
+                      size: 14,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey),
                   const SizedBox(width: 4),
-                  Text(s.teacherName, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey)),
+                  Text(s.teacherName,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey)),
                   const Spacer(),
-                  Icon(Icons.schedule, size: 14, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                  Icon(Icons.schedule,
+                      size: 14,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey),
                   const SizedBox(width: 4),
-                  Text(s.scheduleInfo, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey)),
+                  Text(s.scheduleInfo,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey)),
                 ],
               ),
             ],
@@ -301,7 +340,8 @@ class _SyllabusListViewScreenState extends State<SyllabusListViewScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.library_books_outlined, size: 64, color: Colors.grey.withOpacity(0.3)),
+          Icon(Icons.library_books_outlined,
+              size: 64, color: Colors.grey.withOpacity(0.3)),
           const SizedBox(height: 16),
           const Text(
             'មិនមានកម្មវិធីសិក្សាក្នុងជម្រើសនេះទេ',

@@ -28,7 +28,21 @@ Route::post('/register', [AuthController::class, 'register']);
 
 // Health check
 Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'timestamp' => now()]);
+    $dbStatus = 'unknown';
+    $dbError = null;
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        $dbStatus = 'connected';
+    } catch (\Throwable $e) {
+        $dbStatus = 'failed';
+        $dbError = $e->getMessage();
+    }
+    return response()->json([
+        'status' => 'ok',
+        'database' => $dbStatus,
+        'db_error' => $dbError,
+        'timestamp' => now(),
+    ]);
 });
 
 // Public storage route for CORS support on Flutter Web

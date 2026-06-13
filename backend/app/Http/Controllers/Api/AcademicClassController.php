@@ -35,8 +35,8 @@ class AcademicClassController extends Controller
                 'name' => $c->name,
                 'code' => $c->code,
                 'major_id' => (string)$c->major_id,
-                'major_name' => $c->major->name ?? 'Unknown',
-                'faculty_name' => $c->major->faculty->name ?? 'Unknown',
+                'major_name' => $c->major?->name,
+                'faculty_name' => $c->major?->faculty?->name,
                 'academic_year' => $c->academic_year,
                 'semester' => (string)$c->semester,
             ])
@@ -97,8 +97,8 @@ class AcademicClassController extends Controller
                 'name' => $academicClass->name,
                 'code' => $academicClass->code,
                 'major_id' => (string)$academicClass->major_id,
-                'major_name' => $academicClass->major->name ?? 'Unknown',
-                'faculty_name' => $academicClass->major->faculty->name ?? 'Unknown',
+                'major_name' => $academicClass->major?->name,
+                'faculty_name' => $academicClass->major?->faculty?->name,
                 'academic_year' => $academicClass->academic_year,
                 'semester' => (string)$academicClass->semester,
             ]

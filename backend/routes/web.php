@@ -32,31 +32,38 @@ Route::middleware([
         $isFirestore = \App\Services\FirestoreService::isActive();
 
         if ($isFirestore) {
-            $teacherCount = $firestore->count('teachers');
-            $studentCount = $firestore->count('students');
-            $userCount = $firestore->count('users');
-            $attendanceCount = $firestore->count('attendances');
-            $activeSessions = $firestore->count('attendance_sessions', ['is_active' => true]);
+            $teacherCount = \Illuminate\Support\Facades\Cache::remember('dashboard.teacher_count', 300, fn() => $firestore->count('teachers'));
+            $studentCount = \Illuminate\Support\Facades\Cache::remember('dashboard.student_count', 300, fn() => $firestore->count('students'));
+            $userCount = \Illuminate\Support\Facades\Cache::remember('dashboard.user_count', 300, fn() => $firestore->count('users'));
+            $attendanceCount = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_count', 300, fn() => $firestore->count('attendances'));
+            $activeSessions = \Illuminate\Support\Facades\Cache::remember('dashboard.active_sessions', 300, fn() => $firestore->count('attendance_sessions', ['is_active' => true]));
 
             $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
-            $recentAttendances = $firestore->list('attendances', [
-                ['attendance_date', '>=', $sevenDaysAgo]
-            ]);
-            
-            $dailyData = [];
-            $presentCount = 0;
-            $absentCount = 0;
-            $permissionCount = 0;
-            foreach ($recentAttendances as $attendance) {
-                $date = $attendance['attendance_date'] ?? null;
-                if ($date) {
-                    $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+            $attendanceStats = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_stats', 300, function () use ($firestore, $sevenDaysAgo) {
+                $recentAttendances = $firestore->list('attendances', [
+                    ['attendance_date', '>=', $sevenDaysAgo]
+                ]);
+                
+                $dailyData = [];
+                $presentCount = 0;
+                $absentCount = 0;
+                $permissionCount = 0;
+                foreach ($recentAttendances as $attendance) {
+                    $date = $attendance['attendance_date'] ?? null;
+                    if ($date) {
+                        $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
+                    }
+                    $status = $attendance['status'] ?? '';
+                    if ($status === 'Y') $presentCount++;
+                    elseif ($status === 'N') $absentCount++;
+                    elseif ($status === 'P') $permissionCount++;
                 }
-                $status = $attendance['status'] ?? '';
-                if ($status === 'Y') $presentCount++;
-                elseif ($status === 'N') $absentCount++;
-                elseif ($status === 'P') $permissionCount++;
-            }
+                return compact('dailyData', 'presentCount', 'absentCount', 'permissionCount');
+            });
+            $dailyData = $attendanceStats['dailyData'];
+            $presentCount = $attendanceStats['presentCount'];
+            $absentCount = $attendanceStats['absentCount'];
+            $permissionCount = $attendanceStats['permissionCount'];
         } else {
             $teacherCount = \Illuminate\Support\Facades\Cache::remember('dashboard.teacher_count', 300, fn() => \App\Models\Teacher::count());
             $studentCount = \Illuminate\Support\Facades\Cache::remember('dashboard.student_count', 300, fn() => \App\Models\Student::count());
@@ -65,18 +72,26 @@ Route::middleware([
             $activeSessions = \Illuminate\Support\Facades\Cache::remember('dashboard.active_sessions', 300, fn() => \App\Models\AttendanceSession::where('is_active', true)->count());
 
             $sevenDaysAgo = now()->subDays(7);
-            $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->selectRaw('attendance_date as date_key, COUNT(*) as count')
-                ->groupBy('attendance_date')
-                ->pluck('count', 'date_key')
-                ->toArray();
+            $attendanceStats = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_stats', 300, function () use ($sevenDaysAgo) {
+                $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->selectRaw('attendance_date as date_key, COUNT(*) as count')
+                    ->groupBy('attendance_date')
+                    ->pluck('count', 'date_key')
+                    ->toArray();
 
-            $presentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->where('status', 'Y')->count();
-            $absentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->where('status', 'N')->count();
-            $permissionCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                ->where('status', 'P')->count();
+                $presentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->where('status', 'Y')->count();
+                $absentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->where('status', 'N')->count();
+                $permissionCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
+                    ->where('status', 'P')->count();
+
+                return compact('dailyData', 'presentCount', 'absentCount', 'permissionCount');
+            });
+            $dailyData = $attendanceStats['dailyData'];
+            $presentCount = $attendanceStats['presentCount'];
+            $absentCount = $attendanceStats['absentCount'];
+            $permissionCount = $attendanceStats['permissionCount'];
         }
 
         $dates = [];

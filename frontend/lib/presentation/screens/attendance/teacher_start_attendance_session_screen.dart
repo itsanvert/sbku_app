@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sbku_app/presentation/screens/attendance/teacher_active_session_monitor.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/auth_service.dart';
 import 'package:sbku_app/service/location_service.dart';
@@ -206,7 +207,7 @@ class _TeacherStartAttendanceScreenState
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? const ShimmerWidget(width: 24, height: 24, borderRadius: 12)
                   : const Text(
                       'បើកវេនវត្តមាន',
                       style: TextStyle(fontSize: 16, color: Colors.white),
@@ -251,11 +252,7 @@ class _TeacherStartAttendanceScreenState
         child: Column(
           children: [
             if (_isLoadingLocation)
-              const SizedBox(
-                height: 48,
-                width: 48,
-                child: CircularProgressIndicator(),
-              )
+              const ShimmerWidget(width: 48, height: 48, borderRadius: 24)
             else
               Icon(
                 _currentLocation != null ? Icons.location_on : Icons.location_off,

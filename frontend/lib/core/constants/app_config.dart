@@ -1,11 +1,11 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Runtime configuration for API and asset URLs.
+/// Runtime configuration for API and asset URLs.*
 class AppConfig {
   AppConfig._();
 
   /// Local Laragon fallback (used if .env is missing).
-  static const String localApiHost = 'http://192.168.1.60:8000';
+  static const String localApiHost = 'http://32.236.105.9';
 
   static String get apiHost {
     final fromEnv = dotenv.env['API_URL']?.trim();
@@ -39,7 +39,8 @@ class AppConfig {
   }
 
   static String _rewriteLoopback(String url) {
-    final loopback = RegExp(r'https?://(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?');
+    final loopback =
+        RegExp(r'https?://(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?');
     if (loopback.hasMatch(url)) {
       return url.replaceFirst(loopback, apiHost);
     }

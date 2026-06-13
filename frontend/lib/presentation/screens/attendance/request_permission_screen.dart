@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/service/attendance_service.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 import 'package:sbku_app/service/auth_service.dart';
 
 class RequestPermissionScreen extends StatefulWidget {
@@ -329,8 +330,8 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2),
+                child: ShimmerWidget(
+                    width: 24, height: 24, borderRadius: 12),
               )
             : const Text(
                 'បញ្ជូនការស្នើសុំ',
