@@ -9,10 +9,6 @@ import 'package:sbku_app/presentation/screens/welcome/login_screen.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/providers/theme_provider.dart';
 import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
-<<<<<<< HEAD
-=======
-import 'package:sbku_app/service/api_service.dart';
->>>>>>> dev
 import 'package:sbku_app/service/notification_service_v2.dart';
 import 'package:sbku_app/service/app_lifecycle_manager.dart';
 import 'package:sbku_app/service/platform_channel_service.dart';
@@ -60,7 +56,6 @@ Future<void> main() async {
 
   try {
     await dotenv.load(fileName: '.env');
-<<<<<<< HEAD
     print('✓ .env loaded successfully');
   } catch (e) {
     print('✗ Failed to load .env: $e');
@@ -77,16 +72,6 @@ Future<void> main() async {
   print('🔧 Resolved API URL: ${AppConfig.apiBaseUrl}');
   print('🔧 Resolved API Host: ${AppConfig.apiHost}');
 
-=======
-  } catch (_) {
-    try {
-      await dotenv.load(fileName: '.env.example');
-    } catch (_) {
-      print('Could not load .env file, using defaults');
-    }
-  }
-
->>>>>>> dev
   setupServiceLocator();
 
   // Get device info
@@ -207,12 +192,6 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 
   Future<void> _checkAuth() async {
-<<<<<<< HEAD
-=======
-    // Start server warm-up silently in the background (no await)
-    _warmUpServer();
-
->>>>>>> dev
     final startTime = DateTime.now();
 
     // Check auth status (makes /api/user API call if token is saved)
