@@ -77,51 +77,45 @@ class User extends Authenticatable
      */
     public function getProfilePhotoUrlAttribute()
     {
-        $baseUrl = request()->getSchemeAndHttpHost() . '/api/storage/';
+        $baseUrl = rtrim(config('app.url', request()->getSchemeAndHttpHost()), '/') . '/api/storage/';
 
-        // 1. Check if user has a direct photo path (Jetstream standard)
         if ($this->profile_photo_path) {
             return $baseUrl . $this->profile_photo_path;
         }
 
-        // 2. Fall back to Teacher profile image (handles both Model and Firestore array)
-        $teacher = $this->teacher;
-        $teacherPath = data_get($teacher, 'profile_image_path');
-        if ($teacherPath) {
-            return $baseUrl . $teacherPath;
+        if ($this->relationLoaded('teacher')) {
+            $teacherPath = data_get($this->teacher, 'profile_image_path');
+            if ($teacherPath) {
+                return $baseUrl . $teacherPath;
+            }
         }
 
-        // 3. Fall back to Student profile image (handles both Model and Firestore array)
-        $student = $this->student;
-        $studentPath = data_get($student, 'profile_image_path');
-        if ($studentPath) {
-            return $baseUrl . $studentPath;
+        if ($this->relationLoaded('student')) {
+            $studentPath = data_get($this->student, 'profile_image_path');
+            if ($studentPath) {
+                return $baseUrl . $studentPath;
+            }
         }
 
-        // 4. Default ui-avatars
         return $this->defaultProfilePhotoUrl();
     }
-    /**
-     * Get the profile image path from teacher/student, falling back to
-     * the user's own profile_photo_path.
-     */
+
     public function getProfileImagePathAttribute(): ?string
     {
-        // 1. Check Teacher profile_image_path
-        $teacher = $this->teacher;
-        $teacherPath = data_get($teacher, 'profile_image_path');
-        if ($teacherPath) {
-            return $teacherPath;
+        if ($this->relationLoaded('teacher')) {
+            $teacherPath = data_get($this->teacher, 'profile_image_path');
+            if ($teacherPath) {
+                return $teacherPath;
+            }
         }
 
-        // 2. Check Student profile_image_path
-        $student = $this->student;
-        $studentPath = data_get($student, 'profile_image_path');
-        if ($studentPath) {
-            return $studentPath;
+        if ($this->relationLoaded('student')) {
+            $studentPath = data_get($this->student, 'profile_image_path');
+            if ($studentPath) {
+                return $studentPath;
+            }
         }
 
-        // 3. Fall back to the user's own profile_photo_path
         return $this->profile_photo_path;
     }
 
@@ -152,6 +146,17 @@ class User extends Authenticatable
                 $user->teacher()->create();
             } elseif ($user->role === 'student') {
                 $user->student()->create();
+            }
+        });
+
+        static::saved(function (User $user) {
+            if ($user->isDirty('profile_photo_path')) {
+                $path = $user->profile_photo_path;
+                if ($user->role === 'teacher' && $user->teacher) {
+                    $user->teacher->update(['profile_image_path' => $path]);
+                } elseif ($user->role === 'student' && $user->student) {
+                    $user->student->update(['profile_image_path' => $path]);
+                }
             }
         });
     }

@@ -8,3 +8,9 @@ storage/framework/views/*.php
 storage/logs/*.log
 tests
 public/storage
+*.md
+*.pem
+*.ps1
+public/build
+bootstrap/cache/packages.php
+bootstrap/cache/config.php

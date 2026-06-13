@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:sbku_app/providers/auth_provider.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/presentation/screens/attendance/student_attendance_status_screen.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 /// Modern QR Scan Attendance Screen
 /// Supports: live camera scan | pick QR image from gallery
@@ -50,7 +51,6 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
   late Animation<double> _pulseAnim;
   late Animation<double> _resultScaleAnim;
   late Animation<double> _resultFadeAnim;
-  late Animation<double> _modeSlideAnim;
 
   @override
   void initState() {
@@ -92,9 +92,6 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
       duration: const Duration(milliseconds: 300),
     );
 
-    _modeSlideAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _modeTabController, curve: Curves.easeInOut),
-    );
   }
 
   @override
@@ -588,10 +585,7 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                   SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.orange.shade300,
-                      strokeWidth: 2.5,
-                    ),
+                    child: ShimmerWidget(width: 20, height: 20, borderRadius: 10),
                   ),
                   const SizedBox(width: 12),
                   const Text(
@@ -655,10 +649,7 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
                     SizedBox(
                       width: 36,
                       height: 36,
-                      child: CircularProgressIndicator(
-                        color: Colors.orange.shade400,
-                        strokeWidth: 3,
-                      ),
+                      child: ShimmerWidget(width: 36, height: 36, borderRadius: 18),
                     ),
                     const SizedBox(height: 10),
                     const Text(
@@ -729,10 +720,7 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
               SizedBox(
                 width: 48,
                 height: 48,
-                child: CircularProgressIndicator(
-                  color: Colors.orange.shade400,
-                  strokeWidth: 3,
-                ),
+                child: ShimmerWidget(width: 48, height: 48, borderRadius: 24),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -1248,3 +1236,5 @@ class _CornerPainter extends CustomPainter {
   bool shouldRepaint(covariant _CornerPainter old) =>
       old.color != color || old.strokeWidth != strokeWidth;
 }
+
+

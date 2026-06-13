@@ -52,7 +52,7 @@ class AuthRepositoryImpl with ApiErrorHandler implements AuthRepository {
       final response = await _api.post(ApiEndpoints.login, {
         'email': email,
         'password': password,
-      });
+      }, requiresAuth: false);
 
       final body = jsonDecode(response.body);
 
@@ -77,7 +77,7 @@ class AuthRepositoryImpl with ApiErrorHandler implements AuthRepository {
         'email': email,
         'password': password,
         'password_confirmation': passwordConfirmation,
-      });
+      }, requiresAuth: false);
 
       final body = jsonDecode(response.body);
 
@@ -92,8 +92,13 @@ class AuthRepositoryImpl with ApiErrorHandler implements AuthRepository {
   @override
   Future<Result<void>> logout() {
     return guardAsync(() async {
-      await _api.post(ApiEndpoints.logout, {}, requiresAuth: true);
-      await _api.deleteToken();
+      try {
+        await _api.post(ApiEndpoints.logout, {}, requiresAuth: true);
+      } catch (_) {
+        // Silently catch exceptions to ensure token deletion completes
+      } finally {
+        await _api.deleteToken();
+      }
     });
   }
 
@@ -107,6 +112,10 @@ class AuthRepositoryImpl with ApiErrorHandler implements AuthRepository {
         if (data['success'] == true) {
           return User.fromJson(data['user'] as Map<String, dynamic>);
         }
+      }
+
+      if (response.statusCode == 401) {
+        await _api.deleteToken();
       }
 
       return null;

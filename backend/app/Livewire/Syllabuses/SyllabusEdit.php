@@ -8,6 +8,7 @@ use App\Models\Teacher;
 use App\Models\Faculty;
 use App\Models\Major;
 use App\Models\Shift;
+use App\Models\Room;
 use App\Services\FirestoreService;
 use App\Services\ScheduleConflictDetector;
 use App\Support\FirestoreHydrator;
@@ -21,6 +22,7 @@ class SyllabusEdit extends Component
     public $subject_id;
     public $teacher_id;
     public $shift_id;
+    public $room_id;
     public $year_id;
     public $semester_id;
     public $schedule_description;
@@ -39,6 +41,7 @@ class SyllabusEdit extends Component
             'subject_id'           => 'required' . (FirestoreService::isActive() ? '' : '|exists:subjects,id'),
             'teacher_id'           => 'required' . (FirestoreService::isActive() ? '' : '|exists:teachers,id'),
             'shift_id'             => 'required' . (FirestoreService::isActive() ? '' : '|exists:shifts,id'),
+            'room_id'              => 'nullable' . (FirestoreService::isActive() ? '' : '|exists:rooms,id'),
             'year_id'              => 'required',
             'semester_id'          => 'required|integer|min:1|max:2',
             'schedule_description' => 'nullable|string|max:255',
@@ -73,6 +76,7 @@ class SyllabusEdit extends Component
         $this->subject_id           = $syllabus['subject_id'] ?? '';
         $this->teacher_id           = $syllabus['teacher_id'] ?? '';
         $this->shift_id             = $syllabus['shift_id'] ?? '';
+        $this->room_id              = $syllabus['room_id'] ?? '';
         $this->year_id              = $syllabus['year_id'] ?? '';
         $this->semester_id          = $syllabus['semester_id'] ?? '';
         $this->schedule_description = $syllabus['schedule_description'] ?? '';
@@ -137,6 +141,7 @@ class SyllabusEdit extends Component
             'subject_id'           => (string) $this->subject_id,
             'teacher_id'           => (string) $this->teacher_id,
             'shift_id'             => (string) $this->shift_id,
+            'room_id'              => $this->room_id ? (string) $this->room_id : null,
             'year_id'              => $this->year_id,
             'semester_id'          => (int) $this->semester_id,
             'schedule_description' => $this->schedule_description,
@@ -165,6 +170,7 @@ class SyllabusEdit extends Component
                 'subject_id'           => $this->subject_id,
                 'teacher_id'           => $this->teacher_id,
                 'shift_id'             => $this->shift_id,
+                'room_id'              => $this->room_id ?: null,
                 'year_id'              => $this->year_id,
                 'semester_id'          => $this->semester_id,
                 'schedule_description' => $this->schedule_description,
@@ -175,6 +181,11 @@ class SyllabusEdit extends Component
         }
 
         $this->dispatch('syllabusUpdated');
+    }
+
+    public function updatedFacultyId()
+    {
+        $this->major_id = null;
     }
 
     public function closeModal()
@@ -208,6 +219,7 @@ class SyllabusEdit extends Component
                 'faculties' => FirestoreHydrator::selectOptions($firestore->list('faculties')),
                 'majors'    => FirestoreHydrator::selectOptions($firestore->list('majors')),
                 'shifts'    => FirestoreHydrator::selectOptions($firestore->list('shifts')),
+                'rooms'     => FirestoreHydrator::selectOptions($firestore->list('rooms')),
                 'subjects'  => FirestoreHydrator::selectOptions($firestore->list('subjects')),
                 'teachers'  => FirestoreHydrator::teacherSelectOptions($firestore->list('teachers')),
                 'years'     => $years,
@@ -217,8 +229,11 @@ class SyllabusEdit extends Component
 
         return view('livewire.syllabuses.syllabus-edit', [
             'faculties' => Faculty::orderBy('name')->get(),
-            'majors'    => Major::orderBy('name')->get(),
+            'majors'    => $this->faculty_id
+                ? Major::where('faculty_id', $this->faculty_id)->orderBy('name')->get()
+                : Major::orderBy('name')->get(),
             'shifts'    => Shift::orderBy('name')->get(),
+            'rooms'     => Room::orderBy('name')->get(),
             'subjects'  => Subject::orderBy('name')->get(),
             'teachers'  => Teacher::with('user')->get(),
             'years'     => $years,

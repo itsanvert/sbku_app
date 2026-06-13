@@ -18,7 +18,6 @@ class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
 
   final storage = const FlutterSecureStorage();
-  // Single shared HTTP client for the entire app to maintain Keep-Alive, DNS, and SSL session caching.
   static final http.Client _sharedClient = http.Client();
   final http.Client _client;
 
@@ -29,8 +28,36 @@ class ApiService {
   ApiService() : _client = _sharedClient;
 
   // Retry configuration
-  static const int maxRetries = 3;
+  static const int maxRetries = 1;
   static const Duration requestTimeout = Duration(seconds: 30);
+  static const Duration extendedTimeout = Duration(seconds: 60);
+  static const Duration healthCheckTimeout = Duration(seconds: 5);
+
+  // Track server unreachability to fail fast
+  static bool _serverLikelyDown = false;
+  static DateTime? _lastServerDownCheck;
+  static const Duration _serverDownCooldown = Duration(seconds: 15);
+
+  /// Check if server is likely unreachable (fail-fast before making a real request)
+  bool _isServerLikelyDown() {
+    if (!_serverLikelyDown) return false;
+    if (_lastServerDownCheck != null &&
+        DateTime.now().difference(_lastServerDownCheck!) > _serverDownCooldown) {
+      _serverLikelyDown = false;
+      return false;
+    }
+    return true;
+  }
+
+  void _markServerDown() {
+    _serverLikelyDown = true;
+    _lastServerDownCheck = DateTime.now();
+  }
+
+  void _markServerUp() {
+    _serverLikelyDown = false;
+    _lastServerDownCheck = null;
+  }
 
   /// Clear the entire in-memory cache (call after mutations like POST/PUT/DELETE)
   void clearCache() {
@@ -86,15 +113,32 @@ class ApiService {
     return headers;
   }
 
-  /// Retry wrapper with exponential backoff
+  /// Build a full URL without producing double-slashes.
+  /// `endpoint` must NOT start with a slash.
+  Uri _buildUri(String endpoint) {
+    final base = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    final path = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    return Uri.parse('$base/$path');
+  }
+
+  /// Retry wrapper with exponential backoff and connectivity guard
   Future<http.Response> _retryableRequest<T>(
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    Duration timeout = requestTimeout,
+  }) async {
+    if (_isServerLikelyDown()) {
+      throw TimeoutException('Server unreachable (fast-fail)');
+    }
+
     int attempt = 0;
 
     while (attempt < maxRetries) {
       try {
-        final response = await request().timeout(requestTimeout);
+        final response = await request().timeout(timeout);
+
+        _markServerUp();
 
         // Only retry on server errors (5xx) and connection issues
         if (response.statusCode >= 500 && attempt < maxRetries - 1) {
@@ -105,10 +149,12 @@ class ApiService {
 
         return response;
       } on TimeoutException {
+        _markServerDown();
         attempt++;
         if (attempt >= maxRetries) rethrow;
         await Future.delayed(Duration(milliseconds: 100 * (attempt * 2)));
       } catch (e) {
+        _markServerDown();
         // For network errors, retry
         if (attempt < maxRetries - 1) {
           attempt++;
@@ -123,7 +169,7 @@ class ApiService {
   }
 
   // GET request with retry and in-memory caching
-  Future<http.Response> get(String endpoint, {bool requiresAuth = true, bool forceRefresh = false}) async {
+  Future<http.Response> get(String endpoint, {bool requiresAuth = true, bool forceRefresh = false, Duration? timeout}) async {
     final cacheKey = '$requiresAuth:$endpoint';
 
     if (!forceRefresh) {
@@ -132,13 +178,17 @@ class ApiService {
     }
 
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.get(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
-        ));
+        ), timeout: timeout ?? requestTimeout);
 
     if (response.statusCode == 200) {
       _setCache(cacheKey, response);
+    } else {
+      print('[ApiService GET ${response.statusCode}] $uri');
+      print('  Body: ${response.body}');
     }
 
     return response;
@@ -148,15 +198,21 @@ class ApiService {
   Future<http.Response> post(
     String endpoint,
     Map<String, dynamic> body, {
-    bool requiresAuth = false,
+    bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.post(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         ));
     if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    if (response.statusCode >= 400) {
+      print('[ApiService POST ${response.statusCode}] $uri');
+      print('  Request body: $body');
+      print('  Response body: ${response.body}');
+    }
     return response;
   }
 
@@ -167,12 +223,18 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.put(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         ));
     if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    if (response.statusCode >= 400) {
+      print('[ApiService PUT ${response.statusCode}] $uri');
+      print('  Request body: $body');
+      print('  Response body: ${response.body}');
+    }
     return response;
   }
 
@@ -182,11 +244,16 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     final response = await _retryableRequest(() => _client.delete(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
         ));
     if (response.statusCode < 500) invalidateCache(endpoint.split('/').first);
+    if (response.statusCode >= 400) {
+      print('[ApiService DELETE ${response.statusCode}] $uri');
+      print('  Response body: ${response.body}');
+    }
     return response;
   }
 
@@ -203,7 +270,7 @@ class ApiService {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/$endpoint'),
+        _buildUri(endpoint),
       );
 
       // Add headers
@@ -232,20 +299,27 @@ class ApiService {
     bool requiresAuth = true,
   }) async {
     final headers = await getHeaders(requiresAuth: requiresAuth);
+    final uri = _buildUri(endpoint);
     return await _retryableRequest(() => _client.patch(
-          Uri.parse('$baseUrl/$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         ));
   }
 
-  /// Health check - useful for testing connectivity
+  /// Health check - fast, no retries, short timeout
   Future<bool> healthCheck() async {
     try {
-      final response = await get('health', requiresAuth: false);
-      return response.statusCode == 200;
+      final uri = _buildUri('health');
+      final headers = await getHeaders(requiresAuth: false);
+      final response = await _client.get(uri, headers: headers).timeout(healthCheckTimeout);
+      if (response.statusCode == 200) {
+        _markServerUp();
+        return true;
+      }
+      return false;
     } catch (e) {
-      print('Health check failed: $e');
+      _markServerDown();
       return false;
     }
   }

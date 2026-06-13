@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sbku_app/service/attendance_service.dart';
 import 'package:sbku_app/service/api_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Teacher Active Session Monitor — with anti-cheating approval checklist
@@ -415,7 +416,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
         ),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: primary))
+          ? const Center(child: ShimmerBlock(width: 200, height: 200, borderRadius: 16))
           : TabBarView(
               controller: _tabController,
               children: [
@@ -649,9 +650,8 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final primary = theme.primaryColor;
 
-    final name = a['student_name'] ?? 'Unknown';
+    final name = a['student_name'] ?? '—';
     final code = a['student_code'] ?? '';
-    final checkIn = a['check_in_time'] ?? '--:--';
     final isPermission = a['status'] == 'P';
 
     final borderColor =
@@ -914,7 +914,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     final isDark = theme.brightness == Brightness.dark;
     final isApproved = status == 'approved';
     final color = isApproved ? Colors.green : Colors.red;
-    final name = a['student_name'] ?? 'Unknown';
+    final name = a['student_name'] ?? '—';
     final code = a['student_code'] ?? '';
     final reason = a['reject_reason'];
 
@@ -989,14 +989,13 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
 
   // ── Student Profile Bottom Sheet ────────────────────────────
   void _showStudentProfile(Map<String, dynamic> a) {
-    final name = a['student_name'] ?? 'Unknown';
+    final name = a['student_name'] ?? '—';
     final code = a['student_code'] ?? '';
     final faculty = a['faculty'] ?? '—';
     final major = a['major'] ?? '—';
     final year = a['year']?.toString() ?? '—';
     final shift = a['shift'] ?? '—';
     final generation = a['generation']?.toString() ?? '—';
-    final checkIn = a['check_in_time'] ?? '--:--';
     final status = a['verify_status'] ?? 'pending';
 
     showModalBottomSheet(
@@ -1141,7 +1140,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
               _profileRow(Icons.calendar_today_outlined, 'Year', year),
               _profileRow(Icons.schedule_outlined, 'Shift', shift),
               _profileRow(Icons.groups_outlined, 'Generation', generation),
-              _profileRow(Icons.login_outlined, 'Check-in', checkIn),
+              _profileRow(Icons.login_outlined, 'Check-in', a['check_in_time'] ?? '--:--'),
 
               const SizedBox(height: 16),
             ],
@@ -1298,8 +1297,7 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                    child: ShimmerWidget(width: 16, height: 16, borderRadius: 8),
                   )
                 : const Icon(Icons.stop_circle_outlined),
             label: Text(_isEnding ? 'កំពុងបិទ...' : 'បិទវេនវត្តមាន'),
@@ -1371,15 +1369,6 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     }
   }
 
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '--';
-    try {
-      final dt = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return dateStr;
-    }
-  }
 
   String _fixUrl(String? url) {
     if (url == null || url.isEmpty) return '';
@@ -1398,3 +1387,5 @@ class _TeacherActiveSessionScreenState extends State<TeacherActiveSessionScreen>
     return url;
   }
 }
+
+

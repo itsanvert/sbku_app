@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/model/teacher_model.dart';
+import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 import 'package:sbku_app/service/teacher_service.dart';
 
 class ShowTeacherScreen extends StatefulWidget {
@@ -37,9 +38,7 @@ class _ShowTeacherScreenState extends State<ShowTeacherScreen> {
         builder: (context, snapshot) {
           // ── Loading ──────────────────────────────────────────────
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
+            return _buildSkeleton();
           }
 
           // ── Error ────────────────────────────────────────────────
@@ -222,6 +221,97 @@ class _ShowTeacherScreenState extends State<ShowTeacherScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    final isDark = _isDarkMode(context);
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 260,
+            pinned: true,
+            backgroundColor: const Color(0xFFFF5722),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF5722), Color(0xFFFF8A65)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 48),
+                    const ShimmerCircle(radius: 52),
+                    const SizedBox(height: 12),
+                    ShimmerWidget(width: 180, height: 20, borderRadius: 4),
+                    const SizedBox(height: 4),
+                    ShimmerWidget(width: 140, height: 14, borderRadius: 4),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ShimmerWidget(width: 100, height: 13, borderRadius: 4),
+                  const SizedBox(height: 8),
+                  ...List.generate(4, (_) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        const ShimmerWidget(width: 34, height: 34, borderRadius: 8),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ShimmerWidget(width: 60, height: 11, borderRadius: 4),
+                              const SizedBox(height: 4),
+                              ShimmerWidget(width: 140, height: 15, borderRadius: 4),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                  const SizedBox(height: 20),
+                  ShimmerWidget(width: 100, height: 13, borderRadius: 4),
+                  const SizedBox(height: 8),
+                  ...List.generate(5, (_) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        const ShimmerWidget(width: 34, height: 34, borderRadius: 8),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ShimmerWidget(width: 60, height: 11, borderRadius: 4),
+                              const SizedBox(height: 4),
+                              ShimmerWidget(width: 140, height: 15, borderRadius: 4),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

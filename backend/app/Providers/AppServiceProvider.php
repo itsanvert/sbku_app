@@ -19,7 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (config('app.env') === 'production') {
+        // Increase memory limit for large queries (development safety net)
+        ini_set('memory_limit', '1024M');
+
+        // Only force HTTPS in production when behind a trusted proxy
+        if (config('app.env') === 'production' && request()->server('HTTP_X_FORWARDED_PROTO') === 'https') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 

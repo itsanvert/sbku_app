@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sbku_app/model/teacher_model.dart';
 import 'package:sbku_app/presentation/screens/teacher/show_teacher.dart';
-import 'package:sbku_app/service/teacher_service.dart';
 import 'package:sbku_app/presentation/widgets/appbar_widget.dart';
 import 'package:sbku_app/presentation/widgets/filter_row_widget.dart';
 import 'package:sbku_app/presentation/widgets/list_item_widget.dart';
+import 'package:sbku_app/presentation/widgets/list_card_widget.dart';
+import 'package:sbku_app/service/teacher_service.dart';
 
 class TeacherListViewScreen extends StatefulWidget {
   const TeacherListViewScreen({super.key});
@@ -19,12 +20,9 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
   late Stream<List<Teacher>> _teacherStream;
 
   List<Teacher> _teachers = [];
-  bool _loading = false;
-  String? _error;
 
   // Pagination
   int _page = 1;
-  int _lastPage = 1;
 
   // Filters
   String? _selectedFaculty;
@@ -41,22 +39,15 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
   Future<void> _loadTeachers({bool reset = false}) async {
     if (reset) _page = 1;
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
 
     try {
-      final result = await _service.getTeachers(page: _page);
+      final paginated = await _service.getTeachers(page: _page);
       setState(() {
-        _teachers = result.data;
-        _lastPage = result.lastPage;
+        _teachers = paginated.data;
       });
     } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _loading = false);
-    }
+          } finally {
+          }
   }
 
   // ── Client-side filtering (same logic as before) ──────────────────
@@ -140,10 +131,11 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
             child: StreamBuilder<List<Teacher>>(
               stream: _teacherStream,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
+                  return const ListItemSkeleton();
                 }
-                
+
                 if (snapshot.hasError) {
                   return Center(
                     child: Column(
@@ -158,7 +150,11 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
-                          onPressed: () => setState(() {}),
+                          onPressed: () {
+                            setState(() {
+                              _teacherStream = _service.streamTeachers();
+                            });
+                          },
                           icon: const Icon(Icons.refresh),
                           label: const Text('Retry'),
                         ),
@@ -168,7 +164,7 @@ class _TeacherListScreenState extends State<TeacherListViewScreen> {
                 }
 
                 final teachers = snapshot.data ?? [];
-                
+
                 // Apply client-side filters
                 var filtered = teachers;
                 if (_selectedFaculty != null) {

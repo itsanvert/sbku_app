@@ -3,10 +3,8 @@
 namespace App\Livewire\Students;
 
 use App\Models\Student;
-use App\Models\Faculty;
-use App\Models\Major;
-use App\Models\Shift;
 use App\Support\FirestoreHydrator;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -154,38 +152,39 @@ class StudentIndex extends Component
             );
         }
 
-        $query = Student::query()
-            ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->leftJoin('faculties', 'students.faculty_id', '=', 'faculties.id')
-            ->leftJoin('majors', 'students.major_id', '=', 'majors.id')
-            ->select('students.*', 'users.name as user_name', 'users.email as user_email', 'faculties.name as faculty_name', 'majors.name as major_name');
+        $cacheKey = 'students.index.' . md5(implode('|', [$this->search, $this->role, $this->sortBy, $this->sortDirection, $this->getPage()]));
 
-        // Search
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('users.name', 'like', '%' . $this->search . '%')
-                    ->orWhere('users.email', 'like', '%' . $this->search . '%')
-                    ->orWhere('students.phone', 'like', '%' . $this->search . '%');
-            });
-        }
+        return Cache::remember($cacheKey, 60, function () {
+            $query = Student::query()
+                ->with(['user', 'major', 'faculty', 'schedule', 'shift'])
+                ->join('users', 'students.user_id', '=', 'users.id')
+                ->leftJoin('faculties', 'students.faculty_id', '=', 'faculties.id')
+                ->leftJoin('majors', 'students.major_id', '=', 'majors.id')
+                ->select('students.*', 'users.name as user_name', 'users.email as user_email', 'faculties.name as faculty_name', 'majors.name as major_name');
 
-        // Role Filter
-        if ($this->role) {
-            $query->where('users.role', $this->role);
-        }
+            if ($this->search) {
+                $query->where(function ($q) {
+                    $q->where('users.name', 'like', '%' . $this->search . '%')
+                        ->orWhere('users.email', 'like', '%' . $this->search . '%')
+                        ->orWhere('students.phone', 'like', '%' . $this->search . '%');
+                });
+            }
 
-        // Sorting
-        $sortField = match ($this->sortBy) {
-            'name' => 'users.name',
-            'email' => 'users.email',
-            'faculty_id' => 'faculties.name',
-            'major_id' => 'majors.name',
-            default => 'students.' . $this->sortBy,
-        };
+            if ($this->role) {
+                $query->where('users.role', $this->role);
+            }
 
-        return $query->orderBy($sortField, $this->sortDirection)
-            ->paginate(10);
+            $sortField = match ($this->sortBy) {
+                'name' => 'users.name',
+                'email' => 'users.email',
+                'faculty_id' => 'faculties.name',
+                'major_id' => 'majors.name',
+                default => 'students.' . $this->sortBy,
+            };
+
+            return $query->orderBy($sortField, $this->sortDirection)
+                ->paginate(10);
+        });
     }
 
     public function openCreateModal()
@@ -269,18 +268,6 @@ class StudentIndex extends Component
 
     public function render()
     {
-        if (\App\Services\FirestoreService::isActive()) {
-            return view('livewire.students.student-index', [
-                'faculties' => FirestoreHydrator::selectOptions($this->firestore->list('faculties')),
-                'majors'    => FirestoreHydrator::selectOptions($this->firestore->list('majors')),
-                'shifts'    => FirestoreHydrator::selectOptions($this->firestore->list('shifts')),
-            ])->layout('layouts.app');
-        }
-
-        return view('livewire.students.student-index', [
-            'faculties' => Faculty::orderBy('name')->get(),
-            'majors' => Major::orderBy('name')->get(),
-            'shifts' => Shift::orderBy('name')->get(),
-        ])->layout('layouts.app');
+        return view('livewire.students.student-index')->layout('layouts.app');
     }
 }

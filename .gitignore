@@ -2,4 +2,40 @@ frontend/android/app/*.exe
 *.exe
 node_modules/
 vendor/
+
+# Environment files
 .env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+build/
+!backend/frontend/build/
+dist/
+.next/
+
+# Firebase credentials
+*firebase*.json
+firebase-credentials.json
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

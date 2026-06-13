@@ -5,7 +5,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.jpg" name="SBKU"/>
+                    <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.webp" name="SBKU"/>
 
                 </div>
                 <!-- Navigation Links -->

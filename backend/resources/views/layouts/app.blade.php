@@ -7,15 +7,11 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-        <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
+        <link rel="preload" href="{{ asset('img/logo.webp') }}" as="image" type="image/webp">
+        <link rel="preload" href="{{ asset('img/logo.jpg') }}" as="image" type="image/jpeg">
 
-        <!-- Preconnect for Chart.js CDN (used in dashboard) -->
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <!-- Styles -->
+        @vite(['resources/css/app.css'])
 
         <!-- Styles -->
         @livewireStyles
@@ -26,7 +22,7 @@
             <flux:sidebar stashable sticky class="lg:bg-zinc-50 lg:dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
                 <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-                <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.jpg" name="SBKU" class="px-2" />
+                <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.webp" name="SBKU" class="px-2" />
 
                 <flux:navlist variant="pill" class="mt-6">
                     <flux:navlist.item icon="home" href="{{ route('dashboard') }}" :current="request()->routeIs('dashboard')">Dashboard</flux:navlist.item>
@@ -55,6 +51,7 @@
                         <flux:navlist.item icon="building-library" href="{{ route('faculties.index') }}" :current="request()->routeIs('faculties.index')">Faculty</flux:navlist.item>
                         <flux:navlist.item icon="academic-cap" href="{{ route('majors.index') }}" :current="request()->routeIs('majors.index')">Major</flux:navlist.item>
                         <flux:navlist.item icon="user-group" href="{{ route('classes.index') }}" :current="request()->routeIs('classes.index')">Class</flux:navlist.item>
+                        <flux:navlist.item icon="building-office" href="{{ route('rooms.index') }}" :current="request()->routeIs('rooms.index')">Room</flux:navlist.item>
                         <flux:navlist.item icon="clock" href="{{ route('schedules.index') }}" :current="request()->routeIs('schedules.index')">Schedule</flux:navlist.item>
                         <flux:navlist.item icon="arrow-path" href="{{ route('shifts.index') }}" :current="request()->routeIs('shifts.index')">Shift</flux:navlist.item>
                         <flux:navlist.item icon="chat-bubble-left-right" href="{{ route('messages') }}" :current="request()->routeIs('messages')">Messages</flux:navlist.item>
@@ -139,6 +136,7 @@
 
         @stack('modals')
 
+        @vite(['resources/js/app.js'])
         @livewireScripts
         @fluxScripts
         @stack('scripts')
