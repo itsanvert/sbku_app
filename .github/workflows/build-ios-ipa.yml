@@ -13,6 +13,9 @@ jobs:
           channel: stable
       - run: flutter pub get
         working-directory: frontend
+      - name: Create .env file for CI
+        run: cp .env.example .env
+        working-directory: frontend
       - run: flutter build ios --no-codesign --release
         working-directory: frontend
       - run: |
