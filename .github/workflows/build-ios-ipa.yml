@@ -14,7 +14,10 @@ jobs:
       - run: flutter pub get
         working-directory: frontend
       - name: Create .env file for CI
-        run: cp .env.example .env
+        run: |
+          echo "API_URL=https://singing-status-healthy-courses.trycloudflare.com" > .env
+          echo ".env created successfully:"
+          cat .env
         working-directory: frontend
       - run: flutter build ios --no-codesign --release
         working-directory: frontend
