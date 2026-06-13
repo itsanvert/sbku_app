@@ -12,6 +12,7 @@ import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
 import 'package:sbku_app/service/notification_service_v2.dart';
 import 'package:sbku_app/service/app_lifecycle_manager.dart';
 import 'package:sbku_app/service/platform_channel_service.dart';
+import 'package:sbku_app/service/api_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Global app lifecycle manager
