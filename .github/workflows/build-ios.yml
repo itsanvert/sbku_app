@@ -1,0 +1,77 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Build mode'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - debug
+          - profile
+          - release
+      version:
+        description: 'Version override (e.g. 1.0.0+1) — blank = pubspec.yaml'
+        required: false
+        type: string
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ vars.FLUTTER_VERSION || '3.x' }}
+          channel: stable
+          cache: true
+
+      - name: Override version (optional)
+        if: inputs.version != ''
+        working-directory: frontend
+        run: |
+          sed -i '' "s/^version:.*/version: ${{ inputs.version }}/" pubspec.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: flutter pub get
+
+      - name: Build iOS (${{ inputs.build_mode }})
+        working-directory: frontend
+        run: flutter build ios --no-codesign --${{ inputs.build_mode }}
+
+      - name: Package IPA
+        working-directory: frontend
+        run: |
+          set -e
+          rm -rf Payload
+          mkdir -p Payload
+          APP_PATH=$(find build/ios -name "Runner.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::Runner.app not found in build/ios/"
+            exit 1
+          fi
+          echo "Found: $APP_PATH"
+          cp -r "$APP_PATH" Payload/
+          MODE="${{ inputs.build_mode }}"
+          IPA_NAME="sbku_app_${MODE}.ipa"
+          zip -r "$IPA_NAME" Payload/
+          rm -rf Payload
+          echo "Created: $IPA_NAME ($(du -h "$IPA_NAME" | cut -f1))"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbku_app_${{ inputs.build_mode }}
+          path: frontend/*.ipa
+          compression-level: 0
+          retention-days: 14
