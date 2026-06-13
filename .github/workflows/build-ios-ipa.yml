@@ -1,0 +1,29 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+        working-directory: frontend
+      - name: Create .env file for CI
+        run: cp .env.example .env
+        working-directory: frontend
+      - run: flutter build ios --no-codesign --release
+        working-directory: frontend
+      - run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r sbku_app.ipa Payload/
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbku_app_ipa
+          path: frontend/sbku_app.ipa
