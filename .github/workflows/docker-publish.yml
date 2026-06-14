@@ -3,7 +3,7 @@ name: Build, Publish & Deploy Docker Image
 on:
   push:
     branches: [main, dev, uat]
-    tags: ['v*']
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -237,5 +237,3 @@ jobs:
             done
 
             echo "=== Deployment complete ==="
-
-

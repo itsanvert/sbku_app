@@ -13,6 +13,12 @@ jobs:
           channel: stable
       - run: flutter pub get
         working-directory: frontend
+      - name: Create .env file for CI
+        run: |
+          echo "API_URL=http://32.236.105.9" > .env
+          echo ".env created successfully:"
+          cat .env
+        working-directory: frontend
       - run: flutter build ios --no-codesign --release
         working-directory: frontend
       - run: |
