@@ -15,7 +15,7 @@ jobs:
         working-directory: frontend
       - name: Create .env file for CI
         run: |
-          echo "API_URL=https://singing-status-healthy-courses.trycloudflare.com" > .env
+          echo "API_URL=http://32.236.105.9" > .env
           echo ".env created successfully:"
           cat .env
         working-directory: frontend
