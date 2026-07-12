@@ -4,12 +4,12 @@
 
 ![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 
 **A full-stack application for scalable syllabus management**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [API Documentation](#-api-integration) • [Contributing](#-contributing)
+[Features](#-features) • [Quick Start](#-quick-start) • [Troubleshooting](#️-troubleshooting--theme-support) • [Contributing](#-contributing)
 
 </div>
 
@@ -25,7 +25,7 @@ SBKU App is a modern full-stack application built with a Laravel backend and Flu
 - **[Laravel](https://laravel.com/)** - PHP framework for robust web applications
 - **Laravel Jetstream** - Authentication and team management scaffolding
 - **REST API** - RESTful API architecture for mobile integration
-- **MySQL** - Relational database management system
+- **PostgreSQL / MySQL** - Relational database (supports Neon database cloud and local MySQL)
 
 ### Frontend
 - **[Flutter](https://flutter.dev/)** - Cross-platform mobile framework
@@ -70,7 +70,7 @@ Before you begin, ensure you have the following installed:
 
 - **PHP** >= 8.1
 - **Composer** >= 2.0
-- **MySQL** >= 8.0
+- **PostgreSQL** or **MySQL**
 - **Flutter** >= 3.0
 - **Dart** >= 3.0
 
@@ -94,7 +94,14 @@ Before you begin, ensure you have the following installed:
 
 4. **Configure database**
    
-   Update your `.env` file with database credentials:
+   Update your `.env` file with database credentials.
+   For PostgreSQL:
+   ```env
+   DB_CONNECTION=pgsql
+   DATABASE_URL="your-postgresql-connection-string"
+   ```
+   
+   For MySQL:
    ```env
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
@@ -120,7 +127,7 @@ Before you begin, ensure you have the following installed:
 
 1. **Navigate to Flutter directory**
    ```bash
-   cd flutter_app
+   cd frontend
    ```
 
 2. **Install dependencies**
@@ -140,4 +147,16 @@ Before you begin, ensure you have the following installed:
    flutter run
    ```
 
-</div>
+## 🛠️ Troubleshooting & Theme Support
+
+### Livewire `MultipleRootElementsDetectedException`
+If you encounter `Livewire only supports one HTML element per component. Multiple root elements detected` errors:
+- Ensure none of the Blade view files or components contain a UTF-8 BOM (`\xef\xbb\xbf`) at the very start of the file. UTF-8 BOMs output white-space bytes before the first HTML element, causing Livewire's root element parser to fail.
+- Strip any UTF-8 BOM from your views, then clear the compiled views:
+  ```bash
+  php artisan view:clear
+  ```
+
+### Light/Dark Mode Styling
+The application UI supports fully dynamic Light and Dark mode options:
+- Dashboard widgets, static glassmorphic cards (`.glass-card-static`, `.glass-card`), and count cards (`.stat-card`) automatically toggle backgrounds and text colors responsively when the `dark` class is set on the root `<html>` element.
