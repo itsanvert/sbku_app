@@ -1,4 +1,4 @@
-<div>
+﻿<div>
     <x-slot name="header">
         <flux:heading size="xl">User Management</flux:heading>
         <flux:subheading>Manage team members, roles, and account access</flux:subheading>
@@ -13,10 +13,10 @@
                 </flux:callout>
             @endif
 
-            <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
 
                 {{-- Toolbar --}}
-                <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200">
+                <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
                     <div class="flex items-center gap-2">
                         <flux:input
                             wire:model.live.debounce.300ms="search"
@@ -59,42 +59,42 @@
                             <col class="w-36">
                         </colgroup>
                         <thead>
-                            <tr class="border-b border-zinc-200 bg-zinc-50">
+                            <tr class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1e293b]">
                                 <th class="px-4 py-3">
                                     <flux:checkbox wire:model.live="selectAll" />
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('id')">#</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('name')">Name</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('email')">Email</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('role')">Role</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer hover:text-zinc-600 select-none" wire:click="sort('created_at')">Joined</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Actions</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none" wire:click="sort('id')">#</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none" wire:click="sort('name')">Name</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none" wire:click="sort('email')">Email</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none" wire:click="sort('role')">Role</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none" wire:click="sort('created_at')">Joined</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-100">
+                        <tbody class="divide-y divide-gray-100 dark:divide-[#374151]">
                             @forelse ($this->users as $user)
-                                <tr class="hover:bg-zinc-50/70 transition-colors duration-100">
+                                <tr class="hover:bg-gray-50/70 dark:hover:bg-[#263548]/50 transition-colors duration-100">
 
                                     <td class="px-4 py-3">
                                         <flux:checkbox wire:model.live="selected" value="{{ $user->id }}" />
                                     </td>
 
-                                    <td class="px-4 py-3 tabular-nums text-xs text-zinc-400">
+                                    <td class="px-4 py-3 tabular-nums text-xs text-gray-400 dark:text-gray-500">
                                         {{ $user->id }}
                                     </td>
 
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-2.5">
                                             <img
-                                                class="h-7 w-7 rounded-lg object-cover ring-1 ring-zinc-200 shrink-0"
+                                                class="h-7 w-7 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-[#374151] shrink-0"
                                                 src="{{ $user->profile_photo_url }}"
                                                 alt="{{ $user->name }}"
                                             />
-                                            <span class="font-medium text-zinc-900 truncate">{{ $user->name }}</span>
+                                            <span class="font-medium text-gray-900 dark:text-gray-50 truncate">{{ $user->name }}</span>
                                         </div>
                                     </td>
 
-                                    <td class="px-4 py-3 text-sm text-zinc-500">
+                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                         {{ $user->email }}
                                     </td>
 
@@ -112,7 +112,7 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 text-sm text-zinc-400">
+                                    <td class="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
                                         {{ $user->created_at?->format('M j, Y') ?? '—' }}
                                     </td>
 
@@ -127,9 +127,9 @@
                             @empty
                                 <tr>
                                     <td colspan="7" class="px-4 py-14 text-center">
-                                        <div class="flex flex-col items-center gap-1.5 text-zinc-400">
+                                        <div class="flex flex-col items-center gap-1.5 text-gray-400 dark:text-gray-500">
                                             <flux:icon name="users" class="w-6 h-6 mb-0.5" />
-                                            <p class="text-sm font-medium text-zinc-500">No users found</p>
+                                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">No users found</p>
                                             <p class="text-xs">Try adjusting your search or filters</p>
                                         </div>
                                     </td>
@@ -188,4 +188,3 @@
     </div>
 
 </div>
-

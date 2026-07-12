@@ -1,4 +1,4 @@
-<div>
+﻿<div>
     <x-slot name="header">
         <flux:heading size="xl">Shift Management</flux:heading>
         <flux:subheading>Manage academic shifts (e.g. Morning, Afternoon, Evening)</flux:subheading>
@@ -12,9 +12,9 @@
             </flux:callout>
         @endif
 
-        <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
             {{-- Toolbar --}}
-            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200">
+            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
                 <div class="flex items-center gap-2">
                     <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                         placeholder="Search shifts…" size="sm" class="w-64" />
@@ -29,17 +29,17 @@
             <flux:table :paginate="$shifts">
                 <table class="w-full text-sm text-left">
                     <thead>
-                        <tr class="border-b border-zinc-200 bg-zinc-50">
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Name</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Created At</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Actions</th>
+                        <tr class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1e293b]">
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Name</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Created At</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-100">
+                    <tbody class="divide-y divide-gray-100 dark:divide-[#374151]">
                         @forelse ($shifts as $shift)
-                            <tr class="hover:bg-zinc-50/70 transition-colors duration-100">
-                                <td class="px-4 py-3 font-medium text-zinc-900">{{ $shift->name }}</td>
-                                <td class="px-4 py-3 text-sm text-zinc-400">{{ $shift->created_at?->format('M j, Y') ?? '—' }}</td>
+                            <tr class="hover:bg-gray-50/70 dark:hover:bg-[#263548]/50 transition-colors duration-100">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-50">{{ $shift->name }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">{{ $shift->created_at?->format('M j, Y') ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
                                         <flux:button wire:click="edit('{{ $shift->id }}')" size="xs" variant="ghost">Edit</flux:button>
@@ -49,7 +49,7 @@
                             </tr>
 @empty
                             <tr>
-                                <td colspan="3" class="px-4 py-10 text-center text-zinc-500">No shifts found.</td>
+                                <td colspan="3" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No shifts found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -60,9 +60,9 @@
 
     {{-- Create Modal --}}
     @if ($showCreateModal)
-        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
                     <flux:heading size="lg">Add New Shift</flux:heading>
                     <flux:button wire:click="$set('showCreateModal', false)" variant="ghost" size="sm" icon="x-mark" />
                 </div>
@@ -80,9 +80,9 @@
 
     {{-- Edit Modal --}}
     @if ($showEditModal)
-        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
                     <flux:heading size="lg">Edit Shift</flux:heading>
                     <flux:button wire:click="$set('showEditModal', false)" variant="ghost" size="sm" icon="x-mark" />
                 </div>

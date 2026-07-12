@@ -1,4 +1,4 @@
-@php $tooltipPosition = $tooltipPosition ??= $attributes->pluck('tooltip:position'); @endphp
+﻿@php $tooltipPosition = $tooltipPosition ??= $attributes->pluck('tooltip:position'); @endphp
 @php $tooltipKbd = $tooltipKbd ??= $attributes->pluck('tooltip:kbd'); @endphp
 @php $tooltip = $tooltip ??= $attributes->pluck('tooltip'); @endphp
 @php $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
@@ -62,7 +62,7 @@ $classes = Flux::classes()
 
                 <?php if ($iconDot): ?>
                     <div class="absolute top-[-2px] end-[-2px]">
-                        <div class="size-[6px] rounded-full bg-zinc-500 dark:bg-zinc-400"></div>
+                        <div class="size-[6px] rounded-full bg-zinc-500 dark:bg-[#9ca3af]"></div>
                     </div>
                 <?php endif; ?>
             </div>

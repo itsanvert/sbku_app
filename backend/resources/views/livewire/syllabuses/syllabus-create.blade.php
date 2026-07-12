@@ -1,29 +1,29 @@
-<div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+﻿<div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
 
         {{-- Header --}}
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
             <flux:heading size="lg">Add New Syllabus Entry</flux:heading>
             <flux:button wire:click="closeModal"
                         variant="ghost"
                         size="sm"
                         icon="x-mark"
-                        class="text-gray-400" />
+                        class="text-gray-400 dark:text-gray-500" />
         </div>
 
         {{-- Conflict Alert --}}
         @if (!empty($conflictErrors))
-            <div class="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div class="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
                 <div class="flex items-start gap-3">
                     <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                     </svg>
                     <div>
-                        <p class="text-sm font-semibold text-red-700 mb-1">Scheduling Conflict Detected</p>
+                        <p class="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">Scheduling Conflict Detected</p>
                         <ul class="list-disc list-inside space-y-1">
                             @foreach ($conflictErrors as $error)
-                                <li class="text-sm text-red-600">{{ $error }}</li>
+                                <li class="text-sm text-red-600 dark:text-red-400">{{ $error }}</li>
                             @endforeach
                         </ul>
                     </div>
@@ -130,13 +130,13 @@
             </div>
 
             {{-- ─── Scheduling Section ─────────────────────────────────────── --}}
-            <div class="rounded-lg border border-blue-100 bg-blue-50/50 p-4 space-y-4">
+            <div class="rounded-lg border border-blue-100 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20 p-4 space-y-4">
                 <div class="flex items-center gap-2 mb-1">
                     <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
-                    <span class="text-sm font-semibold text-blue-700">Schedule / Time Slot</span>
+                    <span class="text-sm font-semibold text-blue-700 dark:text-blue-400">Schedule / Time Slot</span>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -158,7 +158,7 @@
                         <input
                             type="time"
                             wire:model.live="start_time"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                            class="w-full rounded-lg border border-gray-300 dark:border-[rgba(255,255,255,0.08)] px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800 outline-none transition"
                         />
                         <flux:error name="start_time" />
                     </flux:field>
@@ -169,7 +169,7 @@
                         <input
                             type="time"
                             wire:model.live="end_time"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                            class="w-full rounded-lg border border-gray-300 dark:border-[rgba(255,255,255,0.08)] px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-800 outline-none transition"
                         />
                         <flux:error name="end_time" />
                     </flux:field>
@@ -184,7 +184,7 @@
                         This time slot conflicts with an existing schedule.
                     </p>
                 @elseif ($teacher_id && $day_of_week && $start_time && $end_time)
-                    <p class="text-xs text-green-600 flex items-center gap-1">
+                    <p class="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
@@ -201,7 +201,7 @@
             />
 
             {{-- Footer --}}
-            <div class="flex justify-end gap-2 pt-4 border-t border-gray-100">
+            <div class="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-[rgba(255,255,255,0.08)]">
                 <flux:button variant="ghost" wire:click="closeModal">Cancel</flux:button>
                 <flux:button
                     type="submit"
