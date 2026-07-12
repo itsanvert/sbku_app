@@ -13,7 +13,7 @@ $class = Flux::classes()
      * We instead need to write out each one by hand. Sorry...
      */
     ->add($variant === 'solid' ? match ($color) {
-        default => 'text-white dark:text-white bg-zinc-600 dark:bg-zinc-600',
+        default => 'text-white dark:text-white bg-zinc-600 dark:bg-[#4b5563]',
         'red' => 'text-white dark:text-white bg-red-500 dark:bg-red-600',
         'orange' => 'text-white dark:text-white bg-orange-500 dark:bg-orange-600',
         'amber' => 'text-white dark:text-zinc-950 bg-amber-500 dark:bg-amber-500',
@@ -32,7 +32,7 @@ $class = Flux::classes()
         'pink' => 'text-white dark:text-white bg-pink-500 dark:bg-pink-600',
         'rose' => 'text-white dark:text-white bg-rose-500 dark:bg-rose-600',
     } :  match ($color) {
-        default => 'text-zinc-700 dark:text-zinc-200 bg-zinc-400/15 dark:bg-zinc-400/40',
+        default => 'text-zinc-700 dark:text-gray-200 bg-zinc-400/15 dark:bg-[#9ca3af]/40',
         'red' => 'text-red-700 dark:text-red-200 bg-red-400/20 dark:bg-red-400/40',
         'orange' => 'text-orange-700 dark:text-orange-200 bg-orange-400/20 dark:bg-orange-400/40',
         'amber' => 'text-amber-700 dark:text-amber-200 bg-amber-400/25 dark:bg-amber-400/40',

@@ -94,7 +94,7 @@ $classes = Flux::classes()
     ->add(match ($variant) { // Background color...
         'primary' => 'bg-[var(--color-accent)] hover:bg-[color-mix(in_oklab,_var(--color-accent),_transparent_10%)]',
         'filled' => 'bg-zinc-800/5 hover:bg-zinc-800/10 dark:bg-white/10 dark:hover:bg-white/20',
-        'outline' => 'bg-white hover:bg-zinc-50 dark:bg-zinc-700 dark:hover:bg-zinc-600/75',
+        'outline' => 'bg-white hover:bg-zinc-50 dark:bg-[#374151] dark:hover:bg-zinc-600/75',
         'danger' => 'bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500',
         'ghost' => 'bg-transparent hover:bg-zinc-800/5 dark:hover:bg-white/15',
         'subtle' => 'bg-transparent hover:bg-zinc-800/5 dark:hover:bg-white/15',
@@ -105,11 +105,11 @@ $classes = Flux::classes()
         'outline' => 'text-zinc-800 dark:text-white',
         'danger' => 'text-white',
         'ghost' => 'text-zinc-800 dark:text-white',
-        'subtle' => 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white',
+        'subtle' => 'text-zinc-500 hover:text-zinc-800 dark:text-gray-400 dark:hover:text-white',
     })
     ->add(match ($variant) { // Border color...
         'primary' => 'border border-black/10 dark:border-0',
-        'outline' => 'border border-zinc-200 hover:border-zinc-200 border-b-zinc-300/80 dark:border-zinc-600 dark:hover:border-zinc-600',
+        'outline' => 'border border-zinc-200 hover:border-zinc-200 border-b-zinc-300/80 dark:border-[#374151] dark:hover:border-zinc-600',
          default => '',
     })
     ->add(match ($variant) { // Shadows...
@@ -192,7 +192,7 @@ $classes = Flux::classes()
         <?php endif; ?>
 
         <?php if ($kbd): ?>
-            <div class="text-xs text-zinc-400 dark:text-zinc-400">{{ $kbd }}</div>
+            <div class="text-xs text-zinc-400 dark:text-gray-400">{{ $kbd }}</div>
         <?php endif; ?>
 
         <?php if (is_string($iconTrailing) && $iconTrailing !== ''): ?>

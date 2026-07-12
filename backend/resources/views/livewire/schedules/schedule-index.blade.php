@@ -12,9 +12,9 @@
             </flux:callout>
         @endif
 
-        <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
             {{-- Toolbar --}}
-            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200">
+            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
                 <div class="flex items-center gap-2">
                     <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                         placeholder="Search schedules…" size="sm" class="w-64" />
@@ -29,34 +29,34 @@
             <flux:table :paginate="$this->schedules">
                 <table class="w-full text-sm text-left">
                     <thead>
-                        <tr class="border-b border-zinc-200 bg-zinc-50">
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Name</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Teacher / Subject</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Class / Room</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Day / Time</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Dates</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Actions</th>
+                        <tr class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1e293b]">
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Name</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Teacher / Subject</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Class / Room</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Day / Time</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Dates</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-100">
+                    <tbody class="divide-y divide-gray-100 dark:divide-[#374151]">
                         @forelse ($schedules as $schedule)
-                            <tr class="hover:bg-zinc-50/70 transition-colors duration-100">
-                                <td class="px-4 py-3 font-medium text-zinc-900">{{ $schedule->name }}</td>
+                            <tr class="hover:bg-gray-50/70 dark:hover:bg-[#263548]/50 transition-colors duration-100">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-50">{{ $schedule->name }}</td>
                                 <td class="px-4 py-3 text-sm">
-                                    <div class="text-zinc-900 font-medium">{{ $schedule->teacher?->user?->name ?? '—' }}</div>
-                                    <div class="text-zinc-500 text-xs">{{ $schedule->subject?->name ?? '—' }}</div>
+                                    <div class="text-gray-900 dark:text-gray-50 font-medium">{{ $schedule->teacher?->user?->name ?? '—' }}</div>
+                                    <div class="text-gray-500 dark:text-gray-400 text-xs">{{ $schedule->subject?->name ?? '—' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-sm">
-                                    <div class="text-zinc-900">{{ $schedule->academicClass?->name ?? '—' }}</div>
-                                    <div class="text-zinc-500 text-xs">{{ $schedule->room?->name ?? '—' }}</div>
+                                    <div class="text-gray-900 dark:text-gray-50">{{ $schedule->academicClass?->name ?? '—' }}</div>
+                                    <div class="text-gray-500 dark:text-gray-400 text-xs">{{ $schedule->room?->name ?? '—' }}</div>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-zinc-500">
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                     <div>{{ $schedule->day_of_the_week ?? '—' }}</div>
                                     @if($schedule->start_time && $schedule->end_time)
                                         <div class="text-xs">{{ $schedule->time_range }}</div>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-sm text-zinc-500">
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                     @if($schedule->start_date && $schedule->end_date)
                                         <div class="text-xs">{{ $schedule->start_date->format('Y-m-d') }}</div>
                                         <div class="text-xs">to {{ $schedule->end_date->format('Y-m-d') }}</div>
@@ -73,7 +73,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-10 text-center text-zinc-500">No schedules found.</td>
+                                <td colspan="6" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No schedules found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -84,9 +84,9 @@
 
     {{-- Create Modal --}}
     @if ($showCreateModal)
-        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
                     <flux:heading size="lg">Add New Schedule</flux:heading>
                     <flux:button wire:click="$set('showCreateModal', false)" variant="ghost" size="sm" icon="x-mark" />
                 </div>
@@ -124,7 +124,7 @@
                             @endforeach
                         </flux:select>
                         @if($this->syllabusRoom)
-                            <p class="text-xs text-zinc-500 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
                         @endif
                     </div>
 
@@ -168,9 +168,9 @@
 
     {{-- Edit Modal --}}
     @if ($showEditModal)
-        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
                     <flux:heading size="lg">Edit Schedule</flux:heading>
                     <flux:button wire:click="$set('showEditModal', false)" variant="ghost" size="sm" icon="x-mark" />
                 </div>
@@ -208,7 +208,7 @@
                             @endforeach
                         </flux:select>
                         @if($this->syllabusRoom)
-                            <p class="text-xs text-zinc-500 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
                         @endif
                     </div>
 
@@ -249,4 +249,3 @@
         </div>
     @endif
 </div>
-

@@ -74,7 +74,7 @@ $classes = Flux::classes()
     ->add('relative flex-none isolate flex items-center justify-center')
     ->add('[:where(&)]:font-medium')
     ->add('rounded-[var(--avatar-radius)]')
-    ->add($hasTextContent ? '[:where(&)]:bg-zinc-200 [:where(&)]:dark:bg-zinc-600 [:where(&)]:text-zinc-800 [:where(&)]:dark:text-white' : '')
+    ->add($hasTextContent ? '[:where(&)]:bg-zinc-200 [:where(&)]:dark:bg-[#4b5563] [:where(&)]:text-zinc-800 [:where(&)]:dark:text-white' : '')
     ->add(match($color) {
         'red' => 'bg-red-200 text-red-800',
         'orange' => 'bg-orange-200 text-orange-800',
@@ -161,7 +161,7 @@ $badgeClasses = Flux::classes()
         'rose' => 'bg-rose-500 dark:bg-rose-400',
         'zinc' => 'bg-zinc-400 dark:bg-zinc-300',
         'gray' => 'bg-zinc-400 dark:bg-zinc-300',
-        default => 'bg-white dark:bg-zinc-900',
+        default => 'bg-white dark:bg-[#1f2937]',
     })
     ;
 
