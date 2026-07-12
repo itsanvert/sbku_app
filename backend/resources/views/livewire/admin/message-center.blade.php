@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Message Center</flux:heading>
         <flux:subheading>Manage announcements and push notifications</flux:subheading>

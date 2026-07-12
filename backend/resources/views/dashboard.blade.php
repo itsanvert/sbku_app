@@ -8,7 +8,7 @@
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-[#f8fafc] tracking-tight">
                     Welcome back, {{ auth()->user()->name }}
                 </h1>
-                <p class="text-[#94a3b8] dark:text-[#64748b] mt-1">Here's what's happening at your school today.</p>
+                <p class="text-[#64748b] dark:text-[#94a3b8] mt-1">Here's what's happening at your school today.</p>
             </div>
             <div class="flex items-center gap-3">
                 <a href="{{ route('teachers.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 active:scale-95">
@@ -32,7 +32,7 @@
                     </div>
                     <span class="text-xs font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">+12%</span>
                 </div>
-                <div class="text-3xl font-bold text-[#f8fafc] tracking-tight">{{ number_format($studentCount ?? 0) }}</div>
+                <div class="text-3xl font-bold text-gray-900 dark:text-[#f8fafc] tracking-tight">{{ number_format($studentCount ?? 0) }}</div>
                 <div class="text-xs text-[#64748b] mt-1 font-medium uppercase tracking-wider">Students</div>
                 <div class="mt-3 h-1 bg-[rgba(59,130,246,0.1)] rounded-full overflow-hidden">
                     <div class="h-full bg-[#3b82f6] rounded-full" style="width: {{ min(($studentCount ?? 0) / max(($studentCount ?? 0) + ($teacherCount ?? 0) + 1, 1) * 100, 100) }}%"></div>
@@ -46,7 +46,7 @@
                     </div>
                     <span class="text-xs font-semibold text-[#64748b] bg-[rgba(100,116,139,0.1)] px-2 py-0.5 rounded-full">Active</span>
                 </div>
-                <div class="text-3xl font-bold text-[#f8fafc] tracking-tight">{{ number_format($teacherCount ?? 0) }}</div>
+                <div class="text-3xl font-bold text-gray-900 dark:text-[#f8fafc] tracking-tight">{{ number_format($teacherCount ?? 0) }}</div>
                 <div class="text-xs text-[#64748b] mt-1 font-medium uppercase tracking-wider">Teachers</div>
                 <div class="mt-3 h-1 bg-[rgba(139,92,246,0.1)] rounded-full overflow-hidden">
                     <div class="h-full bg-[#8b5cf6] rounded-full" style="width: {{ min(($teacherCount ?? 0) / max(($studentCount ?? 0) + ($teacherCount ?? 0) + 1, 1) * 100, 100) }}%"></div>
@@ -60,7 +60,7 @@
                     </div>
                     <span class="text-xs font-semibold text-[#64748b] bg-[rgba(100,116,139,0.1)] px-2 py-0.5 rounded-full">Total</span>
                 </div>
-                <div class="text-3xl font-bold text-[#f8fafc] tracking-tight">{{ number_format($userCount ?? 0) }}</div>
+                <div class="text-3xl font-bold text-gray-900 dark:text-[#f8fafc] tracking-tight">{{ number_format($userCount ?? 0) }}</div>
                 <div class="text-xs text-[#64748b] mt-1 font-medium uppercase tracking-wider">Users</div>
                 <div class="mt-3 h-1 bg-[rgba(6,182,212,0.1)] rounded-full overflow-hidden">
                     <div class="h-full bg-[#06b6d4] rounded-full" style="width: 100%"></div>
@@ -74,7 +74,7 @@
                     </div>
                     <span class="text-xs font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Live</span>
                 </div>
-                <div class="text-3xl font-bold text-[#f8fafc] tracking-tight">{{ number_format($attendanceCount ?? 0) }}</div>
+                <div class="text-3xl font-bold text-gray-900 dark:text-[#f8fafc] tracking-tight">{{ number_format($attendanceCount ?? 0) }}</div>
                 <div class="text-xs text-[#64748b] mt-1 font-medium uppercase tracking-wider">Check-ins</div>
                 <div class="mt-3 h-1 bg-[rgba(16,185,129,0.1)] rounded-full overflow-hidden">
                     <div class="h-full bg-[#10b981] rounded-full" style="width: {{ min(($attendanceCount ?? 0) / max(($studentCount ?? 0) * 7, 1) * 100, 100) }}%"></div>
@@ -96,7 +96,7 @@
                             <span class="text-xs font-semibold text-emerald-500">Online</span>
                         </div>
                     </div>
-                    <div class="text-3xl font-bold text-[#f8fafc] tracking-tight">{{ number_format($activeSessions ?? 0) }}</div>
+                    <div class="text-3xl font-bold text-gray-900 dark:text-[#f8fafc] tracking-tight">{{ number_format($activeSessions ?? 0) }}</div>
                     <div class="text-xs text-[#64748b] mt-1 font-medium uppercase tracking-wider">Active Sessions</div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
             <div class="lg:col-span-2 glass-card-static p-6 animate-fade-up" style="animation-delay: 0.3s;">
                 <div class="flex items-center justify-between mb-6">
                     <div>
-                        <h3 class="text-lg font-bold text-[#f8fafc]">Attendance Overview</h3>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-[#f8fafc]">Attendance Overview</h3>
                         <p class="text-sm text-[#64748b] mt-0.5">Daily check-ins over the last 7 days</p>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
             <div class="glass-card-static p-6 animate-fade-up" style="animation-delay: 0.4s;">
                 <div class="flex items-center justify-between mb-6">
                     <div>
-                        <h3 class="text-lg font-bold text-[#f8fafc]">Status Breakdown</h3>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-[#f8fafc]">Status Breakdown</h3>
                         <p class="text-sm text-[#64748b] mt-0.5">Overall check-in results</p>
                     </div>
                 </div>
@@ -130,15 +130,15 @@
                 <div class="flex justify-center gap-6 mt-4">
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>
-                        <span class="text-xs text-[#94a3b8]">Present</span>
+                        <span class="text-xs text-gray-600 dark:text-[#94a3b8]">Present</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></span>
-                        <span class="text-xs text-[#94a3b8]">Absent</span>
+                        <span class="text-xs text-gray-600 dark:text-[#94a3b8]">Absent</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
-                        <span class="text-xs text-[#94a3b8]">Permission</span>
+                        <span class="text-xs text-gray-600 dark:text-[#94a3b8]">Permission</span>
                     </div>
                 </div>
             </div>
@@ -148,7 +148,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             <div class="glass-card-static p-6 animate-fade-up" style="animation-delay: 0.5s;">
-                <h3 class="text-lg font-bold text-[#f8fafc] mb-6">User Distribution</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-[#f8fafc] mb-6">User Distribution</h3>
                 <div class="relative h-56 w-full">
                     <canvas id="userRoleChart"></canvas>
                 </div>
@@ -158,7 +158,7 @@
                 <div class="absolute inset-0 bg-gradient-to-br from-[#3b82f6]/5 via-transparent to-[#8b5cf6]/5"></div>
                 <div class="relative z-10 flex flex-col h-full justify-between">
                     <div>
-                        <h3 class="text-lg font-bold text-[#f8fafc] mb-2">System Status</h3>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-[#f8fafc] mb-2">System Status</h3>
                         <p class="text-sm text-[#64748b]">All services operational. Database synced.</p>
                     </div>
                     <div class="flex items-center gap-4 mt-6">
@@ -167,7 +167,7 @@
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                             </span>
-                            <span class="text-sm text-[#94a3b8]">All systems go</span>
+                            <span class="text-sm text-gray-600 dark:text-[#94a3b8]">All systems go</span>
                         </div>
                         <div class="flex-1"></div>
                         <button class="px-5 py-2.5 rounded-xl bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-95">

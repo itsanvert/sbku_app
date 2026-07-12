@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Schedule Management</flux:heading>
         <flux:subheading>Manage reusable time slots for teachers and students</flux:subheading>

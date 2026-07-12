@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Shift Management</flux:heading>
         <flux:subheading>Manage academic shifts (e.g. Morning, Afternoon, Evening)</flux:subheading>

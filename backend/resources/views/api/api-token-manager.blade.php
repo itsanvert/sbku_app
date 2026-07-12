@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <!-- Generate API Token -->
     <x-form-section submit="createApiToken">
         <x-slot name="title">

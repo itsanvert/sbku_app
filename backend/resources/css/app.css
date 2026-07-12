@@ -41,37 +41,37 @@
    ============================================================ */
 @layer components {
     .glass-card {
-        background: rgba(30, 41, 59, 0.85);
+        background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.06);
         border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .glass-card:hover {
         border-color: rgba(59, 130, 246, 0.3);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
         transform: translateY(-2px);
     }
 
     .glass-card-static {
-        background: rgba(30, 41, 59, 0.85);
+        background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.06);
         border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
     }
 
     .stat-card {
-        background: rgba(30, 41, 59, 0.85);
+        background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.06);
         border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
         transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
@@ -91,12 +91,39 @@
 
     .stat-card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
         border-color: rgba(59, 130, 246, 0.3);
     }
 
     .stat-card:hover::before {
         opacity: 1;
+    }
+
+    /* Dark mode overrides */
+    .dark .glass-card {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .dark .glass-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .dark .glass-card-static {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .dark .stat-card {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .dark .stat-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
     }
 }
 

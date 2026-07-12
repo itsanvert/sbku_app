@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Create Attendance Session</flux:heading>
         <flux:subheading>Select a syllabus schedule to start a QR attendance session</flux:subheading>

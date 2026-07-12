@@ -1,4 +1,4 @@
-﻿@blaze
+@blaze
 
 @props([
     'orientation' => null,
