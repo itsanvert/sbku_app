@@ -1,3 +1,371 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    .dark {
+        --dm-bg: #0f172a;
+        --dm-surface: #1e293b;
+        --dm-surface-2: #263548;
+        --dm-border: rgba(255, 255, 255, 0.08);
+        --dm-border-strong: rgba(255, 255, 255, 0.12);
+        --dm-text: #f8fafc;
+        --dm-text-secondary: #cbd5e1;
+        --dm-text-muted: #64748b;
+        --dm-primary: #3b82f6;
+        --dm-primary-hover: #2563eb;
+        --dm-success: #10b981;
+        --dm-warning: #f59e0b;
+        --dm-danger: #ef4444;
+        --dm-shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    body {
+        @apply transition-colors duration-200;
+    }
+
+    .dark body,
+    .dark {
+        background-color: var(--dm-bg);
+        color: var(--dm-text);
+    }
+
+    .dark ::selection {
+        background: rgba(59, 130, 246, 0.3);
+        color: #ffffff;
+    }
+}
+
+/* ============================================================
+   Glass morphism card component
+   ============================================================ */
+@layer components {
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
+        transform: translateY(-2px);
+    }
+
+    .glass-card-static {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+        opacity: 0;
+        transition: opacity 0.35s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Dark mode overrides */
+    .dark .glass-card {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .dark .glass-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .dark .glass-card-static {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .dark .stat-card {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .dark .stat-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    }
+}
+
+/* ============================================================
+   Animations
+   ============================================================ */
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes count-up {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-in-left {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes progress-fill {
+    from { width: 0; }
+}
+
+.animate-fade-up {
+    animation: fade-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.animate-fade-in {
+    animation: fade-in 0.4s ease both;
+}
+
+.animate-count-up {
+    animation: count-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.animate-slide-in {
+    animation: slide-in-left 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* ============================================================
+   Sidebar active indicator
+   ============================================================ */
+@layer components {
+    .sidebar-indicator {
+        position: relative;
+    }
+
+    .sidebar-indicator::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 0;
+        background: #3b82f6;
+        border-radius: 0 4px 4px 0;
+        transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    }
+
+    .sidebar-indicator[data-current]::before,
+    .sidebar-indicator.active::before {
+        height: 60%;
+    }
+}
+
+/* ============================================================
+   Flux Component Dark Mode Overrides
+   ============================================================ */
+
+html.dark ui-sidebar {
+    background-color: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark ui-sidebar [data-flux-navlist-item] {
+    color: #94a3b8 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html.dark ui-sidebar [data-flux-navlist-item]:hover {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    color: #f1f5f9 !important;
+    transform: translateX(3px);
+}
+
+html.dark ui-sidebar [data-flux-navlist-item][data-current] {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.1)) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.15), inset 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
+    font-weight: 600 !important;
+}
+
+html.dark ui-sidebar [data-flux-navlist-item][data-current] svg {
+    color: #3b82f6 !important;
+}
+
+html.dark ui-sidebar [data-flux-navlist-item][data-current]:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(59, 130, 246, 0.15)) !important;
+}
+
+html.dark ui-sidebar [data-flux-navlist-item][data-current] [data-content] {
+    color: #ffffff !important;
+}
+
+/* -- Profile -- */
+html.dark .flux-sidebar .flux-profile,
+html.dark .flux-sidebar [data-flux-profile] {
+    color: #cbd5e1 !important;
+}
+
+/* -- Brand -- */
+html.dark .flux-sidebar .flux-brand,
+html.dark .flux-sidebar [data-flux-brand] {
+    color: #f8fafc !important;
+}
+
+/* -- Dropdown / Menu -- */
+html.dark .flux-dropdown__menu,
+html.dark .flux-menu {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45) !important;
+    backdrop-filter: blur(14px) !important;
+}
+
+html.dark .flux-dropdown__menu a,
+html.dark .flux-menu a,
+html.dark .flux-dropdown__menu button,
+html.dark .flux-menu button {
+    color: #cbd5e1 !important;
+}
+
+html.dark .flux-dropdown__menu a:hover,
+html.dark .flux-menu a:hover,
+html.dark .flux-dropdown__menu button:hover,
+html.dark .flux-menu button:hover {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+/* -- Header -- */
+html.dark .flux-header {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(14px) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* -- Main -- */
+html.dark .flux-main {
+    background-color: #0f172a !important;
+}
+
+/* -- Buttons -- */
+html.dark .flux-button--primary,
+html.dark [data-flux-button-variant="primary"] {
+    background-color: #3b82f6 !important;
+}
+
+html.dark .flux-button--primary:hover,
+html.dark [data-flux-button-variant="primary"]:hover {
+    background-color: #2563eb !important;
+}
+
+/* -- Inputs -- */
+html.dark input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+html.dark textarea,
+html.dark select {
+    background-color: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #475569 !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    outline: none !important;
+}
+
+/* -- Modals / Dialogs -- */
+html.dark [data-flux-dialog],
+html.dark .flux-dialog {
+    background-color: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* -- Scrollbar -- */
+.dark ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.4);
+    border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.6);
+}
+
+/* ============================================================
+   Light mode overrides (keep clean)
+   ============================================================ */
+@layer components {
+    .light-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .light-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+}

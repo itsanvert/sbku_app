@@ -7,7 +7,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {{-- Send Message Form --}}
         <div class="md:col-span-1">
-            <div class="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm space-y-6">
+            <div class="bg-white dark:bg-[#1e293b] p-6 rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm space-y-6">
                 <flux:heading size="lg">Compose Message</flux:heading>
 
                 <form wire:submit.prevent="sendMessage" class="space-y-4">
@@ -54,8 +54,8 @@
 
         {{-- Message History --}}
         <div class="md:col-span-2">
-            <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-zinc-200">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
                     <flux:heading size="lg">Message History</flux:heading>
                 </div>
 
@@ -77,12 +77,12 @@
                                     @if($msg->receiver_id)
                                         <span class="font-medium">{{ $msg->receiver->name ?? 'User' }}</span>
                                     @else
-                                        <span class="text-blue-600 font-bold">Broadcast</span>
+                                        <span class="text-blue-600 dark:text-blue-400 font-bold">Broadcast</span>
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell class="max-w-xs truncate">
-                                    <span class="font-medium text-zinc-900">{{ $msg->title }}</span>
-                                    <p class="text-xs text-zinc-500 truncate">{{ $msg->body }}</p>
+                                    <span class="font-medium text-gray-900 dark:text-gray-50">{{ $msg->title }}</span>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $msg->body }}</p>
                                 </flux:table.cell>
                                 <flux:table.cell>
                                     <flux:badge size="sm" :variant="$msg->type === 'alert' ? 'danger' : 'neutral'">

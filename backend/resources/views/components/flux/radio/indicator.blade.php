@@ -3,7 +3,7 @@
 @php
 $classes = Flux::classes()
     ->add('shrink-0 size-[1.125rem] rounded-full')
-    ->add('text-sm text-zinc-700 dark:text-zinc-800')
+    ->add('text-sm text-zinc-700 dark:text-gray-800')
     ->add('shadow-xs [ui-radio[disabled]_&]:opacity-75 [ui-radio[data-checked][disabled]_&]:opacity-50 [ui-radio[disabled]_&]:shadow-none [ui-radio[data-checked]_&]:shadow-none')
     ->add('flex justify-center items-center [ui-radio[data-checked]_&>div]:block')
     ->add([

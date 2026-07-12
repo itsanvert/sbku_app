@@ -21,9 +21,9 @@ $classes = Flux::classes()
         'xs' => 'shadow-none',
     })
     ->add('text-zinc-800 dark:text-white')
-    ->add('bg-white dark:bg-zinc-700')
+    ->add('bg-white dark:bg-[#374151]')
     ->add('after:absolute after:-inset-px after:rounded-lg')
-    ->add('border border-zinc-200 border-b-zinc-300/80 dark:border-zinc-600')
+    ->add('border border-zinc-200 border-b-zinc-300/80 dark:border-[#374151]')
     ->add([
         '[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)]',
         '[--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)]',
@@ -46,7 +46,7 @@ $classes = Flux::classes()
     ;
 
 $iconAttributes = Flux::attributesAfter('icon:', $attributes, [
-    'class' => 'text-zinc-300 dark:text-zinc-400 in-data-checked:text-zinc-800 dark:in-data-checked:text-white',
+    'class' => 'text-zinc-300 dark:text-gray-400 in-data-checked:text-zinc-800 dark:in-data-checked:text-white',
     'variant' => 'micro',
 ]);
 @endphp

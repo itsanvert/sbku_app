@@ -12,9 +12,9 @@
             </flux:callout>
         @endif
 
-        <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
             {{-- Toolbar --}}
-            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200">
+            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
                 <div class="flex flex-wrap items-center gap-2">
                     <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                         placeholder="Search Subjects…" size="sm" class="w-52" />
@@ -45,34 +45,34 @@
             <flux:table :paginate="$this->syllabuses">
                 <table class="w-full text-sm text-left">
                     <thead>
-                        <tr class="border-b border-zinc-200 bg-zinc-50">
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">#</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400 cursor-pointer" wire:click="sort('subject_name')">Subject</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Faculty/Major</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Year/Sem</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Shift</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Teacher</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Schedule</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">Actions</th>
+                        <tr class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1e293b]">
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">#</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer" wire:click="sort('subject_name')">Subject</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Faculty/Major</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Year/Sem</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Shift</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Teacher</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Schedule</th>
+                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-100">
+                    <tbody class="divide-y divide-gray-100 dark:divide-[#374151]">
                         @forelse ($this->syllabuses as $syllabus)
-                            <tr class="hover:bg-zinc-50/70 transition-colors duration-100">
-                                <td class="px-4 py-3 tabular-nums text-xs text-zinc-400">{{ $syllabus->id }}</td>
-                                <td class="px-4 py-3 font-medium text-zinc-900">{{ $syllabus->subject->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-sm text-zinc-500">
+                            <tr class="hover:bg-gray-50/70 dark:hover:bg-[#263548]/50 transition-colors duration-100">
+                                <td class="px-4 py-3 tabular-nums text-xs text-gray-400 dark:text-gray-500">{{ $syllabus->id }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-50">{{ $syllabus->subject->name ?? '—' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                     <div class="flex flex-col">
                                         <span>{{ $syllabus->faculty->name ?? '—' }}</span>
-                                        <span class="text-xs text-zinc-400">{{ $syllabus->major->name ?? '—' }}</span>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">{{ $syllabus->major->name ?? '—' }}</span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-zinc-500">
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                     {{ $syllabus->year_id }} - Sem {{ $syllabus->semester_id }}
                                 </td>
-                                <td class="px-4 py-3 text-sm text-zinc-500">{{ $syllabus->shift->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-sm text-zinc-500">{{ $syllabus->teacher->user->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-sm text-zinc-500 italic">{{ $syllabus->schedule_description }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ $syllabus->shift->name ?? '—' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ $syllabus->teacher->user->name ?? '—' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 italic">{{ $syllabus->schedule_description }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
                                         <flux:button wire:click="openEditModal('{{ $syllabus->id }}')" size="xs" variant="ghost">Edit</flux:button>
@@ -82,7 +82,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-4 py-10 text-center text-zinc-500">No syllabus entries found.</td>
+                                <td colspan="8" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No syllabus entries found.</td>
                             </tr>
                         @endforelse
                     </tbody>

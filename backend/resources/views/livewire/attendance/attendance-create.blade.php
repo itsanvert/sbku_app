@@ -9,7 +9,7 @@
 
             {{-- Flash Success --}}
             @if (session()->has('message'))
-                <div class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">
+                <div class="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-sm">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -20,10 +20,10 @@
             <form wire:submit.prevent="createSession" class="space-y-5">
 
                 {{-- ── Step 1: Teacher ─────────────────────────────────────── --}}
-                <div class="bg-white rounded-xl border border-zinc-200 shadow-sm p-6 space-y-4">
+                <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm p-6 space-y-4">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">1</span>
-                        <span class="text-sm font-semibold text-zinc-700">Select Teacher</span>
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold">1</span>
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Select Teacher</span>
                     </div>
 
                     <flux:field>
@@ -44,27 +44,27 @@
                 </div>
 
                 {{-- ── Step 2: Syllabus / Class Schedule ───────────────────── --}}
-                <div class="bg-white rounded-xl border border-zinc-200 shadow-sm p-6 space-y-4"
+                <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm p-6 space-y-4"
                      x-data="{ open: @entangle('teacher_id') }">
 
                     <div class="flex items-center gap-2 mb-1">
                         <span class="flex items-center justify-center w-6 h-6 rounded-full
-                            {{ $teacher_id ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-400' }}
+                            {{ $teacher_id ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'bg-gray-100 dark:bg-[#374151] text-gray-400 dark:text-gray-500' }}
                             text-xs font-bold">2</span>
-                        <span class="text-sm font-semibold {{ $teacher_id ? 'text-zinc-700' : 'text-zinc-400' }}">
+                        <span class="text-sm font-semibold {{ $teacher_id ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500' }}">
                             Select Class Schedule (Syllabus)
                         </span>
                     </div>
 
                     @if(!$teacher_id)
-                        <div class="flex items-center gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-100 text-sm text-zinc-400">
+                        <div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-[#1e293b] rounded-lg border border-gray-100 dark:border-[rgba(255,255,255,0.08)] text-sm text-gray-400 dark:text-gray-500">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             Please select a teacher first to see their scheduled classes.
                         </div>
                     @elseif($syllabuses->isEmpty())
-                        <div class="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-100 text-sm text-amber-600">
+                        <div class="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-100 dark:border-amber-800 text-sm text-amber-600 dark:text-amber-400">
                             <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                             </svg>
@@ -95,7 +95,7 @@
 
                 {{-- ── Step 3: Auto-filled Class & Schedule Summary ─────────── --}}
                 @if($selectedSyllabus)
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm overflow-hidden">
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm overflow-hidden">
 
                         {{-- Header bar --}}
                         <div class="px-6 py-3 bg-blue-600 text-white flex items-center justify-between">
@@ -116,63 +116,63 @@
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
 
                                 {{-- Subject --}}
-                                <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-xs">
-                                    <p class="text-xs text-zinc-400 uppercase tracking-wide mb-1">Subject</p>
-                                    <p class="text-sm font-semibold text-zinc-800">
+                                <div class="bg-white dark:bg-[#1e293b] rounded-lg p-3 border border-blue-100 dark:border-blue-800 shadow-xs">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Subject</p>
+                                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $selectedSyllabus->subject?->name ?? '—' }}
                                     </p>
                                     @if($selectedSyllabus->subject?->code)
-                                        <p class="text-xs text-zinc-400">{{ $selectedSyllabus->subject->code }}</p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ $selectedSyllabus->subject->code }}</p>
                                     @endif
                                 </div>
 
                                 {{-- Class --}}
-                                <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-xs">
-                                    <p class="text-xs text-zinc-400 uppercase tracking-wide mb-1">Class Group</p>
-                                    <p class="text-sm font-semibold text-zinc-800">
+                                <div class="bg-white dark:bg-[#1e293b] rounded-lg p-3 border border-blue-100 dark:border-blue-800 shadow-xs">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Class Group</p>
+                                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $selectedSyllabus->major?->name ?? '—' }}
                                     </p>
-                                    <p class="text-xs text-zinc-400">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">
                                         {{ $selectedSyllabus->year_id }} · Semester {{ $selectedSyllabus->semester_id }}
                                     </p>
                                 </div>
 
                                 {{-- Faculty --}}
-                                <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-xs">
-                                    <p class="text-xs text-zinc-400 uppercase tracking-wide mb-1">Faculty</p>
-                                    <p class="text-sm font-semibold text-zinc-800">
+                                <div class="bg-white dark:bg-[#1e293b] rounded-lg p-3 border border-blue-100 dark:border-blue-800 shadow-xs">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Faculty</p>
+                                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $selectedSyllabus->faculty?->name ?? '—' }}
                                     </p>
                                 </div>
 
                                 {{-- Day --}}
-                                <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-xs">
-                                    <p class="text-xs text-zinc-400 uppercase tracking-wide mb-1">Day</p>
-                                    <p class="text-sm font-semibold text-zinc-800">
+                                <div class="bg-white dark:bg-[#1e293b] rounded-lg p-3 border border-blue-100 dark:border-blue-800 shadow-xs">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Day</p>
+                                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                         {{ $selectedSyllabus->day_of_week ? ucfirst($selectedSyllabus->day_of_week) : '—' }}
                                     </p>
                                 </div>
 
                                 {{-- Time --}}
-                                <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-xs">
-                                    <p class="text-xs text-zinc-400 uppercase tracking-wide mb-1">Time Slot</p>
+                                <div class="bg-white dark:bg-[#1e293b] rounded-lg p-3 border border-blue-100 dark:border-blue-800 shadow-xs">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Time Slot</p>
                                     @if($selectedSyllabus->start_time && $selectedSyllabus->end_time)
-                                        <p class="text-sm font-semibold text-zinc-800">
+                                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                             {{ \Carbon\Carbon::parse($selectedSyllabus->start_time)->format('H:i') }}
                                             –
                                             {{ \Carbon\Carbon::parse($selectedSyllabus->end_time)->format('H:i') }}
                                         </p>
                                     @else
-                                        <p class="text-sm text-zinc-400">Not set</p>
+                                        <p class="text-sm text-gray-400 dark:text-gray-500">Not set</p>
                                     @endif
                                 </div>
 
                                 {{-- Enrolled students --}}
-                                <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-xs">
-                                    <p class="text-xs text-zinc-400 uppercase tracking-wide mb-1">Enrolled Students</p>
+                                <div class="bg-white dark:bg-[#1e293b] rounded-lg p-3 border border-blue-100 dark:border-blue-800 shadow-xs">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Enrolled Students</p>
                                     <div class="flex items-baseline gap-1">
-                                        <p class="text-2xl font-bold text-blue-600">{{ $enrolledStudents }}</p>
-                                        <p class="text-xs text-zinc-400">students</p>
+                                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $enrolledStudents }}</p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500">students</p>
                                     </div>
                                 </div>
 
@@ -181,8 +181,8 @@
                             {{-- Shift badge if available --}}
                             @if($selectedSyllabus->shift)
                                 <div class="mt-3 flex items-center gap-1.5">
-                                    <span class="text-xs text-zinc-400">Shift:</span>
-                                    <span class="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">Shift:</span>
+                                    <span class="text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
                                         {{ $selectedSyllabus->shift->name }}
                                     </span>
                                 </div>
@@ -192,10 +192,10 @@
                 @endif
 
                 {{-- ── Step 4: Location ─────────────────────────────────────── --}}
-                <div class="bg-white rounded-xl border border-zinc-200 shadow-sm p-6 space-y-4">
+                <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm p-6 space-y-4">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">3</span>
-                        <span class="text-sm font-semibold text-zinc-700">Location (Check-in Radius)</span>
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold">3</span>
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Location (Check-in Radius)</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -223,7 +223,7 @@
                         <flux:error name="room_id" />
                     </flux:field>
 
-                    <p class="text-xs text-zinc-400 flex items-center gap-1">
+                    <p class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>

@@ -1,14 +1,14 @@
-<div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+<div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
 
         {{-- Header --}}
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
             <flux:heading size="lg">Create New Teacher</flux:heading>
             <flux:button wire:click="$dispatch('closeModal')"
                         variant="ghost"
                         size="sm"
                         icon="x-mark"
-                        class="text-gray-400" />
+                        class="text-gray-400 dark:text-gray-500" />
         </div>
 
         {{-- Form --}}
@@ -101,10 +101,10 @@
                     <flux:label>Profile Photo</flux:label>
                     <div class="flex items-center gap-4">
                         @if ($photo)
-                            <img src="{{ $photo->temporaryUrl() }}" class="w-16 h-16 rounded-lg object-cover ring-1 ring-zinc-200">
+                            <img src="{{ $photo->temporaryUrl() }}" class="w-16 h-16 rounded-lg object-cover ring-1 ring-gray-200">
                         @else
-                            <div class="w-16 h-16 rounded-lg bg-zinc-100 flex items-center justify-center ring-1 ring-zinc-200">
-                                <flux:icon name="camera" class="w-6 h-6 text-zinc-400" />
+                            <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center ring-1 ring-gray-200">
+                                <flux:icon name="camera" class="w-6 h-6 text-gray-400" />
                             </div>
                         @endif
                         <flux:input type="file" wire:model="photo" size="sm" />
@@ -115,7 +115,7 @@
             </div>
 
             {{-- Actions --}}
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-[rgba(255,255,255,0.08)]">
                 <flux:button wire:click="$dispatch('closeModal')" variant="ghost">
                     Cancel
                 </flux:button>
