@@ -1,9 +1,9 @@
-<x-guest-layout>
+﻿<x-guest-layout>
 
 <div class="flex min-h-screen w-full">
 
     {{-- ── LEFT: Form Panel ── --}}
-    <div class="w-full lg:w-5/12 xl:w-[45%] flex flex-col justify-center px-8 sm:px-14 xl:px-20 py-12 bg-white">
+    <div class="w-full lg:w-5/12 xl:w-[45%] flex flex-col justify-center px-8 sm:px-14 xl:px-20 py-12 bg-white dark:bg-[#0f172a]">
 
         {{-- Logo --}}
         <div class="mb-10 ">
@@ -14,13 +14,13 @@
 
         {{-- Heading --}}
         <div class="mb-8">
-            <h1 class="text-2xl font-bold text-gray-900 mb-1">Sign in to your account</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-1">Sign in to your account</h1>
 
         </div>
 
         {{-- Validation Errors --}}
         @if ($errors->any())
-            <div class="mb-5 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 space-y-0.5">
+            <div class="mb-5 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-600 dark:text-red-400 space-y-0.5">
                 @foreach ($errors->all() as $error)
                     <p>{{ $error }}</p>
                 @endforeach
@@ -29,7 +29,7 @@
 
         {{-- Session Status --}}
         @session('status')
-            <div class="mb-5 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
+            <div class="mb-5 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3 text-sm text-green-700 dark:text-green-400">
                 {{ $value }}
             </div>
         @endsession
@@ -40,7 +40,7 @@
 
             {{-- Email --}}
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">
+                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     {{ __('Email address') }}
                 </label>
                 <input id="email"
@@ -48,32 +48,32 @@
                        name="email"
                        value="{{ old('email') }}"
                        required autofocus autocomplete="username"
-                       class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-150">
+                       class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4f8cff] focus:border-transparent transition duration-150 bg-white dark:bg-[#1e293b]">
             </div>
 
             {{-- Password --}}
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">
+                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     {{ __('Password') }}
                 </label>
                 <input id="password"
                        type="password"
                        name="password"
                        required autocomplete="current-password"
-                       class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-150">
+                       class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4f8cff] focus:border-transparent transition duration-150 bg-white dark:bg-[#1e293b]">
             </div>
 
 
             {{-- Submit --}}
             <button type="submit"
-                    class="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                    class="w-full py-2.5 bg-[#4f8cff] hover:bg-[#3b82f6] text-white text-sm font-semibold rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#4f8cff] focus:ring-offset-2">
                 {{ __('Sign in') }}
             </button>
         </form>
     </div>
 
     {{-- ── RIGHT: Image Panel ── --}}
-  <div class="hidden lg:flex flex-1 items-center justify-center bg-slate-100 relative overflow-hidden">
+  <div class="hidden lg:flex flex-1 items-center justify-center bg-gray-100 dark:bg-[#0f172a] relative overflow-hidden">
 
     {{-- Subtle background texture --}}
     <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 20% 80%, #cbd5e1 0%, transparent 50%), radial-gradient(circle at 80% 20%, #e2e8f0 0%, transparent 50%);"></div>
@@ -88,12 +88,12 @@
     </lottie-player>
 
     <footer class="absolute bottom-0 left-0 w-full z-10">
-    <div class="bg-white/50 backdrop-blur-md border-t border-orange-100/60"
-         style="box-shadow: 0 -1px 12px rgba(234, 88, 12, 0.06);">
+    <div class="bg-white/50 dark:bg-[#1e293b]/50 backdrop-blur-md border-t border-gray-200/60 dark:border-[rgba(255,255,255,0.08)]"
+         style="box-shadow: 0 -1px 12px rgba(0, 0, 0, 0.06);">
         <div class="px-8 py-3 flex items-center justify-between">
 
             {{-- Left: Brand --}}
-            <div class="text-sm text-gray-600">
+            <div class="text-sm text-gray-600 dark:text-gray-400">
                 &copy; {{ date('Y') }} From Vert San. All rights reserved.
             </div>
         </div>
@@ -102,4 +102,3 @@
 </div>
 
 </x-guest-layout>
-

@@ -1,4 +1,4 @@
-@blaze
+﻿@blaze
 
 @props([
     'dismissible' => null,
@@ -34,8 +34,8 @@ if ($flyout) {
             'bare' => '',
         })
         ->add(match ($variant) {
-            default => 'bg-white dark:bg-zinc-800 border-transparent dark:border-zinc-700',
-            'floating' => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-xl',
+            default => 'bg-white dark:bg-[#1f2937] border-transparent dark:border-[#374151]',
+            'floating' => 'bg-white dark:bg-[#1f2937] ring ring-black/5 dark:ring-[#374151] shadow-lg rounded-xl',
             'bare' => 'bg-transparent',
         });
 } else {
@@ -45,7 +45,7 @@ if ($flyout) {
             'bare' => '',
         })
         ->add(match ($variant) {
-            default => 'bg-white dark:bg-zinc-800 ring ring-black/5 dark:ring-zinc-700 shadow-lg rounded-xl',
+            default => 'bg-white dark:bg-[#1f2937] ring ring-black/5 dark:ring-[#374151] shadow-lg rounded-xl',
             'bare' => 'bg-transparent',
         });
 }
@@ -99,7 +99,7 @@ if ($dismissible === false) {
         <?php if ($closable): ?>
             <div class="absolute top-0 end-0 mt-4 me-4">
                 <flux:modal.close>
-                    <flux:button variant="ghost" icon="x-mark" size="sm" aria-label="Close modal" class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!"></flux:button>
+                    <flux:button variant="ghost" icon="x-mark" size="sm" aria-label="Close modal" class="text-zinc-400! hover:text-zinc-800! dark:text-gray-500! dark:hover:text-white!"></flux:button>
                 </flux:modal.close>
             </div>
         <?php endif; ?>

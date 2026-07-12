@@ -1,4 +1,4 @@
-@php $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
+﻿@php $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
 @php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @aware([ 'variant' ])
@@ -59,7 +59,7 @@ $classes = Flux::classes()
 
             <?php if ($iconDot): ?>
                 <div class="absolute top-[-2px] end-[-2px]">
-                    <div class="size-[6px] rounded-full bg-zinc-500 dark:bg-zinc-400"></div>
+                    <div class="size-[6px] rounded-full bg-zinc-500 dark:bg-[#9ca3af]"></div>
                 </div>
             <?php endif; ?>
         </div>
