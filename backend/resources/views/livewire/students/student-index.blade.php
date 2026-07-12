@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Students</flux:heading>
         <flux:subheading>Manage students</flux:subheading>

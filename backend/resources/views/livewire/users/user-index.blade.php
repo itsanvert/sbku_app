@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">User Management</flux:heading>
         <flux:subheading>Manage team members, roles, and account access</flux:subheading>

@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     @if (Gate::check('addTeamMember', $team))
         <x-section-border />
 

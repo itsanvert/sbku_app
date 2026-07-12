@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Subject Management</flux:heading>
         <flux:subheading>Manage academic subjects and their credit hours</flux:subheading>

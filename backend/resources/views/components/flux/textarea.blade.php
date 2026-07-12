@@ -1,4 +1,4 @@
-﻿@props([
+@props([
     'name' => $attributes->whereStartsWith('wire:model')->first(),
     'resize' => 'vertical',
     'invalid' => null,

@@ -1,4 +1,4 @@
-﻿@blaze
+@blaze
 
 @php $srOnly = $srOnly ??= $attributes->pluck('sr-only'); @endphp
 

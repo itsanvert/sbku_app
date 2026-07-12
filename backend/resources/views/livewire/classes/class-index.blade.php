@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Class Management</flux:heading>
         <flux:subheading>Manage academic classes, years, and semesters</flux:subheading>

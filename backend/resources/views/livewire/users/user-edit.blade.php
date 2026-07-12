@@ -1,4 +1,4 @@
-﻿<div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity p-4">
+<div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity p-4">
     <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-lg overflow-hidden" @click.outside="$wire.dispatch('closeModal')">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
             <flux:heading size="lg">Edit User</flux:heading>

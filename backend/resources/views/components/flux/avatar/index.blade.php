@@ -1,4 +1,4 @@
-﻿@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
+@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @props([
     'iconVariant' => 'solid',

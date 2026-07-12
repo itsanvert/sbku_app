@@ -1,4 +1,4 @@
-﻿<div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+<div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
 
         {{-- Header --}}

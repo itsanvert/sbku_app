@@ -1,4 +1,4 @@
-﻿<x-guest-layout>
+<x-guest-layout>
 
 <div class="flex min-h-screen w-full">
 

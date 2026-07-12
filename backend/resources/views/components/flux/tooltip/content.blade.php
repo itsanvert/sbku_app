@@ -1,4 +1,4 @@
-﻿@blaze
+@blaze
 
 @props([
     'kbd' => null,

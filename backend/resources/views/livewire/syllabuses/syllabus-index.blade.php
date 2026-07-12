@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Syllabus Management</flux:heading>
         <flux:subheading>Manage curriculum by Faculty, Major, and Year</flux:subheading>

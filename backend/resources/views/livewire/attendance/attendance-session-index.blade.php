@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <flux:heading size="xl">Attendance Sessions</flux:heading>
         <flux:subheading>Manage current and past attendance sessions</flux:subheading>
