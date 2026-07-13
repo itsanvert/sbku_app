@@ -12,8 +12,8 @@
         --dm-text: #f8fafc;
         --dm-text-secondary: #cbd5e1;
         --dm-text-muted: #64748b;
-        --dm-primary: #3b82f6;
-        --dm-primary-hover: #2563eb;
+        --dm-primary: #FF6A00;
+        --dm-primary-hover: #E85D00;
         --dm-success: #10b981;
         --dm-warning: #f59e0b;
         --dm-danger: #ef4444;
@@ -31,7 +31,7 @@
     }
 
     .dark ::selection {
-        background: rgba(59, 130, 246, 0.3);
+        background: rgba(255, 106, 0, 0.3);
         color: #ffffff;
     }
 }
@@ -51,7 +51,7 @@
     }
 
     .glass-card:hover {
-        border-color: rgba(59, 130, 246, 0.3);
+        border-color: rgba(255, 106, 0, 0.3);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
         transform: translateY(-2px);
     }
@@ -84,7 +84,7 @@
         left: 0;
         right: 0;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255, 106, 0, 0.3), transparent);
         opacity: 0;
         transition: opacity 0.35s;
     }
@@ -92,7 +92,7 @@
     .stat-card:hover {
         transform: translateY(-6px);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10);
-        border-color: rgba(59, 130, 246, 0.3);
+        border-color: rgba(255, 106, 0, 0.3);
     }
 
     .stat-card:hover::before {
@@ -192,10 +192,10 @@
         transform: translateY(-50%);
         width: 3px;
         height: 0;
-        background: #3b82f6;
+        background: #FF6A00;
         border-radius: 0 4px 4px 0;
         transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 8px rgba(255, 106, 0, 0.5);
     }
 
     .sidebar-indicator[data-current]::before,
@@ -225,19 +225,19 @@ html.dark ui-sidebar [data-flux-navlist-item]:hover {
 }
 
 html.dark ui-sidebar [data-flux-navlist-item][data-current] {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.1)) !important;
+    background: linear-gradient(135deg, rgba(232, 93, 0, 0.2), rgba(255, 106, 0, 0.1)) !important;
     color: #ffffff !important;
     border-color: transparent !important;
-    box-shadow: 0 0 12px rgba(37, 99, 235, 0.15), inset 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
+    box-shadow: 0 0 12px rgba(232, 93, 0, 0.15), inset 0 0 0 1px rgba(255, 106, 0, 0.2) !important;
     font-weight: 600 !important;
 }
 
 html.dark ui-sidebar [data-flux-navlist-item][data-current] svg {
-    color: #3b82f6 !important;
+    color: #FF6A00 !important;
 }
 
 html.dark ui-sidebar [data-flux-navlist-item][data-current]:hover {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(59, 130, 246, 0.15)) !important;
+    background: linear-gradient(135deg, rgba(232, 93, 0, 0.3), rgba(255, 106, 0, 0.15)) !important;
 }
 
 html.dark ui-sidebar [data-flux-navlist-item][data-current] [data-content] {
@@ -276,8 +276,8 @@ html.dark .flux-dropdown__menu a:hover,
 html.dark .flux-menu a:hover,
 html.dark .flux-dropdown__menu button:hover,
 html.dark .flux-menu button:hover {
-    background-color: rgba(59, 130, 246, 0.1) !important;
-    color: #3b82f6 !important;
+    background-color: rgba(255, 106, 0, 0.1) !important;
+    color: #FF6A00 !important;
 }
 
 /* -- Header -- */
@@ -295,12 +295,12 @@ html.dark .flux-main {
 /* -- Buttons -- */
 html.dark .flux-button--primary,
 html.dark [data-flux-button-variant="primary"] {
-    background-color: #3b82f6 !important;
+    background-color: #FF6A00 !important;
 }
 
 html.dark .flux-button--primary:hover,
 html.dark [data-flux-button-variant="primary"]:hover {
-    background-color: #2563eb !important;
+    background-color: #E85D00 !important;
 }
 
 /* -- Inputs -- */
@@ -320,8 +320,8 @@ html.dark textarea::placeholder {
 html.dark input:focus,
 html.dark textarea:focus,
 html.dark select:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    border-color: #FF6A00 !important;
+    box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.15) !important;
     outline: none !important;
 }
 
