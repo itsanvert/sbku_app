@@ -48,7 +48,7 @@
                        name="email"
                        value="{{ old('email') }}"
                        required autofocus autocomplete="username"
-                       class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4f8cff] focus:border-transparent transition duration-150 bg-white dark:bg-[#1e293b]">
+                       class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6A00] focus:border-transparent transition duration-150 bg-white dark:bg-[#1e293b]">
             </div>
 
             {{-- Password --}}
@@ -60,13 +60,13 @@
                        type="password"
                        name="password"
                        required autocomplete="current-password"
-                       class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4f8cff] focus:border-transparent transition duration-150 bg-white dark:bg-[#1e293b]">
+                       class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6A00] focus:border-transparent transition duration-150 bg-white dark:bg-[#1e293b]">
             </div>
 
 
             {{-- Submit --}}
             <button type="submit"
-                    class="w-full py-2.5 bg-[#4f8cff] hover:bg-[#3b82f6] text-white text-sm font-semibold rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#4f8cff] focus:ring-offset-2">
+                    class="w-full py-2.5 bg-[#FF6A00] hover:bg-[#E85D00] text-white text-sm font-semibold rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FF6A00] focus:ring-offset-2 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30">
                 {{ __('Sign in') }}
             </button>
         </form>
