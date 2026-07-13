@@ -11,7 +11,7 @@
                 <p class="text-[#64748b] dark:text-[#94a3b8] mt-1">Here's what's happening at your school today.</p>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('teachers.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 active:scale-95">
+                <a href="{{ route('teachers.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E85D00] text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 hover:-translate-y-0.5 active:scale-95">
                     <flux:icon name="plus" class="w-4 h-4"/>
                     Add Teacher
                 </a>
@@ -170,7 +170,7 @@
                             <span class="text-sm text-gray-600 dark:text-[#94a3b8]">All systems go</span>
                         </div>
                         <div class="flex-1"></div>
-                        <button class="px-5 py-2.5 rounded-xl bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-95">
+                        <button class="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E85D00] text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 active:scale-95">
                             Generate Report
                         </button>
                     </div>
@@ -189,7 +189,7 @@
             const gridColor = isDark ? 'rgba(255,255,255,0.06)' : '#e5e7eb';
             const labelColor = isDark ? '#64748b' : '#9ca3af';
             const cardBg = isDark ? '#1e293b' : '#ffffff';
-            const primary = '#3b82f6';
+            const primary = '#FF6A00';
 
             Chart.defaults.color = labelColor;
             Chart.defaults.borderColor = gridColor;
@@ -200,8 +200,8 @@
             if (ctxAttendance) {
                 const ctx = ctxAttendance.getContext('2d');
                 const gradient = ctx.createLinearGradient(0, 0, 0, 350);
-                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
-                gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                gradient.addColorStop(0, 'rgba(255, 106, 0, 0.25)');
+                gradient.addColorStop(1, 'rgba(255, 106, 0, 0)');
 
                 new Chart(ctxAttendance, {
                     type: 'line',
@@ -307,7 +307,7 @@
                         datasets: [{
                             label: 'Users',
                             data: [{{ $studentCount ?? 0 }}, {{ $teacherCount ?? 0 }}, {{ max(0, ($userCount ?? 0) - ($studentCount ?? 0) - ($teacherCount ?? 0)) }}],
-                            backgroundColor: ['#3b82f6', '#8b5cf6', '#64748b'],
+                            backgroundColor: ['#FF6A00', '#8b5cf6', '#64748b'],
                             borderRadius: 8,
                             barThickness: 36
                         }]
