@@ -7,25 +7,14 @@ error() { echo "[$(date -Iseconds)] ERROR: $*" >&2; }
 
 # IMPORTANT: Do NOT use `set -e`. A failure in any one step (migration,
 # config cache, etc.) should NOT kill the whole container. We handle
-# errors explicitly so Apache and nginx always get a chance to start.
-
-# ── ECS / Container metadata ─────────────────────────────────────────────
-ECS_CONTAINER_METADATA_URI_V4="${ECS_CONTAINER_METADATA_URI_V4:-}"
-if [ -n "$ECS_CONTAINER_METADATA_URI_V4" ]; then
-    log "Running on AWS ECS (Fargate/EC2) — metadata URI available"
-fi
+# errors explicitly so Apache always gets a chance to start.
 
 # ── Graceful shutdown trap ───────────────────────────────────────────────
-# ECS sends SIGTERM, then SIGKILL after the stop timeout (default 30s).
 cleanup() {
     local signal=$1
     log "Received $signal — shutting down gracefully..."
     if [ -n "$WATCHDOG_PID" ] && kill -0 "$WATCHDOG_PID" 2>/dev/null; then
         kill -TERM "$WATCHDOG_PID" 2>/dev/null || true
-    fi
-    if [ -n "$NGINX_PID" ] && kill -0 "$NGINX_PID" 2>/dev/null; then
-        log "Stopping nginx (PID $NGINX_PID)..."
-        nginx -s quit 2>/dev/null || kill -TERM "$NGINX_PID" 2>/dev/null || true
     fi
     if [ -n "$APACHE_PID" ] && kill -0 "$APACHE_PID" 2>/dev/null; then
         log "Stopping Apache (PID $APACHE_PID)..."
@@ -71,7 +60,7 @@ if [ -z "$APP_KEY_VAL" ] || echo "$APP_KEY_VAL" | grep -q "YOUR_APP_KEY_HERE\|^A
     fi
 fi
 
-# ── Write ECS secrets / env vars into .env ──────────────────────────────
+# ── Write env vars into .env ──────────────────────────────────────────
 write_env() {
     local key="$1"
     local val="$2"
@@ -196,15 +185,12 @@ log "Running Laravel setup (best-effort)..."
 php artisan storage:link --force 2>/dev/null || php artisan storage:link 2>/dev/null || true
 
 # Apply pending migrations (idempotent — no-op if nothing pending).
-# This also handles the case where the DB connection is cold (Neon cold-start).
 timeout 30 php artisan migrate --force 2>&1 || warn "Migration failed (tables may be stale)"
 
 rm -f bootstrap/cache/packages.php
 php artisan package:discover --ansi 2>/dev/null || true
 
 # ── Regenerate config/route/event cache at runtime ──────────────────────────
-# Build-time config:cache bakes stale values (e.g. APP_URL from build .env).
-# We must clear and re-cache so runtime env vars take effect.
 log "Regenerating config, route, and view caches with runtime environment..."
 rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/events.php
 php artisan optimize 2>/dev/null || warn "Optimize failed (config/route/event cache skipped)"
@@ -216,7 +202,7 @@ php artisan view:cache 2>/dev/null || warn "View cache failed (templates compile
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
-# ── 502 error page (served directly by nginx when Apache is down) ──────
+# ── 502 error page ────────────────────────────────────────────────────
 cat > /var/www/html/public/502.html << 'ERR502'
 <!DOCTYPE html>
 <html lang="en">
@@ -236,18 +222,16 @@ p { color:#666; line-height:1.5; margin-bottom:0.5rem; }
 <body>
 <div class="container">
 <h1>502</h1>
-<p>The backend server is not reachable right now.</p>
-<p>The API service (Apache) is starting up or is temporarily down.</p>
-<div class="hint">Please wait a moment and refresh. If the issue persists, check the server logs.</div>
+<p>The backend server is starting up.</p>
+<p>Please wait a moment and refresh.</p>
+<div class="hint">Free instances spin down after inactivity and may take up to 50 seconds to respond.</div>
 </div>
 </body>
 </html>
 ERR502
 log "502 error page created at /var/www/html/public/502.html"
 
-# ── Queue worker ─────────────────────────────────────────────────────────
-# Disabled by default on memory-constrained instances (t3.micro = 1 GB).
-# Set ENABLE_QUEUE=true in the environment to start the worker.
+# ── Queue worker (disabled by default on free tier to save memory) ─────
 if [ "${ENABLE_QUEUE:-false}" = "true" ]; then
     php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600 &
     QUEUE_PID=$!
@@ -257,26 +241,11 @@ else
 fi
 
 # ══════════════════════════════════════════════════════════════════════════
-# Self-signed SSL certificate (for HTTPS on port 443)
-# ══════════════════════════════════════════════════════════════════════════
-SSL_CERT="/etc/ssl/certs/self-signed.crt"
-SSL_KEY="/etc/ssl/private/self-signed.key"
-if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
-    log "Generating self-signed SSL certificate..."
-    mkdir -p /etc/ssl/certs /etc/ssl/private
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout "$SSL_KEY" \
-        -out "$SSL_CERT" \
-        -subj "/C=US/ST=State/L=City/O=SBKU/CN=_"
-    log "Self-signed SSL certificate generated."
-fi
-
-# ══════════════════════════════════════════════════════════════════════════
-# Process watchdog — restarts Apache if it dies, logs memory on OOM risk
+# Process watchdog — restarts Apache if it dies
 # ══════════════════════════════════════════════════════════════════════════
 watchdog() {
     while true; do
-        sleep 15
+        sleep 30
 
         # Check Apache
         if [ -n "$APACHE_PID" ] && ! kill -0 "$APACHE_PID" 2>/dev/null; then
@@ -285,70 +254,40 @@ watchdog() {
             APACHE_PID=$!
             log "Apache restarted (new PID $APACHE_PID)"
         fi
-
-        # Check Nginx
-        if [ -n "$NGINX_PID" ] && ! kill -0 "$NGINX_PID" 2>/dev/null; then
-            warn "Nginx (PID $NGINX_PID) died — restarting..."
-            nginx -g "daemon off;" &
-            NGINX_PID=$!
-            log "Nginx restarted (new PID $NGINX_PID)"
-        fi
-
-        # Log memory every 2 minutes for OOM debugging
-        MEM_PCT=$(free | awk '/Mem:/ {printf "%.0f", $3/$2 * 100}' 2>/dev/null || echo "?")
-        if [ "${MEM_PCT}" -gt 90 ] 2>/dev/null; then
-            warn "Memory critical: ${MEM_PCT}% used"
-        fi
     done
 }
 
-# Start watchdog in background
 watchdog &
 WATCHDOG_PID=$!
 log "Process watchdog started (PID $WATCHDOG_PID)"
 
 # ══════════════════════════════════════════════════════════════════════════
-# Apache & nginx startup
+# Apache startup (Render assigns PORT via environment variable)
 # ══════════════════════════════════════════════════════════════════════════
+
+# Render provides PORT env var (default 10000)
+APACHE_PORT="${PORT:-10000}"
+log "Render PORT=$APACHE_PORT"
 
 # ── 1. Validate Apache config ──────────────────────────────────────────
 log "Validating Apache configuration..."
 if ! apachectl configtest 2>&1; then
     error "Apache configuration is INVALID — fix the config and rebuild."
-    error "If Apache cannot start, nginx will return 502 for all proxied requests."
-    # We still continue so the container doesn't restart-loop. nginx serves
-    # the Flutter app at least, and shows 502.html for API calls.
 fi
 
-# ── 2. Configure Apache for port 8080 ──────────────────────────────────
+# ── 2. Configure Apache to listen on Render's PORT ─────────────────────
 APACHE_PORTS="/etc/apache2/ports.conf"
 APACHE_SITE="/etc/apache2/sites-available/000-default.conf"
 
-log "Configuring Apache to listen on port 8080..."
-sed -ni '/^Listen /!p' "$APACHE_PORTS" 2>/dev/null || true
-echo "Listen 8080" >> "$APACHE_PORTS"
-sed -i 's/:[0-9]\+>/:8080>/g' "$APACHE_SITE" 2>/dev/null || true
+log "Configuring Apache to listen on port $APACHE_PORT..."
+sed -i '/^Listen /d' "$APACHE_PORTS" 2>/dev/null || true
+echo "Listen $APACHE_PORT" >> "$APACHE_PORTS"
+sed -i "s/:[0-9]\+>/:${APACHE_PORT}>/g" "$APACHE_SITE" 2>/dev/null || true
 echo "ServerName _default_" >> /etc/apache2/apache2.conf 2>/dev/null || true
 echo "UseCanonicalName Off" >> /etc/apache2/apache2.conf 2>/dev/null || true
 
-# Stop any stale Apache on old port 80
-if [ -s /var/log/apache2/httpd.pid ] || ps aux 2>/dev/null | grep -v grep | grep -q '[a]pache2'; then
-    log "Stopping existing Apache process..."
-    pkill -TERM apache2 2>/dev/null || true
-    sleep 2
-fi
-
-# ── 3. PHP-FPM (optional — only if binary exists) ─────────────────────
-if [ -x "$(command -v php-fpm 2>/dev/null)" ]; then
-    log "Starting PHP-FPM..."
-    php-fpm -y /usr/local/etc/php-fpm.conf &
-    sleep 1
-else
-    log "Apache uses mod_php (no php-fpm needed)."
-fi
-
-# ── 4. Start Apache on port 8080 in background ─────────────────────────
-log "Starting Apache on port 8080..."
+# ── 3. Start Apache on Render's PORT ──────────────────────────────────
+log "Starting Apache on port $APACHE_PORT..."
 apache2-foreground &
 APACHE_PID=$!
 
@@ -356,12 +295,12 @@ APACHE_PID=$!
 APACHE_READY=false
 for i in $(seq 1 10); do
     if command -v ss &> /dev/null; then
-        if ss -tlnp 2>/dev/null | grep -q ':8080'; then
-            log "✓ Apache listening on port 8080"; APACHE_READY=true; break
+        if ss -tlnp 2>/dev/null | grep -q ":${APACHE_PORT}"; then
+            log "Apache listening on port $APACHE_PORT"; APACHE_READY=true; break
         fi
     elif command -v netstat &> /dev/null; then
-        if netstat -tlnp 2>/dev/null | grep -q ':8080'; then
-            log "✓ Apache listening on port 8080"; APACHE_READY=true; break
+        if netstat -tlnp 2>/dev/null | grep -q ":${APACHE_PORT}"; then
+            log "Apache listening on port $APACHE_PORT"; APACHE_READY=true; break
         fi
     fi
     if ! kill -0 "$APACHE_PID" 2>/dev/null; then
@@ -375,49 +314,26 @@ done
 # Verify Apache responds to HTTP
 if [ "$APACHE_READY" = true ] && command -v curl &> /dev/null; then
     for i in 1 2 3; do
-        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null || echo "000")
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${APACHE_PORT}/" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" != "000" ]; then
-            log "Apache reachable on 8080 (HTTP $HTTP_CODE)"
+            log "Apache reachable on port $APACHE_PORT (HTTP $HTTP_CODE)"
             break
         fi
-        [ "$i" -eq 3 ] && warn "Apache unreachable on 8080 after 3 curl attempts"
+        [ "$i" -eq 3 ] && warn "Apache unreachable on port $APACHE_PORT after 3 curl attempts"
         sleep 2
     done
 fi
 
 if [ "$APACHE_READY" = false ]; then
     error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    error "Apache is NOT running on port 8080."
-    error "Nginx will return 502 Bad Gateway for all API calls."
-    error ""
+    error "Apache is NOT running on port $APACHE_PORT."
     error "Check Apache error log:  cat /var/log/apache2/error.log"
     error "Check Apache access log: cat /var/log/apache2/access.log"
     error "Check Laravel log:       cat storage/logs/laravel.log"
     error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 fi
 
-# ── 5. Start nginx ─────────────────────────────────────────────────────
-log "Starting nginx on port ${PORT:-80}..."
-if [ -f /var/run/nginx.pid ] && kill -0 "$(cat /var/run/nginx.pid)" 2>/dev/null; then
-    log "nginx already running."
-else
-    nginx -g "daemon off;" &
-    NGINX_PID=$!
-    sleep 1
-    if kill -0 "$NGINX_PID" 2>/dev/null; then
-        log "✓ nginx is PID $NGINX_PID"
-    else
-        error "nginx failed to start — check nginx config"
-        error "nginx -t output:"
-        nginx -t 2>&1 || true
-    fi
-fi
-
-if [ "$APACHE_READY" = true ]; then
-    log "✓ SBKU backend is fully operational (nginx → Apache on 8080)."
-else
-    warn "SBKU backend started with Apache DOWN — API calls will return 502."
-fi
+log "SBKU backend is operational on port $APACHE_PORT."
 
 # Block so the container stays alive (handles signals via trap)
-wait $NGINX_PID 2>/dev/null || wait $APACHE_PID 2>/dev/null || wait $WATCHDOG_PID
+wait $APACHE_PID 2>/dev/null || wait $WATCHDOG_PID
