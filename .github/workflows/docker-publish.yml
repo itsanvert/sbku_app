@@ -1,4 +1,4 @@
-name: Build, Publish & Deploy Docker Image
+name: Build & Publish Docker Image
 
 on:
   push:
@@ -11,8 +11,6 @@ on:
 env:
   REGISTRY_GHCR: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  AWS_REGION: ap-southeast-2
-  ECR_REPOSITORY: sbku_app
 
 jobs:
   build-and-push:
@@ -20,7 +18,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -35,33 +32,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
-
-      - name: Log in to Amazon ECR
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Extract Docker metadata (GHCR)
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=sha-,format=long
-            type=ref,event=branch
-            type=ref,event=tag
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Extract Docker metadata (ECR)
-        id: meta-ecr
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
           tags: |
             type=sha,prefix=sha-,format=long
             type=ref,event=branch
@@ -73,12 +48,8 @@ jobs:
         with:
           context: ./backend
           push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ steps.meta.outputs.tags }}
-            ${{ steps.meta-ecr.outputs.tags }}
-          labels: |
-            ${{ steps.meta.outputs.labels }}
-            ${{ steps.meta-ecr.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
@@ -86,152 +57,21 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/uat' || github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # ──────────────────────────────────────────────────────────────────
-      # Step 1: Prepare — pull image, update env, kill old in background
-      # NOTE: docker kill/rm is run in a detached background process
-      # because it terminates the SSH session itself (host networking).
-      # ──────────────────────────────────────────────────────────────────
-      - name: Deploy — prepare (pull, env, background stop)
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            ECR_REGISTRY="${{ steps.ecr.outputs.registry }}"
-            IMAGE_URI="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:uat"
-            CONTAINER_NAME="sbku-app"
-
-            echo "=== Step 1: Prepare ==="
-
-            # Setup swap if missing
-            if ! swapon --show 2>/dev/null | grep -q .; then
-              echo "Creating 2 GB swap file..."
-              sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
-              sudo chmod 600 /swapfile
-              sudo mkswap /swapfile
-              sudo swapon /swapfile
-              echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-              echo "Swap enabled"
-            fi
-
-            # ECR login
-            aws ecr get-login-password --region "${{ env.AWS_REGION }}" | \
-              docker login --username AWS --password-stdin "${ECR_REGISTRY}" || true
-
-            # Pull new image
-            timeout 180 docker pull "$IMAGE_URI" || echo "Pull failed"
-
-            # Create/update env file
-            ENV_FILE="/opt/sbku-app.env"
-            if [ ! -f "$ENV_FILE" ]; then
-              sudo tee "$ENV_FILE" > /dev/null << 'ENVEOF'
-            NEON_DATABASE_URL="postgresql://neondb_owner:npg_PTQUFJLvd94h@ep-fragrant-recipe-a7rnwwa3.ap-southeast-2.aws.neon.tech/neondb?sslmode=require"
-            APP_KEY=base64:qA+gNzOOJyERlAI2Qx1u7AK8j/pJ0npT5KMqaOl3sCE=
-            APP_ENV=production
-            APP_DEBUG=false
-            APP_URL=http://32.236.105.9
-            FILESYSTEM_DISK=public
-            ENVEOF
+      - name: Trigger Render deploy
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "Triggering Render deploy..."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" || true)
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+              echo "Render deploy triggered successfully (HTTP $HTTP_CODE)"
             else
-              sudo sed -i 's|^APP_URL=.*|APP_URL=http://32.236.105.9|' "$ENV_FILE"
-              sudo sed -i '/^ASSET_URL=/d' "$ENV_FILE"   # remove stale tunnel URL
+              echo "Render deploy returned HTTP $HTTP_CODE (Render auto-deploys from GitHub, this is a backup trigger)"
             fi
-
-            # Disable any cron/systemd that would restart the tunnel
-            sudo crontab -l 2>/dev/null | grep -v 'start-tunnel\|cloudflared' | sudo crontab - 2>/dev/null || true
-            sudo systemctl disable cloudflared 2>/dev/null || true
-            sudo systemctl stop cloudflared 2>/dev/null || true
-
-            # Kill old container in DETACHED background (nohup + disown)
-            # This avoids SSH session death caused by docker kill on host-networked containers
-            nohup bash -c "
-              docker kill $CONTAINER_NAME 2>/dev/null
-              docker rm $CONTAINER_NAME 2>/dev/null
-              docker kill sbku-backend 2>/dev/null
-              docker rm sbku-backend 2>/dev/null
-              docker kill sbku-app-tunnel 2>/dev/null
-              docker rm sbku-app-tunnel 2>/dev/null
-              sudo pkill -f 'cloudflared tunnel' 2>/dev/null
-            " > /tmp/stop-container.log 2>&1 &
-            disown
-
-            echo "=== Prepare complete (background stop ongoing) ==="
-
-      # ──────────────────────────────────────────────────────────────────
-      # Step 2: Deploy — wait for stop, start new container, health check
-      # ──────────────────────────────────────────────────────────────────
-      - name: Deploy — start & verify
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            IMAGE_URI="${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:uat"
-            CONTAINER_NAME="sbku-app"
-            ENV_FILE="/opt/sbku-app.env"
-
-            echo "=== Step 2: Start & Verify ==="
-
-            # Wait for background stop to complete
-            echo "Waiting for old container to stop..."
-            for i in $(seq 1 6); do
-              if ! docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
-                echo "Old container gone"
-                break
-              fi
-              sleep 5
-            done
-
-            # Force-remove if still hanging around
-            docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME" && \
-              timeout 10 docker rm -f "$CONTAINER_NAME" || true
-            docker ps -a --format '{{.Names}}' | grep -qx "sbku-backend" && \
-              timeout 10 docker rm -f sbku-backend || true
-
-            echo "--- Containers after cleanup ---"
-            docker ps -a --format 'table {{.Names}}\t{{.Status}}' 2>/dev/null
-
-            # Start new container
-            echo "Starting new container..."
-            timeout 30 docker run -d \
-              --name "$CONTAINER_NAME" \
-              --restart unless-stopped \
-              --network host \
-              --memory="768m" \
-              --memory-reservation="512m" \
-              --env-file "$ENV_FILE" \
-              --log-opt max-size=10m \
-              --log-opt max-file=3 \
-              "$IMAGE_URI"
-
-            # Health check
-            echo "Waiting for container to be ready..."
-            for i in $(seq 1 12); do
-              sleep 5
-              if curl -sf http://localhost/ > /dev/null 2>&1; then
-                echo "✓ Container is healthy (HTTP 200)"
-                break
-              fi
-              if [ "$i" -eq 12 ]; then
-                echo "⚠ Health check failed — logs:"
-                timeout 10 docker logs "$CONTAINER_NAME" --tail 30 2>/dev/null || true
-              fi
-            done
-
-            echo "=== Deployment complete ==="
+          else
+            echo "No RENDER_DEPLOY_HOOK_URL secret configured."
+            echo "Render will auto-deploy from the GitHub push if connected."
+          fi
