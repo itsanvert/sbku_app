@@ -13,7 +13,11 @@ services:
         value: "false"
       - key: APP_URL
         value: https://sbkuapp.onrender.com
+      - key: APP_KEY
+        generateValue: true
       - key: DB_CONNECTION
+        value: pgsql
+      - key: NEON_DATABASE_URL
         sync: false
       - key: DB_HOST
         sync: false
@@ -25,11 +29,17 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
+      - key: DB_SSLMODE
+        value: require
       - key: SESSION_DRIVER
         value: file
       - key: CACHE_STORE
         value: file
       - key: QUEUE_CONNECTION
         value: sync
+      - key: FILESYSTEM_DISK
+        value: public
+      - key: USE_FIRESTORE
+        value: "false"
       - key: LOG_LEVEL
         value: error

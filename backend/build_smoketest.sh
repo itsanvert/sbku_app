@@ -40,7 +40,7 @@ done
 if [ ! -f ".env" ]; then
     echo "WARN: .env not found. Create one before deploying:"
     echo "      cp .env.example .env   then fill in APP_KEY, DB_*, etc."
-    echo "      NOTE: In ECS, secrets come from task definition / SSM."
+    echo "      NOTE: On Render, set env vars in the dashboard."
 fi
 
 # 4. Quick Dockerfile syntax check
@@ -83,7 +83,7 @@ echo ""
 echo "=== Preflight OK — ready to build ==="
 echo "Run:  docker build -t sbku-backend ."
 echo ""
-echo "To deploy to ECS:"
-echo "  1. Push image to ECR"
-echo "  2. Update ecs-task-definition.json with your ACCOUNT_ID"
-echo "  3. aws ecs update-service --cluster sbku-backend --service sbku-backend --force-new-deployment"
+echo "To deploy:"
+echo "  1. Push to GitHub main branch"
+echo "  2. Render auto-deploys from GitHub"
+echo "  3. Or trigger manually in Render dashboard"

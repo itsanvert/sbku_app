@@ -5,6 +5,26 @@
     <meta charset="UTF-8">
     <title>Attendance Report</title>
     <style>
+        /* ─── Khmer Font Registration ─── */
+        @font-face {
+            font-family: 'Noto Sans Khmer';
+            src: url('{{ public_path("fonts/NotoSansKhmer-Regular.ttf") }}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Noto Sans Khmer';
+            src: url('{{ public_path("fonts/NotoSansKhmer-Bold.ttf") }}') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Noto Sans Khmer';
+            src: url('{{ public_path("fonts/NotoSansKhmer-Light.ttf") }}') format('truetype');
+            font-weight: 300;
+            font-style: normal;
+        }
+
         /* ─── Base ─── */
         * {
             box-sizing: border-box;
@@ -13,7 +33,7 @@
         }
 
         body {
-            font-family: DejaVu Sans, sans-serif;
+            font-family: 'Noto Sans Khmer', DejaVu Sans, sans-serif;
             font-size: 11px;
             color: #1a1a2e;
             background: #ffffff;
@@ -477,7 +497,20 @@
                         </td>
 
                         {{-- Check-in time --}}
-                        <td>{{ $record->check_in_time ? $record->check_in_time->format('H:i') : '—' }}</td>
+                        <td>
+                            @php
+                                $ct = $record->check_in_time;
+                                $checkInDisplay = '—';
+                                if ($ct instanceof \Carbon\Carbon) {
+                                    $checkInDisplay = $ct->format('H:i');
+                                } elseif (is_string($ct) && $ct !== '') {
+                                    $checkInDisplay = substr($ct, 0, 5);
+                                } elseif (is_numeric($ct)) {
+                                    $checkInDisplay = \Carbon\Carbon::createFromTimestamp($ct)->format('H:i');
+                                }
+                            @endphp
+                            {{ $checkInDisplay }}
+                        </td>
                     </tr>
                 @endforeach
 
