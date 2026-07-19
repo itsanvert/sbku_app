@@ -70,6 +70,7 @@ write_env() {
     fi
 }
 
+write_env "APP_KEY" "${APP_KEY:-}"
 write_env "APP_ENV" "${APP_ENV:-production}"
 write_env "APP_DEBUG" "${APP_DEBUG:-false}"
 write_env "APP_URL" "${APP_URL:-http://localhost}"
