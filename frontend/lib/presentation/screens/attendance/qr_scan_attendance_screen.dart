@@ -12,8 +12,13 @@ import 'package:sbku_app/presentation/widgets/shimmer_widget.dart';
 
 /// Modern QR Scan Attendance Screen
 /// Supports: live camera scan | pick QR image from gallery
+/// When navigated from a push notification, [sessionId] and [qrToken]
+/// can be provided to auto-initiate the check-in without scanning.
 class QrScanAttendanceScreen extends StatefulWidget {
-  const QrScanAttendanceScreen({super.key});
+  final String? sessionId;
+  final String? qrToken;
+
+  const QrScanAttendanceScreen({super.key, this.sessionId, this.qrToken});
 
   @override
   State<QrScanAttendanceScreen> createState() => _QrScanAttendanceScreenState();
@@ -92,6 +97,16 @@ class _QrScanAttendanceScreenState extends State<QrScanAttendanceScreen>
       duration: const Duration(milliseconds: 300),
     );
 
+    // If navigated from a push notification with session params, auto-check-in
+    if (widget.sessionId != null && widget.qrToken != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final qrPayload = jsonEncode({
+          'session_id': widget.sessionId,
+          'qr_token': widget.qrToken,
+        });
+        _processRawValue(qrPayload);
+      });
+    }
   }
 
   @override
