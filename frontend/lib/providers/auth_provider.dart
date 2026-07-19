@@ -3,6 +3,7 @@ import 'package:sbku_app/core/di/service_locator.dart';
 import 'package:sbku_app/core/result.dart';
 import 'package:sbku_app/domain/repositories/auth_repository.dart';
 import 'package:sbku_app/model/user_model.dart';
+import 'package:sbku_app/service/firebase_messaging_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthRepository _authRepository = sl<AuthRepository>();
@@ -68,6 +69,12 @@ class AuthProvider with ChangeNotifier {
       case Success<User>():
         _user = result.data;
         notifyListeners();
+        // Register FCM token with backend after successful login
+        try {
+          await FirebaseMessagingService().registerToken();
+        } catch (e) {
+          print('FCM token registration after login failed: $e');
+        }
         return true;
       case Failure<User>():
         _errorMessage = _formatError(result.error);

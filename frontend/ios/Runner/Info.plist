@@ -53,5 +53,9 @@
 		<string>This app needs access to location to verify attendance.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>remote-notification</string>
+		</array>
 	</dict>
 </plist>

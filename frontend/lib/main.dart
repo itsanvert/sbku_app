@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:sbku_app/core/constants/app_config.dart';
@@ -12,15 +14,25 @@ import 'package:sbku_app/presentation/screens/welcome/splash_screen.dart';
 import 'package:sbku_app/service/notification_service_v2.dart';
 import 'package:sbku_app/service/app_lifecycle_manager.dart';
 import 'package:sbku_app/service/platform_channel_service.dart';
+import 'package:sbku_app/service/firebase_messaging_service.dart';
 import 'package:sbku_app/service/api_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Global app lifecycle manager
 final appLifecycleManager = AppLifecycleManager();
 final notificationService = NotificationService();
+final firebaseMessagingService = FirebaseMessagingService();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp();
+    print('✓ Firebase initialized successfully');
+  } catch (e) {
+    print('✗ Firebase initialization failed: $e');
+  }
 
   try {
     // Create Android Notification Channel
@@ -74,6 +86,9 @@ Future<void> main() async {
   print('🔧 Resolved API Host: ${AppConfig.apiHost}');
 
   setupServiceLocator();
+
+  // Register background message handler
+  FirebaseMessaging.onBackgroundMessage(onBackgroundMessage);
 
   // Get device info
   _logDeviceInfo();
@@ -138,6 +153,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SBKU App',
+      key: firebaseMessagingService.navigatorKey,
       theme: ThemeProvider.lightTheme,
       darkTheme: ThemeProvider.darkTheme,
       themeMode: themeProvider.themeMode,
@@ -198,6 +214,18 @@ class _AuthCheckState extends State<AuthCheck> {
     // Check auth status (makes /api/user API call if token is saved)
     await Provider.of<AuthProvider>(context, listen: false).checkAuth();
 
+    // Initialize Firebase Messaging after auth check
+    try {
+      await firebaseMessagingService.initialize();
+      // Register FCM token with backend if user is authenticated
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isAuthenticated) {
+        await firebaseMessagingService.registerToken();
+      }
+    } catch (e) {
+      print('FCM initialization error: $e');
+    }
+
     // Enforce a minimum splash duration of 1.5s so transition is smooth
     // and the background warm-up gets a head start if no token is saved
     final elapsed = DateTime.now().difference(startTime);
@@ -208,6 +236,11 @@ class _AuthCheckState extends State<AuthCheck> {
 
     if (mounted) {
       setState(() => _isChecking = false);
+
+      // Handle cold-start notification after first frame is rendered
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        firebaseMessagingService.handleColdStartNotification();
+      });
     }
   }
 
