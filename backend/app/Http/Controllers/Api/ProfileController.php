@@ -98,7 +98,18 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        $user->forceFill(['fcm_token' => $request->token])->save();
+        \Log::info('updateFcmToken called', [
+            'user_id' => $user?->id,
+            'token_length' => strlen($request->token),
+        ]);
+
+        $saved = $user->forceFill(['fcm_token' => $request->token])->save();
+
+        \Log::info('updateFcmToken result', [
+            'user_id' => $user->id,
+            'saved' => $saved,
+            'fresh_token' => $user->fresh()?->fcm_token ? 'set' : 'null',
+        ]);
 
         return response()->json([
             'success' => true,
