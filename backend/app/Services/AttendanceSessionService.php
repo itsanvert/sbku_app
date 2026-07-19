@@ -193,6 +193,78 @@ class AttendanceSessionService
         }
     }
 
+    /**
+     * Send FCM push notifications and create a Firestore message
+     * when an attendance session ends.
+     */
+    protected function notifyStudentsOfSessionEnd(AttendanceSession $session): void
+    {
+        try {
+            $teacherName = $session->teacher?->user?->name ?? 'Teacher';
+            $subjectName = $session->subject?->name ?? 'Class';
+            $majorName   = $session->major?->name ?? '';
+            $className   = $session->academicClass?->name ?? '';
+
+            $title = "📋 Attendance Closed: {$subjectName}";
+            $body  = "{$teacherName} has ended the attendance session";
+            if ($className) {
+                $body .= " — Class: {$className}";
+            } elseif ($majorName) {
+                $body .= " — {$majorName}";
+            }
+
+            // Build the notification data payload for the Flutter app
+            $data = [
+                'type'              => 'attendance_session_ended',
+                'session_id'        => (string) $session->id,
+                'teacher_name'      => $teacherName,
+                'subject_name'      => $subjectName,
+                'major_name'        => $majorName,
+                'class_name'        => $className,
+                'day_of_week'       => $session->day_of_week ?? '',
+                'ended_at'          => $session->ended_at?->toIso8061String() ?? now()->toIso8601String(),
+            ];
+
+            // 1. Create a Message record
+            Message::create([
+                'sender_id'   => $session->teacher?->user_id,
+                'receiver_id' => null, // broadcast
+                'title'       => $title,
+                'body'        => $body,
+                'type'        => 'alert',
+                'metadata'    => $data,
+            ]);
+
+            // 2. Find eligible student IDs and dispatch a queued push notification batch
+            $query = Student::whereNotNull('user_id');
+
+            if ($session->academic_class_id) {
+                $query->where('academic_class_id', $session->academic_class_id);
+            } elseif ($session->major_id) {
+                $query->where('major_id', $session->major_id);
+                if ($session->year_id) {
+                    $query->where('year', $session->year_id);
+                }
+            }
+
+            if ($session->shift_id) {
+                $query->where('shift_id', $session->shift_id);
+            }
+
+            $studentIds = $query->pluck('id')->toArray();
+
+            if (!empty($studentIds)) {
+                SendPushNotification::dispatch($studentIds, $title, $body, $data);
+            }
+
+            // 3. Also broadcast to the 'all' topic as a fallback
+            $this->pushService->sendToTopic('all', $title, $body, $data);
+
+        } catch (\Exception $e) {
+            \Log::warning("Failed to notify students about session end #{$session->id}: " . $e->getMessage());
+        }
+    }
+
     public function checkIn(
         AttendanceSession $session,
         Student $student,
@@ -375,6 +447,9 @@ class AttendanceSessionService
             
             $finalAttendances = $this->firestore->list('attendances', ['session_id' => (string)$session->id]);
 
+            // Send push notifications that the session has ended
+            $this->notifyStudentsOfSessionEnd($session);
+
             return [
                 'session'       => $session,
                 'attendances'   => $finalAttendances,
@@ -418,6 +493,9 @@ class AttendanceSessionService
                 Attendance::insert($insertData);
             }
         });
+
+        // Send push notifications that the session has ended
+        $this->notifyStudentsOfSessionEnd($session);
 
         return [
             'session'       => $session->fresh()->load(['attendances.student.user']),
