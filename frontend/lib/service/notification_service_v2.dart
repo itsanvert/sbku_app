@@ -37,9 +37,8 @@ class NotificationService {
   Function(NotificationModel)? onNotificationTapped;
 
   /// Initialize notification service
-  Future<void> initialize(BuildContext context) async {
+  Future<void> initialize() async {
     try {
-      // Initialize local notifications
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('ic_launcher');
       const InitializationSettings initializationSettings =
@@ -48,20 +47,15 @@ class NotificationService {
       await _notificationsPlugin.initialize(
         settings: initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse details) {
-          _handleNotificationTap(context, details.payload);
+          if (details.payload != null) {
+            print('Local notification tapped with payload: ${details.payload}');
+          }
         },
       );
 
       print('NotificationService initialized successfully');
     } catch (e) {
       print('Error initializing NotificationService: $e');
-    }
-  }
-
-  /// Handle local notification tap
-  void _handleNotificationTap(BuildContext context, String? payload) {
-    if (payload != null) {
-      print('Local notification tapped with payload: $payload');
     }
   }
 

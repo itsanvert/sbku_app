@@ -153,7 +153,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SBKU App',
-      key: firebaseMessagingService.navigatorKey,
+      navigatorKey: firebaseMessagingService.navigatorKey,
       theme: ThemeProvider.lightTheme,
       darkTheme: ThemeProvider.darkTheme,
       themeMode: themeProvider.themeMode,
@@ -204,7 +204,7 @@ class _AuthCheckState extends State<AuthCheck> {
     // Initialize notifications once we have a valid context
     if (!_notificationsInitialized) {
       _notificationsInitialized = true;
-      notificationService.initialize(context);
+      notificationService.initialize();
     }
   }
 
