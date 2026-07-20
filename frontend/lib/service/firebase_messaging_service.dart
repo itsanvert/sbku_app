@@ -173,15 +173,15 @@ class FirebaseMessagingService {
     final sessionId = data['session_id'] as String?;
     final qrToken = data['qr_token'] as String?;
 
-    final state = navigatorKey.currentState;
-    if (state == null) {
-      print('Navigator unavailable, cannot navigate from notification');
+    final context = navigatorKey.currentContext;
+    if (context == null) {
+      print('Navigator context unavailable, cannot navigate from notification');
       return;
     }
 
     switch (type) {
       case 'attendance_session_started':
-        state.push(
+        Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => QrScanAttendanceScreen(
               sessionId: sessionId,
@@ -191,7 +191,7 @@ class FirebaseMessagingService {
         );
         break;
       case 'attendance_session_ended':
-        state.push(
+        Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => QrScanAttendanceScreen(
               sessionId: sessionId,
@@ -200,7 +200,7 @@ class FirebaseMessagingService {
         );
         break;
       default:
-        state.pushNamedAndRemoveUntil(
+        Navigator.of(context).pushNamedAndRemoveUntil(
           '/home',
           (route) => false,
         );
