@@ -181,7 +181,6 @@ class FirebaseMessagingService {
 
     switch (type) {
       case 'attendance_session_started':
-        // Navigate to QR scan screen with session info
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => QrScanAttendanceScreen(
@@ -192,7 +191,6 @@ class FirebaseMessagingService {
         );
         break;
       case 'attendance_session_ended':
-        // Navigate to QR scan screen — student sees their status
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => QrScanAttendanceScreen(
@@ -202,7 +200,6 @@ class FirebaseMessagingService {
         );
         break;
       default:
-        // For unknown types, just open the app home
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/home',
           (route) => false,
