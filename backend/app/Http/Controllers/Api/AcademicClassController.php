@@ -62,7 +62,6 @@ class AcademicClassController extends Controller
                 'data' => $class
             ], 201);
         }
-
         $class = AcademicClass::create($validated);
 
         return response()->json([
