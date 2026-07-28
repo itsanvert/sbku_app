@@ -71,6 +71,7 @@ class PushNotificationService
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
+            error_log('FCM Send Error: ' . $e->getMessage());
             return false;
         }
     }
@@ -110,6 +111,7 @@ class PushNotificationService
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
+            error_log('FCM Topic Send Error: ' . $e->getMessage());
             return false;
         }
     }

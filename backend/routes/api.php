@@ -160,6 +160,17 @@ Route::middleware('auth:api')->group(function () {
     });
 });
 
+    // Laravel log viewer (admin diagnostic — returns last N lines matching optional search)
+    Route::get('logs/laravel', function (\Illuminate\Http\Request $req) {
+        $logFile = storage_path('logs/laravel.log');
+        if (!file_exists($logFile)) return response()->json(['lines' => []]);
+        $lines = file($logFile);
+        $lines = array_slice($lines, -min(500, count($lines)));
+        $search = $req->query('search');
+        if ($search) $lines = preg_grep('/' . preg_quote($search, '/') . '/i', $lines);
+        return response()->json(['lines' => array_map('trim', $lines)]);
+    });
+
 // Close auth:api group
 });
 
