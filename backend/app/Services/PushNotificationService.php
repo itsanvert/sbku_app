@@ -11,6 +11,14 @@ use Exception;
 class PushNotificationService
 {
     /**
+     * Check if Firebase credentials are configured (file exists or env var is set).
+     */
+    public function isConfigured(): bool
+    {
+        return $this->healthCheck()['configured'];
+    }
+
+    /**
      * Send a notification to a specific user.
      *
      * @param User $user
@@ -40,7 +48,13 @@ class PushNotificationService
     public function sendToToken($token, $title, $body, array $data = [])
     {
         try {
-            $messaging = \Kreait\Laravel\Firebase\Facades\Firebase::messaging();
+            if (!$this->isConfigured()) {
+                $health = $this->healthCheck();
+                \Log::error('FCM Send skipped: Firebase not configured. ' . $health['message']);
+                return false;
+            }
+
+            $messaging = Firebase::messaging();
 
             $notification = Notification::create($title, $body);
 
@@ -53,6 +67,45 @@ class PushNotificationService
             return true;
         } catch (Exception $e) {
             \Log::error('FCM Send Error: ' . $e->getMessage(), [
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send a notification to a specific topic.
+     *
+     * @param string $topic
+     * @param string $title
+     * @param string $body
+     * @param array $data
+     * @return bool
+     */
+    public function sendToTopic($topic, $title, $body, array $data = [])
+    {
+        try {
+            if (!$this->isConfigured()) {
+                $health = $this->healthCheck();
+                \Log::error('FCM Topic Send skipped: Firebase not configured. ' . $health['message']);
+                return false;
+            }
+
+            $messaging = Firebase::messaging();
+
+            $notification = Notification::create($title, $body);
+
+            $message = CloudMessage::new()
+                ->withTopic($topic)
+                ->withNotification($notification)
+                ->withData($data);
+
+            $messaging->send($message);
+            return true;
+        } catch (Exception $e) {
+            \Log::error('FCM Topic Send Error: ' . $e->getMessage(), [
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -86,35 +139,6 @@ class PushNotificationService
             return ['configured' => false, 'message' => "Credentials file not found: $credentials"];
         } catch (\Exception $e) {
             return ['configured' => false, 'message' => 'Error: ' . $e->getMessage()];
-        }
-    }
-
-    /**
-     * Send a notification to a specific topic.
-     *
-     * @param string $topic
-     * @param string $title
-     * @param string $body
-     * @param array $data
-     * @return bool
-     */
-    public function sendToTopic($topic, $title, $body, array $data = [])
-    {
-        try {
-            $messaging = \Kreait\Laravel\Firebase\Facades\Firebase::messaging();
-
-            $notification = Notification::create($title, $body);
-
-            $message = CloudMessage::new()
-                ->withTopic($topic)
-                ->withNotification($notification)
-                ->withData($data);
-
-            $messaging->send($message);
-            return true;
-        } catch (Exception $e) {
-            \Log::error('FCM Topic Send Error: ' . $e->getMessage());
-            return false;
         }
     }
 }
