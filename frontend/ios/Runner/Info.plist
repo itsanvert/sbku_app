@@ -57,5 +57,9 @@
 		<array>
 			<string>remote-notification</string>
 		</array>
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs camera access to scan QR codes for attendance.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs photo library access to scan QR codes from images.</string>
 	</dict>
 </plist>

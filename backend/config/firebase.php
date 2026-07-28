@@ -51,6 +51,13 @@ return [
              */
 
             'credentials' => (static function () {
+                // 1. Raw JSON env var (for Render.com / CI where file isn't committed)
+                $json = env('FIREBASE_CREDENTIALS_JSON');
+                if ($json) {
+                    return $json;
+                }
+
+                // 2. File path from env (local dev)
                 $credentials = env('FIREBASE_CREDENTIALS');
 
                 if (!$credentials) {

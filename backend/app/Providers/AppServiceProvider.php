@@ -31,5 +31,14 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Auth::provider('firestore', function ($app, array $config) {
             return new \App\Providers\FirestoreUserProvider($app->make(\App\Services\FirestoreService::class));
         });
+
+        // Log Firebase credentials health on startup (for debugging push notifications)
+        try {
+            $pushService = $this->app->make(\App\Services\PushNotificationService::class);
+            $health = $pushService->healthCheck();
+            \Log::info('Firebase health check: ' . ($health['configured'] ? 'OK' : 'ISSUE') . ' — ' . $health['message']);
+        } catch (\Throwable $e) {
+            \Log::warning('Firebase health check failed: ' . $e->getMessage());
+        }
     }
 }
