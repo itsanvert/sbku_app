@@ -23,15 +23,34 @@ class SendPushNotification implements ShouldQueue
 
     public function handle(PushNotificationService $pushService): void
     {
-        $students = Student::with('user')
-            ->whereIn('id', $this->studentIds)
-            ->whereNotNull('user_id')
-            ->get();
+        try {
+            $students = Student::with('user')
+                ->whereIn('id', $this->studentIds)
+                ->whereNotNull('user_id')
+                ->get();
 
-        foreach ($students as $student) {
-            if ($student->user && $student->user->fcm_token) {
-                $pushService->sendToUser($student->user, $this->title, $this->body, $this->data);
+            $sentCount = 0;
+            $skippedCount = 0;
+
+            foreach ($students as $student) {
+                if ($student->user && $student->user->fcm_token) {
+                    $result = $pushService->sendToUser($student->user, $this->title, $this->body, $this->data);
+                    if ($result) {
+                        $sentCount++;
+                    } else {
+                        \Log::warning('PushNotification: failed to send to user #' . $student->user_id . ' (no FCM token or send error)');
+                    }
+                } else {
+                    $skippedCount++;
+                }
             }
+
+            \Log::info("PushNotification: sent to {$sentCount} users, skipped {$skippedCount} (no FCM token)");
+        } catch (\Throwable $e) {
+            \Log::error('PushNotification job failed: ' . $e->getMessage(), [
+                'student_count' => count($this->studentIds),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 }
