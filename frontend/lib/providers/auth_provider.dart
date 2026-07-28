@@ -68,8 +68,10 @@ class AuthProvider with ChangeNotifier {
     switch (result) {
       case Success<User>():
         _user = result.data;
-        notifyListeners();
-        // Register FCM token with backend after successful login
+        // Don't notifyListeners here — LoginScreen handles navigation
+        // and calling notifyListeners would cause AuthCheck (which wraps
+        // the route) to swap LoginScreen for HomePageScreen immediately,
+        // unmounting LoginScreen before it can push LoginSuccessScreen.
         try {
           await FirebaseMessagingService().registerToken();
         } catch (e) {
