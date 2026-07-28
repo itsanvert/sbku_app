@@ -160,6 +160,9 @@ Route::middleware('auth:api')->group(function () {
     });
 });
 
+// Close auth:api group
+});
+
 // Firebase diagnostic endpoint (public)
 Route::get('firebase/health', function (PushNotificationService $pushService) {
     return response()->json($pushService->healthCheck());
