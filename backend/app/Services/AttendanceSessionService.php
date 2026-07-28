@@ -236,7 +236,7 @@ class AttendanceSessionService
                 'major_name'        => $majorName,
                 'class_name'        => $className,
                 'day_of_week'       => $session->day_of_week ?? '',
-                'ended_at'          => $session->ended_at?->toIso8061String() ?? now()->toIso8601String(),
+                'ended_at'          => $session->ended_at?->toIso8601String() ?? now()->toIso8601String(),
             ];
 
             // 1. Create a Message record
