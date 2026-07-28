@@ -163,6 +163,8 @@ class AttendanceSessionService
                 'metadata'    => $data,
             ]);
 
+            \Log::info("Notification: session #{$session->id} created Message record");
+
             // 2. Find eligible student IDs and dispatch a queued push notification batch
             $query = Student::whereNotNull('user_id');
 
@@ -181,15 +183,27 @@ class AttendanceSessionService
 
             $studentIds = $query->pluck('id')->toArray();
 
+            \Log::info("Notification: session #{$session->id} found " . count($studentIds) . " eligible students", [
+                'academic_class_id' => $session->academic_class_id,
+                'major_id' => $session->major_id,
+                'shift_id' => $session->shift_id,
+            ]);
+
             if (!empty($studentIds)) {
                 SendPushNotification::dispatch($studentIds, $title, $body, $data);
+                \Log::info("Notification: session #{$session->id} dispatched SendPushNotification job for " . count($studentIds) . " students");
+            } else {
+                \Log::warning("Notification: session #{$session->id} has NO eligible students to notify");
             }
 
             // 3. Also broadcast to the 'all' topic as a fallback
-            $this->pushService->sendToTopic('all', $title, $body, $data);
+            $topicResult = $this->pushService->sendToTopic('all', $title, $body, $data);
+            \Log::info("Notification: session #{$session->id} topic send result: " . ($topicResult ? 'success' : 'failed'));
 
         } catch (\Exception $e) {
-            \Log::warning("Failed to notify students about session #{$session->id}: " . $e->getMessage());
+            \Log::error("Failed to notify students about session #{$session->id}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 

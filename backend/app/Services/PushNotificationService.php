@@ -52,8 +52,40 @@ class PushNotificationService
             $messaging->send($message);
             return true;
         } catch (Exception $e) {
-            \Log::error('FCM Send Error: ' . $e->getMessage());
+            \Log::error('FCM Send Error: ' . $e->getMessage(), [
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return false;
+        }
+    }
+
+    /**
+     * Check if Firebase is properly configured and credentials work.
+     *
+     * @return array{configured: bool, message: string}
+     */
+    public function healthCheck(): array
+    {
+        try {
+            $credentials = config('firebase.projects.app.credentials');
+            if (!$credentials) {
+                return ['configured' => false, 'message' => 'No credentials configured (FIREBASE_CREDENTIALS or FIREBASE_CREDENTIALS_JSON is not set)'];
+            }
+
+            if (str_starts_with($credentials, '{')) {
+                return ['configured' => true, 'message' => 'Credentials from env var JSON (' . strlen($credentials) . ' chars)'];
+            }
+
+            if (file_exists($credentials)) {
+                $size = filesize($credentials);
+                return ['configured' => true, 'message' => "Credentials from file ($credentials, {$size} bytes)"];
+            }
+
+            return ['configured' => false, 'message' => "Credentials file not found: $credentials"];
+        } catch (\Exception $e) {
+            return ['configured' => false, 'message' => 'Error: ' . $e->getMessage()];
         }
     }
 

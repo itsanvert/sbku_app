@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\MajorController;
 use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\AcademicClassController;
 use App\Http\Controllers\Api\RoomController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Services\PushNotificationService;
 
 
 /*
@@ -125,6 +127,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('attendance-sessions/{id}/approvals', [AttendanceSessionController::class, 'approvalList']);
     Route::post('attendance-sessions/{sessionId}/verify/{attendanceId}', [AttendanceSessionController::class, 'verifyAttendance']);
 
+    // Schedules (teacher's timetable)
+    Route::get('schedules', [ScheduleController::class, 'index']);
+
     // Syllabus
     Route::get('syllabus', [SyllabusController::class, 'index']);
 
@@ -153,5 +158,10 @@ Route::middleware('auth:api')->group(function () {
                     'created_at' => $msg->created_at,
                 ];
             });
+    });
+
+    // Firebase diagnostic endpoint
+    Route::get('firebase/health', function (PushNotificationService $pushService) {
+        return response()->json($pushService->healthCheck());
     });
 });
