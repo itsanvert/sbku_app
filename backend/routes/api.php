@@ -157,11 +157,10 @@ Route::middleware('auth:api')->group(function () {
                     'receiver_id' => $msg->receiver_id,
                     'created_at' => $msg->created_at,
                 ];
-            });
     });
+});
 
-    // Firebase diagnostic endpoint
-    Route::get('firebase/health', function (PushNotificationService $pushService) {
-        return response()->json($pushService->healthCheck());
-    });
+// Firebase diagnostic endpoint (public)
+Route::get('firebase/health', function (PushNotificationService $pushService) {
+    return response()->json($pushService->healthCheck());
 });
