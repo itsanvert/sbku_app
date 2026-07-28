@@ -54,7 +54,7 @@ class PushNotificationService
                         'title' => $title,
                         'body' => $body,
                     ],
-                    'data' => array_merge(['type' => $data['type'] ?? 'general'], $data),
+                    'data' => $data ?: ['type' => 'general'],
                 ],
             ];
 
@@ -92,7 +92,7 @@ class PushNotificationService
                         'title' => $title,
                         'body' => $body,
                     ],
-                    'data' => array_merge(['type' => $data['type'] ?? 'general'], $data),
+                    'data' => $data ?: ['type' => 'general'],
                 ],
             ];
 
