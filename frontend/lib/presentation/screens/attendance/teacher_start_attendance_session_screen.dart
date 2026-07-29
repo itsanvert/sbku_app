@@ -23,13 +23,17 @@ class _TeacherStartAttendanceScreenState
 
   bool _isLoading = false;
   bool _isLoadingLocation = false;
+  bool _isLoadingSchedules = false;
   bool _locationFailed = false;
   Position? _currentLocation;
 
   String? _teacherId;
   String? _facultyId;
   String? _majorId;
-  String? _scheduleId;
+
+  // Schedule auto-detect fields
+  List<Map<String, dynamic>> _schedules = [];
+  Map<String, dynamic>? _selectedSchedule;
 
   @override
   void initState() {
@@ -38,7 +42,6 @@ class _TeacherStartAttendanceScreenState
     _getCurrentLocation();
   }
 
-  /// Fetch the authenticated teacher's ID from the API instead of hardcoding.
   Future<void> _loadTeacherInfo() async {
     final user = await _authService.getCurrentUser();
     if (!mounted) return;
@@ -52,6 +55,46 @@ class _TeacherStartAttendanceScreenState
       return;
     }
     setState(() => _teacherId = user.teacherId);
+    _loadSchedules();
+  }
+
+  Future<void> _loadSchedules() async {
+    if (_teacherId == null) return;
+    setState(() => _isLoadingSchedules = true);
+
+    try {
+      final now = DateTime.now();
+      final days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      final today = days[now.weekday % 7];
+
+      final schedules = await _attendanceService.getTeacherSchedules(
+        teacherId: _teacherId!,
+        day: today,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _schedules = schedules;
+        _isLoadingSchedules = false;
+      });
+
+      if (schedules.length == 1) {
+        _selectSchedule(schedules.first);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingSchedules = false);
+      print('Failed to load schedules: $e');
+    }
+  }
+
+  void _selectSchedule(Map<String, dynamic> schedule) {
+    setState(() {
+      _selectedSchedule = schedule;
+      _facultyId = schedule['subject']?['faculty_id']?.toString();
+      _majorId = schedule['subject']?['major_id']?.toString();
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -101,11 +144,20 @@ class _TeacherStartAttendanceScreenState
     setState(() => _isLoading = true);
 
     try {
+      final now = DateTime.now();
+      final days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      final today = days[now.weekday % 7];
+
       final result = await _attendanceService.startSession(
         teacherId: _teacherId!,
         facultyId: _facultyId,
         majorId: _majorId,
-        scheduleId: _scheduleId,
+        scheduleId: _selectedSchedule?['id']?.toString(),
+        subjectId: _selectedSchedule?['subject_id']?.toString(),
+        academicClassId: _selectedSchedule?['class_id']?.toString(),
+        dayOfWeek: today,
+        startTime: _selectedSchedule?['start_time'],
+        endTime: _selectedSchedule?['end_time'],
         latitude: _currentLocation!.latitude,
         longitude: _currentLocation!.longitude,
       );
@@ -125,7 +177,6 @@ class _TeacherStartAttendanceScreenState
         );
       }
     } catch (e) {
-      // Strip leading "Exception: " added by Dart so the message is clean
       final message = e.toString().replaceFirst('Exception: ', '');
       _showError(message);
     } finally {
@@ -158,45 +209,7 @@ class _TeacherStartAttendanceScreenState
             const SizedBox(height: 16),
             _buildTeacherInfoCard(),
             const SizedBox(height: 16),
-            // Info card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'ការបើកវេនវត្តមាន',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'ពេលបើកវេន សិស្សអាចស្កេន QR កូដដើម្បីចុះវត្តមាន។',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Icon(Icons.qr_code, color: Colors.orange[700], size: 20),
-                        const SizedBox(width: 8),
-                        const Text('QR កូដនឹងត្រូវបង្កើតដោយស្វ័យប្រវត្តិ'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, color: Colors.orange[700], size: 20),
-                        const SizedBox(width: 8),
-                        const Text('ទីតាំងនឹងត្រូវកត់ត្រា'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildScheduleCard(),
             const Spacer(),
             ElevatedButton(
               onPressed: (_isLoading || _isLoadingLocation || _teacherId == null)
@@ -241,6 +254,167 @@ class _TeacherStartAttendanceScreenState
                   ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.schedule, color: Colors.orange[700], size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'កាលវិភាគថ្ងៃនេះ',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_isLoadingSchedules)
+              const Center(child: ShimmerWidget(width: 200, height: 20, borderRadius: 10))
+            else if (_schedules.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'រកមិនឃើញកាលវិភាគសម្រាប់ថ្ងៃនេះ\nSession will notify all students.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.orange, fontSize: 13),
+                ),
+              )
+            else if (_schedules.length == 1)
+              _buildScheduleDetail(_schedules.first)
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'ជ្រើសរើសកាលវិភាគ:',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  ...(_selectedSchedule != null ? [_schedules.where((s) => s['id'] == _selectedSchedule!['id']).toList()] : [_schedules])
+                      .expand((list) => list)
+                      .map((schedule) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _buildScheduleOption(schedule),
+                          )),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleOption(Map<String, dynamic> schedule) {
+    final isSelected = _selectedSchedule?['id'] == schedule['id'];
+    final subjectName = schedule['subject']?['name'] ?? 'Unknown Subject';
+    final className = schedule['academic_class']?['name'] ?? '';
+    final timeRange = '${(schedule['start_time'] ?? '').toString().substring(0, 5)} - ${(schedule['end_time'] ?? '').toString().substring(0, 5)}';
+
+    return GestureDetector(
+      onTap: () => _selectSchedule(schedule),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).primaryColor.withOpacity(0.15)
+              : Colors.grey.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? Theme.of(context).primaryColor
+                : Colors.grey.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subjectName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  if (className.isNotEmpty)
+                    Text(
+                      'Class: $className',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  Text(
+                    timeRange,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleDetail(Map<String, dynamic> schedule) {
+    final subjectName = schedule['subject']?['name'] ?? 'Unknown Subject';
+    final className = schedule['academic_class']?['name'] ?? '';
+    final timeRange = '${(schedule['start_time'] ?? '').toString().substring(0, 5)} - ${(schedule['end_time'] ?? '').toString().substring(0, 5)}';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).primaryColor.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            subjectName,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (className.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.class_, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(className, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+              ],
+            ),
+          Row(
+            children: [
+              const Icon(Icons.access_time, size: 14, color: Colors.grey),
+              const SizedBox(width: 4),
+              Text(timeRange, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            ],
+          ),
+        ],
       ),
     );
   }

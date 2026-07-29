@@ -8,12 +8,41 @@ class AttendanceService {
 
   // ── Attendance Sessions ──────────────────────────────────────
 
+  /// Get schedules for a teacher, optionally filtered by day.
+  Future<List<Map<String, dynamic>>> getTeacherSchedules({
+    required String teacherId,
+    String? day,
+  }) async {
+    final params = <String>['teacher_id=$teacherId'];
+    if (day != null) params.add('day=$day');
+
+    final response = await _api.get('schedules?${params.join('&')}');
+
+    if (response.statusCode == 200) {
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is List) {
+        return List<Map<String, dynamic>>.from(decoded);
+      }
+      return <Map<String, dynamic>>[];
+    }
+    throw Exception('Failed to load teacher schedules');
+  }
+
   /// Start a new attendance session (teacher).
   Future<Map<String, dynamic>> startSession({
     required String teacherId,
     String? facultyId,
     String? majorId,
     String? scheduleId,
+    String? syllabusId,
+    String? subjectId,
+    String? academicClassId,
+    String? shiftId,
+    String? yearId,
+    String? semesterId,
+    String? dayOfWeek,
+    String? startTime,
+    String? endTime,
     double? latitude,
     double? longitude,
   }) async {
@@ -22,6 +51,15 @@ class AttendanceService {
       if (facultyId != null) 'faculty_id': facultyId,
       if (majorId != null) 'major_id': majorId,
       if (scheduleId != null) 'schedule_id': scheduleId,
+      if (syllabusId != null) 'syllabus_id': syllabusId,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (academicClassId != null) 'academic_class_id': academicClassId,
+      if (shiftId != null) 'shift_id': shiftId,
+      if (yearId != null) 'year_id': yearId,
+      if (semesterId != null) 'semester_id': semesterId,
+      if (dayOfWeek != null) 'day_of_week': dayOfWeek,
+      if (startTime != null) 'start_time': startTime,
+      if (endTime != null) 'end_time': endTime,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
     };
