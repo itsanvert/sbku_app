@@ -256,7 +256,7 @@
         }
 
         .cell-name {
-            font-weight: 600;
+            font-weight: bold;
             color: #111827;
             font-size: 11px;
         }
