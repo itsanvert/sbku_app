@@ -184,7 +184,7 @@ class AttendanceIndex extends Component
             $records = $this->getBaseQuery()->get();
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
+        $pdf = \App\Services\PdfRenderer::render('exports.attendance-pdf', [
             'records'    => $records,
             'reportedBy' => auth()->user()?->name ?? 'System',
             'filterInfo' => collect([
@@ -196,7 +196,7 @@ class AttendanceIndex extends Component
         ]);
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn () => print($pdf),
             'attendance-records.pdf'
         );
     }
