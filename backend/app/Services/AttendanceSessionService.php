@@ -312,8 +312,10 @@ class AttendanceSessionService
             }
         }
 
+        $now = now();
+
         $data = [
-            'attendance_date' => now()->toDateString(),
+            'attendance_date' => $now->toDateString(),
             'status'          => 'Y',
             'verify_status'   => 'pending',
             'student_id'      => (string)$student->id,
@@ -321,8 +323,9 @@ class AttendanceSessionService
             'schedule_id'     => isset($session->schedule_id) ? (string)$session->schedule_id : null,
             'latitude'        => $latitude,
             'longitude'       => $longitude,
-            'created_at'      => now()->format('Y-m-d H:i:s'),
-            'updated_at'      => now()->format('Y-m-d H:i:s'),
+            'check_in_time'   => $now->format('Y-m-d H:i:s'),
+            'created_at'      => $now->format('Y-m-d H:i:s'),
+            'updated_at'      => $now->format('Y-m-d H:i:s'),
         ];
 
         if (\App\Services\FirestoreService::isActive()) {
