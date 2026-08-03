@@ -11,7 +11,7 @@
                 <flux:button variant="primary" icon="plus" href="{{ route('teachers.index') }}">
                     Add Teacher
                 </flux:button>
-                <flux:button variant="outline" icon="arrow-down-tray">
+                <flux:button variant="outline" icon="arrow-down-tray" href="{{ route('dashboard.export') }}">
                     Export
                 </flux:button>
             </div>
@@ -148,7 +148,7 @@
                         <span class="text-sm text-zinc-600 dark:text-zinc-400">All systems go</span>
                     </div>
                     <div class="flex-1"></div>
-                    <flux:button variant="primary">Generate Report</flux:button>
+                    <flux:button variant="primary" href="{{ route('dashboard.report') }}">Generate Report</flux:button>
                 </div>
             </flux:card>
         </div>
