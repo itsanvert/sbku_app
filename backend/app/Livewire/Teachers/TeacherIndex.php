@@ -42,6 +42,7 @@ class TeacherIndex extends Component
     {
         $this->resetPage();
     }
+
     public function updatingRole()
     {
         $this->resetPage();

@@ -1,7 +1,7 @@
 <div>
     <x-slot name="header">
-        <flux:heading size="xl">Schedule Management</flux:heading>
-        <flux:subheading>Manage reusable time slots for teachers and students</flux:subheading>
+        <flux:heading size="xl">Schedules</flux:heading>
+        <flux:subheading>Create and manage course timetables and room allocations.</flux:subheading>
     </x-slot>
 
     <div class="space-y-4">
@@ -12,240 +12,249 @@
             </flux:callout>
         @endif
 
-        <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
+        <flux:card>
             {{-- Toolbar --}}
-            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
-                <div class="flex items-center gap-2">
-                    <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
-                        placeholder="Search schedules…" size="sm" class="w-64" />
-                </div>
-
-                <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus">
-                    Add Schedule
-                </flux:button>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+                    placeholder="Search schedules…" size="sm" class="w-64" />
+                <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus">Add Schedule</flux:button>
             </div>
 
-            {{-- Table --}}
-            <flux:table :paginate="$this->schedules">
-                <table class="w-full text-sm text-left">
-                    <thead>
-                        <tr class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1e293b]">
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Name</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Teacher / Subject</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Class / Room</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Day / Time</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Dates</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-[#374151]">
-                        @forelse ($schedules as $schedule)
-                            <tr class="hover:bg-gray-50/70 dark:hover:bg-[#263548]/50 transition-colors duration-100">
-                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-50">{{ $schedule->name }}</td>
-                                <td class="px-4 py-3 text-sm">
-                                    <div class="text-gray-900 dark:text-gray-50 font-medium">{{ $schedule->teacher?->user?->name ?? '—' }}</div>
-                                    <div class="text-gray-500 dark:text-gray-400 text-xs">{{ $schedule->subject?->name ?? '—' }}</div>
-                                </td>
-                                <td class="px-4 py-3 text-sm">
-                                    <div class="text-gray-900 dark:text-gray-50">{{ $schedule->academicClass?->name ?? '—' }}</div>
-                                    <div class="text-gray-500 dark:text-gray-400 text-xs">{{ $schedule->room?->name ?? '—' }}</div>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    <div>{{ $schedule->day_of_the_week ?? '—' }}</div>
-                                    @if($schedule->start_time && $schedule->end_time)
-                                        <div class="text-xs">{{ $schedule->time_range }}</div>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    @if($schedule->start_date && $schedule->end_date)
-                                        <div class="text-xs">{{ $schedule->start_date->format('Y-m-d') }}</div>
-                                        <div class="text-xs">to {{ $schedule->end_date->format('Y-m-d') }}</div>
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex gap-2">
-                                        <flux:button wire:click="edit('{{ $schedule->id }}')" size="xs" variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="delete('{{ $schedule->id }}')" size="xs" variant="danger">Delete</flux:button>
+            <flux:table :paginate="$schedules">
+                <flux:table.columns>
+                    <flux:table.column>Name</flux:table.column>
+                    <flux:table.column>Teacher / Subject</flux:table.column>
+                    <flux:table.column>Class / Room</flux:table.column>
+                    <flux:table.column>Day / Time</flux:table.column>
+                    <flux:table.column>Dates</flux:table.column>
+                    <flux:table.column align="end">Actions</flux:table.column>
+                </flux:table.columns>
+
+                <flux:table.rows>
+                    @forelse ($schedules as $schedule)
+                        <flux:table.row :key="$schedule->id">
+                            <flux:table.cell variant="strong">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 flex items-center justify-center shrink-0">
+                                        <flux:icon name="calendar-days" class="w-4 h-4" />
                                     </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No schedules found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    {{ $schedule->name }}
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="text-sm font-medium text-zinc-800 dark:text-white">{{ $schedule->teacher?->user?->name ?? '—' }}</div>
+                                <div class="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+                                    <flux:icon name="book-open" class="w-3 h-3" />
+                                    {{ $schedule->subject?->name ?? '—' }}
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="text-sm">{{ $schedule->academicClass?->name ?? '—' }}</div>
+                                <div class="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+                                    <flux:icon name="building-office" class="w-3 h-3" />
+                                    {{ $schedule->room?->name ?? '—' }}
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge size="sm" color="indigo">{{ $schedule->day_of_the_week ?? '—' }}</flux:badge>
+                                @if($schedule->start_time && $schedule->end_time)
+                                    <div class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ $schedule->time_range }}</div>
+                                @endif
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                @if($schedule->start_date && $schedule->end_date)
+                                    <div class="text-xs text-zinc-400 dark:text-zinc-500">{{ $schedule->start_date->format('Y-m-d') }}</div>
+                                    <div class="text-xs text-zinc-400 dark:text-zinc-500">to {{ $schedule->end_date->format('Y-m-d') }}</div>
+                                @else
+                                    —
+                                @endif
+                            </flux:table.cell>
+                            <flux:table.cell align="end">
+                                <div class="flex justify-end gap-1.5">
+                                    <flux:button wire:click="edit('{{ $schedule->id }}')" size="sm" variant="ghost" icon="pencil-square">Edit</flux:button>
+                                    <flux:button wire:click="delete('{{ $schedule->id }}')" size="sm" variant="danger" icon="trash">Delete</flux:button>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="6">
+                                <div class="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                                    <flux:icon name="calendar-days" class="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
+                                    <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">No schedules found</p>
+                                    <p class="text-xs text-zinc-400 dark:text-zinc-500">Try adjusting your search or create a new schedule.</p>
+                                    <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus" class="mt-2">Add Schedule</flux:button>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforelse
+                </flux:table.rows>
             </flux:table>
-        </div>
+        </flux:card>
     </div>
 
     {{-- Create Modal --}}
-    @if ($showCreateModal)
-        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
-                    <flux:heading size="lg">Add New Schedule</flux:heading>
-                    <flux:button wire:click="$set('showCreateModal', false)" variant="ghost" size="sm" icon="x-mark" />
-                </div>
-                <form wire:submit.prevent="store" class="p-6 space-y-4">
-                    <flux:input label="Schedule Name" wire:model="name" placeholder="e.g. Morning Shift A" />
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:select label="Teacher" wire:model="teacher_id">
-                            <flux:select.option value="">Select Teacher</flux:select.option>
-                            @foreach($teachers as $teacher)
-                                <flux:select.option value="{{ (string)$teacher->id }}">{{ $teacher->user?->name ?? $teacher->user_name ?? chr(8212) }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
+    <flux:modal name="create-schedule" wire:model="showCreateModal" class="!max-w-2xl">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Add New Schedule</flux:heading>
+                <flux:subheading>Create a reusable time slot</flux:subheading>
+            </div>
 
-                        <flux:select label="Subject" wire:model="subject_id">
-                            <flux:select.option value="">Select Subject</flux:select.option>
-                            @foreach($subjects as $subject)
-                                <flux:select.option value="{{ (string)$subject->id }}">{{ $subject->name }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </div>
+            <form wire:submit.prevent="store" class="space-y-4">
+                <flux:input label="Schedule Name" wire:model="name" placeholder="e.g. Morning Shift A" />
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:select label="Class" wire:model="class_id">
-                            <flux:select.option value="">Select Class</flux:select.option>
-                            @foreach($academicClasses as $class)
-                                <flux:select.option value="{{ (string)$class->id }}">{{ $class->name }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-
-                        <flux:select label="Room" wire:model="room_id" :disabled="$this->syllabusRoom ? true : false">
-                            <flux:select.option value="">Select Room</flux:select.option>
-                            @foreach($rooms as $room)
-                                <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                        @if($this->syllabusRoom)
-                            <p class="text-xs text-gray-500 dark:text-gray-400 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
-                        @endif
-                    </div>
-
-                    <flux:select label="Link to Syllabus" wire:model.live="syllabus_id">
-                        <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
-                        @foreach($syllabuses as $syllabus)
-                            <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
-                            </flux:select.option>
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:select label="Teacher" wire:model="teacher_id">
+                        <flux:select.option value="">Select Teacher</flux:select.option>
+                        @foreach($teachers as $teacher)
+                            <flux:select.option value="{{ (string)$teacher->id }}">{{ $teacher->user?->name ?? $teacher->user_name ?? chr(8212) }}</flux:select.option>
                         @endforeach
                     </flux:select>
 
-                    <flux:select label="Day of the Week" wire:model="day_of_the_week">
-                        <flux:select.option value="">Select Day</flux:select.option>
-                        <flux:select.option value="Monday">Monday</flux:select.option>
-                        <flux:select.option value="Tuesday">Tuesday</flux:select.option>
-                        <flux:select.option value="Wednesday">Wednesday</flux:select.option>
-                        <flux:select.option value="Thursday">Thursday</flux:select.option>
-                        <flux:select.option value="Friday">Friday</flux:select.option>
-                        <flux:select.option value="Saturday">Saturday</flux:select.option>
-                        <flux:select.option value="Sunday">Sunday</flux:select.option>
+                    <flux:select label="Subject" wire:model="subject_id">
+                        <flux:select.option value="">Select Subject</flux:select.option>
+                        @foreach($subjects as $subject)
+                            <flux:select.option value="{{ (string)$subject->id }}">{{ $subject->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:select label="Class" wire:model="class_id">
+                        <flux:select.option value="">Select Class</flux:select.option>
+                        @foreach($academicClasses as $class)
+                            <flux:select.option value="{{ (string)$class->id }}">{{ $class->name }}</flux:select.option>
+                        @endforeach
                     </flux:select>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:input label="Start Time" type="time" wire:model="start_time" />
-                        <flux:input label="End Time" type="time" wire:model="end_time" />
-                    </div>
+                    <flux:select label="Room" wire:model="room_id" :disabled="$this->syllabusRoom ? true : false">
+                        <flux:select.option value="">Select Room</flux:select.option>
+                        @foreach($rooms as $room)
+                            <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    @if($this->syllabusRoom)
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
+                    @endif
+                </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:input label="Start Date" type="date" wire:model="start_date" />
-                        <flux:input label="End Date" type="date" wire:model="end_date" />
-                    </div>
+                <flux:select label="Link to Syllabus" wire:model.live="syllabus_id">
+                    <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
+                    @foreach($syllabuses as $syllabus)
+                        <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
+                        </flux:select.option>
+                    @endforeach
+                </flux:select>
 
-                    <div class="flex justify-end gap-2 pt-4">
-                        <flux:button variant="ghost" wire:click="$set('showCreateModal', false)">Cancel</flux:button>
-                        <flux:button type="submit" variant="primary">Create Schedule</flux:button>
-                    </div>
-                </form>
-            </div>
+                <flux:select label="Day of the Week" wire:model="day_of_the_week">
+                    <flux:select.option value="">Select Day</flux:select.option>
+                    <flux:select.option value="Monday">Monday</flux:select.option>
+                    <flux:select.option value="Tuesday">Tuesday</flux:select.option>
+                    <flux:select.option value="Wednesday">Wednesday</flux:select.option>
+                    <flux:select.option value="Thursday">Thursday</flux:select.option>
+                    <flux:select.option value="Friday">Friday</flux:select.option>
+                    <flux:select.option value="Saturday">Saturday</flux:select.option>
+                    <flux:select.option value="Sunday">Sunday</flux:select.option>
+                </flux:select>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:input label="Start Time" type="time" wire:model="start_time" />
+                    <flux:input label="End Time" type="time" wire:model="end_time" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:input label="Start Date" type="date" wire:model="start_date" />
+                    <flux:input label="End Date" type="date" wire:model="end_date" />
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <flux:button variant="ghost" wire:click="$set('showCreateModal', false)">Cancel</flux:button>
+                    <flux:button type="submit" variant="primary">Create Schedule</flux:button>
+                </div>
+            </form>
         </div>
-    @endif
+    </flux:modal>
 
     {{-- Edit Modal --}}
-    @if ($showEditModal)
-        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
-                    <flux:heading size="lg">Edit Schedule</flux:heading>
-                    <flux:button wire:click="$set('showEditModal', false)" variant="ghost" size="sm" icon="x-mark" />
-                </div>
-                <form wire:submit.prevent="update" class="p-6 space-y-4">
-                    <flux:input label="Schedule Name" wire:model="name" />
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:select label="Teacher" wire:model="teacher_id">
-                            <flux:select.option value="">Select Teacher</flux:select.option>
-                            @foreach($teachers as $teacher)
-                                <flux:select.option value="{{ (string)$teacher->id }}">{{ $teacher->user?->name ?? $teacher->user_name ?? chr(8212) }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
+    <flux:modal name="edit-schedule" wire:model="showEditModal" class="!max-w-2xl">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Edit Schedule</flux:heading>
+                <flux:subheading>Update time slot details</flux:subheading>
+            </div>
 
-                        <flux:select label="Subject" wire:model="subject_id">
-                            <flux:select.option value="">Select Subject</flux:select.option>
-                            @foreach($subjects as $subject)
-                                <flux:select.option value="{{ (string)$subject->id }}">{{ $subject->name }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </div>
+            <form wire:submit.prevent="update" class="space-y-4">
+                <flux:input label="Schedule Name" wire:model="name" />
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:select label="Class" wire:model="class_id">
-                            <flux:select.option value="">Select Class</flux:select.option>
-                            @foreach($academicClasses as $class)
-                                <flux:select.option value="{{ (string)$class->id }}">{{ $class->name }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-
-                        <flux:select label="Room" wire:model="room_id" :disabled="$this->syllabusRoom ? true : false">
-                            <flux:select.option value="">Select Room</flux:select.option>
-                            @foreach($rooms as $room)
-                                <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                        @if($this->syllabusRoom)
-                            <p class="text-xs text-gray-500 dark:text-gray-400 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
-                        @endif
-                    </div>
-
-                    <flux:select label="Link to Syllabus" wire:model.live="syllabus_id">
-                        <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
-                        @foreach($syllabuses as $syllabus)
-                            <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
-                            </flux:select.option>
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:select label="Teacher" wire:model="teacher_id">
+                        <flux:select.option value="">Select Teacher</flux:select.option>
+                        @foreach($teachers as $teacher)
+                            <flux:select.option value="{{ (string)$teacher->id }}">{{ $teacher->user?->name ?? $teacher->user_name ?? chr(8212) }}</flux:select.option>
                         @endforeach
                     </flux:select>
 
-                    <flux:select label="Day of the Week" wire:model="day_of_the_week">
-                        <flux:select.option value="Monday">Monday</flux:select.option>
-                        <flux:select.option value="Tuesday">Tuesday</flux:select.option>
-                        <flux:select.option value="Wednesday">Wednesday</flux:select.option>
-                        <flux:select.option value="Thursday">Thursday</flux:select.option>
-                        <flux:select.option value="Friday">Friday</flux:select.option>
-                        <flux:select.option value="Saturday">Saturday</flux:select.option>
-                        <flux:select.option value="Sunday">Sunday</flux:select.option>
+                    <flux:select label="Subject" wire:model="subject_id">
+                        <flux:select.option value="">Select Subject</flux:select.option>
+                        @foreach($subjects as $subject)
+                            <flux:select.option value="{{ (string)$subject->id }}">{{ $subject->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:select label="Class" wire:model="class_id">
+                        <flux:select.option value="">Select Class</flux:select.option>
+                        @foreach($academicClasses as $class)
+                            <flux:select.option value="{{ (string)$class->id }}">{{ $class->name }}</flux:select.option>
+                        @endforeach
                     </flux:select>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:input label="Start Time" type="time" wire:model="start_time" />
-                        <flux:input label="End Time" type="time" wire:model="end_time" />
-                    </div>
+                    <flux:select label="Room" wire:model="room_id" :disabled="$this->syllabusRoom ? true : false">
+                        <flux:select.option value="">Select Room</flux:select.option>
+                        @foreach($rooms as $room)
+                            <flux:select.option value="{{ (string)$room->id }}">{{ $room->name }} ({{ $room->code }})</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    @if($this->syllabusRoom)
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 col-span-2 -mt-2">Room is set by the selected syllabus.</p>
+                    @endif
+                </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:input label="Start Date" type="date" wire:model="start_date" />
-                        <flux:input label="End Date" type="date" wire:model="end_date" />
-                    </div>
+                <flux:select label="Link to Syllabus" wire:model.live="syllabus_id">
+                    <flux:select.option value="">None (Standalone Schedule)</flux:select.option>
+                    @foreach($syllabuses as $syllabus)
+                        <flux:select.option value="{{ (string)$syllabus->id }}">{{ $syllabus->subject_name ?? $syllabus->subject?->name ?? chr(8212) }}
+                        </flux:select.option>
+                    @endforeach
+                </flux:select>
 
-                    <div class="flex justify-end gap-2 pt-4">
-                        <flux:button variant="ghost" wire:click="$set('showEditModal', false)">Cancel</flux:button>
-                        <flux:button type="submit" variant="primary">Update Schedule</flux:button>
-                    </div>
-                </form>
-            </div>
+                <flux:select label="Day of the Week" wire:model="day_of_the_week">
+                    <flux:select.option value="Monday">Monday</flux:select.option>
+                    <flux:select.option value="Tuesday">Tuesday</flux:select.option>
+                    <flux:select.option value="Wednesday">Wednesday</flux:select.option>
+                    <flux:select.option value="Thursday">Thursday</flux:select.option>
+                    <flux:select.option value="Friday">Friday</flux:select.option>
+                    <flux:select.option value="Saturday">Saturday</flux:select.option>
+                    <flux:select.option value="Sunday">Sunday</flux:select.option>
+                </flux:select>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:input label="Start Time" type="time" wire:model="start_time" />
+                    <flux:input label="End Time" type="time" wire:model="end_time" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:input label="Start Date" type="date" wire:model="start_date" />
+                    <flux:input label="End Date" type="date" wire:model="end_date" />
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <flux:button variant="ghost" wire:click="$set('showEditModal', false)">Cancel</flux:button>
+                    <flux:button type="submit" variant="primary">Update Schedule</flux:button>
+                </div>
+            </form>
         </div>
-    @endif
+    </flux:modal>
 </div>

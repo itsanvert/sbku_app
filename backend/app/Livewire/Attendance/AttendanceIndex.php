@@ -155,7 +155,7 @@ class AttendanceIndex extends Component
             );
         }
 
-        return $this->getBaseQuery()->paginate(20);
+        return $this->getBaseQuery()->paginate(10);
     }
 
     public function exportPdf()
