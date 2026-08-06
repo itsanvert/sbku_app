@@ -44,6 +44,7 @@ class AttendanceCreate extends Component
     // Location
     public string $latitude  = '11.5564';
     public string $longitude = '104.9282';
+    public string $radius    = '';
 
     // Derived preview
     public ?object $selectedSyllabus   = null;
@@ -60,6 +61,7 @@ class AttendanceCreate extends Component
             'major_id'    => 'required',
             'latitude'    => 'required|numeric',
             'longitude'   => 'required|numeric',
+            'radius'      => 'nullable|numeric|min:1|max:10000',
         ];
     }
 
@@ -177,6 +179,7 @@ class AttendanceCreate extends Component
             'end_time'           => $this->end_time      ?: null,
             'latitude'           => $this->latitude,
             'longitude'          => $this->longitude,
+            'radius'             => $this->radius ?: null,
             'room_id'            => $this->room_id ?: null,
         ]);
 

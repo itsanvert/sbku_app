@@ -76,8 +76,8 @@ class AttendanceSessionController extends Controller
     {
         $request->validate([
             'qr_token' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
         ]);
 
         $student = $request->user()->student;
@@ -93,8 +93,8 @@ class AttendanceSessionController extends Controller
                 $session,
                 $student,
                 $request->qr_token,
-                (string)($request->latitude ?? '0'),
-                (string)($request->longitude ?? '0')
+                (string) $request->latitude,
+                (string) $request->longitude
             );
 
             return response()->json([

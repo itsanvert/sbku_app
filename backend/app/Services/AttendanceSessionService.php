@@ -71,6 +71,7 @@ class AttendanceSessionService
             'session_end_time'   => $endTimeString,
             'latitude'           => $validated['latitude']     ?? null,
             'longitude'          => $validated['longitude']    ?? null,
+            'radius'             => $validated['radius']       ?? config('attendance.default_radius'),
             'room_id'            => isset($validated['room_id']) ? (string) $validated['room_id'] : null,
             'started_at'         => $scheduledStart->format('Y-m-d H:i:s'),
             'expires_at'         => $scheduledEnd ? $scheduledEnd->format('Y-m-d H:i:s') : null,
@@ -294,7 +295,21 @@ class AttendanceSessionService
             throw new \Exception('Invalid or expired QR code. Please scan the latest one.', 403);
         }
 
-        // 3. Prevent duplicate check-ins
+        // 3. Require a valid student location — check-ins without a
+        //    real GPS coordinate are not allowed.
+        $studentLat = is_numeric($latitude) ? (float) $latitude : null;
+        $studentLng = is_numeric($longitude) ? (float) $longitude : null;
+
+        if ($studentLat === null || $studentLng === null
+            || ($studentLat === 0.0 && $studentLng === 0.0)) {
+            throw new \Exception('មិនអាចចុះវត្តមានដោយគ្មានទីតាំងបានទេ។ សូមបើក GPS ហើយព្យាយាមម្តងទៀត។', 422);
+        }
+
+        // 4. Enforce geofence: the student must be within the session's
+        //    check-in radius of the location set when the session started.
+        $this->validateCheckInLocation($session, $studentLat, $studentLng);
+
+        // 5. Prevent duplicate check-ins
         if (\App\Services\FirestoreService::isActive()) {
             $exists = $this->firestore->list('attendances', [
                 'session_id' => (string)$session->id,
@@ -321,8 +336,8 @@ class AttendanceSessionService
             'student_id'      => (string)$student->id,
             'session_id'      => (string)$session->id,
             'schedule_id'     => isset($session->schedule_id) ? (string)$session->schedule_id : null,
-            'latitude'        => $latitude,
-            'longitude'       => $longitude,
+            'latitude'        => (string) $studentLat,
+            'longitude'       => (string) $studentLng,
             'check_in_time'   => $now->format('Y-m-d H:i:s'),
             'created_at'      => $now->format('Y-m-d H:i:s'),
             'updated_at'      => $now->format('Y-m-d H:i:s'),
@@ -338,6 +353,56 @@ class AttendanceSessionService
         }
 
         return $attendance;
+    }
+
+    /**
+     * Validate that the student's coordinates fall within the session's
+     * geofence radius. When the session has no location configured the
+     * distance check is skipped (nothing to validate against).
+     */
+    protected function validateCheckInLocation(
+        AttendanceSession $session,
+        float $studentLat,
+        float $studentLng,
+    ): void {
+        $sessionLat = $session->latitude !== null ? (float) $session->latitude : null;
+        $sessionLng = $session->longitude !== null ? (float) $session->longitude : null;
+
+        // No anchor location → cannot geofence.
+        if ($sessionLat === null || $sessionLng === null) {
+            return;
+        }
+
+        $radius = $session->radius !== null ? (float) $session->radius : (float) config('attendance.default_radius');
+
+        $distance = $this->haversineDistance($sessionLat, $sessionLng, $studentLat, $studentLng);
+
+        if ($distance > $radius) {
+            throw new \Exception(
+                'អ្នកស្ថិតនៅក្រៅជួរចម្ងាយដែលបានកំណត់សម្រាប់វេនវត្តមាននេះ (' . round($radius) . ' ម៉ែត្រ)។ សូមចូលទៅជិតកន្លែងបង្រៀន ហើយព្យាយាមម្តងទៀត។',
+                422
+            );
+        }
+    }
+
+    /**
+     * Great-circle distance between two coordinates in meters.
+     */
+    protected function haversineDistance(
+        float $lat1,
+        float $lng1,
+        float $lat2,
+        float $lng2,
+    ): float {
+        $earthRadius = 6371000; // meters
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        return $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
     public function validateSessionAccess(AttendanceSession $session): void

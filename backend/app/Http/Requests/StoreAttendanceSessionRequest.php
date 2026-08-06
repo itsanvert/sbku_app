@@ -32,6 +32,7 @@ class StoreAttendanceSessionRequest extends FormRequest
             'end_time'          => 'nullable|string|max:5',
             'latitude'          => 'nullable|numeric',
             'longitude'         => 'nullable|numeric',
+            'radius'            => 'nullable|numeric|min:1|max:10000',
         ];
     }
 }

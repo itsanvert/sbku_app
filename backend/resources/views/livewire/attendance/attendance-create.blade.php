@@ -170,6 +170,13 @@
                     </div>
 
                     <flux:field>
+                        <flux:label>Check-in Radius (meters)</flux:label>
+                        <flux:input wire:model="radius" type="number" min="1" placeholder="e.g. 100 (default)" />
+                        <flux:error name="radius" />
+                        <flux:description>Students must be within this distance (meters) of the coordinate above to check in. Leave empty to use the default.</flux:description>
+                    </flux:field>
+
+                    <flux:field>
                         <flux:label>Room / Location Name</flux:label>
                         <flux:select wire:model="room_id" placeholder="— Select Room (Optional) —" class="w-full">
                             <flux:select.option value="">— Use default / No Room —</flux:select.option>

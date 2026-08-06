@@ -19,6 +19,8 @@ class Attendance extends Model
         'verify_status',
         'reject_reason',
         'verified_at',
+        'latitude',
+        'longitude',
         'permission_reason',
         'permission_image',
     ];
@@ -28,6 +30,8 @@ class Attendance extends Model
         'check_in_time'   => 'datetime',
         'check_out_time'  => 'datetime',
         'verified_at'     => 'datetime',
+        'latitude'        => 'decimal:7',
+        'longitude'       => 'decimal:7',
     ];
 
     protected $appends = ['student_name', 'permission_image_url'];
