@@ -1,13 +1,13 @@
 <x-guest-layout>
-    <div class="pt-4 bg-gray-100 dark:bg-[#1e293b]">
-        <div class="min-h-screen flex flex-col items-center pt-6 sm:pt-0">
-            <div>
-                <x-authentication-card-logo />
-            </div>
+    <div class="min-h-screen flex flex-col items-center px-4 py-12">
+        <flux:brand logo="/img/logo.webp" name="SBKU" class="mb-6" />
 
-            <div class="w-full sm:max-w-2xl mt-6 p-6 bg-white dark:bg-[#1e293b] shadow-md dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)] overflow-hidden sm:rounded-lg prose">
-                {!! $terms !!}
-            </div>
+        <div class="w-full sm:max-w-2xl">
+            <flux:card>
+                <div class="prose prose-zinc dark:prose-invert max-w-none">
+                    {!! $terms !!}
+                </div>
+            </flux:card>
         </div>
     </div>
 </x-guest-layout>

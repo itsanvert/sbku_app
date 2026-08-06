@@ -46,6 +46,7 @@ class UserIndex extends Component
     ];
 
     public function updatingSearch() { $this->resetPage(); }
+
     public function updatingRole() { $this->resetPage(); }
 
     public function updatedSelectAll($value)

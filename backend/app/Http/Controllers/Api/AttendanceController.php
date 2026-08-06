@@ -304,14 +304,17 @@ class AttendanceController extends Controller
         $records = $query->orderBy('attendance_date', 'desc')
             ->lazy(500);
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
+        $pdf = \App\Services\PdfRenderer::render('exports.attendance-pdf', [
             'records' => $records,
             'title' => 'Attendance Report',
             'reportedBy' => auth()->user()?->name ?? 'System',
             'filterInfo' => $filterInfo,
-        ])->setPaper('a4', 'landscape');
+        ]);
 
-        return $pdf->download('attendance-report-' . now()->format('Y-m-d') . '.pdf');
+        return response()->streamDownload(
+            fn () => print($pdf),
+            'attendance-report-' . now()->format('Y-m-d') . '.pdf'
+        );
     }
 
     /**

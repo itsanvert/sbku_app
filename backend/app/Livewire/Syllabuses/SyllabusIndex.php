@@ -45,6 +45,7 @@ class SyllabusIndex extends Component
     {
         $this->resetPage();
     }
+
     public function updatingFacultyId()
     {
         $this->resetPage();

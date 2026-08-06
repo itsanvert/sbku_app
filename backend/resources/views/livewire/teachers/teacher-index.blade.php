@@ -1,7 +1,7 @@
 <div>
     <x-slot name="header">
         <flux:heading size="xl">Teachers</flux:heading>
-        <flux:subheading>Manage teachers</flux:subheading>
+        <flux:subheading>Manage faculty profiles, departments, and teaching assignments.</flux:subheading>
     </x-slot>
 
     <div class="space-y-4">
@@ -13,186 +13,135 @@
             </flux:callout>
         @endif
 
-        <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
-
+        <flux:card>
             {{-- Toolbar --}}
-            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
-                <div class="flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div class="flex flex-wrap items-center gap-2">
                     <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
-                        placeholder="Search teachers…" size="sm" class="w-52" />
+                        placeholder="Search teachers…" size="sm" class="w-56" />
                     @if(count($selected) > 0)
                         <flux:button wire:click="confirmBulkDelete" size="sm" variant="danger" icon="trash">
                             Delete ({{ count($selected) }})
                         </flux:button>
                     @endif
                 </div>
-
-                <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus">
-                    Add Teacher
-                </flux:button>
+                <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus">Add Teacher</flux:button>
             </div>
 
-            {{-- Table --}}
             <flux:table :paginate="$this->teachers">
-                <table class="w-full text-sm text-left">
-                    <colgroup>
-                        <col class="w-10"> {{-- checkbox --}}
-                        <col class="w-12"> {{-- # --}}
-                        <col class="w-52"> {{-- name --}}
-                        <col> {{-- email --}}
-                        <col class="w-28"> {{-- major --}}
-                        <col class="w-28"> {{-- faculty --}}
-                        <col class="w-16"> {{-- year --}}
-                        <col class="w-36"> {{-- schedule --}}
-                        <col class="w-28"> {{-- shift --}}
-                        <col class="w-28"> {{-- phone --}}
-                        <col class="w-28"> {{-- joined --}}
-                        <col class="w-32"> {{-- actions --}}
-                    </colgroup>
-                    <thead>
-                        <tr class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1e293b]">
-                            <th class="px-4 py-3">
-                                <flux:checkbox wire:model.live="selectAll" />
-                            </th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('id')">#</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('name')">Name</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('email')">Email</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('major_id')">Major</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('faculty_id')">Faculty</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('year')">Year</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('schedule')">Schedule</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('shift')">Shift</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('phone')">Phone</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none"
-                                wire:click="sort('created_at')">Joined</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-[#374151]">
-                        @forelse ($this->teachers as $teacher)
-                            <tr class="hover:bg-gray-50/70 dark:hover:bg-[#263548]/50 transition-colors duration-100">
+                <flux:table.columns>
+                    <flux:table.column>
+                        <flux:checkbox wire:model.live="selectAll" />
+                    </flux:table.column>
+                    <flux:table.column wire:click="sort('id')">#</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Name</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'email'" :direction="$sortDirection" wire:click="sort('email')">Email</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'major_id'" :direction="$sortDirection" wire:click="sort('major_id')">Major</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'faculty_id'" :direction="$sortDirection" wire:click="sort('faculty_id')">Faculty</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'year'" :direction="$sortDirection" wire:click="sort('year')">Year</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'schedule'" :direction="$sortDirection" wire:click="sort('schedule')">Schedule</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'shift'" :direction="$sortDirection" wire:click="sort('shift')">Shift</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'phone'" :direction="$sortDirection" wire:click="sort('phone')">Phone</flux:table.column>
+                    <flux:table.column :sortable="true" :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">Joined</flux:table.column>
+                    <flux:table.column align="end">Actions</flux:table.column>
+                </flux:table.columns>
 
-                                {{-- Checkbox --}}
-                                <td class="px-4 py-3">
-                                    <flux:checkbox wire:model.live="selected" value="{{ $teacher->id }}" />
-                                </td>
-
-                                {{-- ID --}}
-                                <td class="px-4 py-3 tabular-nums text-xs text-gray-400 dark:text-gray-500">
-                                    {{ $teacher->id }}
-                                </td>
-
-                                {{-- Name --}}
-                                <td class="px-4 py-3">
-                                    <div class="flex items-center gap-2.5">
-                                        <img class="h-7 w-7 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-[#374151] shrink-0"
-                                            src="{{ $teacher->profile_image_path ? asset('storage/' . $teacher->profile_image_path) : 'https://ui-avatars.com/api/?name=' . urlencode($teacher->name) . '&background=6366f1&color=ffffff&size=64&bold=true&font-size=0.4' }}"
-                                            alt="{{ $teacher->name }}" />
-                                        <span class="font-medium text-gray-900 dark:text-gray-50 truncate">{{ $teacher->name }}</span>
+                <flux:table.rows>
+                    @forelse ($this->teachers as $teacher)
+                        <flux:table.row :key="$teacher->id">
+                            <flux:table.cell>
+                                <flux:checkbox wire:model.live="selected" value="{{ $teacher->id }}" />
+                            </flux:table.cell>
+                            <flux:table.cell class="tabular-nums text-xs text-zinc-400 dark:text-zinc-500">{{ $teacher->id }}</flux:table.cell>
+                            <flux:table.cell variant="strong">
+                                <div class="flex items-center gap-3">
+                                    <img class="w-8 h-8 rounded-full object-cover"
+                                        src="{{ $teacher->profile_image_path ? asset('storage/' . $teacher->profile_image_path) : 'https://ui-avatars.com/api/?name=' . urlencode($teacher->name) . '&background=8b5cf6&color=ffffff&size=64&bold=true&font-size=0.4' }}"
+                                        alt="{{ $teacher->name }}" />
+                                    <div class="min-w-0">
+                                        <div class="truncate">{{ $teacher->name }}</div>
+                                        @if($teacher->shift)
+                                            <div class="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+                                                <flux:icon name="clock" class="w-3 h-3" />
+                                                {{ $teacher->shift->name }}
+                                            </div>
+                                        @endif
                                     </div>
-                                </td>
-
-
-
-                                {{-- Email --}}
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <flux:icon name="envelope" class="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />
                                     {{ $teacher->user->email ?? '—' }}
-                                </td>
-
-                                {{-- Major --}}
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $teacher->major->name ?? '—' }}
-                                </td>
-
-                                {{-- Faculty --}}
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $teacher->faculty->name ?? '—' }}
-                                </td>
-
-                                {{-- Year --}}
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $teacher->year ?? '—' }}
-                                </td>
-
-                                {{-- Schedule --}}
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    <div class="truncate max-w-[150px]"
-                                        title="{{ $teacher->schedule->full_display ?? '—' }}">
-                                        {{ $teacher->schedule->full_display ?? '—' }}
-                                    </div>
-                                </td>
-
-                                {{-- Shift --}}
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $teacher->shift->name ?? '—' }}
-                                </td>
-
-                                {{-- Phone --}}
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                </span>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge size="sm" color="zinc">{{ $teacher->major->name ?? '—' }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>{{ $teacher->faculty->name ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge size="sm" color="gray">Y{{ $teacher->year ?? '—' }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="truncate max-w-[150px]" title="{{ $teacher->schedule->full_display ?? '—' }}">
+                                    {{ $teacher->schedule->full_display ?? '—' }}
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge size="sm" color="indigo">{{ $teacher->shift->name ?? '—' }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <flux:icon name="phone" class="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />
                                     {{ $teacher->phone ?? '—' }}
-                                </td>
-
-                                {{-- Joined --}}
-                                <td class="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
-                                    {{ $teacher->created_at?->format('M j, Y') ?? '—' }}
-                                </td>
-
-                                <td class="px-3 py-3">
-                                    <div class="flex items-center gap-1.5">
-                                        <flux:button wire:click="openEditModal('{{ $teacher->id }}')" size="sm"
-                                            variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="confirmDelete('{{ $teacher->id }}')" size="sm"
-                                            variant="danger">Delete</flux:button>
-                                    </div>
-                                </td>
-
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="11" class="px-4 py-14 text-center">
-                                    <div class="flex flex-col items-center gap-1.5 text-gray-400 dark:text-gray-500">
-                                        <flux:icon name="users" class="w-6 h-6 mb-0.5" />
-                                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">No teachers found</p>
-                                        <p class="text-xs">Try adjusting your search or filters</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                </span>
+                            </flux:table.cell>
+                            <flux:table.cell class="text-zinc-400 dark:text-zinc-500">{{ $teacher->created_at?->format('M j, Y') ?? '—' }}</flux:table.cell>
+                            <flux:table.cell align="end">
+                                <div class="flex justify-end gap-1.5">
+                                    <flux:button wire:click="openEditModal('{{ $teacher->id }}')" size="sm" variant="ghost" icon="pencil-square">Edit</flux:button>
+                                    <flux:button wire:click="confirmDelete('{{ $teacher->id }}')" size="sm" variant="danger" icon="trash">Delete</flux:button>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="12">
+                                <div class="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                                    <flux:icon name="academic-cap" class="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
+                                    <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">No teachers found</p>
+                                    <p class="text-xs text-zinc-400 dark:text-zinc-500">Try adjusting your search or create a new teacher.</p>
+                                    <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus" class="mt-2">Add Teacher</flux:button>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforelse
+                </flux:table.rows>
             </flux:table>
-
-        </div>
+        </flux:card>
 
     </div>
 
     {{-- Create Modal --}}
-    @if ($showCreateModal)
-        <livewire:teachers.teacher-create :key="'create'" />
-    @endif
+    <flux:modal name="create-teacher" wire:model="showCreateModal" class="!max-w-2xl">
+        @if ($showCreateModal)
+            <livewire:teachers.teacher-create :key="'create'" />
+        @endif
+    </flux:modal>
 
     {{-- Edit Modal --}}
-    @if ($showEditModal && $editTeacherId)
-        <livewire:teachers.teacher-edit :teacherId="$editTeacherId" :key="'edit-' . $editTeacherId" />
-    @endif
+    <flux:modal name="edit-teacher" wire:model="showEditModal" class="!max-w-2xl">
+        @if ($showEditModal && $editTeacherId)
+            <livewire:teachers.teacher-edit :teacherId="$editTeacherId" :key="'edit-' . $editTeacherId" />
+        @endif
+    </flux:modal>
 
     {{-- Delete Confirm Modal --}}
-    <div>
-        <flux:modal name="confirm-delete" class="min-w-[22rem] space-y-6">
+    <flux:modal name="confirm-delete">
+        <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Delete this teacher?</flux:heading>
-                <flux:subheading>This action cannot be undone. The teacher will be permanently removed.
-                </flux:subheading>
+                <flux:subheading>This action cannot be undone. The teacher will be permanently removed.</flux:subheading>
             </div>
             <div class="flex justify-end gap-2">
                 <flux:modal.close>
@@ -200,14 +149,15 @@
                 </flux:modal.close>
                 <flux:button wire:click="deleteTeacher" size="sm" variant="danger">Delete</flux:button>
             </div>
-        </flux:modal>
+        </div>
+    </flux:modal>
 
-        {{-- Bulk Delete Confirm Modal --}}
-        <flux:modal name="confirm-bulk-delete" class="min-w-[22rem] space-y-6">
+    {{-- Bulk Delete Confirm Modal --}}
+    <flux:modal name="confirm-bulk-delete">
+        <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Delete selected teachers?</flux:heading>
-                <flux:subheading>This action cannot be undone. All selected teachers will be permanently removed.
-                </flux:subheading>
+                <flux:subheading>This action cannot be undone. All selected teachers will be permanently removed.</flux:subheading>
             </div>
             <div class="flex justify-end gap-2">
                 <flux:modal.close>
@@ -215,9 +165,6 @@
                 </flux:modal.close>
                 <flux:button wire:click="deleteSelected" variant="danger" icon="trash">Delete Selected</flux:button>
             </div>
-        </flux:modal>
-    </div>
-
-</div>
-
+        </div>
+    </flux:modal>
 </div>

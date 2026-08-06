@@ -155,11 +155,13 @@ class AttendanceIndex extends Component
             );
         }
 
-        return $this->getBaseQuery()->paginate(20);
+        return $this->getBaseQuery()->paginate(10);
     }
 
     public function exportPdf()
     {
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('fonts'));
+
         if (\App\Services\FirestoreService::isActive()) {
             $user = auth()->user();
             $filters = [];
@@ -182,7 +184,7 @@ class AttendanceIndex extends Component
             $records = $this->getBaseQuery()->get();
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.attendance-pdf', [
+        $pdf = \App\Services\PdfRenderer::render('exports.attendance-pdf', [
             'records'    => $records,
             'reportedBy' => auth()->user()?->name ?? 'System',
             'filterInfo' => collect([
@@ -194,7 +196,7 @@ class AttendanceIndex extends Component
         ]);
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn () => print($pdf),
             'attendance-records.pdf'
         );
     }

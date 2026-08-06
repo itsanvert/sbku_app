@@ -14,7 +14,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ["ui-sans-serif", "system-ui", "sans-serif"],
+                sans: ["ui-sans-serif", "system-ui", "Noto Sans Khmer", "sans-serif"],
+                khmer: ["Noto Sans Khmer", "ui-sans-serif", "system-ui", "sans-serif"],
             },
             colors: {
                 dark: {

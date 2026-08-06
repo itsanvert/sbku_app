@@ -1,18 +1,18 @@
 <div>
     <x-slot name="header">
-        <flux:heading size="xl">Message Center</flux:heading>
-        <flux:subheading>Manage announcements and push notifications</flux:subheading>
+        <flux:heading size="xl">Messages</flux:heading>
+        <flux:subheading>Send announcements and communicate with students and staff.</flux:subheading>
     </x-slot>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {{-- Send Message Form --}}
         <div class="md:col-span-1">
-            <div class="bg-white dark:bg-[#1e293b] p-6 rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm space-y-6">
+            <flux:card class="space-y-6">
                 <flux:heading size="lg">Compose Message</flux:heading>
 
                 <form wire:submit.prevent="sendMessage" class="space-y-4">
                     <flux:input wire:model="title" label="Title" placeholder="Enter message title..." />
-                    
+
                     <flux:textarea wire:model="body" label="Body" placeholder="Enter message content..." rows="5" />
 
                     <flux:field>
@@ -49,13 +49,13 @@
                         {{ session('message') }}
                     </flux:callout>
                 @endif
-            </div>
+            </flux:card>
         </div>
 
         {{-- Message History --}}
         <div class="md:col-span-2">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
+            <flux:card>
+                <div class="border-b border-zinc-200 dark:border-white/10 pb-4 mb-4">
                     <flux:heading size="lg">Message History</flux:heading>
                 </div>
 
@@ -69,7 +69,7 @@
 
                     <flux:table.rows>
                         @foreach($messages as $msg)
-                            <flux:table.row>
+                            <flux:table.row :key="$msg->id">
                                 <flux:table.cell class="whitespace-nowrap">
                                     {{ $msg->created_at->format('M d, H:i') }}
                                 </flux:table.cell>
@@ -81,19 +81,17 @@
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell class="max-w-xs truncate">
-                                    <span class="font-medium text-gray-900 dark:text-gray-50">{{ $msg->title }}</span>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $msg->body }}</p>
+                                    <span class="font-medium">{{ $msg->title }}</span>
+                                    <p class="text-xs text-zinc-400 dark:text-zinc-500 truncate">{{ $msg->body }}</p>
                                 </flux:table.cell>
                                 <flux:table.cell>
-                                    <flux:badge size="sm" :variant="$msg->type === 'alert' ? 'danger' : 'neutral'">
-                                        {{ ucfirst($msg->type) }}
-                                    </flux:badge>
+                                    <flux:badge size="sm" color="zinc">{{ ucfirst($msg->type) }}</flux:badge>
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforeach
                     </flux:table.rows>
                 </flux:table>
-            </div>
+            </flux:card>
         </div>
     </div>
 </div>

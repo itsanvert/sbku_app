@@ -28,94 +28,36 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function (\App\Services\FirestoreService $firestore) {
-        $isFirestore = \App\Services\FirestoreService::isActive();
-
-        if ($isFirestore) {
-            $teacherCount = \Illuminate\Support\Facades\Cache::remember('dashboard.teacher_count', 300, fn() => $firestore->count('teachers'));
-            $studentCount = \Illuminate\Support\Facades\Cache::remember('dashboard.student_count', 300, fn() => $firestore->count('students'));
-            $userCount = \Illuminate\Support\Facades\Cache::remember('dashboard.user_count', 300, fn() => $firestore->count('users'));
-            $attendanceCount = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_count', 300, fn() => $firestore->count('attendances'));
-            $activeSessions = \Illuminate\Support\Facades\Cache::remember('dashboard.active_sessions', 300, fn() => $firestore->count('attendance_sessions', ['is_active' => true]));
-
-            $sevenDaysAgo = now()->subDays(7)->format('Y-m-d');
-            $attendanceStats = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_stats', 300, function () use ($firestore, $sevenDaysAgo) {
-                $recentAttendances = $firestore->list('attendances', [
-                    ['attendance_date', '>=', $sevenDaysAgo]
-                ]);
-                
-                $dailyData = [];
-                $presentCount = 0;
-                $absentCount = 0;
-                $permissionCount = 0;
-                foreach ($recentAttendances as $attendance) {
-                    $date = $attendance['attendance_date'] ?? null;
-                    if ($date) {
-                        $dailyData[$date] = ($dailyData[$date] ?? 0) + 1;
-                    }
-                    $status = $attendance['status'] ?? '';
-                    if ($status === 'Y') $presentCount++;
-                    elseif ($status === 'N') $absentCount++;
-                    elseif ($status === 'P') $permissionCount++;
-                }
-                return compact('dailyData', 'presentCount', 'absentCount', 'permissionCount');
-            });
-            $dailyData = $attendanceStats['dailyData'];
-            $presentCount = $attendanceStats['presentCount'];
-            $absentCount = $attendanceStats['absentCount'];
-            $permissionCount = $attendanceStats['permissionCount'];
-        } else {
-            $teacherCount = \Illuminate\Support\Facades\Cache::remember('dashboard.teacher_count', 300, fn() => \App\Models\Teacher::count());
-            $studentCount = \Illuminate\Support\Facades\Cache::remember('dashboard.student_count', 300, fn() => \App\Models\Student::count());
-            $userCount = \Illuminate\Support\Facades\Cache::remember('dashboard.user_count', 300, fn() => \App\Models\User::count());
-            $attendanceCount = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_count', 300, fn() => \App\Models\Attendance::count());
-            $activeSessions = \Illuminate\Support\Facades\Cache::remember('dashboard.active_sessions', 300, fn() => \App\Models\AttendanceSession::where('is_active', true)->count());
-
-            $sevenDaysAgo = now()->subDays(7);
-            $attendanceStats = \Illuminate\Support\Facades\Cache::remember('dashboard.attendance_stats', 300, function () use ($sevenDaysAgo) {
-                $dailyData = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                    ->selectRaw('attendance_date as date_key, COUNT(*) as count')
-                    ->groupBy('attendance_date')
-                    ->pluck('count', 'date_key')
-                    ->toArray();
-
-                $presentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                    ->where('status', 'Y')->count();
-                $absentCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                    ->where('status', 'N')->count();
-                $permissionCount = \App\Models\Attendance::where('attendance_date', '>=', $sevenDaysAgo)
-                    ->where('status', 'P')->count();
-
-                return compact('dailyData', 'presentCount', 'absentCount', 'permissionCount');
-            });
-            $dailyData = $attendanceStats['dailyData'];
-            $presentCount = $attendanceStats['presentCount'];
-            $absentCount = $attendanceStats['absentCount'];
-            $permissionCount = $attendanceStats['permissionCount'];
-        }
-
-        $dates = [];
-        $counts = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $dateObj = now()->subDays($i);
-            $dateKey = $dateObj->format('Y-m-d');
-            $dates[] = $dateObj->format('M d (D)'); 
-            $counts[] = $dailyData[$dateKey] ?? 0;
-        }
-
-        return view('dashboard', compact(
-            'teacherCount', 
-            'studentCount', 
-            'userCount', 
-            'attendanceCount',
-            'activeSessions',
-            'dates',
-            'counts',
-            'presentCount',
-            'absentCount',
-            'permissionCount'
-        ));
+    Route::get('/dashboard', function () {
+        return view('dashboard', app(\App\Services\DashboardService::class)->stats());
     })->name('dashboard');
+
+    // Dashboard PDF report (7-day summary)
+    Route::get('/dashboard/report', function () {
+        $stats = app(\App\Services\DashboardService::class)->stats();
+
+        $pdf = \App\Services\PdfRenderer::render('exports.dashboard-report', [
+            'stats'       => $stats,
+            'generatedBy' => auth()->user()?->name ?? 'System',
+            'generatedAt' => now(),
+        ]);
+
+        return response()->streamDownload(
+            fn () => print($pdf),
+            'dashboard-report-' . now()->format('Y-m-d') . '.pdf'
+        );
+    })->name('dashboard.report');
+
+    // Dashboard Excel export (last 7 days of attendance records)
+    Route::get('/dashboard/export', function () {
+        $records = app(\App\Services\DashboardService::class)->recentRecords();
+
+        return (new \App\Exports\AttendanceExport(
+            $records,
+            auth()->user()?->name ?? 'System',
+            'Last 7 days'
+        ))->download('attendance-last-7-days.xlsx');
+    })->name('dashboard.export');
 });
 
 Route::get('/flux-test', function () {

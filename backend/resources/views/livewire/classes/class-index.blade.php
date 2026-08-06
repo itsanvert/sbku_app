@@ -1,141 +1,122 @@
 <div>
     <x-slot name="header">
-        <flux:heading size="xl">Class Management</flux:heading>
-        <flux:subheading>Manage academic classes, years, and semesters</flux:subheading>
+        <flux:heading size="xl">Classes</flux:heading>
+        <flux:subheading>Manage class sections, student enrollment, and schedules.</flux:subheading>
     </x-slot>
 
     <div class="space-y-4">
-        {{-- Flash Message --}}
         @if (session()->has('message'))
             <flux:callout variant="success" icon="check-circle" dismissible>
                 {{ session('message') }}
             </flux:callout>
         @endif
 
-        <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] shadow-sm overflow-hidden">
-            {{-- Toolbar --}}
-            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
-                <div class="flex items-center gap-2">
-                    <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
-                        placeholder="Search classes…" size="sm" class="w-64" />
-                </div>
-
+        <flux:card>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+                    placeholder="Search classes…" size="sm" class="w-full sm:w-72" />
                 <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus">
                     Add Class
                 </flux:button>
             </div>
 
-            {{-- Table --}}
-            <flux:table :paginate="$this->classes">
-                <table class="w-full text-sm text-left">
-                    <thead>
-                        <tr class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-gray-50 dark:bg-[#1e293b]">
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Code</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Name</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Major</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Year/Sem</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-[#374151]">
-                        @forelse ($classes as $class)
-                            <tr class="hover:bg-gray-50/70 dark:hover:bg-[#263548]/50 transition-colors duration-100">
-                                <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{{ $class->code }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-50">{{ $class->name }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $class->major->name ?? '—' }}
-                                    <div class="text-xs text-gray-400">{{ $class->major->faculty->name ?? '' }}</div>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $class->academic_year }}
-                                    <div class="text-xs text-gray-400">Semester {{ $class->semester }}</div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex gap-2">
-                                        <flux:button wire:click="edit('{{ $class->id }}')" size="xs" variant="ghost">Edit</flux:button>
-                                        <flux:button wire:click="delete('{{ $class->id }}')" size="xs" variant="danger">Delete</flux:button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No classes found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <flux:table :paginate="$classes">
+                <flux:table.columns>
+                    <flux:table.column>Name</flux:table.column>
+                    <flux:table.column>Code</flux:table.column>
+                    <flux:table.column>Major</flux:column>
+                    <flux:table.column>Year</flux:table.column>
+                    <flux:table.column>Semester</flux:table.column>
+                    <flux:table.column align="end">Actions</flux:table.column>
+                </flux:table.columns>
+
+                <flux:table.rows>
+                    @forelse ($classes as $class)
+                        <flux:table.row :key="$class->id">
+                            <flux:table.cell variant="strong">{{ $class->name }}</flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge size="sm" color="zinc">{{ $class->code }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>{{ $class->major?->name ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>{{ $class->academic_year ?? '—' }}</flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge size="sm" color="indigo">Sem {{ $class->semester }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell align="end">
+                                <div class="flex justify-end gap-2">
+                                    <flux:button wire:click="edit('{{ $class->id }}')" size="sm" variant="ghost" icon="pencil-square">Edit</flux:button>
+                                    <flux:button wire:click="delete('{{ $class->id }}')" size="sm" variant="danger" icon="trash">Delete</flux:button>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="6">
+                                <div class="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                                    <flux:icon name="building-library" class="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
+                                    <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">No classes found</p>
+                                    <p class="text-xs text-zinc-400 dark:text-zinc-500">Try adjusting your search or create a new class.</p>
+                                    <flux:button wire:click="openCreateModal" size="sm" variant="primary" icon="plus" class="mt-2">Add Class</flux:button>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforelse
+                </flux:table.rows>
             </flux:table>
-        </div>
+        </flux:card>
     </div>
 
     {{-- Create Modal --}}
-    @if ($showCreateModal)
-        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
-                    <flux:heading size="lg">Add New Class</flux:heading>
-                    <flux:button wire:click="$set('showCreateModal', false)" variant="ghost" size="sm" icon="x-mark" />
-                </div>
-                <form wire:submit.prevent="store" class="p-6 space-y-4">
-                    <flux:input label="Class Name" wire:model="name" placeholder="e.g. M1-A" />
-                    <flux:input label="Class Code" wire:model="code" placeholder="e.g. CLS001" />
-
-                    <flux:select label="Major" wire:model="major_id" placeholder="Select a major">
-                        <flux:select.option value="">Select Major</flux:select.option>
-                        @foreach($majors as $major)
-                            <flux:select.option value="{{ (string)$major->id }}">{{ $major->name }} ({{ $major->faculty->name ?? '' }})</flux:select.option>
-                        @endforeach
-                    </flux:select>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:input label="Academic Year" wire:model="academic_year" placeholder="e.g. 2025-2026" />
-                        <flux:select label="Semester" wire:model="semester">
-                            <flux:select.option value="1">Semester 1</flux:select.option>
-                            <flux:select.option value="2">Semester 2</flux:select.option>
-                        </flux:select>
-                    </div>
-
-                    <div class="flex justify-end gap-2 pt-4">
-                        <flux:button variant="ghost" wire:click="$set('showCreateModal', false)">Cancel</flux:button>
-                        <flux:button type="submit" variant="primary">Create Class</flux:button>
-                    </div>
-                </form>
-            </div>
+    <flux:modal name="create-class" wire:model="showCreateModal">
+        <div>
+            <flux:heading size="lg">Add New Class</flux:heading>
+            <flux:subheading>Create an academic class</flux:subheading>
         </div>
-    @endif
+
+        <form wire:submit="store" class="mt-6 space-y-4">
+            <flux:input label="Class Name" wire:model="name" placeholder="e.g. CS First Year" />
+            <flux:input label="Code" wire:model="code" placeholder="e.g. CS-1A" />
+            <flux:select label="Major" wire:model="major_id" placeholder="Select a major">
+                @foreach($majors as $major)
+                    <flux:select.option value="{{ (string) $major->id }}">{{ $major->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            <flux:input label="Academic Year" wire:model="academic_year" placeholder="e.g. 2025" />
+            <flux:input label="Semester" type="number" wire:model="semester" min="1" />
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">Cancel</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">Create Class</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 
     {{-- Edit Modal --}}
-    @if ($showEditModal)
-        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-xl w-full max-w-md">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
-                    <flux:heading size="lg">Edit Class</flux:heading>
-                    <flux:button wire:click="$set('showEditModal', false)" variant="ghost" size="sm" icon="x-mark" />
-                </div>
-                <form wire:submit.prevent="update" class="p-6 space-y-4">
-                    <flux:input label="Class Name" wire:model="name" />
-                    <flux:input label="Class Code" wire:model="code" />
-
-                    <flux:select label="Major" wire:model="major_id">
-                        @foreach($majors as $major)
-                            <flux:select.option value="{{ (string)$major->id }}">{{ $major->name }} ({{ $major->faculty->name ?? '' }})</flux:select.option>
-                        @endforeach
-                    </flux:select>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:input label="Academic Year" wire:model="academic_year" />
-                        <flux:select label="Semester" wire:model="semester">
-                            <flux:select.option value="1">Semester 1</flux:select.option>
-                            <flux:select.option value="2">Semester 2</flux:select.option>
-                        </flux:select>
-                    </div>
-
-                    <div class="flex justify-end gap-2 pt-4">
-                        <flux:button variant="ghost" wire:click="$set('showEditModal', false)">Cancel</flux:button>
-                        <flux:button type="submit" variant="primary">Update Class</flux:button>
-                    </div>
-                </form>
-            </div>
+    <flux:modal name="edit-class" wire:model="showEditModal">
+        <div>
+            <flux:heading size="lg">Edit Class</flux:heading>
+            <flux:subheading>Update class details</flux:subheading>
         </div>
-    @endif
+
+        <form wire:submit="update" class="mt-6 space-y-4">
+            <flux:input label="Class Name" wire:model="name" />
+            <flux:input label="Code" wire:model="code" />
+            <flux:select label="Major" wire:model="major_id">
+                @foreach($majors as $major)
+                    <flux:select.option value="{{ (string) $major->id }}">{{ $major->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            <flux:input label="Academic Year" wire:model="academic_year" />
+            <flux:input label="Semester" type="number" wire:model="semester" min="1" />
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">Cancel</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">Update Class</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>

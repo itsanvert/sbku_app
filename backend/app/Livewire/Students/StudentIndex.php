@@ -43,6 +43,7 @@ class StudentIndex extends Component
     {
         $this->resetPage();
     }
+
     public function updatingRole()
     {
         $this->resetPage();

@@ -203,7 +203,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         dateTimeStr = '$datePrefix $dateTimeStr';
       }
       final dt = DateTime.parse(dateTimeStr);
-      return DateFormat('h:mm a').format(dt);
+      final local = dt.isUtc ? dt.toLocal() : dt;
+      return DateFormat('h:mm a').format(local);
     } catch (_) {
       return dateTimeStr ?? '--:--';
     }
@@ -1008,7 +1009,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
         dateTimeStr = '$datePrefix $dateTimeStr';
       }
       final dt = DateTime.parse(dateTimeStr);
-      return DateFormat('h:mm a').format(dt);
+      final local = dt.isUtc ? dt.toLocal() : dt;
+      return DateFormat('h:mm a').format(local);
     } catch (_) {
       return dateTimeStr ?? '--:--';
     }
@@ -1046,7 +1048,8 @@ class _StudentAttendanceHistoryScreenState
         dateTimeStr = '$datePrefix $dateTimeStr';
       }
       final dt = DateTime.parse(dateTimeStr);
-      return DateFormat('h:mm a').format(dt);
+      final local = dt.isUtc ? dt.toLocal() : dt;
+      return DateFormat('h:mm a').format(local);
     } catch (_) {
       return dateTimeStr ?? '--:--';
     }

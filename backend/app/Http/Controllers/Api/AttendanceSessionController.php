@@ -184,6 +184,13 @@ class AttendanceSessionController extends Controller
                 $status = data_get($a, 'status');
                 $verifyStatus = data_get($a, 'verify_status');
                 $checkInTime = data_get($a, 'check_in_time');
+                if ($checkInTime instanceof \DateTimeInterface) {
+                    $checkInTime = $checkInTime->format('Y-m-d H:i:s');
+                } elseif ($checkInTime instanceof \Google\Cloud\Firestore\Timestamp) {
+                    $checkInTime = $checkInTime->get()->format('Y-m-d H:i:s');
+                } elseif (is_array($checkInTime) && isset($checkInTime['seconds'])) {
+                    $checkInTime = \Carbon\Carbon::createFromTimestamp($checkInTime['seconds'])->format('Y-m-d H:i:s');
+                }
                 
                 return [
                     'id' => data_get($a, 'id'),

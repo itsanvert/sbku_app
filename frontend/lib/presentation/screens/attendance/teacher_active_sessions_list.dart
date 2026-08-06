@@ -73,7 +73,8 @@ class _TeacherActiveSessionsListScreenState
     if (dateStr == null || dateStr.toString().isEmpty) return '--:--';
     try {
       final date = DateTime.parse(dateStr.toString());
-      return DateFormat('hh:mm a').format(date);
+      final local = date.isUtc ? date.toLocal() : date;
+      return DateFormat('hh:mm a').format(local);
     } catch (e) {
       return dateStr.toString();
     }

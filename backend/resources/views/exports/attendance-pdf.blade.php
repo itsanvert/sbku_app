@@ -26,10 +26,17 @@
         }
 
         /* ─── Base ─── */
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         body {
@@ -256,7 +263,7 @@
         }
 
         .cell-name {
-            font-weight: 600;
+            font-weight: bold;
             color: #111827;
             font-size: 11px;
         }

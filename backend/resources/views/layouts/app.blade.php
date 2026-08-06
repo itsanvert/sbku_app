@@ -32,201 +32,69 @@
         </script>
 
         <style>
-            /* ================================================================
-               FLUX DARK MODE OVERRIDES — Three-Surface-Level Premium Palette
-               ================================================================ */
-
-            /* -- Sidebar background: surface level 0 -- */
-            html.dark .flux-sidebar,
-            html.dark [data-flux-sidebar],
-            html.dark ui-sidebar {
-                background-color: #0f172a !important;
-                border-color: rgba(255, 255, 255, 0.08) !important;
-            }
-
-            /* -- Navlist item base: muted text -- */
-            html.dark .flux-sidebar [data-flux-navlist-item],
-            html.dark ui-sidebar [data-flux-navlist-item] {
-                color: #94a3b8 !important;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            }
-
-            /* -- Navlist item hover -- */
-            html.dark .flux-sidebar [data-flux-navlist-item]:hover,
-            html.dark ui-sidebar [data-flux-navlist-item]:hover {
-                background-color: rgba(30, 41, 59, 0.8) !important;
-                color: #f1f5f9 !important;
-                transform: translateX(3px);
-            }
-
-            /* -- Navlist item ACTIVE -- */
-            html.dark .flux-sidebar [data-flux-navlist-item][data-current],
-            html.dark ui-sidebar [data-flux-navlist-item][data-current] {
-                background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.1)) !important;
-                color: #ffffff !important;
-                border-color: transparent !important;
-                box-shadow: 0 0 12px rgba(37, 99, 235, 0.15), inset 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
-                font-weight: 600 !important;
-            }
-
-            html.dark .flux-sidebar [data-flux-navlist-item][data-current] svg,
-            html.dark ui-sidebar [data-flux-navlist-item][data-current] svg {
-                color: #3b82f6 !important;
-            }
-
-            html.dark .flux-sidebar [data-flux-navlist-item][data-current]:hover,
-            html.dark ui-sidebar [data-flux-navlist-item][data-current]:hover {
-                background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(59, 130, 246, 0.15)) !important;
-            }
-
-            html.dark .flux-sidebar [data-flux-navlist-item][data-current] [data-content],
-            html.dark ui-sidebar [data-flux-navlist-item][data-current] [data-content] {
-                color: #ffffff !important;
-            }
-
-            /* -- Profile -- */
-            html.dark .flux-sidebar [data-flux-profile] {
-                color: #cbd5e1 !important;
-            }
-
-            /* -- Brand -- */
-            html.dark .flux-sidebar [data-flux-brand] {
-                color: #f8fafc !important;
-            }
-
-            /* -- Dropdown / Menu: surface level 1 -- */
-            html.dark .flux-dropdown__menu,
-            html.dark .flux-menu {
-                background-color: #1e293b !important;
-                border: 1px solid rgba(255, 255, 255, 0.08) !important;
-                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45) !important;
-                backdrop-filter: blur(14px) !important;
-            }
-
-            html.dark .flux-dropdown__menu a,
-            html.dark .flux-menu a,
-            html.dark .flux-dropdown__menu button,
-            html.dark .flux-menu button {
-                color: #cbd5e1 !important;
-            }
-
-            html.dark .flux-dropdown__menu a:hover,
-            html.dark .flux-menu a:hover,
-            html.dark .flux-dropdown__menu button:hover,
-            html.dark .flux-menu button:hover {
-                background-color: rgba(59, 130, 246, 0.1) !important;
-                color: #3b82f6 !important;
-            }
-
-            /* -- Header: glass -- */
-            html.dark .flux-header {
-                background-color: rgba(15, 23, 42, 0.8) !important;
-                backdrop-filter: blur(14px) !important;
-                border-color: rgba(255, 255, 255, 0.08) !important;
-            }
-
-            /* -- Main content -- */
-            html.dark .flux-main {
-                background-color: #0f172a !important;
-            }
-
-            /* -- Primary button -- */
-            html.dark .flux-button--primary,
-            html.dark [data-flux-button-variant="primary"] {
-                background-color: #3b82f6 !important;
-            }
-
-            html.dark .flux-button--primary:hover,
-            html.dark [data-flux-button-variant="primary"]:hover {
-                background-color: #2563eb !important;
-            }
-
-            /* -- Inputs -- */
-            html.dark input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
-            html.dark textarea,
-            html.dark select {
-                background-color: #1e293b !important;
-                border-color: rgba(255, 255, 255, 0.08) !important;
-                color: #f8fafc !important;
-            }
-
-            html.dark input::placeholder,
-            html.dark textarea::placeholder {
-                color: #475569 !important;
-            }
-
-            html.dark input:focus,
-            html.dark textarea:focus,
-            html.dark select:focus {
-                border-color: #3b82f6 !important;
-                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
-                outline: none !important;
-            }
-
-            /* -- Modals -- */
-            html.dark [data-flux-dialog],
-            html.dark .flux-dialog {
-                background-color: #1e293b !important;
-                border-color: rgba(255, 255, 255, 0.08) !important;
-                box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5) !important;
-            }
+            /* Native Flux appearance — no custom overrides */
         </style>
     </head>
-    <body class="min-h-screen bg-white dark:bg-[#0f172a] antialiased font-sans text-gray-900 dark:text-[#f8fafc] flex flex-col">
+    <body class="min-h-screen bg-gray-50 dark:bg-zinc-900 antialiased font-sans text-zinc-900 dark:text-zinc-100 flex flex-col">
         <div class="flex flex-1 flex-col lg:flex-row">
-            <flux:sidebar stashable sticky class="lg:bg-gray-50 lg:dark:bg-[#0f172a] border-r border-gray-200 dark:border-[rgba(255,255,255,0.08)]">
+            <flux:sidebar stashable sticky class="lg:bg-gray-50 lg:dark:bg-zinc-900 border-r border-gray-200 dark:border-white/10">
                 <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
                 <flux:brand href="{{ route('dashboard') }}" logo="/img/logo.webp" name="SBKU" class="px-2" />
 
-                <flux:navlist variant="pill" class="mt-6">
-                    <flux:navlist.item icon="home" href="{{ route('dashboard') }}" :current="request()->routeIs('dashboard')">Dashboard</flux:navlist.item>
+                <flux:navlist variant="pill" class="mt-4 space-y-4">
+                    <flux:navlist.group heading="General">
+                        <flux:navlist.item icon="home" href="{{ route('dashboard') }}" :current="request()->routeIs('dashboard')">Dashboard</flux:navlist.item>
+                    </flux:navlist.group>
 
-                    @if(auth()->user()->isSuperAdmin())
-                        <flux:navlist.item icon="user" href="{{ route('users.index') }}" :current="request()->routeIs('users.index')">User</flux:navlist.item>
+                    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                        <flux:navlist.group heading="Academic">
+                            @if(auth()->user()->isSuperAdmin())
+                                <flux:navlist.item icon="user" href="{{ route('users.index') }}" :current="request()->routeIs('users.index')">User</flux:navlist.item>
+                            @endif
+
+                            <flux:navlist.item icon="academic-cap" href="{{ route('teachers.index') }}" :current="request()->routeIs('teachers.index')">Teacher</flux:navlist.item>
+                            <flux:navlist.item icon="users" href="{{ route('students.index') }}" :current="request()->routeIs('students.index')">Student</flux:navlist.item>
+                            <flux:navlist.item icon="book-open" href="{{ route('syllabuses.index') }}" :current="request()->routeIs('syllabuses.index')">Syllabus</flux:navlist.item>
+                            <flux:navlist.item icon="bookmark" href="{{ route('subjects.index') }}" :current="request()->routeIs('subjects.index')">Subject</flux:navlist.item>
+                            <flux:navlist.item icon="building-library" href="{{ route('faculties.index') }}" :current="request()->routeIs('faculties.index')">Faculty</flux:navlist.item>
+                            <flux:navlist.item icon="academic-cap" href="{{ route('majors.index') }}" :current="request()->routeIs('majors.index')">Major</flux:navlist.item>
+                            <flux:navlist.item icon="user-group" href="{{ route('classes.index') }}" :current="request()->routeIs('classes.index')">Class</flux:navlist.item>
+                            <flux:navlist.item icon="building-office" href="{{ route('rooms.index') }}" :current="request()->routeIs('rooms.index')">Room</flux:navlist.item>
+                        </flux:navlist.group>
+
+                        <flux:navlist.group heading="Operations">
+                            <flux:navlist.item icon="clock" href="{{ route('schedules.index') }}" :current="request()->routeIs('schedules.index')">Schedule</flux:navlist.item>
+                            <flux:navlist.item icon="arrow-path" href="{{ route('shifts.index') }}" :current="request()->routeIs('shifts.index')">Shift</flux:navlist.item>
+                        </flux:navlist.group>
+
+                        <flux:navlist.group heading="Communication">
+                            <flux:navlist.item icon="chat-bubble-left-right" href="{{ route('messages') }}" :current="request()->routeIs('messages')">Messages</flux:navlist.item>
+                        </flux:navlist.group>
                     @endif
 
-                    @if(auth()->user()->isAdmin())
-                        <flux:navlist.item icon="academic-cap" href="{{ route('teachers.index') }}" :current="request()->routeIs('teachers.index')">Teacher</flux:navlist.item>
-                    @endif
+                    @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher' || auth()->user()->role === 'student')
+                        <flux:navlist.group heading="Attendance">
+                            @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher')
+                                <flux:navlist.item icon="calendar-days" href="{{ route('attendance.sessions.index') }}" :current="request()->routeIs('attendance.sessions.*')">Sessions</flux:navlist.item>
+                            @endif
 
-                    @if(auth()->user()->isAdmin())
-                        <flux:navlist.item icon="users" href="{{ route('students.index') }}" :current="request()->routeIs('students.index')">Student</flux:navlist.item>
-                    @endif
-
-                    @if(auth()->user()->isAdmin())
-                        <flux:navlist.item icon="book-open" href="{{ route('syllabuses.index') }}" :current="request()->routeIs('syllabuses.index')">Syllabus</flux:navlist.item>
-                    @endif
-
-                    @if(auth()->user()->isAdmin())
-                        <flux:navlist.item icon="bookmark" href="{{ route('subjects.index') }}" :current="request()->routeIs('subjects.index')">Subject</flux:navlist.item>
-                    @endif
-
-                    @if(auth()->user()->isAdmin())
-                        <flux:navlist.item icon="building-library" href="{{ route('faculties.index') }}" :current="request()->routeIs('faculties.index')">Faculty</flux:navlist.item>
-                        <flux:navlist.item icon="academic-cap" href="{{ route('majors.index') }}" :current="request()->routeIs('majors.index')">Major</flux:navlist.item>
-                        <flux:navlist.item icon="user-group" href="{{ route('classes.index') }}" :current="request()->routeIs('classes.index')">Class</flux:navlist.item>
-                        <flux:navlist.item icon="building-office" href="{{ route('rooms.index') }}" :current="request()->routeIs('rooms.index')">Room</flux:navlist.item>
-                        <flux:navlist.item icon="clock" href="{{ route('schedules.index') }}" :current="request()->routeIs('schedules.index')">Schedule</flux:navlist.item>
-                        <flux:navlist.item icon="arrow-path" href="{{ route('shifts.index') }}" :current="request()->routeIs('shifts.index')">Shift</flux:navlist.item>
-                        <flux:navlist.item icon="chat-bubble-left-right" href="{{ route('messages') }}" :current="request()->routeIs('messages')">Messages</flux:navlist.item>
-                    @endif
-
-                    @guest
-                    @else
-                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher')
-                            <flux:navlist.item icon="calendar-days" href="{{ route('attendance.sessions.index') }}" :current="request()->routeIs('attendance.sessions.*')">Sessions</flux:navlist.item>
-                        @endif
-
-                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'teacher' || auth()->user()->role === 'student')
                             <flux:navlist.item icon="clipboard-document-check" href="{{ route('attendance.records.index') }}" :current="request()->routeIs('attendance.records.*')">Records</flux:navlist.item>
-                        @endif
-                    @endguest
+                        </flux:navlist.group>
+                    @endif
                 </flux:navlist>
 
                 <flux:spacer />
 
-                <flux:navlist variant="pill" class="mb-2">
+                <flux:navlist variant="pill" class="mb-2 space-y-1">
+                    <flux:navlist.item
+                        x-data="themeToggle"
+                        x-on:click="cycleTheme()"
+                        icon="sun"
+                        icon-variant="outline"
+                    >
+                        <span x-text="theme === 'dark' ? 'Dark mode' : theme === 'light' ? 'Light mode' : 'System theme'">Theme</span>
+                    </flux:navlist.item>
                     <flux:navlist.item icon="cog-6-tooth" href="{{ route('profile.show') }}" :current="request()->routeIs('profile.show')">Settings</flux:navlist.item>
                 </flux:navlist>
 
@@ -249,10 +117,10 @@
                             </flux:menu.item>
                         @endif
 
-                        <div class="border-t border-gray-200 dark:border-[rgba(255,255,255,0.08)]"></div>
+                        <div class="border-t border-gray-200 dark:border-white/10"></div>
 
 
-                        <div class="border-t border-gray-200 dark:border-[rgba(255,255,255,0.08)]"></div>
+                        <div class="border-t border-gray-200 dark:border-white/10"></div>
 
                         <flux:menu.item icon="arrow-right-start-on-rectangle" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" variant="danger">
                             Log out
@@ -268,7 +136,7 @@
             </flux:sidebar>
 
             <div class="flex-1 flex flex-col min-w-0">
-                <flux:header class="border-b border-gray-200 dark:border-[rgba(255,255,255,0.08)] lg:hidden">
+                <flux:header class="border-b border-gray-200 dark:border-white/10 lg:hidden">
                     <flux:sidebar.toggle icon="bars-3" inset="left" />
                     <flux:spacer />
                     <flux:dropdown>
@@ -279,9 +147,11 @@
                     </flux:dropdown>
                 </flux:header>
 
-                <flux:main>
+                <flux:main class="relative">
                     @if (isset($header))
-                        {{ $header }}
+                        <div class="mb-8">
+                            {{ $header }}
+                        </div>
                     @endif
 
                     {{ $slot }}
