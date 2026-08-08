@@ -31,7 +31,6 @@ dependencies:
   share_plus: ^12.0.2
   reorderable_grid_view: ^2.2.8
   get_it: ^8.0.2
-  google_fonts: ^6.1.0
   flutter_local_notifications: ^21.0.0
   firebase_core: ^3.8.1
   firebase_messaging: ^15.2.2
@@ -70,3 +69,15 @@ flutter:
     - .env.example
     - assets/images/logo.jpg
     - assets/images/campus.png
+
+  fonts:
+    - family: NotoSansKhmer
+      fonts:
+        - asset: assets/fonts/NotoSansKhmer-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansKhmer-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansKhmer-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansKhmer-Bold.ttf
+          weight: 700

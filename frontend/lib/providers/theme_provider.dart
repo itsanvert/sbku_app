@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
@@ -34,6 +33,12 @@ class ThemeProvider with ChangeNotifier {
   // ── Brand colors ────────────────────────────────────────────
   static const Color _primary = Color(0xFFFF6A00);
   static const Color _primaryDark = Color(0xFF9C3701);
+
+  // ── Font ────────────────────────────────────────────────────
+  static const String kFontFamily = 'NotoSansKhmer';
+
+  static TextStyle khmerStyle({TextStyle? textStyle}) =>
+      (textStyle ?? const TextStyle()).copyWith(fontFamily: kFontFamily);
 
   // ╔══════════════════════════════════════════════════════════╗
   // ║                   LIGHT THEME                           ║
@@ -69,7 +74,7 @@ class ThemeProvider with ChangeNotifier {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Color(0xFF111827)),
-        titleTextStyle: GoogleFonts.hanuman(
+        titleTextStyle: khmerStyle(
           textStyle: const TextStyle(
             color: Color(0xFF111827),
             fontSize: 18,
@@ -97,8 +102,8 @@ class ThemeProvider with ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        labelStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF6B7280))),
-        hintStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF9CA3AF))),
+        labelStyle: khmerStyle(textStyle: const TextStyle(color: Color(0xFF6B7280))),
+        hintStyle: khmerStyle(textStyle: const TextStyle(color: Color(0xFF9CA3AF))),
         prefixIconColor: _primary,
         suffixIconColor: const Color(0xFF9CA3AF),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -129,7 +134,9 @@ class ThemeProvider with ChangeNotifier {
       ),
 
       // Text
-      textTheme: GoogleFonts.hanumanTextTheme().copyWith(
+      textTheme: ThemeData.light().textTheme
+          .apply(fontFamily: kFontFamily, fontFamilyFallback: const ['NotoSansKhmer'])
+          .copyWith(
         displayLarge: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.bold),
         displayMedium: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.bold),
         displaySmall: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
@@ -162,7 +169,7 @@ class ThemeProvider with ChangeNotifier {
       listTileTheme: ListTileThemeData(
         iconColor: const Color(0xFF6B7280),
         textColor: const Color(0xFF1F2937),
-        subtitleTextStyle: GoogleFonts.hanuman(
+        subtitleTextStyle: khmerStyle(
           textStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
         ),
       ),
@@ -175,7 +182,7 @@ class ThemeProvider with ChangeNotifier {
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          textStyle: GoogleFonts.hanuman(
+          textStyle: khmerStyle(
             textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
         ),
@@ -212,14 +219,14 @@ class ThemeProvider with ChangeNotifier {
         backgroundColor: Colors.white,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: GoogleFonts.hanuman(
+        titleTextStyle: khmerStyle(
           textStyle: const TextStyle(
             color: Color(0xFF111827),
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
-        contentTextStyle: GoogleFonts.hanuman(
+        contentTextStyle: khmerStyle(
           textStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 15),
         ),
       ),
@@ -227,7 +234,7 @@ class ThemeProvider with ChangeNotifier {
       // Snackbar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: const Color(0xFF1F2937),
-        contentTextStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Colors.white)),
+        contentTextStyle: khmerStyle(textStyle: const TextStyle(color: Colors.white)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -235,7 +242,7 @@ class ThemeProvider with ChangeNotifier {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFFF3F4F6),
-        labelStyle: GoogleFonts.hanuman(
+        labelStyle: khmerStyle(
           textStyle: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500),
         ),
         side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -279,7 +286,7 @@ class ThemeProvider with ChangeNotifier {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        titleTextStyle: GoogleFonts.hanuman(
+        titleTextStyle: khmerStyle(
           textStyle: const TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -306,8 +313,8 @@ class ThemeProvider with ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF1E293B),
-        labelStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF94A3B8))),
-        hintStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Color(0xFF64748B))),
+        labelStyle: khmerStyle(textStyle: const TextStyle(color: Color(0xFF94A3B8))),
+        hintStyle: khmerStyle(textStyle: const TextStyle(color: Color(0xFF64748B))),
         prefixIconColor: _primary,
         suffixIconColor: const Color(0xFF64748B),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -338,7 +345,9 @@ class ThemeProvider with ChangeNotifier {
       ),
 
       // Text
-      textTheme: GoogleFonts.hanumanTextTheme().copyWith(
+      textTheme: ThemeData.light().textTheme
+          .apply(fontFamily: kFontFamily, fontFamilyFallback: const ['NotoSansKhmer'])
+          .copyWith(
         displayLarge: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         displayMedium: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         displaySmall: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
@@ -371,7 +380,7 @@ class ThemeProvider with ChangeNotifier {
       listTileTheme: ListTileThemeData(
         iconColor: const Color(0xFF94A3B8),
         textColor: const Color(0xFFE2E8F0),
-        subtitleTextStyle: GoogleFonts.hanuman(
+        subtitleTextStyle: khmerStyle(
           textStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
         ),
       ),
@@ -384,7 +393,7 @@ class ThemeProvider with ChangeNotifier {
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          textStyle: GoogleFonts.hanuman(
+          textStyle: khmerStyle(
             textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
         ),
@@ -421,14 +430,14 @@ class ThemeProvider with ChangeNotifier {
         backgroundColor: const Color(0xFF1E293B),
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: GoogleFonts.hanuman(
+        titleTextStyle: khmerStyle(
           textStyle: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
-        contentTextStyle: GoogleFonts.hanuman(
+        contentTextStyle: khmerStyle(
           textStyle: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 15),
         ),
       ),
@@ -436,7 +445,7 @@ class ThemeProvider with ChangeNotifier {
       // Snackbar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: const Color(0xFF1E293B),
-        contentTextStyle: GoogleFonts.hanuman(textStyle: const TextStyle(color: Colors.white)),
+        contentTextStyle: khmerStyle(textStyle: const TextStyle(color: Colors.white)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -444,7 +453,7 @@ class ThemeProvider with ChangeNotifier {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFF1E293B),
-        labelStyle: GoogleFonts.hanuman(
+        labelStyle: khmerStyle(
           textStyle: const TextStyle(color: Color(0xFFCBD5E1), fontWeight: FontWeight.w500),
         ),
         side: const BorderSide(color: Color(0xFF334155)),
